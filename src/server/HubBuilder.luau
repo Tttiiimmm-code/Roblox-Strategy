@@ -93,9 +93,13 @@ end
 
 -- Statische Figur aus dem Charakter-Baukasten (Hauptmann, Magier)
 local function npc(class, weapon, rarity, x, z, yaw, hair)
-	local model = CharacterBuilder.build({
+	local ok, model = pcall(CharacterBuilder.build, {
 		id = "NPC", team = "Royal", class = class, weapon = weapon, rarity = rarity,
 	})
+	if not ok then
+		warn(("Saal-NPC %s wird weggelassen: %s"):format(class, tostring(model)))
+		return nil
+	end
 	if hair then
 		for _, name in { "Hair", "HairBack" } do
 			local p = model:FindFirstChild(name)

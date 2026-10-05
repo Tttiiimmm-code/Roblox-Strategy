@@ -59,7 +59,16 @@ function UnitVisuals.buildHeroTemplates()
 end
 
 function UnitVisuals.create(unit)
-	local model = CharacterBuilder.build(unit)
+	local ok, model = pcall(CharacterBuilder.build, unit)
+	if not ok then
+		warn(("Einheit %s konnte nicht gebaut werden; erneuter Versuch: %s"):format(unit.id, tostring(model)))
+		task.wait(1)
+		ok, model = pcall(CharacterBuilder.build, unit)
+		if not ok then
+			warn(("Einheit %s bleibt ohne Modell: %s"):format(unit.id, tostring(model)))
+			return nil
+		end
+	end
 	model:SetAttribute("UnitId", unit.id)
 	model:PivotTo(rootCFrame(unit.x, unit.y, unit.team == "Player" and 0 or math.pi, model:GetAttribute("GroundOffset")))
 	local root = model.PrimaryPart

@@ -22,7 +22,7 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
   - Defekte Ergebnisse nicht cachen: `bases[key]` nur setzen, wenn ein Modell erfolgreich gebaut wurde.
   - Fertig, wenn: kein ungeschützter Aufruf von `CreateHumanoidModelFromDescriptionAsync` mehr; Fehler landen als `warn` im Output.
 
-- [ ] 3. **Einheiten-Erstellung absichern** – Datei: `src/server/UnitVisuals.luau`, Funktion `UnitVisuals.create`; `src/server/HubBuilder.luau`, Funktion `npc`
+- [x] 3. **Einheiten-Erstellung absichern** – Datei: `src/server/UnitVisuals.luau`, Funktion `UnitVisuals.create`; `src/server/HubBuilder.luau`, Funktion `npc`
   - `CharacterBuilder.build(unit)` in `pcall` aufrufen. Bei Fehler `warn` ausgeben und **zweiter Versuch einmalig** nach `task.wait(1)`. Scheitert auch dieser: Einheit ohne Modell lassen (`return nil`) – vorher prüfen, dass alle Aufrufer von `UnitVisuals.create`/Modell-Lookups mit fehlendem Modell klarkommen (`rg "UnitVisuals.create|FindFirstChild\(.*id" src/server`), fehlende `nil`-Prüfungen ergänzen.
   - Bei `npc` im Thronsaal: Fehler → `warn`, NPC weglassen, Saal-Aufbau läuft weiter (Proximity-Prompt bleibt am Möbel-Anker, nicht am NPC – prüfen, dass das so ist; sonst Prompt an den Anker hängen).
   - Fertig, wenn: Ein Avatar-Ladefehler bricht weder Kampfstart noch Thronsaal ab.
@@ -61,3 +61,4 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
 
 ## Notizen (Codex)
 - Zusätzlich werden die beiden NPC-Aufrufe im HubBuilder mit task.defer nach dem synchronen Saalbau ausgeführt. Ohne diese Anpassung würde HubBuilder.build selbst weiterhin auf Avatar-Ladevorgänge warten.
+- Server-Aufrufer ignorieren den Rückgabewert von UnitVisuals.create; getModel/Modell-Lookups, update, moveAlong, face, setHp und remove prüfen fehlende Modelle/Roots bereits. Keine zusätzlichen Nil-Prüfungen nötig. Saal-Prompts hängen weiterhin am Kriegstisch, Waffenständer bzw. Beschwörungskreis.
