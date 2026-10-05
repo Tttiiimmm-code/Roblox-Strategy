@@ -69,7 +69,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - Vor dem Commit prüfen: alle Zeilen gleich lang, kein Slot/Gegner auf `W`/`D`, jeder Gegner per Fuß von den Slots erreichbar (per Hand oder kleinem lokalem Skript – Ergebnis in den Notizen).
   - Fertig, wenn: beide Karten spielbar, Sieg möglich, Sterne werden gespeichert.
 
-- [ ] 5. **Sumpf-Atmosphäre** – Dateien: `src/shared/Config.luau`, `src/client/Main.client.luau` (~Zeile 649)
+- [x] 5. **Sumpf-Atmosphäre** – Dateien: `src/shared/Config.luau`, `src/client/Main.client.luau` (~Zeile 649)
   - `Config.FEEL.atmosphere.swamp` = Kopie von `battle` mit: haze Density 0.38, Color (170,195,160), Decay (110,130,100), Haze 1.2; color TintColor (225,240,220), Saturation 0.05; lighting Brightness 1.8, ExposureCompensation 0.
   - Statt `Atmosphere.set(isMine() and "battle" or "hall")`: im Kampf das Preset der Region der aktuellen Mission (`Stages.getRegion(Stages.get(<stageId>).region).atmosphere`, Rückfall `"battle"`). Feldnamen der aktuellen Mission im State per `rg "stageId" src` prüfen.
   - Fertig, wenn: Sumpfkarten sind neblig-grün, Grünland-Karten unverändert.

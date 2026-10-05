@@ -646,7 +646,13 @@ local function applyState(newState)
 	-- Kamera und Avatar: Taktik-Ansicht nur im eigenen Kampf, sonst frei im Thronsaal
 	CameraController.setActive(isMine())
 	Hub.setBattleView(isMine())
-	Atmosphere.set(isMine() and "battle" or "hall")
+	local atmosphere = "hall"
+	if isMine() then
+		local stage = Stages.get(state.stageId)
+		local region = stage and Stages.getRegion(stage.region)
+		atmosphere = region and region.atmosphere or "battle"
+	end
+	Atmosphere.set(atmosphere)
 	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub", { loop = not (isMine() and state.result ~= nil) })
 	resetSelection()
 	UI.setHudVisible(inBattle() and not state.result)

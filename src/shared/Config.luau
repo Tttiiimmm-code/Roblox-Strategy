@@ -54,6 +54,14 @@ Config.FEEL = {
 			depth = { FarIntensity = 0, NearIntensity = 0, FocusDistance = 75, InFocusRadius = 100 },
 			lighting = { Brightness = 2.2, ExposureCompensation = 0.1 },
 		},
+		swamp = {
+			bloom = { Intensity = 0.12, Size = 20, Threshold = 1.5 },
+			color = { TintColor = Color3.fromRGB(225, 240, 220), Saturation = 0.05, Contrast = 0.1, Brightness = 0 },
+			rays = { Intensity = 0.02, Spread = 0.8 },
+			haze = { Density = 0.38, Offset = 0.15, Color = Color3.fromRGB(170, 195, 160), Decay = Color3.fromRGB(110, 130, 100), Haze = 1.2, Glare = 0 },
+			depth = { FarIntensity = 0, NearIntensity = 0, FocusDistance = 75, InFocusRadius = 100 },
+			lighting = { Brightness = 1.8, ExposureCompensation = 0 },
+		},
 	},
 }
 
