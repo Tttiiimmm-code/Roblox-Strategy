@@ -340,10 +340,13 @@ function UIKit.portrait(viewport, camera, source, zoomOut)
 			d:Destroy()
 		end
 	end
+	-- Brett-Figuren sind vergrößert (Config.FEEL.boardUnitScale); Porträts zeigen Originalgröße.
+	local scale = source:GetScale()
+	clone:ScaleTo(1)
 	clone:PivotTo(CFrame.new())
 	local world = make("WorldModel", {}, viewport)
 	clone.Parent = world
-	local headY = source:GetAttribute("HeadY") or 4.8
+	local headY = (source:GetAttribute("HeadY") or 4.8) / scale
 	local d = zoomOut and 9 or 6
 	camera.CFrame = CFrame.lookAt(Vector3.new(1.8, headY + 0.4, -d), Vector3.new(0, headY - (zoomOut and 1.6 or 0.8), 0))
 end
