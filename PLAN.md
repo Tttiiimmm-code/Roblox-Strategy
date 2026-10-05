@@ -86,7 +86,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - Fertig, wenn: Weltkarte zeigt 4 Gebiete (2 aktiv, 2 „Bald verfügbar"), 5 Knoten, Wege inkl. Verzweigung nach s2; Auswahl und Missionsstart funktionieren am PC und per Touch.
 
 - [x] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
-- [ ] 8. Devlog-Eintrag #15 „Weltkarte + Nebelsumpf" (Teststatus „ungetestet"), Ausblick unten unter „Nächste Schritte" übernehmen, Branch pushen, dann `.handoff/status` = `fertig`.
+- [x] 8. Devlog-Eintrag #15 „Weltkarte + Nebelsumpf" (Teststatus „ungetestet"), Ausblick unten unter „Nächste Schritte" übernehmen, Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test in Studio (Nutzer)
 - [ ] Missionen-Reiter heißt „Weltkarte"; Gebiete Grünland + Nebelsumpf farbig, Frostgipfel + Glutberg grau „Bald verfügbar"

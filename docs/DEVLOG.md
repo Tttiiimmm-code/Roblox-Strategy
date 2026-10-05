@@ -342,14 +342,38 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #15 – Weltkarte + Nebelsumpf
+**Datum:** 06.10.2026
+
+**Ziel:** Missionsfortschritt auf einer verzweigten Weltkarte sichtbar machen und den Nebelsumpf als erstes neues Gebiet ergänzen.
+
+**Umsetzung**
+- Vier zentrale Gebietsdefinitionen in `Stages`: Grünland und Nebelsumpf aktiv, Frostgipfel und Glutberg als „Bald verfügbar“. Fünf Missionen mit Kartenpositionen und Vorgängern; Waldpass schaltet Banditenfestung und Nebelfurt frei, Nebelfurt schaltet Hexenhütte frei. Mindestens ein geschaffter Vorgänger genügt; Schwer erfordert weiterhin Normal derselben Mission.
+- Morast mit Bewegungskosten Fuß 2/Pferd 3 und Ausweichen −15; tiefer Morast für beide Bewegungstypen unpassierbar. Schlamm-Terrain, 1 Stud Wasser über tiefem Morast, Schilf sowie abgestorbene Holzdekoration ergänzt. Die bestehende Kalibrierung misst beide neuen Zeichen. Gelände-Boni in beiden Infoanzeigen mit korrektem Vorzeichen formatiert.
+- Gegnerklasse EnemyMage mit Chibi-Hexen-Aussehen und bestehendem Magier-Accessoire für den Avatar-Pfad; Sumpfhexe und stationäre Bosshexe Morwen mit Feuer, Morwen mit Seltenheit ★4.
+- Handgebaute Karten Nebelfurt (12×9) und Hexenhütte (12×10) mit Aufstellungsfeldern, Gegnern und zusätzlichen Schwer-Gegnern gemäß Plan.
+- Grünes Nebel-Preset für das Sumpfgebiet; die aktuelle Mission bestimmt die Atmosphäre im eigenen Kampf, mit Rückfall auf battle. Im Thronsaal bleibt hall aktiv.
+- Weltkarten-Reiter mit 1200×720-Canvas zum Scrollen in X/Y und Wischen, farbigen Gebieten, vier Wegen und fünf runden 72-px-Knoten. Gesperrte Knoten zeigen „???“, offene pulsieren, geschaffte erhalten Goldrand und Sterne, die Auswahl einen hellen Zusatzring. Erste offene Mission als Standard, sonst letzte freigeschaltete; Kartenausschnitt darauf zentriert. Details rechts auf 40 % Breite mit Stufen, Regeln, Zielen, Belohnung und Start. Gesperrt-/Warte-Emoji entfernt.
+
+**Entscheidungen:** Bestehende Stage-IDs und Sternedaten bleiben erhalten; kein neues Profilfeld. Karten s1–s3, Heldenwerte, Kampf-/KI-Formeln und Servervalidierung unverändert. UI über UIKit; Pulse werden nur bei Zustandswechsel erstellt und vor Neubau/Zerstörung beendet. Für die schmalere Detailansicht stehen Regeln und Ziele untereinander. Ein Commit je Planschritt auf `feature/weltkarte`, ausgehend von `feature/chibi-figuren`.
+
+**Probleme:** Keine blockierenden Probleme. Ein UTF-8-Übertragungsfehler bei der ersten Ergänzung wurde korrigiert. Spielbarkeit, Darstellung und tatsächliche Speicherung benötigen den Studio-Test.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Nach jedem Umsetzungsschritt `scripts/check.ps1`: **OK**; Abschlussprüfung **25 Dateien, Exit 0**. Rojo-Build von `TacticsGame.rbxlx` erfolgreich. Lokale Prüfung mit tatsächlichen Luau-Shared-Modulen und Werttyp-Stubs bestätigt Verzweigung, ODER-Vorgängerregel, Freischaltungen mit alten Sternedaten und Schwer-Regel; Morast-Kosten 2/3, Unpassierbarkeit von D, Trefferchance +15 durch Ausweichen −15 und Vorzeichenformatierung. Auf beiden Karten ist jeder Gegner einschließlich Schwer-Zusätzen von jedem Startplatz mit `Grid.reachable` zu Fuß erreichbar. Hexenwerte, Feuerreichweite und Gebietsatmosphäre geprüft. Die lokale Prüfhilfe unter `.handoff` wird nicht committet. Darstellung, Touch, Missionsstart, Sieg, Sternespeicherung, Nebel und Terrain-Oberflächen anhand von `PLAN.md` manuell testen; Claude-Review ausstehend.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Claude prüft `feature/chibi-figuren`; Nutzer testet die Terrain-/Chibi-Prüfliste in Studio und auf dem Handy und entscheidet zwischen Chibi und R15.
-2. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
-3. Nach dem Stil-Entscheid je eigener Plan: Ausrüstung/Items mit am Modell sichtbaren Waffen und Gegenständen.
-4. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
-5. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
-6. Eigene Angriffs-Effekte für ★4/★5.
-7. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
-8. Option KI-generierte 3D-Modelle: Nutzer prüft Tools; möglicher dritter Stil `"mesh"` im selben Schalter.
-9. Belohnungen & Klassenwechsel.
-10. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
+1. Claude prüft `feature/weltkarte`; Nutzer testet Weltkarte und Nebelsumpf anhand von `PLAN.md` in Studio und auf dem Handy. Terrain-/Chibi-Test und Stil-Entscheid bleiben offen.
+2. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
+3. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
+4. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
+5. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
+6. Nach dem Stil-Entscheid je eigener Plan: Ausrüstung/Items mit am Modell sichtbaren Waffen und Gegenständen.
+7. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
+8. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
+9. Eigene Angriffs-Effekte für ★4/★5.
+10. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
+11. Option KI-generierte 3D-Modelle: Nutzer prüft Tools; möglicher dritter Stil `"mesh"` im selben Schalter.
+12. Belohnungen & Klassenwechsel.
+13. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
