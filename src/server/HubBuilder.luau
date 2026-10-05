@@ -284,8 +284,11 @@ local function buildBarracks(x, z)
 		deco("RackWeapon", Vector3.new(0.3, lance and 9 or 5, 0.3), at(x + 5.2, lance and 4.5 or 3, z + i * 2.2), METAL,
 			{ Material = Enum.Material.Metal })
 	end
-	part("ArmorStand", Vector3.new(2, 4, 1.2), at(x + 2, 4, z + 6), METAL, { Material = Enum.Material.Metal })
-	deco("ArmorHelm", Vector3.new(1.6, 1.4, 1.6), at(x + 2, 6.8, z + 6), METAL, { Material = Enum.Material.Metal })
+	part("ArmorBase", Vector3.new(2.4, 0.3, 2.4), at(x + 2, 0.15, z + 6), WOOD, { Material = Enum.Material.Wood })
+	deco("ArmorPole", Vector3.new(0.3, 4.6, 0.3), at(x + 2, 2.6, z + 6), WOOD, { Material = Enum.Material.Wood })
+	deco("ArmorCrossbar", Vector3.new(2.6, 0.3, 0.3), at(x + 2, 4.4, z + 6), WOOD, { Material = Enum.Material.Wood })
+	deco("ArmorChest", Vector3.new(2, 2, 1), at(x + 2, 3.7, z + 6), METAL, { Material = Enum.Material.Metal })
+	deco("ArmorHelm", Vector3.new(1.4, 1.4, 1.4), at(x + 2, 5.4, z + 6), METAL, { Shape = Enum.PartType.Ball, Material = Enum.Material.Metal })
 	deco("BarracksBanner", Vector3.new(0.3, 10, 6), at(x + 6.6, 11, z), RED, { Material = Enum.Material.Fabric })
 	task.defer(npc, "Soldier", "IronLance", 3, x, z, math.rad(90))
 	label(rack, "Soldatenquartier", "Kaserne", 9)

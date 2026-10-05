@@ -29,7 +29,7 @@ Ursachen (Claude-Analyse):
   - Neue Werte: `Config.FEEL.touchRotateThreshold = 18`, `Config.FEEL.touchPanScale = 1` (Faktor auf `panBy` bei Touch, zum Feintuning).
   - Fertig, wenn: am Handy verschiebt ein Finger die Karte „unter dem Finger", Pinch zoomt ruhig, Drehen nur bei bewusster Drehung, kein Springen beim Absetzen eines Fingers; Tippen wählt weiterhin Einheiten/Felder.
 
-- [ ] 3. **Rüstungsständer reparieren** – Datei: `src/server/HubBuilder.luau` (`buildBarracks`)
+- [x] 3. **Rüstungsständer reparieren** – Datei: `src/server/HubBuilder.luau` (`buildBarracks`)
   - `ArmorStand`/`ArmorHelm` ersetzen durch einen Ständer, der auf dem Boden steht (Oberkante Boden = y 0): Fußplatte (2.4×0.3×2.4, Holz, y 0.15), Stange (0.3×4.6×0.3, Holz, y 2.6), Querholz (2.6×0.3×0.3, y 4.4), Brustpanzer (2×2×1, Metall, y 3.7), Helm (Kugel Ø1.4 Metall, y 5.4) – alle über `part`/`deco` wie bisher an `at(x + 2, …, z + 6)`.
   - Fertig, wenn: nichts schwebt an der Kaserne (alle Teile berühren sich bzw. den Boden).
 
