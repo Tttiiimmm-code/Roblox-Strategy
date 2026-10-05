@@ -157,7 +157,7 @@ function UnitVisuals.update(unit)
 	local color = grey and Config.DONE_COLOR or Config.TEAM_COLORS[unit.team]
 	for _, p in model:GetDescendants() do
 		if p:IsA("BasePart") and p:GetAttribute("Tint") then
-			p.Color = color
+			p.Color = grey and Config.DONE_COLOR or (p:GetAttribute("BaseColor") or color)
 		end
 	end
 	UnitVisuals.setHp(unit.id, unit.hp, unit.maxHp)

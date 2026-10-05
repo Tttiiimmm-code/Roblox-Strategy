@@ -3,6 +3,15 @@ local Config = {}
 
 Config.CHARACTER_STYLE = "chibi" -- "chibi" oder "avatar"
 
+Config.CHIBI = {
+	legSize = Vector3.new(0.7, 1.0, 0.7), hipY = 1.0, legX = 0.45, bootHeight = 0.35,
+	torsoSize = Vector3.new(1.7, 1.5, 1.1), torsoY = 1.75,
+	armSize = Vector3.new(0.55, 1.1, 0.55), shoulderX = 1.15, shoulderY = 2.35,
+	handDiameter = 0.6, headDiameter = 2.6, headY = 3.7, neckY = 2.5,
+	eyeSize = Vector3.new(0.38, 0.6, 0.1), eyeX = 0.48, eyeY = 3.6,
+	riderLift = 2.6, riderHipAngle = -35,
+}
+
 Config.FEEL = {
 	avatarIdle = "rbxassetid://507766388", avatarWalk = "rbxassetid://507777826",
 	avatarAnimationFade = 0.15, riderLift = 3.2, capeAngle = 8,

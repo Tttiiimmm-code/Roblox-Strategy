@@ -48,7 +48,7 @@ Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshot
     Klassen-Standard (Gegner/NPC): Brigand = S2, short (30,25,25), bandana (110,25,30), Outfit (110,25,30)/(90,70,50)/(50,40,30) · Soldier = S1, short (90,60,40), kettle (Metall), Outfit (150,155,165)/(120,30,35)/(80,80,90) · EnemyArcher = S2, short (90,60,40), hood (110,25,30), Outfit (110,25,30)/(90,70,50)/(50,40,30) · Chieftain = S3, none, horned (Metall), beard, scale 1.2, Outfit (40,35,35)/(130,25,30)/(170,140,80) · Lord/Cavalier/Archer/Mage/Fighter = Werte von leon/kai/tobi/greta/finn.
   - Fertig, wenn: jeder Held und jede Gegnerklasse hat ein auflösbares `chibi`-Aussehen.
 
-- [ ] 4. **ChibiBuilder** – neue Datei `src/shared/ChibiBuilder.luau` (läuft auf Server **und** Client, keine Netz-Assets)
+- [x] 4. **ChibiBuilder** – neue Datei `src/shared/ChibiBuilder.luau`, zusätzlich `src/shared/Config.luau` und freigegeben `src/server/UnitVisuals.luau` (läuft auf Server **und** Client, keine Netz-Assets)
   - Gerüst wie alter Baukasten (`5e4a469`), aber **R15-kompatible Namen**, damit `UnitAnimator`/`UIKit` ohne Änderung laufen:
     - Wurzel `HumanoidRootPart` (unsichtbar, verankert, am Boden, `PrimaryPart`); Rumpf `UpperTorso`; Kopf `Head`; Hände `RightHand`/`LeftHand`.
     - Motor6D-Namen: `Root` (HumanoidRootPart→UpperTorso), `Neck`, `RightShoulder`, `LeftShoulder`, `RightHip`, `LeftHip`, `CapeJoint`.
@@ -98,4 +98,5 @@ Vom Nutzer gewünscht, je eigener Plan nach dem Stil-Entscheid:
   - **Antwort Claude: Ja, genau so.** Ergänzung zu Schritt 4 (Datei zusätzlich `src/server/UnitVisuals.luau`, nur `UnitVisuals.update`): ChibiBuilder setzt an Outfit-Teilen Attribut `BaseColor` (Color3). In `update`: Teil mit `Tint` → fertig = `Config.DONE_COLOR`, aktiv = `p:GetAttribute("BaseColor") or Teamfarbe`. Teamteile (ohne `BaseColor`) und Avatar-Pfad unverändert. Weiter umsetzen.
 
 ## Notizen (Codex)
-- Branch `feature/chibi-figuren` von `feature/visual-pass-2` angelegt. Vor den Umsetzungsschritten wegen des Farbkonflikts angehalten; noch keine Codeänderungen.
+- Branch `feature/chibi-figuren` von `feature/visual-pass-2` angelegt. Nach Claudes Antwort fortgesetzt: Outfitteile speichern `BaseColor`; `UnitVisuals.update` stellt aktive Farben wieder her und graut fertige Einheiten aus.
+- Helm/Kessel verwenden eine abgeflachte Kugelschale, damit die Gesichtsteile frei bleiben. Die Boden-Aura besteht aus einem offenen Segmentring. `TopY` wird aus den fertigen Teilen ermittelt; die Hutfarbe und Frisur bleiben beim Ergrauen erhalten.
