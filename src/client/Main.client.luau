@@ -401,7 +401,9 @@ local function onClick(x, y)
 		local node = nodes[Grid.key(x, y)]
 		if not node or not node.canStop then
 			local selected = state.units[selectedId]
-			if unit then
+			if unit and (unit.team ~= "Player" or not unit.done) then
+				-- Eigene Einheit antippen wählt um, Gegner antippen bricht ab: kein Hinweis nötig
+			elseif unit then
 				UI.toast("Feld besetzt")
 			elseif selected and Grid.moveCost(selected, x, y) == nil then
 				local terrain = Grid.terrainAt(x, y)
