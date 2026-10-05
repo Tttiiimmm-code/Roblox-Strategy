@@ -6,6 +6,7 @@ local Config = require(Shared.Config)
 local Grid = require(Shared.Grid)
 
 local BoardBuilder = {}
+local lastTerrainRegion
 
 local function deco(props, parent)
 	local p = Instance.new("Part")
@@ -32,9 +33,10 @@ local function decorate(ch, x, y, parent)
 			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 0.6, 0.6),
 				CFrame = CFrame.new(base + Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90)),
 				Color = Color3.fromRGB(100, 70, 40), Material = Enum.Material.Wood }, parent)
-			deco({ Shape = Enum.PartType.Ball, Size = Vector3.new(2.4, 2.4, 2.4),
-				Position = base + Vector3.new(0, 2.6, 0),
-				Color = Color3.fromRGB(40, 100, 45), Material = Enum.Material.Grass }, parent)
+			for layer = 1, 3 do
+				local diameter = 3.2 - layer * 0.5
+				deco({ Shape = Enum.PartType.Ball, Size = Vector3.new(diameter, 1.6, diameter), Position = base + Vector3.new(0, 1.8 + layer * 0.7, 0), Color = Color3.fromRGB(40, 100, 45), Material = Enum.Material.Grass }, parent)
+			end
 		end
 	elseif ch == "M" then
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, -c), Vector3.new(-c, 0, c) } do
@@ -78,6 +80,34 @@ function BoardBuilder.build()
 	end
 
 	local T = Config.TILE_SIZE
+	local terrain = workspace.Terrain
+	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
+	local w, h = Grid.width() * T, Grid.height() * T
+	if lastTerrainRegion then terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
+	local size = Vector3.new(w + margin * 2, depth + Config.FEEL.terrainClearTop, h + margin * 2)
+	local cf = CFrame.new(w / 2, (Config.FEEL.terrainClearTop - depth) / 2, h / 2)
+	terrain:FillBlock(cf, size, Enum.Material.Air)
+	lastTerrainRegion = { cf = cf, size = size }
+	terrain:FillBlock(CFrame.new(w / 2, -depth / 2, h / 2), Vector3.new(w + margin * 2, depth, h + margin * 2), Enum.Material.Ground)
+	terrain:FillBlock(CFrame.new(w / 2, -2, h / 2), Vector3.new(w + margin * 2, 4, h + margin * 2), Enum.Material.Grass)
+	for y = 1, Grid.height() do
+		for x = 1, Grid.width() do
+			local definition = Grid.terrainAt(x, y)
+			local center = Grid.toWorld(x, y)
+			terrain:FillBlock(CFrame.new(center.X, 2, center.Z), Vector3.new(T, 12, T), Enum.Material.Air)
+			if definition.terrainMaterial == Enum.Material.Water then
+				terrain:FillBlock(CFrame.new(center.X, -6, center.Z), Vector3.new(T, 4, T), Enum.Material.Sand)
+				terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), Enum.Material.Water)
+			else
+				terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), definition.terrainMaterial)
+				if definition.terrainMaterial == Enum.Material.Rock then
+					for _, sign in { -1, 1 } do
+						terrain:FillBall(center + Vector3.new(sign * 2.8, -1.3, ((x * 17 + y * 11) % 3) - 1), 2, Enum.Material.Rock)
+					end
+				end
+			end
+		end
+	end
 	local board = Instance.new("Folder")
 	board.Name = "Board"
 
@@ -88,8 +118,11 @@ function BoardBuilder.build()
 			local tile = Instance.new("Part")
 			tile.Name = ("Tile_%d_%d"):format(x, y)
 			tile.Anchored = true
-			tile.Size = Vector3.new(T - 0.2, Config.TILE_THICKNESS, T - 0.2) -- kleine Fuge = Gitterlinien
-			tile.Position = Grid.toWorld(x, y) - Vector3.new(0, Config.TILE_THICKNESS / 2, 0)
+			tile.Size = Vector3.new(T, 0.2, T) -- kleine Fuge = Gitterlinien
+			tile.Position = Grid.toWorld(x, y) - Vector3.new(0, 0.1, 0)
+			tile.Transparency = 1
+			tile.CanCollide = false
+			tile.CanQuery = true
 			tile.Color = terrain.color
 			tile.Material = terrain.material
 			tile.TopSurface = Enum.SurfaceType.Smooth
@@ -97,19 +130,14 @@ function BoardBuilder.build()
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
 			decorate(ch, x, y, board)
+			local center = Grid.toWorld(x, y)
+			for _, offset in { Vector3.new(-T / 2, 0, 0), Vector3.new(T / 2, 0, 0), Vector3.new(0, 0, -T / 2), Vector3.new(0, 0, T / 2) } do
+				deco({ Name = "GridLine", Size = offset.X ~= 0 and Vector3.new(Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth, T) or Vector3.new(T, Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth), Position = center + offset + Vector3.new(0, 0.04, 0), Color = Color3.fromRGB(40, 45, 35), Transparency = Config.FEEL.gridTransparency }, board)
+			end
 		end
 	end
 
 	local w, h = Grid.width() * T, Grid.height() * T
-	deco({
-		Name = "Base",
-		Size = Vector3.new(w + 6, 2, h + 6),
-		Position = Vector3.new(w / 2, -Config.TILE_THICKNESS - 0.9, h / 2),
-		Color = Color3.fromRGB(40, 36, 32),
-		Material = Enum.Material.Slate,
-	}, board)
-
-	deco({ Name = "SurroundingGrass", Size = Vector3.new(w + Config.FEEL.environmentMargin * 2, 2, h + Config.FEEL.environmentMargin * 2), Position = Vector3.new(w / 2, -4, h / 2), Color = Config.TERRAIN["."].color, Material = Enum.Material.Grass }, board)
 	for i = 1, Config.FEEL.environmentCount do
 		local edge = i % 4
 		local fraction = ((i * 37) % 97) / 97
@@ -117,10 +145,10 @@ function BoardBuilder.build()
 		local z = fraction * h
 		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -18 or h + 18 end
 		if i % 3 == 0 then
-			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, -1, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
+			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, 2, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
 		else
-			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, 1.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
-			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, 9, z), Color = Config.TERRAIN.F.color, Material = Enum.Material.Grass }, board)
+			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, 4.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
+			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, 12, z), Color = Config.TERRAIN.F.color, Material = Enum.Material.Grass }, board)
 		end
 	end
 	board.Parent = workspace

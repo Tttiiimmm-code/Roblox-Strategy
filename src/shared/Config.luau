@@ -2,6 +2,7 @@
 local Config = {}
 
 Config.FEEL = {
+	terrainDepth = 12, terrainClearTop = 20, gridLineWidth = 0.06, gridTransparency = 0.75,
 	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,
 	hallWhite = Color3.fromRGB(225, 218, 205), hallMarble = Color3.fromRGB(205, 198, 186),
 	hoverSoundCooldown = 0.08,
@@ -52,31 +53,37 @@ Config.MAX_LEVEL = 20
 -- avoid: Ausweich-Bonus, def: Verteidigungs-Bonus, heal: Heilung pro Runde (Anteil der Max-KP)
 Config.TERRAIN = {
 	["."] = {
+		height = 0, terrainMaterial = Enum.Material.Grass,
 		name = "Ebene", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
 		color = Color3.fromRGB(126, 184, 92), material = Enum.Material.Grass,
 	},
 	F = {
+		height = 0.4, terrainMaterial = Enum.Material.LeafyGrass,
 		name = "Wald", avoid = 20, def = 1,
 		cost = { foot = 2, horse = 3 },
 		color = Color3.fromRGB(72, 132, 62), material = Enum.Material.Grass,
 	},
 	M = {
+		height = 4, terrainMaterial = Enum.Material.Rock,
 		name = "Berg", avoid = 30, def = 2,
 		cost = { foot = 4 },
 		color = Color3.fromRGB(140, 122, 98), material = Enum.Material.Rock,
 	},
 	W = {
+		height = -1.2, terrainMaterial = Enum.Material.Water,
 		name = "Wasser", avoid = 0, def = 0,
 		cost = {},
 		color = Color3.fromRGB(60, 120, 200), material = Enum.Material.SmoothPlastic,
 	},
 	H = {
+		height = 1, terrainMaterial = Enum.Material.Cobblestone,
 		name = "Festung", avoid = 20, def = 3, heal = 0.2,
 		cost = { foot = 2, horse = 2 },
 		color = Color3.fromRGB(170, 160, 150), material = Enum.Material.Cobblestone,
 	},
 	B = {
+		height = 0.2, terrainMaterial = Enum.Material.WoodPlanks,
 		name = "Brücke", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
 		color = Color3.fromRGB(150, 110, 70), material = Enum.Material.WoodPlanks,

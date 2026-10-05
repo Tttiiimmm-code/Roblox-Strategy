@@ -22,7 +22,7 @@ end
 function CameraController.focusOn(position, distance, duration)
 	if not active then return end
 	if not saved then saved = { focus = focus, zoom = zoom } end
-	transitionTo(position * Vector3.new(1, 0, 1), distance, duration)
+	transitionTo(position, distance, duration)
 end
 
 function CameraController.restore(duration)
@@ -37,7 +37,7 @@ function CameraController.shake(strength, duration)
 end
 
 local function clampFocus()
-	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), 0, math.clamp(focus.Z, 0, bounds.Z))
+	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), focus.Y, math.clamp(focus.Z, 0, bounds.Z))
 end
 
 function CameraController.setBounds(center, size)

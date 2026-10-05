@@ -43,7 +43,7 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
   - Lautstärken in `Sounds.VOLUME` anpassen: Musik 0.3, click 0.4, hit/miss 0.6, crit 0.8.
   - Fertig, wenn: IDs eingetragen, Kommentar „vom Nutzer in Studio probehören" bleibt stehen.
 
-- [ ] 4. **3D-Schlachtfeld mit Roblox-Terrain** – Dateien: `src/shared/Config.luau`, `src/shared/Grid.luau`, `src/server/BoardBuilder.luau`
+- [x] 4. **3D-Schlachtfeld mit Roblox-Terrain** – Dateien: `src/shared/Config.luau`, `src/shared/Grid.luau`, `src/server/BoardBuilder.luau`
   - `Config.TERRAIN[...]` je Gelände ergänzen: `height` (Oberkante in Studs) und `terrainMaterial`: Ebene `0` / `Enum.Material.Grass`; Wald `0.4` / `LeafyGrass`; Berg `4` / `Rock`; Wasser `-1.2` / `Water` (darunter `Sand`/`Mud` als Grund); Festung `1` / `Cobblestone`; Brücke `0.2` / `WoodPlanks`.
   - `Grid.tileHeight(x, y)` (aus `terrainAt().height`) und `Grid.toWorld(x, y)` liefert die Höhe als Y (statt 0). Dadurch stehen Einheiten, Overlays, Cursor, Laufwege und Kamera-Fokus automatisch auf der richtigen Höhe – alle Aufrufer von `toWorld` prüfen, dass nichts eine feste Höhe 0 annimmt (`HubBuilder` nutzt eigene Koordinaten).
   - `BoardBuilder.build`: Brett-Bereich (plus `Config.FEEL.environmentMargin`) mit `workspace.Terrain:FillBlock(...)` aufbauen: Grundschicht `Ground`/`Grass` bis Höhe 0, je Feld ein Block in `terrainMaterial` bis `height`; Berge zusätzlich mit 1–2 `FillBall` für unregelmäßige Kuppen (deterministisch aus x,y); Wasser als `Water`-Block über abgesenktem Grund. Vorher nur den Brett-Bereich leeren (`FillBlock` mit `Air`), **nicht** `Terrain:Clear()` auf die ganze Welt.

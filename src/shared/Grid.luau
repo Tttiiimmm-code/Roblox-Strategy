@@ -39,9 +39,14 @@ function Grid.terrainAt(x, y)
 end
 
 -- Mittelpunkt der Feld-Oberseite in Weltkoordinaten
+function Grid.tileHeight(x, y)
+	local terrain = Grid.terrainAt(x, y)
+	return terrain and terrain.height or 0
+end
+
 function Grid.toWorld(x, y)
 	local t = Config.TILE_SIZE
-	return Vector3.new((x - 0.5) * t, 0, (y - 0.5) * t)
+	return Vector3.new((x - 0.5) * t, Grid.tileHeight(x, y), (y - 0.5) * t)
 end
 
 function Grid.dist(ax, ay, bx, by)
