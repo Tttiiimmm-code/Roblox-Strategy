@@ -134,6 +134,69 @@ Stages.List = {
 			{ kind = "brigand", x = 12, y = 5, level = 3 },
 		},
 	},
+	{
+		id = "s4", name = "Nebelfurt", baseGold = 180, turnGoal = 9,
+		region = "swamp", mapPos = Vector2.new(0.48, 0.66), requires = { "s2" },
+		description = "Im Nebelsumpf verschwinden Händler spurlos. Folge den Furten – und bleib nicht im Morast stecken.",
+		map = {
+			"..SS.F..SSD.",
+			".SSDS...SDD.",
+			"..S..H...S..",
+			"F...SS.F....",
+			"..D.SS..SS.F",
+			".SSD...S..S.",
+			"..S..F..SD..",
+			"F....SS.....",
+			"........F...",
+		},
+		slots = {
+			{ x = 5, y = 9 }, { x = 6, y = 9 }, { x = 7, y = 9 }, { x = 4, y = 8 },
+		},
+		enemies = {
+			{ kind = "brigand", x = 7, y = 2, level = 3 },
+			{ kind = "brigand", x = 2, y = 3, level = 3 },
+			{ kind = "archer", x = 6, y = 3, level = 3 },
+			{ kind = "javelin", x = 11, y = 3, level = 3 },
+			{ kind = "witch", x = 12, y = 1, level = 3 },
+		},
+		hardEnemies = {
+			{ kind = "brigand", x = 1, y = 5, level = 3 },
+			{ kind = "archer", x = 8, y = 4, level = 3 },
+		},
+	},
+	{
+		id = "s5", name = "Hexenhütte", baseGold = 260, turnGoal = 11,
+		region = "swamp", mapPos = Vector2.new(0.62, 0.82), requires = { "s4" },
+		description = "Morwen, die Moorhexe, lenkt die Banditen aus ihrer Hütte im Sumpf. Brich ihren Bann!",
+		map = {
+			"SSD..H..DSSS",
+			"SD...F...DSS",
+			"S..SS..SS..S",
+			"..SDDS.SDD..",
+			"F..SS...S..F",
+			"...........S",
+			".SS..F..SS..",
+			"..S.....DS..",
+			".F...SS...F.",
+			"....S....S..",
+		},
+		slots = {
+			{ x = 6, y = 10 }, { x = 7, y = 10 }, { x = 8, y = 10 }, { x = 4, y = 10 }, { x = 5, y = 9 },
+		},
+		enemies = {
+			{ kind = "morwen", x = 6, y = 1, level = 6 },
+			{ kind = "brigand", x = 4, y = 2, level = 4 },
+			{ kind = "brigand", x = 8, y = 2, level = 4 },
+			{ kind = "archer", x = 7, y = 3, level = 4 },
+			{ kind = "javelin", x = 2, y = 5, level = 4 },
+			{ kind = "soldier", x = 11, y = 6, level = 4 },
+			{ kind = "witch", x = 11, y = 4, level = 4 },
+		},
+		hardEnemies = {
+			{ kind = "brigand", x = 1, y = 6, level = 4 },
+			{ kind = "archer", x = 12, y = 5, level = 4 },
+		},
+	},
 }
 
 function Stages.get(id)

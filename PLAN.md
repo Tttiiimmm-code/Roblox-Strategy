@@ -38,7 +38,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - `UnitData.Enemies.morwen = { name = "Morwen", class = "EnemyMage", weapon = "Fire", rarity = 4, ai = "stationary", stats = { hp = 26, str = 0, mag = 8, skl = 7, spd = 6, lck = 4, def = 3, res = 7 } }` (Bosshexe, ★4-Effekte durch `rarity`).
   - Fertig, wenn: beide Gegner erscheinen als Chibi-Hexen und greifen mit Feuer (Reichweite 1–2) an; `EnemyAI` braucht keine Änderung.
 
-- [ ] 4. **Zwei Sumpf-Karten** – Datei: `src/shared/Stages.luau` (Format wie s2/s3)
+- [x] 4. **Zwei Sumpf-Karten** – Datei: `src/shared/Stages.luau` (Format wie s2/s3)
   - **s4 „Nebelfurt"** · baseGold 180 · turnGoal 9 · Beschreibung: „Im Nebelsumpf verschwinden Händler spurlos. Folge den Furten – und bleib nicht im Morast stecken."
     ```
     "..SS.F..SSD.",
@@ -111,4 +111,5 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Schritt 4: Lokale Flood-Fill-Prüfung der Kartendaten erfolgreich: s4 = 12×9, s5 = 12×10; alle Slots und Gegner (inklusive hardEnemies) stehen auf passierbarem Gelände und sind zu Fuß erreichbar. Spielverhalten und Sternespeicherung in Studio ungetestet.
 - Schritt 1: Gebiete, Vorg?ngergraph und Freischaltregel erg?nzt; s4/s5 folgen mit ihren Kartendaten in Schritt 4.
