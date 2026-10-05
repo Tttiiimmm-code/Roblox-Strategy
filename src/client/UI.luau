@@ -1,3 +1,4 @@
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Kampf-HUD: Phase, Hinweise, Einheiten-Info, Aktionsmenü, Kampfvorschau, Werkzeugleiste, Meldungen
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -437,6 +438,7 @@ function UI.setPhase(state)
 	local key = state.phase .. state.turn
 	if key ~= lastPhaseKey and not state.result then
 		lastPhaseKey = key
+		SoundPlayer.play("phase")
 		playBanner(phaseLabel.Text, isPlayer and Color3.fromRGB(60, 110, 230) or Color3.fromRGB(210, 50, 50))
 	end
 end
@@ -552,6 +554,7 @@ function UI.toast(text, duration)
 end
 
 function UI.showLevelUp(e)
+	SoundPlayer.play("levelUp")
 	levelToken += 1
 	local token = levelToken
 	level.sub.Text = ("%s  ·  Lv %d"):format(e.unitName, e.level)

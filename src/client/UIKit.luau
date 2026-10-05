@@ -1,3 +1,4 @@
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Gemeinsame UI-Bausteine im Fire-Emblem-Stil: Farben, Fenster, Buttons, Balken, Skalierung
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -103,7 +104,11 @@ function UIKit.button(text, parent, style, order)
 	UIKit.corner(b, 6)
 	local s = UIKit.stroke(b, THEME.goldDark, 1.5)
 	UIKit.setButtonStyle(b, style or "default")
+	b.Activated:Connect(function()
+		if b:GetAttribute("Style") ~= "disabled" then SoundPlayer.play("click") end
+	end)
 	b.MouseEnter:Connect(function()
+		if b:GetAttribute("Style") ~= "disabled" then SoundPlayer.play("hover") end
 		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
 		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[2] }):Play()
 		s.Color = THEME.gold

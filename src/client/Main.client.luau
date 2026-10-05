@@ -1,3 +1,4 @@
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Client: Eingabe (Maus & Touch), Reichweiten, Bewegungsvorschau, Kampfvorschau, Menüs, Animationen
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -538,6 +539,8 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 				local attacker = state and state.units[s.attackerId]
 				local weaponKey = attacker and attacker.weapon or "IronSword"
 				UnitAnimator.playStrike(s, weaponKey, function()
+					SoundPlayer.play(not s.hit and "miss" or s.crit and "crit" or "hit", { varyPitch = true })
+					if s.hpAfter == 0 then SoundPlayer.play("death") end
 					if not s.hit then
 						floatText(s.targetId, "Verfehlt", Color3.fromRGB(190, 196, 210), 140)
 					elseif s.crit then
@@ -585,6 +588,7 @@ local function applyState(newState)
 	-- Kamera und Avatar: Taktik-Ansicht nur im eigenen Kampf, sonst frei im Thronsaal
 	CameraController.setActive(isMine())
 	Hub.setBattleView(isMine())
+	SoundPlayer.playMusic(isMine() and (state.result and (state.result.victory and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub")
 	resetSelection()
 	UI.setHudVisible(inBattle() and not state.result)
 	if inBattle() then

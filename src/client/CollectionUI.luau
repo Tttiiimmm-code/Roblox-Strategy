@@ -1,3 +1,4 @@
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Rekrutierung (Banner, Wahrscheinlichkeiten, Enthüllung) und Kaserne (Heldensammlung)
 -- GRUNDGERÜST – Layout und Texte sind bewusst einfach gehalten und können frei umgebaut werden.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -245,6 +246,7 @@ function CollectionUI.showResults(list)
 		local scale = make("UIScale", { Scale = 0 }, c.card)
 		task.delay(0.15 + i * 0.22, function()
 			TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+			SoundPlayer.play(r.rarity >= 5 and "recruitLegendary" or r.rarity >= 4 and "recruitRare" or "recruit")
 			if r.rarity >= 5 then
 				results.flash.BackgroundTransparency = 0.2
 				TweenService:Create(results.flash, TweenInfo.new(0.6), { BackgroundTransparency = 1 }):Play()

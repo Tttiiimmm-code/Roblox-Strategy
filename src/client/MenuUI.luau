@@ -1,3 +1,4 @@
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Menüs außerhalb des Kampfes: Kartenauswahl (mit Schwierigkeit), Aufstellung, Ergebnis
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -509,6 +510,7 @@ local function animateStars(count)
 		scale.Scale = 1
 		if i <= count then
 			task.delay(0.35 + i * 0.35, function()
+				SoundPlayer.play("coin")
 				s.TextColor3 = THEME.gold
 				scale.Scale = 1.8
 				TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -645,12 +647,14 @@ function MenuUI.init(root, cbs)
 end
 
 function MenuUI.openLobby(tab)
+	if not lobbyOpen then SoundPlayer.play("open") end
 	lobbyTab = tab or lobbyTab
 	lobbyOpen = true
 	MenuUI.update(lastState, lastProfile)
 end
 
 function MenuUI.closeLobby()
+	if lobbyOpen then SoundPlayer.play("close") end
 	lobbyOpen = false
 	MenuUI.update(lastState, lastProfile)
 end

@@ -11,7 +11,7 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
 
 ## Schritte
 
-- [ ] 1. **Sound-System (Grundgerüst)**
+- [x] 1. **Sound-System (Grundgerüst)**
   - Neu `src/shared/Sounds.luau`: Tabelle `Sounds.IDS = { musicHub = "", musicBattle = "", musicVictory = "", musicDefeat = "", click = "", hover = "", open = "", close = "", hit = "", crit = "", miss = "", death = "", levelUp = "", phase = "", recruit = "", recruitRare = "", recruitLegendary = "", coin = "", step = "" }` (Strings `"rbxassetid://…"`, **leer lassen** – Nutzer trägt IDs aus der Roblox-Audio-Bibliothek ein) + `Sounds.VOLUME` je Eintrag.
   - Neu `src/client/SoundPlayer.luau`: `play(name, opts)` (einmalig, Pitch-Variation ±5 % optional), `playMusic(name)` mit 1-s-Überblendung zwischen Musikstücken, Lautstärke-Faktor. **Leere ID → still nichts tun, keine Warnung/Fehler.**
   - Einhängen: `UIKit.button` (click bei `Activated`, hover bei `MouseEnter`), Menü öffnen/schließen (`MenuUI.openLobby/closeLobby`), Treffer in `Main.client.luau` im `onImpact`-Callback von `UnitAnimator.playStrike` (hit / crit / miss), Tod (wenn `s.hpAfter == 0`), `UI.showLevelUp` (levelUp), Phasen-Banner in `UI.setPhase` (phase), Ergebnis-Sterne in `MenuUI` (coin pro Stern), Rekrutierungs-Enthüllung in `CollectionUI.showResults` (recruit / recruitRare ab ★4 / recruitLegendary ★5).

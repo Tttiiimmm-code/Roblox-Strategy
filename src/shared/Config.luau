@@ -1,6 +1,10 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
+Config.FEEL = {
+	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
+}
+
 Config.TILE_SIZE = 8
 Config.TILE_THICKNESS = 1
 Config.MOVE_STEP_TIME = 0.16
