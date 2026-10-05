@@ -25,7 +25,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - Hilfsfunktion `Stages.getRegion(id)`.
   - Fertig, wenn: s3 und s4 werden beide nach s2 freigeschaltet; s5 nach s4.
 
-- [ ] 2. **Neues Gelände: Morast** – Dateien: `src/shared/Config.luau`, `src/server/BoardBuilder.luau`, `src/client/UI.luau`
+- [x] 2. **Neues Gelände: Morast** – Dateien: `src/shared/Config.luau`, `src/server/BoardBuilder.luau`, `src/client/UI.luau`
   - `Config.TERRAIN.S` = Morast: `name = "Morast"`, `avoid = -15`, `def = 0`, `cost = { foot = 2, horse = 3 }`, `height = -0.2`, `terrainMaterial = Enum.Material.Mud`, `color = (95,85,60)`, `material = Enum.Material.Mud`.
   - `Config.TERRAIN.D` = Tiefer Morast: `name = "Tiefer Morast"`, `avoid = 0`, `def = 0`, `cost = {}` (für Fuß/Pferd unpassierbar – **später** `fly = 1` für Flieger, Kommentar dazu), `height = -0.8`, `terrainMaterial = Enum.Material.Mud`, `color = (60,55,40)`, `material = Enum.Material.Mud`. Optisch dunkler: zusätzlich eine flache, halbtransparente Wasserschicht (Terrain `Water`, 1 Stud) über dem Schlamm.
   - `BoardBuilder.decorate`: `S` → 2–3 Schilfhalme (dünne Zylinder 0.15×1.6, Farbe (110,120,60), leicht geneigt, Position wie bei `F` pseudozufällig aus x/y); `D` → 1–2 abgestorbene Baumstümpfe/Äste (dunkles Holz). Die Terrain-Kalibrierung (Raycast je Zeichen) muss `S`/`D` mitmessen – prüfen, dass sie über alle Zeichen läuft.

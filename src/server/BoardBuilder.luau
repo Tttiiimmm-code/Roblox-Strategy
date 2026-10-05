@@ -38,6 +38,21 @@ local function decorate(ch, x, y, parent)
 				deco({ Shape = Enum.PartType.Ball, Size = Vector3.new(diameter, 1.6, diameter), Position = base + Vector3.new(0, 1.8 + layer * 0.7, 0), Color = Color3.fromRGB(40, 100, 45), Material = Enum.Material.Grass }, parent)
 			end
 		end
+	elseif ch == "S" then
+		for i = 1, 2 + (x + y) % 2 do
+			local off = Vector3.new(((x * 17 + y * 11 + i * 7) % 2 == 0 and -1 or 1) * c, 0,
+				((x * 13 + y * 19 + i * 5) % 7 / 3 - 1) * c)
+			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 0.15, 0.15),
+				CFrame = CFrame.new(center + off + Vector3.new(0, 0.8, 0)) * CFrame.Angles(math.rad(i * 7), 0, math.rad(80 + i * 4)),
+				Color = Color3.fromRGB(110, 120, 60), Material = Enum.Material.Grass }, parent)
+		end
+	elseif ch == "D" then
+		for i = 1, 1 + (x + y) % 2 do
+			local off = Vector3.new(i == 1 and -c or c, 0.6, ((x * 17 + y * 11) % 3 - 1) * c)
+			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 0.7, 0.7),
+				CFrame = CFrame.new(center + off) * CFrame.Angles(math.rad(15), 0, math.rad(65)),
+				Color = Color3.fromRGB(55, 45, 35), Material = Enum.Material.Wood }, parent)
+		end
 	elseif ch == "M" then
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, -c), Vector3.new(-c, 0, c) } do
 			deco({ Size = Vector3.new(2.4, 2.2, 2.4),
@@ -105,6 +120,9 @@ function BoardBuilder.build()
 					terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), Enum.Material.Water)
 				else
 					terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), definition.terrainMaterial)
+					if ch == "D" then
+						terrain:FillBlock(CFrame.new(center.X, center.Y + 0.5, center.Z), Vector3.new(T, 1, T), Enum.Material.Water)
+					end
 					if definition.terrainMaterial == Enum.Material.Rock then
 						for _, sign in { -1, 1 } do
 							terrain:FillBall(center + Vector3.new(sign * 2.8, -1.3, ((x * 17 + y * 11) % 3) - 1), 2, Enum.Material.Rock)

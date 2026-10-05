@@ -497,7 +497,7 @@ function UI.showInfo(unit, terrain)
 		local name = stat == "mov" and "Bew" or UnitData.STAT_NAMES[stat]
 		lbl.Text = ("<font color='%s'>%s</font> <b>%d</b>"):format(UIKit.DIM_HEX, name, value)
 	end
-	info.weapon.Text = ("<font color='%s'>Waffe</font>  <b>%s</b>  <font color='%s'>Mt %d · Rw %d–%d · %s +%d/+%d</font>"):format(
+	info.weapon.Text = ("<font color='%s'>Waffe</font>  <b>%s</b>  <font color='%s'>Mt %d · Rw %d–%d · %s %+d/%+d</font>"):format(
 		UIKit.DIM_HEX, w.name, UIKit.DIM_HEX, w.might, w.minRange, w.maxRange, terrain.name, terrain.avoid, terrain.def)
 	UIKit.setVisible(info.frame, true)
 end
@@ -508,7 +508,7 @@ end
 
 function UI.showTerrain(terrain)
 	local extra = terrain.heal and (" <font color='%s'>Heilung</font>"):format(UIKit.GOOD_HEX) or ""
-	terrainLabel.Text = ("<font face='Fondamento' size='20'><b>%s</b></font>\n<font color='%s'>Ausweichen</font> +%d   <font color='%s'>Verteidigung</font> +%d%s")
+	terrainLabel.Text = ("<font face='Fondamento' size='20'><b>%s</b></font>\n<font color='%s'>Ausweichen</font> %+d   <font color='%s'>Verteidigung</font> %+d%s")
 		:format(terrain.name, UIKit.DIM_HEX, terrain.avoid, UIKit.DIM_HEX, terrain.def, extra)
 	UIKit.setVisible(terrainFrame, true)
 end

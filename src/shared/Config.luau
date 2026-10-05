@@ -92,6 +92,18 @@ Config.TERRAIN = {
 		cost = {},
 		color = Color3.fromRGB(60, 120, 200), material = Enum.Material.SmoothPlastic,
 	},
+	S = {
+		height = -0.2, terrainMaterial = Enum.Material.Mud,
+		name = "Morast", avoid = -15, def = 0,
+		cost = { foot = 2, horse = 3 },
+		color = Color3.fromRGB(95, 85, 60), material = Enum.Material.Mud,
+	},
+	D = {
+		height = -0.8, terrainMaterial = Enum.Material.Mud,
+		name = "Tiefer Morast", avoid = 0, def = 0,
+		cost = {}, -- Später fly = 1 für Flieger.
+		color = Color3.fromRGB(60, 55, 40), material = Enum.Material.Mud,
+	},
 	H = {
 		height = 1, terrainMaterial = Enum.Material.Cobblestone,
 		name = "Festung", avoid = 20, def = 3, heal = 0.2,
