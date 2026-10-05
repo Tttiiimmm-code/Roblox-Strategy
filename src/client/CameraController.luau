@@ -3,6 +3,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
 
 local CameraController = {}
 
@@ -14,6 +15,23 @@ local yaw = 0
 local saved, transition
 local shakeTime, shakeDuration, shakeStrength = 0, 0, 0
 local random = Random.new()
+local controlsWarningShown = false
+
+local function setAvatarControls(on)
+	local controlsOk, controlsError = pcall(function()
+		local playerModule = Players.LocalPlayer.PlayerScripts:WaitForChild("PlayerModule", 5)
+		if not playerModule then error("PlayerModule fehlt") end
+		local controls = require(playerModule):GetControls()
+		if on then controls:Enable() else controls:Disable() end
+	end)
+	local touchOk, touchError = pcall(function()
+		GuiService.TouchControlsEnabled = on
+	end)
+	if (not controlsOk or not touchOk) and not controlsWarningShown then
+		controlsWarningShown = true
+		warn("Avatar-Steuerung konnte nicht umgeschaltet werden: " .. tostring(controlsError or touchError))
+	end
+end
 
 local function transitionTo(position, distance, duration)
 	transition = { from = focus, to = position, zoomFrom = zoom, zoomTo = distance, elapsed = 0, duration = math.max(duration, 0.001) }
@@ -75,6 +93,7 @@ function CameraController.setActive(on)
 		return
 	end
 	active = on
+	setAvatarControls(not on)
 	if not on then saved, transition = nil, nil; shakeStrength = 0 end
 	if not on then
 		local camera = workspace.CurrentCamera

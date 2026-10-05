@@ -16,7 +16,7 @@ Ursachen (Claude-Analyse):
 
 ## Schritte
 
-- [ ] 1. **Avatar-Steuerung im Kampf aus** – Datei: `src/client/CameraController.luau` (`setActive`)
+- [x] 1. **Avatar-Steuerung im Kampf aus** – Datei: `src/client/CameraController.luau` (`setActive`)
   - Bei `setActive(true)`: Figurensteuerung deaktivieren (`require(Players.LocalPlayer.PlayerScripts:WaitForChild("PlayerModule")):GetControls():Disable()`) und Touch-Steuerelemente ausblenden (`GuiService.TouchControlsEnabled = false`). Bei `setActive(false)`: beides wieder an. Alles in `pcall` (PlayerModule kann fehlen/umbenannt sein) – bei Fehler einmal `warn`.
   - Fertig, wenn: im Kampf kein Joystick/Sprungknopf sichtbar und Wischen bewegt nie den Avatar; im Thronsaal ist die Steuerung normal.
 
