@@ -51,7 +51,7 @@ Ursachen (Claude-Analyse):
   - Fertig, wenn: man nie rätselt, warum ein Feld nicht geht.
 
 - [x] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
-- [ ] 8. Devlog-Eintrag #16 „Handy-Kamera + Sumpf-Lesbarkeit" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
+- [x] 8. Devlog-Eintrag #16 „Handy-Kamera + Sumpf-Lesbarkeit“ (Teststatus „ungetestet“), Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer, vor allem Handy)
 - [ ] Kampf am Handy: kein Joystick/Sprungknopf; ein Finger verschiebt die Karte flüssig; zwei Finger zoomen ohne Ruckeln; Drehen nur bei deutlicher Drehbewegung; Finger absetzen → kein Springen; Tippen wählt Einheit/Feld
@@ -70,3 +70,8 @@ Ursachen (Claude-Analyse):
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Umsetzung auf `feature/mobile-lesbarkeit`, abgezweigt von `feature/weltkarte`; ein Commit je Schritt. Pflichtcheck nach jedem Schritt grün (25 Dateien); Rojo-Build erfolgreich. Studio-/Handy-Test ungetestet, Claude-Review ausstehend.
+- PlayerModule-Lookup mit fünf Sekunden Timeout; Figuren- und Touch-Steuerung in getrennten pcalls, damit ein Fehler nicht das andere Umschalten verhindert. Höchstens eine Warnung.
+- UI-begonnene Touches werden mitgezählt, lösen aber keine Kamerageste aus. Fingerwechsel setzt Gestenbasis zurück; Rotation beginnt ohne Nachholen des Schwellenwinkels. Lokale Prüfung der originalen Handler mit API-Stubs erfolgreich; Prüfhilfe unter `.handoff` uncommittet.
+- Zusätzliche Darstellungswerte zentral in Config.FEEL. Pfützen sitzen nach der Kalibrierung an der lokal gemessenen Terrain-Oberfläche. Graue Sperrmarkierungen ersetzen dort rote Overlays, damit das X erkennbar bleibt.
+- Terrain-Panel für drei Zeilen vergrößert und am Handy bei einer ausgewählten Einheit sichtbar gehalten, da dort kein Maus-Hover vorhanden ist.

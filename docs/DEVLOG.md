@@ -363,8 +363,29 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #16 – Handy-Kamera + Sumpf-Lesbarkeit
+**Datum:** 06.10.2026
+
+**Ziel:** Verlässliche Karten-Gesten am Handy, ein auf dem Boden stehender Rüstungsständer und verständliche Sumpf- und Bewegungsanzeigen.
+
+**Umsetzung**
+- Taktik-Kamera schaltet Avatar-Steuerung und Touch-Steuerelemente geschützt aus und bei Rückkehr in den Thronsaal wieder ein. Fehlendes PlayerModule hat fünf Sekunden Timeout; Umschaltfehler erzeugen höchstens eine Warnung.
+- Jeder Touch hat eigene Start-/Letzte-Position. Ein Finger verschiebt ab der Ziehschwelle; zwei Finger zoomen über ihren Abstand und verschieben über den Mittelpunkt. Rotation folgt erst nach 18 Grad bewusster Drehung. Fingerzahlwechsel setzen alle Basiswerte neu; Mehrfinger-Gesten lösen keine Auswahl aus. Roblox-Pinch-/Rotate-Handler entfernt; Maus, Mausrad und Tastatur behalten ihre Bedienung.
+- Rüstungsständer aus Holzfuß, Stange, Querholz, Brustpanzer und Kugelhelm mit den geplanten Maßen aufgebaut; Fußplatte berührt den Boden, Helm und Stange überlappen.
+- Grünland und Nebelsumpf definieren Umgebungsmaterial und Baumfarbe. Mission übergibt ihr Gebiet an BoardBuilder; Sumpfumgebung nutzt braunen Schlamm und dunklere Bäume. Morastfelder erhalten eine versetzte Terrain-Wasserpfütze und drei bis vier Schilfhalme mit braunen Spitzen.
+- Blaue Felder mit erhöhten Bewegungskosten erhalten transparentere Overlays und flache Oberseiten-Beschriftungen. Unbesetzte, unpassierbare Nachbarfelder sind grau mit X; alle Beschriftungen werden mit ihren Overlays aufgeräumt.
+- Nicht erreichbare Ziele erklären zuerst Besetzung, dann Unpassierbarkeit und schließlich fehlende Bewegungsreichweite. Das bisherige Auswählen/Abwählen folgt danach. Das Gelände-Panel zeigt Fuß-/Pferdekosten, fehlende Kosten als Gedankenstrich und am Handy das Gelände der ausgewählten Einheit.
+
+**Entscheidungen:** Neue Gesten- und Darstellungswerte in Config.FEEL, graue Farbe in Config.OVERLAY. UI-begonnene Finger zählen zur Gestenunterdrückung, steuern aber keine Kamera. Nach Überschreiten der Drehschwelle werden nur weitere Winkeländerungen angewendet, damit kein nachträglicher Drehungssprung entsteht. Pfützen werden nach der Terrain-Kalibrierung an der lokal gemessenen Schlammoberfläche platziert. Graue Sperrmarkierungen ersetzen an denselben Feldern rote Angriffs-Overlays für eine eindeutige Anzeige. Gelände-Panel auf drei Zeilen vergrößert. Keine Änderungen an Spielregeln, KI, Kartendaten, Freischaltung, Profilen oder Befehlsvalidierung.
+
+**Probleme:** Keine blockierenden Probleme. Beim Vormerken von Schritt 2 blockierte die Sandbox den Git-Index; der autorisierte erneute Aufruf war erfolgreich.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Nach jedem Schritt `scripts/check.ps1`: **OK, 25 Dateien, Exit 0**. Abschluss-Build von `TacticsGame.rbxlx` erfolgreich. Lokale Prüfung der originalen Eingabe-Handler mit API-/Vector2-Stubs bestätigt Einfinger-Ziehen, Pinch-Verhältnis, 18-Grad-Drehschwelle, kontinuierliche Rotation, Fingerwechsel zwischen eins/zwei/drei Fingern ohne Sprung, Winkelwechsel über ±180 Grad, Unterdrückung von UI-Touches und Mehrfinger-Taps sowie Maus-Ziehen/Klicken. Prüfhilfe unter `.handoff` bleibt uncommittet. Darstellung und tatsächliche Roblox-Touch-Ereignisse müssen anhand der manuellen Prüfliste bestätigt werden; Claude-Review ausstehend.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Claude prüft `feature/weltkarte`; Nutzer testet Weltkarte und Nebelsumpf anhand von `PLAN.md` in Studio und auf dem Handy. Terrain-/Chibi-Test und Stil-Entscheid bleiben offen.
+1. Claude prüft `feature/mobile-lesbarkeit`; Nutzer testet Handy-Kamera, Rückkehr zur Avatar-Steuerung, PC-Eingabe, Rüstungsständer, Sumpf und Bewegungshinweise anhand von `PLAN.md` in Studio und auf dem Handy. Weltkarten-/Terrain-/Chibi-Test und Stil-Entscheid bleiben offen.
 2. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
 3. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
 4. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
