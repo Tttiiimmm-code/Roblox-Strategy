@@ -298,8 +298,30 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #13 – Review-Fixes Visual-Pass 2
+**Datum:** 05.10.2026
+
+**Ziel:** Saal und Serverstart von Avatar-Ladezeiten entkoppeln, Ladefehler abfangen und verspätete Porträtvorlagen anzeigen.
+
+**Umsetzung**
+- `UnitVisuals.init` setzt nur den Einheitenordner; `buildHeroTemplates` läuft nach dem Saalbau im Hintergrund. Der leere Vorlagenordner wird sofort repliziert und mit jeder fertigen Vorlage ergänzt. Fehler eines Helden werden mit dessen ID protokolliert; die übrigen Helden werden weiter gebaut.
+- Beide Saal-NPCs werden nach dem synchronen Aufbau mit `task.defer` geladen. Boden, Möbel, Spawn und Prompts stehen bereits im Workspace, bevor ein Avatar nachgeladen wird.
+- Auch der Avatar-Versuch ohne Accessoires läuft in `pcall`. Scheitert er, folgen Warnung und Fehlerweitergabe an die geschützten Aufrufer; kein defektes Ergebnis wird gecacht.
+- Einheiten-Erstellung schützt den Bau und wiederholt ihn nach einem Fehler einmal nach einer Sekunde. Bei erneutem Fehler bleibt die Einheit ohne Modell; vorhandene Modell-Lookups verkraften das. NPC-Fehler führen zu einer Warnung und zum Weglassen des NPCs; Prompts bleiben an Möbeln bzw. Kreis.
+- Beide modernen Licht-Eigenschaften einzeln geschützt, bei Problemen höchstens eine Warnung mit Studio-Hinweis. `default.project.json` setzt zusätzlich `Lighting.Technology = Future`; Rojo akzeptiert die Eigenschaft beim Build.
+- Heldenporträts leeren bei fehlender Vorlage den Viewport und warten im Hintergrund mit jeweils zehn Sekunden Timeout auf Ordner/Vorlage. Die spätere Anzeige erfolgt nur bei noch vorhandenem Viewport und passendem `PortraitHero`-Attribut.
+- Alten NPC-Haarfarben-Parameter und Zugriffe auf `Hair`/`HairBack` entfernt.
+
+**Entscheidungen:** Die NPC-Aufrufe mussten zusätzlich zum Vorlagenbau verschoben werden, da andernfalls schon `HubBuilder.build` auf Netzwerk-Ladevorgänge gewartet hätte. Keine Änderungen an Asset-IDs, Spielregeln, Befehlsvalidierung oder Kampfzeiten.
+
+**Probleme:** Keine blockierenden Probleme; der Rojo-Eintrag für Future musste nicht entfernt werden.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Nach jedem Umsetzungsschritt `scripts/check.ps1`: **OK, 24 Dateien, Exit 0**. Abschluss-Build von `TacticsGame.rbxlx` erfolgreich. Strukturprüfung bestätigt, dass kein `HairBack`-Zugriff mehr existiert. Startverhalten, simulierte Ladefehler, Porträt-Nachladen und Licht müssen anhand der manuellen Prüfliste bestätigt werden; Claude-Review ausstehend.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Claude prüft `feature/visual-pass-2`.
+1. Claude prüft die Review-Fixes auf `feature/visual-pass-2`.
 2. Visual-Pass-Prüfliste in Studio und auf dem Handy durchführen; Sounds probehören, Accessoires/Porträts und Terrain-Klicks prüfen, Output und Bildrate beobachten.
 3. Gemeldete Asset-Ladefehler mit ID dokumentieren; Sounds und Optik nach Nutzer-Feedback abstimmen.
 4. Belohnungen & Klassenwechsel.

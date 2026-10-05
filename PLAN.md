@@ -40,8 +40,8 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
   - Die Schleife über `"Hair", "HairBack"` und den Parameter `hair` entfernen (R15-Avatare haben keine solchen Teile); Aufrufe von `npc(...)` entsprechend anpassen.
   - Fertig, wenn: `rg '"HairBack"' src` liefert nichts.
 
-- [ ] 7. `scripts/check.ps1` = `OK`, `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
-- [ ] 8. Devlog-Eintrag #13 „Review-Fixes Visual-Pass 2" (Teststatus „ungetestet"), Branch pushen.
+- [x] 7. `scripts/check.ps1` = `OK`, `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
+- [x] 8. Devlog-Eintrag #13 „Review-Fixes Visual-Pass 2" (Teststatus „ungetestet"), Branch pushen.
 
 ## Manueller Test in Studio (Nutzer)
 - [ ] Beim Play-Start steht der Thronsaal sofort, die eigene Figur fällt nicht ins Leere
@@ -62,3 +62,4 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
 ## Notizen (Codex)
 - Zusätzlich werden die beiden NPC-Aufrufe im HubBuilder mit task.defer nach dem synchronen Saalbau ausgeführt. Ohne diese Anpassung würde HubBuilder.build selbst weiterhin auf Avatar-Ladevorgänge warten.
 - Server-Aufrufer ignorieren den Rückgabewert von UnitVisuals.create; getModel/Modell-Lookups, update, moveAlong, face, setHp und remove prüfen fehlende Modelle/Roots bereits. Keine zusätzlichen Nil-Prüfungen nötig. Saal-Prompts hängen weiterhin am Kriegstisch, Waffenständer bzw. Beschwörungskreis.
+- Rojo akzeptiert Technology = Future in default.project.json; der Eintrag bleibt erhalten. Alle sechs Umsetzungsschritte einzeln mit grünem check.ps1 committed. Abschluss: 24 Dateien, OK / Exit 0; Rojo-Build erfolgreich; Studio-/Handy-Test ungetestet.
