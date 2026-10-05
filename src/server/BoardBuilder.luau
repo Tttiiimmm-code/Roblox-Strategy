@@ -88,26 +88,55 @@ function BoardBuilder.build()
 	local cf = CFrame.new(w / 2, (Config.FEEL.terrainClearTop - depth) / 2, h / 2)
 	terrain:FillBlock(cf, size, Enum.Material.Air)
 	lastTerrainRegion = { cf = cf, size = size }
-	terrain:FillBlock(CFrame.new(w / 2, -depth / 2, h / 2), Vector3.new(w + margin * 2, depth, h + margin * 2), Enum.Material.Ground)
-	terrain:FillBlock(CFrame.new(w / 2, -2, h / 2), Vector3.new(w + margin * 2, 4, h + margin * 2), Enum.Material.Grass)
-	for y = 1, Grid.height() do
-		for x = 1, Grid.width() do
-			local definition = Grid.terrainAt(x, y)
-			local center = Grid.toWorld(x, y)
-			terrain:FillBlock(CFrame.new(center.X, 2, center.Z), Vector3.new(T, 12, T), Enum.Material.Air)
-			if definition.terrainMaterial == Enum.Material.Water then
-				terrain:FillBlock(CFrame.new(center.X, -6, center.Z), Vector3.new(T, 4, T), Enum.Material.Sand)
-				terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), Enum.Material.Water)
-			else
-				terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), definition.terrainMaterial)
-				if definition.terrainMaterial == Enum.Material.Rock then
-					for _, sign in { -1, 1 } do
-						terrain:FillBall(center + Vector3.new(sign * 2.8, -1.3, ((x * 17 + y * 11) % 3) - 1), 2, Enum.Material.Rock)
+	pcall(function() terrain.Decoration = false end)
+	local function fillTerrain(sinkByChar)
+		local groundSink = sinkByChar["."] or 0
+		terrain:FillBlock(CFrame.new(w / 2, -depth / 2 - groundSink, h / 2), Vector3.new(w + margin * 2, depth, h + margin * 2), Enum.Material.Ground)
+		terrain:FillBlock(CFrame.new(w / 2, -2 - groundSink, h / 2), Vector3.new(w + margin * 2, 4, h + margin * 2), Enum.Material.Grass)
+		for y = 1, Grid.height() do
+			for x = 1, Grid.width() do
+				local definition = Grid.terrainAt(x, y)
+				local center = Grid.toWorld(x, y)
+				local ch = string.sub(Grid.getMap()[y], x, x)
+				center -= Vector3.new(0, sinkByChar[ch] or 0, 0)
+				terrain:FillBlock(CFrame.new(center.X, 2, center.Z), Vector3.new(T, 12, T), Enum.Material.Air)
+				if definition.terrainMaterial == Enum.Material.Water then
+					terrain:FillBlock(CFrame.new(center.X, -6, center.Z), Vector3.new(T, 4, T), Enum.Material.Sand)
+					terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), Enum.Material.Water)
+				else
+					terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), definition.terrainMaterial)
+					if definition.terrainMaterial == Enum.Material.Rock then
+						for _, sign in { -1, 1 } do
+							terrain:FillBall(center + Vector3.new(sign * 2.8, -1.3, ((x * 17 + y * 11) % 3) - 1), 2, Enum.Material.Rock)
+						end
 					end
 				end
 			end
 		end
+		end
+	fillTerrain({})
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { terrain }
+	local sink, measured, calibration = {}, {}, {}
+	for y = 1, Grid.height() do
+		for x = 1, Grid.width() do
+			local ch = string.sub(Grid.getMap()[y], x, x)
+			if ch ~= "W" and not measured[ch] then
+				measured[ch] = true
+				local center = Grid.toWorld(x, y)
+				local hit = workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
+				if hit then
+					local amount = hit.Position.Y - center.Y + Config.FEEL.terrainSurfaceMargin
+					if amount > 0 then sink[ch] = amount end
+				end
+				table.insert(calibration, ("%s=%.3f"):format(ch, sink[ch] or 0))
+			end
+		end
 	end
+	terrain:FillBlock(cf, size, Enum.Material.Air)
+	fillTerrain(sink)
+	print("Terrain-Kalibrierung: " .. table.concat(calibration, ", "))
 	local board = Instance.new("Folder")
 	board.Name = "Board"
 
@@ -132,7 +161,7 @@ function BoardBuilder.build()
 			decorate(ch, x, y, board)
 			local center = Grid.toWorld(x, y)
 			for _, offset in { Vector3.new(-T / 2, 0, 0), Vector3.new(T / 2, 0, 0), Vector3.new(0, 0, -T / 2), Vector3.new(0, 0, T / 2) } do
-				deco({ Name = "GridLine", Size = offset.X ~= 0 and Vector3.new(Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth, T) or Vector3.new(T, Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth), Position = center + offset + Vector3.new(0, 0.04, 0), Color = Color3.fromRGB(40, 45, 35), Transparency = Config.FEEL.gridTransparency }, board)
+				deco({ Name = "GridLine", Size = offset.X ~= 0 and Vector3.new(Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth, T) or Vector3.new(T, Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth), Position = center + offset + Vector3.new(0, 0.08, 0), Color = Color3.fromRGB(40, 45, 35), Transparency = Config.FEEL.gridTransparency }, board)
 			end
 		end
 	end

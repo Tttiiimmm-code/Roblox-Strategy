@@ -13,7 +13,7 @@ Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshot
 
 ## Schritte
 
-- [ ] 1. **Terrain-Oberfläche kalibrieren** – Dateien: `src/server/BoardBuilder.luau`, `src/shared/Config.luau`
+- [x] 1. **Terrain-Oberfläche kalibrieren** – Dateien: `src/server/BoardBuilder.luau`, `src/shared/Config.luau`
   - Terrain-Füllung (Schleife ab `for y = 1, Grid.height()` mit `FillBlock`) in lokale Funktion `fillTerrain(sinkByChar)` auslagern: Oberkante jedes Feldes bei `center.Y - (sinkByChar[ch] or 0)` statt `center.Y`; Grundschichten (Ground/Grass, auch außerhalb des Bretts) um den Wert für `"."` absenken.
   - Ablauf in `BoardBuilder.build`: `fillTerrain({})` → je Terrain-Zeichen (außer `W`) **ein** Feld per `workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)` messen (`RaycastParams`: `FilterType = Include`, `FilterDescendantsInstances = { workspace.Terrain }`) → `sink[ch] = treffer.Y - center.Y + Config.FEEL.terrainSurfaceMargin` (nur wenn > 0) → Bereich mit Air leeren → `fillTerrain(sink)`. Einmal `print("Terrain-Kalibrierung: ...")` mit den Werten je Zeichen.
   - `Config.FEEL.terrainSurfaceMargin = 0.15` (Abstand, damit Rasterlinien/Felder sichtbar über der Oberfläche liegen).
