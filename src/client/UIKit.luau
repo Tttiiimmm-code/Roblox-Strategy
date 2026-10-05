@@ -350,8 +350,19 @@ end
 
 -- Heldenporträts klonen die beim Serverstart erzeugten R15-Vorlagen.
 function UIKit.heroPortrait(viewport, camera, heroId, zoomOut)
+	viewport:SetAttribute("PortraitHero", heroId)
 	local templates = ReplicatedStorage:FindFirstChild("HeroTemplates")
-	UIKit.portrait(viewport, camera, templates and templates:FindFirstChild(heroId), zoomOut)
+	local template = templates and templates:FindFirstChild(heroId)
+	UIKit.portrait(viewport, camera, template, zoomOut)
+	if template then return end
+	task.spawn(function()
+		local available = templates or ReplicatedStorage:WaitForChild("HeroTemplates", 10)
+		if not available then return end
+		local loaded = available:WaitForChild(heroId, 10)
+		if loaded and viewport.Parent and viewport:GetAttribute("PortraitHero") == heroId then
+			UIKit.portrait(viewport, camera, loaded, zoomOut)
+		end
+	end)
 end
 
 -- ViewportFrame mit Kamera für Porträts

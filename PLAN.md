@@ -32,7 +32,7 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
   - Zusätzlich in `default.project.json` unter `Lighting` die Eigenschaft `"Technology": "Future"` als `$properties` eintragen (falls `Lighting` dort noch nicht existiert, Knoten `"Lighting": { "$properties": { "Technology": "Future" } }` anlegen). Rojo setzt sie beim Sync/Build, unabhängig von Skript-Rechten. Mit `tools/rojo.exe build` prüfen, dass der Build fehlerfrei bleibt; meldet Rojo die Eigenschaft als unbekannt, Eintrag wieder entfernen und in den Notizen vermerken.
   - Fertig, wenn: `HubBuilder.build` läuft auch durch, wenn die Licht-Eigenschaften nicht setzbar sind.
 
-- [ ] 5. **Porträts warten auf Vorlagen** – Datei: `src/client/UIKit.luau`, Funktion `UIKit.heroPortrait`
+- [x] 5. **Porträts warten auf Vorlagen** – Datei: `src/client/UIKit.luau`, Funktion `UIKit.heroPortrait`
   - Ist `HeroTemplates` oder die Vorlage `heroId` noch nicht da: Viewport leeren und per `task.spawn` mit `WaitForChild(…, 10)` auf die Vorlage warten; danach `UIKit.portrait` aufrufen, **aber nur**, wenn der Viewport noch existiert (`viewport.Parent`) und inzwischen kein anderer Held dort angezeigt wird (Attribut `PortraitHero = heroId` am Viewport setzen und vor dem späten Aufruf vergleichen).
   - Fertig, wenn: Kaserne/Rekrutierung direkt nach dem Spielstart zeigt Porträts, sobald die Vorlagen da sind, ohne erneutes Öffnen; schnelles Durchklicken zeigt nie den falschen Helden.
 
