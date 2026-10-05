@@ -247,9 +247,60 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #12 – Visual-Pass 2
+**Datum:** 05.10.2026
+
+**Ziel:** Sichtbarer Qualitätssprung durch R15-Figuren, Terrain mit Höhen und Wasser, besser belichteten Thronsaal, lesbare UI-Symbole und hörbare Sounds.
+
+**Umsetzung**
+- Nicht unterstützte Deko-Symbole durch lesbaren Text bzw. `X` ersetzt. Rückblende mit Schriftgröße 13, Tempo als `1×`/`2×`/`3×`, Gegnerphase mit ausgeschriebenem Buttontext.
+- Saal-Farben wärmer und dunkler; Helligkeit 1,2, Belichtung −0,35, Schatten aktiviert, Bloom und Farbkorrektur reduziert. Kerzen-Helligkeit 1,2. Alle Beschriftungen erhalten einen eigenen aufrechten, unsichtbaren Anker.
+- Die 16 vorgegebenen Sound-IDs eingetragen; Musiklautstärke 0,3, Klick 0,4, Treffer/Verfehlen 0,6 und Krit 0,8. `hover`, `phase` und `step` bleiben leer. Kommentar für die Hörprobe in Studio beibehalten.
+- Gelände-Höhen und Terrain-Materialien zentral in Config; `Grid.tileHeight` ergänzt, `Grid.toWorld` liefert die Feldhöhe. Kamera-Fokus bewahrt diese Höhe.
+- Terrain-Grundfläche und Feldblöcke mit erhöhten Bergen, echten Wasserflächen über Sand und deterministischen Kuppen. Nur der Brett-Bereich einschließlich Umgebung wird vor dem Aufbau geleert. Unsichtbare Klickflächen behalten X/Y-Attribute; dezentes Raster und Deko sind nicht abfragbar. Waldbäume mit gestapelten Kronen; Außenbäume/-felsen stehen auf dem Terrain.
+- R15-Avatare aus HumanoidDescriptions, vorgegebene Kopfbedeckungen/Haare, Team-/Royal-Farben und Wappenrock. Waffen an Händen; Schnalle am LowerTorso, Kragen/Wappen und Umhang am UpperTorso; Waffenglühen und Boden-Aura erhalten. Kavalier mit Pferd und Sitzpose.
+- Server erzeugt `ReplicatedStorage.HeroTemplates`; Client-Porträts klonen diese in WorldModels. Zugriffe auf den früheren Figuren-Root auf PrimaryPart umgestellt; R15-Root-Gelenk zugeordnet. Standard-Idle/Laufen ergänzen die eigenen Kampfposen.
+
+**Entscheidungen**
+- Aktuelle API-Namen: `LightingStyle.Realistic` mit `PrioritizeLightingQuality` statt des veralteten `Technology.Future`; `CreateHumanoidModelFromDescriptionAsync` statt der veralteten synchron benannten Variante. Quellen: [Lighting](https://create.roblox.com/docs/reference/engine/classes/Lighting), [Technology](https://create.roblox.com/docs/reference/engine/enums/Technology), [Players](https://create.roblox.com/docs/reference/engine/classes/Players).
+- GroundOffset aus der Fußposition hält R15-Figuren und Reiter auf Feldhöhe. Platzierung, Laufwege, Vorschau, Staub und Auswahlring berücksichtigen diesen Abstand.
+- Avatar-Grundmodelle werden serverseitig gecacht. Bei Ladefehlern wird ohne Accessoires erneut gebaut; fehlende Accessoires werden mit den vorgegebenen IDs protokolliert. Keine zusätzlichen Asset-IDs recherchiert oder eingebaut.
+- Spielregeln, Bewegungsformeln, Balancing, Speicherformat, Server-Kampfzeiten und Befehlsvalidierung unverändert.
+
+**Verwendete Asset-IDs**
+
+| Audio | ID |
+|---|---|
+| musicHub | 1839906422 |
+| musicBattle | 1837301451 |
+| musicVictory | 9041812129 |
+| musicDefeat | 9048278630 |
+| click | 9119717523 |
+| open | 9120709477 |
+| close | 9113842150 |
+| hit | 9119746592 |
+| crit | 9116673678 |
+| miss | 9119749145 |
+| death | 9113480915 |
+| levelUp | 1836860398 |
+| recruit | 9116394545 |
+| recruitRare | 9116395089 |
+| recruitLegendary | 9116395085 |
+| coin | 127645268874265 |
+
+- Kopfbedeckungen: Lord `3756500192`, Kavalier `98450287`, Soldat `8796225`, Bogenschützen `102623080`, Magier `13121508`, Kämpfer/Bandit `74221074`, Bandenführer `108829551`.
+- Haare: Leon `12819292`, Mira `1513252656`, Selina `376527350`, Aurelia/Ida `398673196`, Greta `1708329071`.
+- Animationen: Idle `507766388`, Laufen `507777826`.
+
+**Probleme:** Umsetzung unterbrochen und anschließend auf demselben Branch fortgesetzt. Veraltete API-Aufrufe auf aktuelle Entsprechungen angepasst. Asset-Verfügbarkeit und tatsächliche Terrain-Oberflächen können außerhalb von Studio nicht bestätigt werden; keine einzelnen Ladefehler bisher beobachtet.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. `scripts/check.ps1`: **OK, 24 Dateien, Exit 0**. Rojo-Build von `TacticsGame.rbxlx` erfolgreich. Strukturprüfung: keine gesperrten UI-Symbole; Client-Porträts bauen keine Avatare mehr lokal. Sichtbarkeit, Accessoires, Sounds, Animationen, Höhenübergänge und Klickflächen benötigen den manuellen Test aus `PLAN.md`; Claude-Review ausstehend.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Claude prüft die Review-Fixes des Branches `feature/game-feel-1`.
-2. Sound-IDs in `src/shared/Sounds.luau` eintragen; Game-Feel-Prüfliste in Studio und auf dem Handy durchgehen (auch Output, Bildrate, Menü-Übergänge und Tempo-Rückstellung).
-3. Effektstärken, Lautstärken und UI-Bewegungen nach Nutzer-Feedback abstimmen.
+1. Claude prüft `feature/visual-pass-2`.
+2. Visual-Pass-Prüfliste in Studio und auf dem Handy durchführen; Sounds probehören, Accessoires/Porträts und Terrain-Klicks prüfen, Output und Bildrate beobachten.
+3. Gemeldete Asset-Ladefehler mit ID dokumentieren; Sounds und Optik nach Nutzer-Feedback abstimmen.
 4. Belohnungen & Klassenwechsel.
 5. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.

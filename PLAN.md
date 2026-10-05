@@ -64,9 +64,9 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
   - Thronsaal-NPCs (`HubBuilder.npc`) nutzen denselben Baukasten (Team `Royal`).
   - Fertig, wenn: alle Einheiten und NPCs sind R15-Avatare mit Hut/Haar, Waffe in der Hand, Seltenheits-Effekten; Laufen/Idle animiert; Angriffe, Treffer-Reaktion, Auswahl-Ring, Porträts (Info, Aufstellung, Kaserne, Rekrutierung) funktionieren.
 
-- [ ] 6. `scripts/check.ps1` ausführen – fertig, wenn: `OK` / Exit 0
-- [ ] 7. Spieldatei bauen (`tools/rojo.exe build default.project.json -o TacticsGame.rbxlx`) – fertig, wenn: Build ohne Fehler
-- [ ] 8. Devlog-Eintrag #12 „Visual-Pass 2" (Teststatus „ungetestet", verwendete Asset-IDs auflisten), „Nächste Schritte" aktualisieren; Branch pushen – fertig, wenn: Eintrag vorhanden, Branch auf GitHub
+- [x] 6. `scripts/check.ps1` ausführen – fertig, wenn: `OK` / Exit 0
+- [x] 7. Spieldatei bauen (`tools/rojo.exe build default.project.json -o TacticsGame.rbxlx`) – fertig, wenn: Build ohne Fehler
+- [x] 8. Devlog-Eintrag #12 „Visual-Pass 2" (Teststatus „ungetestet", verwendete Asset-IDs auflisten), „Nächste Schritte" aktualisieren; Branch pushen – fertig, wenn: Eintrag vorhanden, Branch auf GitHub
 
 ## Manueller Test in Studio (Nutzer)
 - [ ] Keine Kästchen-Symbole mehr; Saal nicht überbelichtet, Schatten sichtbar; Beschwörungskreis-Schild lesbar
