@@ -1,118 +1,113 @@
-# PLAN: Terrain-Fix + Chibi-Figuren (Prototyp zum Vergleich)
+# PLAN: Weltkarte + Gebiet Sumpf (Phase 1 von „Weltkarte & Gebiete")
 
-Ziel: (a) Raster, Bewegungsfelder und Figuren liegen wieder sichtbar **auf** dem Terrain. (b) Ein eigener, niedlicher **Chibi-Stil** aus Teilen (großer Kopf, Gesicht mit Augen, individuelle Frisuren/Outfits je Held), damit der Nutzer ihn mit den R15-Avataren vergleichen kann. Umschaltbar per Config; R15-Code bleibt erhalten (später evtl. KI-generierte 3D-Modelle).
-Branch: `feature/chibi-figuren` – abzweigen von `feature/visual-pass-2`
-Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshots:
-- Bewegungs-/Angriffsfelder nur über Wasser sichtbar → Terrain-Oberfläche liegt höher als `Grid.toWorld` (4-Stud-Voxel + Glättung), Grashalme verdecken zusätzlich; Figuren stecken im Boden.
-- Alle Kavaliere (Mira, Kai, Siegfried) ohne Modell, Aurelia ohne Kopf (R15-Pfad; Ursache offen, Nutzer liefert Output – **nicht** Teil dieses Plans).
-- Nutzer: Figuren „nicht schön genug, damit Leute dafür Geld ausgeben oder grinden".
+Ziel: Statt einer Missionsliste gibt es einen **Weltkarten-Bildschirm** mit Gebieten, Knoten (Missionen) und Wegen dazwischen – das gibt Spielern ein Gefühl von Fortschritt. Dazu das erste neue Gebiet **Nebelsumpf** mit neuem Gelände (Morast, Tiefer Morast), zwei neuen Karten und einem neuen Gegnertyp (Sumpfhexe). Eis und Vulkan sind auf der Karte schon als „Bald verfügbar" sichtbar.
+Branch: `feature/weltkarte` – abzweigen von `feature/chibi-figuren`
+Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handgebaut + später zufällige Erkundungskarten; Gelände-Hindernisse **innerhalb** der Karten, die Spezial-Einheiten (später Flieger/Teleport) umgehen – **nie** Pflicht für den Fortschritt auf der Weltkarte. Reihenfolge: Weltkarte + Sumpf zuerst.
 
 **Allgemein**
-- Neue Werte zentral (`Config.CHIBI`, `UnitData`). Nach jedem Schritt `scripts/check.ps1` = `OK`; ein Commit pro Schritt.
-- Alter Block-Baukasten als Vorlage: `git show 5e4a469:src/shared/CharacterBuilder.luau` (Motoren, Waffen, Pferd, Seltenheits-Effekte). Wiederverwenden statt neu erfinden.
+- Daten zentral in `Stages.luau`, `Config.luau`, `UnitData.luau`. Kein neues Profil-Feld nötig (Sterne sind schon nach Stage-ID gespeichert) – `ProfileStore` nicht anfassen.
+- UI über `UIKit` (Theme), Handy mitdenken: Knoten ≥ 64 px, Karte per Wischen scrollbar.
+- Nur erlaubte Symbole (`★ ◆ ♦ ⚔ ⚠ ⓘ`). Nach jedem Schritt `scripts/check.ps1` = `OK`; ein Commit pro Schritt.
 
 ## Schritte
 
-- [x] 1. **Terrain-Oberfläche kalibrieren** – Dateien: `src/server/BoardBuilder.luau`, `src/shared/Config.luau`
-  - Terrain-Füllung (Schleife ab `for y = 1, Grid.height()` mit `FillBlock`) in lokale Funktion `fillTerrain(sinkByChar)` auslagern: Oberkante jedes Feldes bei `center.Y - (sinkByChar[ch] or 0)` statt `center.Y`; Grundschichten (Ground/Grass, auch außerhalb des Bretts) um den Wert für `"."` absenken.
-  - Ablauf in `BoardBuilder.build`: `fillTerrain({})` → je Terrain-Zeichen (außer `W`) **ein** Feld per `workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)` messen (`RaycastParams`: `FilterType = Include`, `FilterDescendantsInstances = { workspace.Terrain }`) → `sink[ch] = treffer.Y - center.Y + Config.FEEL.terrainSurfaceMargin` (nur wenn > 0) → Bereich mit Air leeren → `fillTerrain(sink)`. Einmal `print("Terrain-Kalibrierung: ...")` mit den Werten je Zeichen.
-  - `Config.FEEL.terrainSurfaceMargin = 0.15` (Abstand, damit Rasterlinien/Felder sichtbar über der Oberfläche liegen).
-  - Grashalme aus: `pcall(function() workspace.Terrain.Decoration = false end)`.
-  - Rasterlinien bei `+0.08` statt `+0.04` über `Grid.toWorld`.
-  - Fertig, wenn: Messung + zweite Füllung umgesetzt, Output-Zeile mit Kalibrierwerten. Akzeptanz im Studio-Test: alle blauen/roten Felder und Rasterlinien sichtbar, Füße auf der Oberfläche.
+- [ ] 1. **Gebiete + Kartengraph** – Datei: `src/shared/Stages.luau`
+  - Neue Tabelle `Stages.Regions` (Reihenfolge = Anzeige):
+    | id | name | color | area (Anteile der Kartenfläche x, y, w, h) | atmosphere | comingSoon |
+    |---|---|---|---|---|---|
+    | `greenland` | Grünland | (110,170,90) | 0.02, 0.38, 0.42, 0.58 | `battle` | – |
+    | `swamp` | Nebelsumpf | (85,115,85) | 0.40, 0.45, 0.30, 0.50 | `swamp` | – |
+    | `ice` | Frostgipfel | (175,205,235) | 0.30, 0.02, 0.40, 0.38 | – | true |
+    | `volcano` | Glutberg | (175,75,50) | 0.70, 0.30, 0.28, 0.65 | – | true |
+  - Jede Mission bekommt `region`, `mapPos = Vector2.new(x, y)` (Anteile 0–1 der Kartenfläche) und `requires = { ids }`:
+    - s1 Grenzdorf: greenland, (0.10, 0.80), `{}` · s2 Waldpass: greenland, (0.22, 0.58), `{ "s1" }` · s3 Banditenfestung: greenland, (0.32, 0.82), `{ "s2" }` · s4 Nebelfurt: swamp, (0.48, 0.66), `{ "s2" }` · s5 Hexenhütte: swamp, (0.62, 0.82), `{ "s4" }` → **Verzweigung** nach s2.
+  - `Stages.isUnlocked(profile, index, diffId)`: **Signatur bleibt** (Server nutzt sie in `Main.server.luau:546`). Neue Regel: freigeschaltet, wenn `requires` leer ist **oder mindestens eine** gelistete Mission geschafft ist (`isCleared`); Stufen-Regel (`diff.requires`) unverändert.
+  - Hilfsfunktion `Stages.getRegion(id)`.
+  - Fertig, wenn: s3 und s4 werden beide nach s2 freigeschaltet; s5 nach s4.
 
-- [x] 2. **Stil-Schalter** – Dateien: `src/shared/Config.luau`, `src/shared/CharacterBuilder.luau`
-  - `Config.CHARACTER_STYLE = "chibi"` (Werte `"chibi"` | `"avatar"`).
-  - `CharacterBuilder.build(unit)`: bei `"chibi"` → `require(script.Parent.ChibiBuilder).build(unit)` zurückgeben; sonst bisheriger R15-Pfad unverändert (das `assert(IsServer)` gilt nur im Avatar-Pfad).
-  - `HeroTemplates` (Server) und `UIKit.heroPortrait` bleiben unverändert – sie funktionieren mit beiden Stilen.
-  - Fertig, wenn: Umschalten in Config wechselt alle Figuren (Kampf, Saal-NPCs, Porträts).
+- [ ] 2. **Neues Gelände: Morast** – Dateien: `src/shared/Config.luau`, `src/server/BoardBuilder.luau`, `src/client/UI.luau`
+  - `Config.TERRAIN.S` = Morast: `name = "Morast"`, `avoid = -15`, `def = 0`, `cost = { foot = 2, horse = 3 }`, `height = -0.2`, `terrainMaterial = Enum.Material.Mud`, `color = (95,85,60)`, `material = Enum.Material.Mud`.
+  - `Config.TERRAIN.D` = Tiefer Morast: `name = "Tiefer Morast"`, `avoid = 0`, `def = 0`, `cost = {}` (für Fuß/Pferd unpassierbar – **später** `fly = 1` für Flieger, Kommentar dazu), `height = -0.8`, `terrainMaterial = Enum.Material.Mud`, `color = (60,55,40)`, `material = Enum.Material.Mud`. Optisch dunkler: zusätzlich eine flache, halbtransparente Wasserschicht (Terrain `Water`, 1 Stud) über dem Schlamm.
+  - `BoardBuilder.decorate`: `S` → 2–3 Schilfhalme (dünne Zylinder 0.15×1.6, Farbe (110,120,60), leicht geneigt, Position wie bei `F` pseudozufällig aus x/y); `D` → 1–2 abgestorbene Baumstümpfe/Äste (dunkles Holz). Die Terrain-Kalibrierung (Raycast je Zeichen) muss `S`/`D` mitmessen – prüfen, dass sie über alle Zeichen läuft.
+  - `UI.luau`: Ausweichen/Verteidigung mit Vorzeichen formatieren (`%+d` statt `+%d`), damit „-15" statt „+-15" erscheint (Terrain-Panel ~Zeile 511 und Info-Panel ~Zeile 499).
+  - Fertig, wenn: Morast verlangsamt (Fuß 2, Pferd 3), Ausweichen −15 im Kampf wirksam und korrekt angezeigt; Tiefer Morast ist unbetretbar.
 
-- [x] 3. **Aussehen-Daten je Held/Gegner** – Datei: `src/shared/UnitData.luau` (nur Aussehen-Felder ergänzen, Werte nicht anfassen)
-  - Feld `chibi = { skin, eyes, hairStyle, hairColor, headgear, headgearColor, outfit = { primary, secondary, trim }, robe, beard, scale }` je Held in `UnitData.Heroes` und als Klassen-Standard `UnitData.Classes.<Klasse>.chibi` für Gegner/NPCs. Held ohne eigenes Feld → Klassen-Standard.
-  - Hautfarben: `S1 = (236,196,164)`, `S2 = (205,150,110)`, `S3 = (150,100,70)`. Frisuren: `spiky`, `short`, `long`, `ponytail`, `bun`, `none`. Kopfbedeckungen: `crown`, `tiara`, `helmet`, `headband`, `wizard`, `hood`, `bandana`, `kettle`, `horned` oder `nil`. Gold = (232,188,74), Metall = (185,192,204).
+- [ ] 3. **Neuer Gegner: Sumpfhexe** – Datei: `src/shared/UnitData.luau`
+  - Klasse `UnitData.Classes.EnemyMage = { name = "Hexe", mov = 5, moveType = "foot", growths = {} }` mit Chibi-Aussehen: Haut S2, Augen (150,60,160), `long` (60,40,70), `wizard` (50,80,50), Outfit (50,80,50) / (40,35,45) / (150,120,60), `robe = true`. Prüfen, ob weitere Stellen eine Klassenliste erwarten (`rg "EnemyArcher" src`) und dort gleich behandeln (z. B. R15-`look`).
+  - `UnitData.Enemies.witch = { name = "Sumpfhexe", class = "EnemyMage", weapon = "Fire", stats = { hp = 16, str = 0, mag = 5, skl = 5, spd = 5, lck = 2, def = 1, res = 5 } }`
+  - `UnitData.Enemies.morwen = { name = "Morwen", class = "EnemyMage", weapon = "Fire", rarity = 4, ai = "stationary", stats = { hp = 26, str = 0, mag = 8, skl = 7, spd = 6, lck = 4, def = 3, res = 7 } }` (Bosshexe, ★4-Effekte durch `rarity`).
+  - Fertig, wenn: beide Gegner erscheinen als Chibi-Hexen und greifen mit Feuer (Reichweite 1–2) an; `EnemyAI` braucht keine Änderung.
 
-    | Held | Haut | Augen | Frisur / Farbe | Kopf (Farbe) | Outfit primary / secondary / trim | Extra |
-    |---|---|---|---|---|---|---|
-    | leon ★5 | S1 | (60,110,200) | spiky (90,58,36) | crown (Gold) | (40,70,160) / (235,235,240) / Gold | – |
-    | aurelia ★5 | S1 | (150,90,210) | long (240,240,250) | tiara (Gold) | (245,245,250) / (220,190,110) / Gold | robe |
-    | siegfried ★5 | S1 | (60,150,90) | short (230,200,120) | helmet (Metall, Federbusch Gold) | (190,195,205) / (150,25,35) / Gold | – |
-    | mira ★4 | S2 | (60,140,120) | ponytail (200,60,50) | headband (Metall) | (40,140,140) / (190,195,205) / (230,230,235) | – |
-    | selina ★4 | S1 | (230,180,60) | long (35,30,40) | wizard (110,60,160) | (110,60,160) / (40,35,50) / Gold | robe |
-    | tobi ★3 | S2 | (110,80,50) | short (100,70,45) | hood (70,120,60) | (70,120,60) / (120,90,60) / (60,45,35) | – |
-    | greta ★3 | S1 | (90,100,160) | bun (120,130,170) | wizard (40,50,100) | (40,50,100) / (235,225,200) / (200,170,90) | robe |
-    | bruno ★2 | S3 | (70,50,40) | spiky (30,25,25) | bandana (170,40,40) | (120,85,55) / (170,40,40) / (60,45,35) | – |
-    | kai ★2 | S1 | (80,100,140) | short (70,50,35) | helmet (Metall, Federbusch Teamfarbe) | (60,90,150) / (150,155,165) / (200,200,210) | – |
-    | finn ★1 | S1 | (80,130,70) | spiky (190,80,40) | bandana (70,130,70) | (200,180,140) / (70,130,70) / (110,80,55) | – |
-    | ida ★1 | S2 | (110,80,50) | ponytail (235,205,120) | headband (80,130,70) | (130,100,70) / (80,130,70) / (70,50,35) | – |
+- [ ] 4. **Zwei Sumpf-Karten** – Datei: `src/shared/Stages.luau` (Format wie s2/s3)
+  - **s4 „Nebelfurt"** · baseGold 180 · turnGoal 9 · Beschreibung: „Im Nebelsumpf verschwinden Händler spurlos. Folge den Furten – und bleib nicht im Morast stecken."
+    ```
+    "..SS.F..SSD.",
+    ".SSDS...SDD.",
+    "..S..H...S..",
+    "F...SS.F....",
+    "..D.SS..SS.F",
+    ".SSD...S..S.",
+    "..S..F..SD..",
+    "F....SS.....",
+    "........F...",
+    ```
+    slots: (5,9) (6,9) (7,9) (4,8) · enemies (level 3): brigand (7,2), brigand (2,3), archer (6,3), javelin (11,3), witch (12,1) · hardEnemies (level 3): brigand (1,5), archer (8,4)
+  - **s5 „Hexenhütte"** · baseGold 260 · turnGoal 11 · Beschreibung: „Morwen, die Moorhexe, lenkt die Banditen aus ihrer Hütte im Sumpf. Brich ihren Bann!"
+    ```
+    "SSD..H..DSSS",
+    "SD...F...DSS",
+    "S..SS..SS..S",
+    "..SDDS.SDD..",
+    "F..SS...S..F",
+    "...........S",
+    ".SS..F..SS..",
+    "..S.....DS..",
+    ".F...SS...F.",
+    "....S....S..",
+    ```
+    slots: (6,10) (7,10) (8,10) (4,10) (5,9) · enemies (level 4): morwen (6,1) level 6, brigand (4,2), brigand (8,2), archer (7,3), javelin (2,5), soldier (11,6), witch (11,4) · hardEnemies (level 4): brigand (1,6), archer (12,5)
+  - Vor dem Commit prüfen: alle Zeilen gleich lang, kein Slot/Gegner auf `W`/`D`, jeder Gegner per Fuß von den Slots erreichbar (per Hand oder kleinem lokalem Skript – Ergebnis in den Notizen).
+  - Fertig, wenn: beide Karten spielbar, Sieg möglich, Sterne werden gespeichert.
 
-    Klassen-Standard (Gegner/NPC): Brigand = S2, short (30,25,25), bandana (110,25,30), Outfit (110,25,30)/(90,70,50)/(50,40,30) · Soldier = S1, short (90,60,40), kettle (Metall), Outfit (150,155,165)/(120,30,35)/(80,80,90) · EnemyArcher = S2, short (90,60,40), hood (110,25,30), Outfit (110,25,30)/(90,70,50)/(50,40,30) · Chieftain = S3, none, horned (Metall), beard, scale 1.2, Outfit (40,35,35)/(130,25,30)/(170,140,80) · Lord/Cavalier/Archer/Mage/Fighter = Werte von leon/kai/tobi/greta/finn.
-  - Fertig, wenn: jeder Held und jede Gegnerklasse hat ein auflösbares `chibi`-Aussehen.
+- [ ] 5. **Sumpf-Atmosphäre** – Dateien: `src/shared/Config.luau`, `src/client/Main.client.luau` (~Zeile 649)
+  - `Config.FEEL.atmosphere.swamp` = Kopie von `battle` mit: haze Density 0.38, Color (170,195,160), Decay (110,130,100), Haze 1.2; color TintColor (225,240,220), Saturation 0.05; lighting Brightness 1.8, ExposureCompensation 0.
+  - Statt `Atmosphere.set(isMine() and "battle" or "hall")`: im Kampf das Preset der Region der aktuellen Mission (`Stages.getRegion(Stages.get(<stageId>).region).atmosphere`, Rückfall `"battle"`). Feldnamen der aktuellen Mission im State per `rg "stageId" src` prüfen.
+  - Fertig, wenn: Sumpfkarten sind neblig-grün, Grünland-Karten unverändert.
 
-- [x] 4. **ChibiBuilder** – neue Datei `src/shared/ChibiBuilder.luau`, zusätzlich `src/shared/Config.luau` und freigegeben `src/server/UnitVisuals.luau` (läuft auf Server **und** Client, keine Netz-Assets)
-  - Gerüst wie alter Baukasten (`5e4a469`), aber **R15-kompatible Namen**, damit `UnitAnimator`/`UIKit` ohne Änderung laufen:
-    - Wurzel `HumanoidRootPart` (unsichtbar, verankert, am Boden, `PrimaryPart`); Rumpf `UpperTorso`; Kopf `Head`; Hände `RightHand`/`LeftHand`.
-    - Motor6D-Namen: `Root` (HumanoidRootPart→UpperTorso), `Neck`, `RightShoulder`, `LeftShoulder`, `RightHip`, `LeftHip`, `CapeJoint`.
-    - Attribute: `GroundOffset = 0`, `Mounted`, `HeadY`, `TopY`.
-  - Proportionen in `Config.CHIBI` (Startwerte, Studs): Beine 0.7×1.0×0.7 (Hüfte y 1.0, untere 0.35 als Stiefel in `trim`), Rumpf 1.7×1.5×1.1 (y 1.0–2.5) mit Gürtel, Arme 0.55×1.1×0.55 (Schulter x ±1.15, y 2.35) + Hand-Kugel Ø0.6 (Haut), **Kopf = Kugel Ø2.6** (Mitte y 3.7, Hals-Gelenk y 2.5). Gesamt-Skalierung `scale` (Chieftain 1.2).
-  - **Gesicht** (Vorderseite = −Z, an der Kopfkugel anliegend): 2 Augen (0.38×0.6×0.1, Farbe `eyes`, x ±0.48, y 3.6) mit Neon-Glanzpunkt (0.14×0.14, weiß, oben innen), kleiner Mund (0.3×0.06, dunkel, y 3.15), Wangenröte (0.3×0.12, rosa, Transparenz 0.4, x ±0.75, y 3.35). Chieftain: schräge Augenbrauen. `beard` = Block unter dem Kinn in dunkler Haarfarbe.
-  - **Haare** (`hairColor`; außer `none` immer Haar-Kappe = Kugel Ø2.75 bei (0, 3.85, 0.15), Gesicht bleibt frei): `spiky` + 5 schräge Zacken oben/hinten · `short` nur Kappe · `long` + Rückenplatte 2.2×2.2×0.5 bei (0, 3.2, 0.9) · `ponytail` + Kugel Ø0.9 hinten (0, 4.2, 1.4) + Zopf 0.6×1.6×0.6 nach unten · `bun` + Kugel Ø1.0 oben hinten.
-  - **Kopfbedeckungen** (`headgearColor`): crown (Ring + 5 Zacken) · tiara (schmaler Reif + Neon-Edelstein in Seltenheitsfarbe) · helmet (Kugelschale Ø2.85 über der Kappe, Gesicht frei, Federbusch) · headband (Band um die Stirn) · wizard (Krempe Ø3.4 + 3 gestapelte, kleiner werdende Zylinder, Spitze leicht geneigt) · hood (Kugel Ø2.95 nach hinten versetzt, Gesicht frei) · bandana (Stirnband + Knoten hinten) · kettle (Krempe + Halbkugel) · horned (Kappe + 2 Hörner).
-  - **Outfit:** Rumpf `primary`, Arme/Beine `secondary`, Gürtel/Stiefel/Säume `trim`. `robe = true` → Rock 1.8×0.9×1.2 unter dem Rumpf in `primary`. Team-Lesbarkeit: Schulterstücke + Brust-Schärpe in Teamfarbe (`"team"`, Attribut `Tint`); Outfit-Teile ebenfalls `Tint` (werden grau, wenn die Einheit fertig ist). Haut, Gesicht, Haare ohne `Tint`.
-  - **Aus dem alten Baukasten übernehmen** (an neue Maße angepasst): Waffen an `RightHand` (Bogen/Buch an `LeftHand`), Pferd für Kavalier (Reiter erhöht, Hüften gebeugt, `Mounted = true`), Seltenheits-Effekte (Schnalle, Kragen, Waffenglühen + Funken, Umhang mit Saum, Wappen, Aura-Ring + Partikel), Umhang für Lord.
-  - Alle Teile: `CanCollide/CanTouch = false`, `Massless = true`; Material SmoothPlastic (Metall-Teile Metal, Stoffe Fabric).
-  - Fertig, wenn: `ChibiBuilder.build(unit)` liefert für jeden Helden/Gegner/NPC ein Modell ohne Fehler; Laufen, Atmen, Angriffe und Treffer laufen über die bestehenden Motor-Namen.
+- [ ] 6. **Weltkarten-Bildschirm** – Datei: `src/client/MenuUI.luau` (`buildLobby` Missionsteil ~Zeile 116–146, `updateLobby` ~Zeile 204–232)
+  - Reiter heißt „⚔  Weltkarte". Die linke Missionsliste (300 px) wird ersetzt durch eine **Karte** links (Breite `0.6`); die Detail-Ansicht rechts bleibt inhaltlich gleich (Breite `0.4`, gleicher Code für Stufen, Regeln, Ziele, Belohnung, Start – Layout ggf. enger).
+  - Karte = `ScrollingFrame` (Scrollen in X und Y, `CanvasSize` 1200×720 px, dünne Scrollbalken, Touch-Wischen). Darauf:
+    - **Gebiete:** je Region ein Frame an `area` (Anteile der Canvas), `UICorner` 40, Region-Farbe mit `UIGradient` (oben heller), Transparenz 0.2, Name in `THEME.title` oben links. `comingSoon`: entsättigt (grau, Transparenz 0.45) + Schriftzug „Bald verfügbar".
+    - **Wege:** für jede Kante `requires → Mission` ein Frame (8 px dick) zwischen den Knotenmittelpunkten (Länge = Abstand, `Rotation` = Winkel, `AnchorPoint` 0.5/0.5 in der Mitte). Farbe: Gold, wenn die Ausgangsmission geschafft ist, sonst dunkel/halbtransparent. Unter den Knoten (niedrigerer `ZIndex`).
+    - **Knoten:** runder Button 72 px (`UICorner` voll, `UIStroke` 3 px). Zustände: *gesperrt* = grau, nicht anklickbar, Name „???"; *offen* = Region-Farbe, Rand pulsiert (TweenService, Transparenz 0↔0.6, Endlosschleife – beim Neuaufbau alte Tweens abbrechen, nicht bei jedem `update` neue starten); *geschafft* = goldener Rand, im Knoten die Missionsnummer. Darunter Name (Titel-Schrift) und Sterne-Zeile wie bisher (L/N/S + `UIKit.goalStars`). *Ausgewählt* = zusätzlicher heller Ring.
+    - Tippen auf einen offenen/geschafften Knoten setzt `selectedIndex` (wie bisher) → Detail-Ansicht aktualisiert.
+    - Beim ersten Öffnen: Standardauswahl = erste freigeschaltete, noch **nicht** geschaffte Mission (sonst die letzte freigeschaltete); `CanvasPosition` so setzen, dass dieser Knoten sichtbar ist.
+  - Gesperrt-Texte ohne Emoji: Knoten „???", Start-Knopf „Zuerst auf %s schaffen", Warte-Text ohne „⏳" („%s kämpft gerade – bitte warten"); alle übrigen „🔒"/„⏳" in `src` ebenso ersetzen (`rg "🔒|⏳" src`).
+  - Fertig, wenn: Weltkarte zeigt 4 Gebiete (2 aktiv, 2 „Bald verfügbar"), 5 Knoten, Wege inkl. Verzweigung nach s2; Auswahl und Missionsstart funktionieren am PC und per Touch.
 
-- [x] 5. **Abgeschnittener Knopftext** – Datei: `src/client/UI.luau` (`tools.undo`)
-  - „Rückblende N" passt nicht in den Werkzeugknopf: `TextScaled = true` plus `UITextSizeConstraint` (MaxTextSize 13).
-  - Fertig, wenn: Text vollständig lesbar.
-
-- [x] 6. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
-- [x] 7. Devlog-Eintrag #14 „Terrain-Fix + Chibi-Prototyp" (Teststatus „ungetestet"), „Nächste Schritte" um den Ausblick unten ergänzen, Branch pushen, dann `.handoff/status` = `fertig`.
+- [ ] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
+- [ ] 8. Devlog-Eintrag #15 „Weltkarte + Nebelsumpf" (Teststatus „ungetestet"), Ausblick unten unter „Nächste Schritte" übernehmen, Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test in Studio (Nutzer)
-- [ ] Kampf: blaue/rote Felder und Rasterlinien überall sichtbar (Wiese, Wald, Berg); Figuren stehen mit den Füßen auf dem Boden; Output-Zeile „Terrain-Kalibrierung: …" vorhanden
-- [ ] Chibi-Figuren: großer Kopf mit Augen; jede/r Held/in am Haar/Hut/Outfit sofort unterscheidbar; Gegner klar erkennbar
-- [ ] Kavaliere (Mira, Kai, Siegfried) sitzen auf dem Pferd; Aurelia vollständig
-- [ ] Laufen, Atmen, Angriff, Treffer, Tod animiert; ★4/★5 mit Leuchten/Umhang/Aura
-- [ ] Porträts in Info-Panel, Kaserne, Rekrutierung zeigen die Chibi-Figuren
-- [ ] Vergleich: `Config.CHARACTER_STYLE = "avatar"` → R15-Avatare wie vorher
+- [ ] Missionen-Reiter heißt „Weltkarte"; Gebiete Grünland + Nebelsumpf farbig, Frostgipfel + Glutberg grau „Bald verfügbar"
+- [ ] Wege zwischen den Knoten; nach Sieg in Waldpass sind **Banditenfestung und Nebelfurt** beide offen; Hexenhütte erst nach Nebelfurt
+- [ ] Offene Knoten pulsieren, geschaffte haben Goldrand + Sterne; Karte lässt sich wischen/scrollen (auch Handy)
+- [ ] Nebelfurt/Hexenhütte: Morast verlangsamt (weniger blaue Felder), Terrain-Panel zeigt „Ausweichen -15"; Tiefer Morast nicht betretbar; Schilf sichtbar; grünlicher Nebel
+- [ ] Hexen greifen mit Feuer an; Morwen bleibt in ihrer Hütte (stationär), hat ★4-Leuchten
+- [ ] Alte Spielstände: bisherige Sterne/Freischaltungen bleiben erhalten
 - [ ] Output ohne rote Zeilen
 
 ## Nicht anfassen
-- Spielregeln/Formeln/KI (`Combat.luau`, Bewegungslogik in `Grid.luau`, `EnemyAI.luau`), `Stages.luau`, `Recruit.luau`, `ProfileStore.luau`, Helden-**Werte** in `UnitData.luau`
-- R15-Avatar-Pfad in `CharacterBuilder.luau` (nur den Stil-Schalter davorsetzen)
-- Asset-IDs (Sounds, Accessoires, Animationen)
+- `ProfileStore.luau` (kein Schema-Wechsel), `Combat.luau`-Formeln, `EnemyAI.luau`, `Recruit.luau`
+- Bestehende Karten s1–s3 (Inhalt), Helden-Werte, Befehls-Validierung im Server (außer dass `isUnlocked` neue Regeln hat)
 
-## Ausblick (NICHT umsetzen – nur in den Devlog unter „Nächste Schritte")
-Vom Nutzer gewünscht, je eigener Plan nach dem Stil-Entscheid:
-1. Ausrüstung/Items: Waffen und Gegenstände zum Ausrüsten der Einheiten (am Modell sichtbar).
-2. Beschwörungs-Show: animierte Rekrutierung (Lichtsäule in Seltenheitsfarbe, Kamerafahrt, Pose).
-3. Helden-Showcase: großes drehbares Modell in der Kaserne.
-4. Eigene Angriffs-Effekte für ★4/★5.
-5. Skins / Ausrüstungs-Stufen (Aussehen wächst mit Verschmelzen/Level; kaufbare Skins).
-6. Option: KI-generierte 3D-Modelle (Nutzer prüft Tools) als dritter Stil `"mesh"` im selben Schalter.
+## Ausblick (NICHT umsetzen – nur in den Devlog)
+- **Phase 2 – Zufall:** pro Versuch ein Server-Seed → Varianten der Story-Karten (Gegner-Positionen aus Pools, Geländeflecken, Wetter); zufällig erzeugte **Erkundungskarten** je Gebiet (Grinden von Gold/EP/Edelsteinen) als eigene Knotenart auf der Weltkarte.
+- **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp `fly` (ignoriert Gelände inkl. Tiefer Morast/Lava, anfällig für Bögen), Pegasus-Heldin (Gratis-Grundversion über Story + seltenere über Rekrutierung); Eis (Ausweichen −10, Pferde langsam), Schneewehen.
+- **Phase 4 – Teleport + Glutberg:** Magier-Fähigkeit Teleport (z. B. 1× pro Kampf), Lava (unpassierbar außer Fliegen, Schaden am Rand), Asche.
+- Grundsatz: Spezial-Fähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne – **nie** Pflicht für den Weltkarten-Fortschritt.
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
-- Schritt 4 verlangt individuelle Outfitfarben sowie `Tint` für das Ergrauen fertiger Einheiten. `UnitVisuals.update` (`src/server/UnitVisuals.luau`, ab Zeile 157) setzt jedoch jedes Teil mit `Tint` auch bei aktiven Einheiten auf Teamfarbe; dadurch gehen `primary`, `secondary` und `trim` verloren. Darf der Plan um eine gezielte Anpassung dieser Funktion ergänzt werden: Chibi-Outfitteile speichern ihre ursprüngliche Farbe als Attribut, aktive Einheiten erhalten diese Farbe zurück, fertige Einheiten weiterhin `Config.DONE_COLOR`; Teamteile und der Avatar-Pfad behalten das bisherige Verhalten?
-  - **Antwort Claude: Ja, genau so.** Ergänzung zu Schritt 4 (Datei zusätzlich `src/server/UnitVisuals.luau`, nur `UnitVisuals.update`): ChibiBuilder setzt an Outfit-Teilen Attribut `BaseColor` (Color3). In `update`: Teil mit `Tint` → fertig = `Config.DONE_COLOR`, aktiv = `p:GetAttribute("BaseColor") or Teamfarbe`. Teamteile (ohne `BaseColor`) und Avatar-Pfad unverändert. Weiter umsetzen.
 
 ## Notizen (Codex)
-- Review von Claudes Commit `d0066e9` (Brett-Skalierung, Lighting und glatte Outfits): **ein Befund mittlerer Schwere (P2)**; keine Befunde hoher oder niedriger Schwere. Spielcode unverändert.
-  - **P2 – Brett-Skalierung schneidet die Köpfe im Info-Porträt ab** (`src/server/UnitVisuals.luau:75–78`; Folgepfad: `src/client/UI.luau:103–114,478–482`, `src/client/UIKit.luau:337–348`). Beim Auswählen einer Einheit klont `UIKit.portrait` das bereits auf 1,35 skalierte Brettmodell unverändert. `HeadY` verschiebt zwar die Kamera nach oben, aber Abstand `d = 6`, seitlicher Abstand 1,8 und FOV 35° bleiben gleich. Im 112×156-Porträt wächst ein normaler Chibi-Kopf damit von 2,60 auf 3,51 Studs, während der Ausschnitt auf Kopftiefe weiter nur etwa 2,82 Studs breit ist: Die seitliche Kopfkontur liegt außerhalb des Bildes. Der unskalierte Kopf passt horizontal noch hinein. Heldenvorlagen in Kaserne/Rekrutierung sind davon nicht betroffen, weil `buildHeroTemplates` nicht über `UnitVisuals.create` läuft. Für einen Folgefix den Porträt-Klon samt Höhenbezug auf Originalgröße zurücksetzen oder die Kameradistanzen und Zielabstände passend skalieren. Nachweis durch statische Projektionsrechnung aus den Codewerten; die sichtbare Ausprägung ist im Studio noch ungetestet. Grundlage: [Roblox Camera.FieldOfView](https://github.com/Roblox/creator-docs/blob/main/content/en-us/reference/engine/classes/Camera.yaml) (vertikaler FOV, horizontale Ausdehnung folgt dem Seitenverhältnis).
-  - Skalierung/Höhen: Chibi-Modelle haben ihren Pivot am Root bei Y=0; der Builder berücksichtigt `look.scale` bereits in Teilen und Höhen. `ScaleTo(1.35)` skaliert diese Ausgangsgeometrie zusätzlich, die manuelle Multiplikation von `HeadY`, `TopY` und `GroundOffset` hält die numerischen Attribute dazu passend. Im Avatar-Pfad liegt der Root nach `PivotTo(CFrame.new())` ebenfalls im Ursprung; der skalierte Bodenabstand hält Füße/Pferd auf dem Brett. KP-Billboard und schwebende Kampftexte verwenden das skalierte `TopY`. Grundlage: [Roblox Model.ScaleTo](https://create.roblox.com/docs/reference/engine/classes/Model) (Skalierung um den Pivot, geometrische Eigenschaften einschließlich Gelenken/Partikeln).
-  - Animationen/Bewegung/Auswahl/Geist: Skalierung erfolgt vor dem Einhängen des Modells in den Einheitenordner; `UnitAnimator` liest damit die skalierten Motor-C0 als Basis. Drehungen und Wiederherstellung der Basispose bleiben konsistent; Atmen, Sprung und Angriffsvorstöße behalten ihre bisherigen absoluten Wegstrecken. Hand-/Brustpositionen für Projektile stammen aus den tatsächlichen Parts. `moveAlong` nutzt das skalierte `GroundOffset`, Feldabstände und Tempo bleiben unverändert. Der Auswahlring folgt Root minus `GroundOffset`; sein Radius bleibt ein unabhängiger Feldmarker. `showGhost` klont die skalierte Geometrie und setzt denselben Bodenabstand; keine zweite Skalierung und keine neue abfragbare Geistergeometrie. Keine weiteren bestätigten Befunde in diesen Pfaden.
-  - Lighting: `HubBuilder.build()` wird nur einmal beim Serverstart aufgerufen (`src/server/Main.server.luau:44`) und setzt die Saalwerte vor Freigabe der Remotes. Keine späteren Server-Schreiber für Brightness/Exposure gefunden. `Atmosphere.set` wird pro Client anhand des eigenen Kampfstatus aufgerufen, bricht beim Ortswechsel sämtliche alten Tweens einschließlich Lighting ab und stellt beim Rückweg die Saalwerte wieder her. Die aktuellen Saalwerte stimmen mit `hallBrightness`/`hallExposure` überein; kein bestätigter Konflikt mit HubBuilder. Die doppelte Konfiguration ist derzeit konsistent.
-  - Material: Der Wechsel des gemeinsamen `fabric`-Presets auf SmoothPlastic betrifft die bisherigen Stoffteile; Farben, BaseColor/Tint, Motoren und Geometrie bleiben gleich. Metall- und Neon-Presets werden separat gesetzt. Keine bestätigten funktionalen Nebenwirkungen.
-  - Prüfung: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1` = **OK**, 25 Luau-Dateien (Syntax und undefinierte Variablen), Exit 0. Statische Prüfung und Porträt-Projektionsrechnung; Studio-/Handy-Test **ungetestet**. Kein Spielcode geändert; ausschließlich dieser Review-Eintrag in `PLAN.md`.
-- Review von Claudes Commit `49482a9`: **keine bestätigten Befunde** (keine Fehler hoher, mittlerer oder niedriger Schwere im geprüften Diff). Spielcode unverändert.
-  - Vollständigkeit (`src/shared/ChibiBuilder.luau:31–52`): Alle ungleich dimensionierten Ball-Teile laufen durch `part()` und werden als neuer `Part` mit Standardform Block und `SpecialMesh` vom Typ Sphere gebaut: HorseBody, HorseHead, Eye, EyeShine, Blush, Mouth und HelmetShell. `Shape` wird nur für diese Teile übersprungen; Material, Transparenz, Farbe und übrige Eigenschaften bleiben gesetzt. Gleiche Achsen (Kopf, Hände, Haar-/Schmuckkugeln) bleiben Ball; Wedge und Cylinder sind unverändert. Die einheitliche Skalierung `s` erhält die Achsenverhältnisse. Sphere-Meshes skalieren relativ zur Größe des Elternteils; die Standard-Mesh-Skalierung genügt (Quelle: [Roblox DataModelMesh.Scale](https://github.com/Roblox/creator-docs/blob/main/content/en-us/reference/engine/classes/DataModelMesh.yaml)).
-  - Porträts: `UIKit.portrait` klont das ganze Modell und entfernt nur BillboardGui/ParticleEmitter; die neuen Mesh-Kinder bleiben erhalten. HeroTemplates verwenden denselben Builder. HeadY und Kameraberechnung bleiben unverändert; TopY nutzt weiterhin die Größen der sichtbaren BaseParts.
-  - Tint/Ergrauen: Attribute bleiben am Part, der weiterhin BasePart ist. `UnitVisuals.update` verarbeitet diese Elternteile und ignoriert die Mesh-Kinder; BaseColor, Teamfarbe und DONE_COLOR bleiben kompatibel. Die aktuell umgestellten Ellipsen tragen selbst kein Tint.
-  - Raycasts/Physik: Ein SpecialMesh ändert nur die Darstellung, die Abfragegeometrie bleibt die des Elternteils ([Roblox SpecialMesh](https://github.com/Roblox/creator-docs/blob/main/content/en-us/reference/engine/classes/SpecialMesh.yaml)). Hier kommen sämtliche umgestellten Ellipsen aus `extra()` und erhalten `CanQuery = false`; es entstehen daher keine zusätzlichen Block-Treffer bei der Einheitenwahl. CanCollide/CanTouch bleiben false, Massless bleibt true; der abfragbare kugelförmige Head bleibt unverändert.
-  - Animationen: Namen, CFrames, Motor6D-Verbindungen und WeldConstraints bleiben erhalten. `UnitAnimator` sucht Motoren/benannte Parts und verändert Gelenke bzw. CFrames, nicht Shape oder Mesh-Kinder. Porträt-/Geister-Klone und Ausblenden beim Tod behalten bzw. verarbeiten die Elternparts weiterhin korrekt.
-  - Prüfung: `scripts/check.ps1` = OK, 25 Luau-Dateien (Syntax und undefinierte Variablen), Exit 0. Statische Prüfung; Studio-/Handy-Test ungetestet. Sichtbare Gesichtsproportionen, Helm-/Pferdeform sowie Materialdarstellung (EyeShine: Neon, HelmetShell: Metal) müssen im Studio bestätigt werden; aus dem Code allein ergibt sich hierfür kein bestätigter Fehler.
-- Branch `feature/chibi-figuren` von `feature/visual-pass-2` angelegt. Nach Claudes Antwort fortgesetzt: Outfitteile speichern `BaseColor`; `UnitVisuals.update` stellt aktive Farben wieder her und graut fertige Einheiten aus.
-- Helm/Kessel verwenden eine abgeflachte Kugelschale, damit die Gesichtsteile frei bleiben. Die Boden-Aura besteht aus einem offenen Segmentring. `TopY` wird aus den fertigen Teilen ermittelt; die Hutfarbe und Frisur bleiben beim Ergrauen erhalten.
-- Abschlussprüfung: 25 Luau-Dateien, Syntax und undefinierte Variablen OK (Exit 0); Rojo-Build erfolgreich. Einrückung des Abschlusses von `fillTerrain` korrigiert. Studio-/Handy-Test und Claude-Review ausstehend.
-- Devlog #14 ergänzt, Ausblick unter „Nächste Schritte“ dokumentiert. Umsetzung in sieben Schritt-Commits auf `feature/chibi-figuren`; Übergabe nach erfolgreichem Push über `.handoff/status`.
