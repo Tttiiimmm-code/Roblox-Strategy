@@ -42,7 +42,15 @@ local function avatar(unit)
 	if not ok then
 		warn(("Avatar %s: Accessoires %s/%s konnten nicht geladen werden; versuche ohne Accessoires. %s"):format(unit.class, tostring(look.hat), tostring(hair), tostring(result)))
 		description.HatAccessory, description.HairAccessory, description.FaceAccessory = "", "", ""
-		result = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
+		ok, result = pcall(function()
+			return Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
+		end)
+	end
+	if not ok or not result or not result:IsA("Model") then
+		description:Destroy()
+		local message = ("Avatar %s konnte auch ohne Accessoires nicht gebaut werden: %s"):format(unit.class, tostring(result))
+		warn(message)
+		error(message)
 	end
 	local expected = (look.hat and 1 or 0) + (hair and 1 or 0)
 	local loaded = 0

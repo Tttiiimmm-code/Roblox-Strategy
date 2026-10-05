@@ -16,7 +16,7 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
   - In `Main.server.luau` erst `HubBuilder.build()` aufrufen, danach `task.spawn(UnitVisuals.buildHeroTemplates)`.
   - Fertig, wenn: `HubBuilder.build()` läuft vor jedem Avatar-Laden; ein fehlerhafter Held stoppt die übrigen Vorlagen nicht.
 
-- [ ] 2. **Avatar-Fallback absichern** – Datei: `src/shared/CharacterBuilder.luau`, Funktion `avatar`
+- [x] 2. **Avatar-Fallback absichern** – Datei: `src/shared/CharacterBuilder.luau`, Funktion `avatar`
   - Problem: Der zweite Aufruf von `CreateHumanoidModelFromDescriptionAsync` ohne Accessoires steht ohne `pcall` da. Scheitert auch er, stürzt der Aufrufer ab.
   - Den zweiten Aufruf ebenfalls in `pcall` packen. Scheitert auch dieser: `warn` ausgeben und mit `error(...)` an den Aufrufer weitergeben, damit die `pcall`-Hüllen aus Schritt 1 und 3 greifen. Keinen dritten Ladeversuch und keine anderen Players-APIs einbauen.
   - Defekte Ergebnisse nicht cachen: `bases[key]` nur setzen, wenn ein Modell erfolgreich gebaut wurde.
