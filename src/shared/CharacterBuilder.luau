@@ -67,6 +67,9 @@ local function avatar(unit)
 end
 
 function CharacterBuilder.build(unit)
+	if Config.CHARACTER_STYLE == "chibi" then
+		return require(script.Parent.ChibiBuilder).build(unit)
+	end
 	assert(RunService:IsServer(), "Avatar-Vorlagen werden nur auf dem Server gebaut")
 	local model = avatar(unit)
 	model.Name = unit.id

@@ -21,7 +21,7 @@ Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshot
   - Rasterlinien bei `+0.08` statt `+0.04` über `Grid.toWorld`.
   - Fertig, wenn: Messung + zweite Füllung umgesetzt, Output-Zeile mit Kalibrierwerten. Akzeptanz im Studio-Test: alle blauen/roten Felder und Rasterlinien sichtbar, Füße auf der Oberfläche.
 
-- [ ] 2. **Stil-Schalter** – Dateien: `src/shared/Config.luau`, `src/shared/CharacterBuilder.luau`
+- [x] 2. **Stil-Schalter** – Dateien: `src/shared/Config.luau`, `src/shared/CharacterBuilder.luau`
   - `Config.CHARACTER_STYLE = "chibi"` (Werte `"chibi"` | `"avatar"`).
   - `CharacterBuilder.build(unit)`: bei `"chibi"` → `require(script.Parent.ChibiBuilder).build(unit)` zurückgeben; sonst bisheriger R15-Pfad unverändert (das `assert(IsServer)` gilt nur im Avatar-Pfad).
   - `HeroTemplates` (Server) und `UIKit.heroPortrait` bleiben unverändert – sie funktionieren mit beiden Stilen.

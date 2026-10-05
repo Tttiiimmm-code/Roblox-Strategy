@@ -1,6 +1,8 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
+Config.CHARACTER_STYLE = "chibi" -- "chibi" oder "avatar"
+
 Config.FEEL = {
 	avatarIdle = "rbxassetid://507766388", avatarWalk = "rbxassetid://507777826",
 	avatarAnimationFade = 0.15, riderLift = 3.2, capeAngle = 8,
