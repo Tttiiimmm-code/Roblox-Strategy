@@ -1,10 +1,10 @@
-local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 -- Thronsaal auf dem Client: Einrichtungen (ProximityPrompts), Thron-Schnellmenü, Deko-Animation,
 -- Avatar-Steuerung im Kampf sperren. GRUNDGERÜST – frei erweiterbar.
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local RunService = game:GetService("RunService")
 
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local Hub = {}
 
 local player = Players.LocalPlayer

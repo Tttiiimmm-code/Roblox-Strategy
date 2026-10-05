@@ -46,6 +46,7 @@ HubBuilder.build()
 local rng = Random.new()
 local nextUnitId = 0
 local undoStack = {}
+local enemySpeedBefore
 
 local function lobbyState(speed)
 	return { mode = "Lobby", units = {}, phase = "Prep", turn = 1, busy = false, speed = speed or 1, undoLeft = 0, lost = 0 }
@@ -152,6 +153,7 @@ local function makeUnit(def, x, y, team, level, bonus)
 end
 
 local function setupStage(stageId, diffId)
+	enemySpeedBefore = nil
 	local stage = Stages.get(stageId)
 	local diff = Stages.getDifficulty(diffId)
 	clearUnits()
@@ -352,7 +354,6 @@ local function battle(attacker, defender)
 	end
 end
 
-local enemySpeedBefore
 local function runEnemyPhase()
 	table.clear(undoStack)
 	state.phase = "Enemy"
@@ -514,6 +515,7 @@ local function handleCommand(player, cmd)
 	local t = cmd.type
 
 	if t == "SetSpeed" then
+		if state.mode == "Battle" and state.ownerUserId ~= player.UserId then return false end
 		if cmd.speed == 1 or cmd.speed == 2 or cmd.speed == 3 then
 			if cmd.speed == 3 and state.phase == "Enemy" and not enemySpeedBefore then
 				enemySpeedBefore = state.speed
@@ -555,6 +557,7 @@ local function handleCommand(player, cmd)
 	elseif t == "ToLobby" then
 		if state.mode == "Battle" then
 			clearUnits()
+			enemySpeedBefore = nil
 			state = lobbyState(state.speed)
 			broadcast()
 			return true
@@ -672,6 +675,7 @@ Players.PlayerRemoving:Connect(function(player)
 				task.wait(0.2)
 			end
 			clearUnits()
+			enemySpeedBefore = nil
 			state = lobbyState(state.speed)
 			broadcast()
 		end)

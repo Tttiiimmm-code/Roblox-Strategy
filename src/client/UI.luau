@@ -1,4 +1,3 @@
-local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Kampf-HUD: Phase, Hinweise, Einheiten-Info, Aktionsmenü, Kampfvorschau, Werkzeugleiste, Meldungen
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9,6 +8,7 @@ local UnitData = require(Shared:WaitForChild("UnitData"))
 local Config = require(Shared:WaitForChild("Config"))
 local Stages = require(Shared:WaitForChild("Stages"))
 
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local THEME = UIKit.THEME
 local make, label, panel, button, corner, padding =
@@ -160,18 +160,20 @@ end
 
 local function buildMenu()
 	menuFrame = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.42, 0), Size = UDim2.fromOffset(200, 212),
 		Visible = false,
 	}, hud)
-	padding(menuFrame, 10)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, menuFrame)
+	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, menuFrame)
+	padding(content, 10)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 	label({
 		Size = UDim2.new(1, 0, 0, 24), Font = THEME.title, TextSize = 22, TextColor3 = THEME.gold,
 		Text = "Aktion", LayoutOrder = 0,
-	}, menuFrame)
-	attackButton = button("⚔  Angriff", menuFrame, "danger", 1)
-	local waitButton = button("✓  Warten", menuFrame, "default", 2)
-	local cancelButton = button("✕  Abbrechen", menuFrame, "muted", 3)
+	}, content)
+	attackButton = button("⚔  Angriff", content, "danger", 1)
+	local waitButton = button("✓  Warten", content, "default", 2)
+	local cancelButton = button("✕  Abbrechen", content, "muted", 3)
 	for _, b in { attackButton, waitButton, cancelButton } do
 		b.Size = UDim2.new(1, 0, 0, 46)
 	end
@@ -194,6 +196,7 @@ end
 
 local function buildForecast()
 	local f = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 92), Size = UDim2.fromOffset(470, 256),
 		Visible = false,
 	}, hud)
@@ -311,12 +314,14 @@ end
 
 local function buildPopups()
 	toastFrame = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.fromOffset(460, 44),
 		Visible = false, ZIndex = 5,
 	}, root)
 	toastLabel = label({ Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 17, ZIndex = 5 }, toastFrame)
 
 	local lf = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.fromOffset(320, 250),
 		Visible = false, ZIndex = 6,
 	}, root)

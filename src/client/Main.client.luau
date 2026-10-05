@@ -1,5 +1,3 @@
-local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
-local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Client: Eingabe (Maus & Touch), Reichweiten, Bewegungsvorschau, Kampfvorschau, Menüs, Animationen
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,6 +12,8 @@ local Grid = require(Shared:WaitForChild("Grid"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Stages = require(Shared:WaitForChild("Stages"))
 
+local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UI = require(script.Parent:WaitForChild("UI"))
 local MenuUI = require(script.Parent:WaitForChild("MenuUI"))
 local CameraController = require(script.Parent:WaitForChild("CameraController"))
@@ -647,7 +647,7 @@ local function applyState(newState)
 	CameraController.setActive(isMine())
 	Hub.setBattleView(isMine())
 	Atmosphere.set(isMine() and "battle" or "hall")
-	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub")
+	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub", { loop = not (isMine() and state.result ~= nil) })
 	resetSelection()
 	UI.setHudVisible(inBattle() and not state.result)
 	if inBattle() then

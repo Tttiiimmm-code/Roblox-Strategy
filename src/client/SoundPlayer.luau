@@ -31,7 +31,7 @@ function SoundPlayer.play(name, opts)
 	sound:Play()
 end
 
-function SoundPlayer.playMusic(name)
+function SoundPlayer.playMusic(name, opts)
 	if name == currentName then return end
 	currentName = name
 	local old = currentMusic
@@ -44,7 +44,7 @@ function SoundPlayer.playMusic(name)
 	if currentMusic then
 		local volume = currentMusic.Volume
 		currentMusic.Volume = 0
-		currentMusic.Looped = true
+		currentMusic.Looped = not opts or opts.loop ~= false
 		currentMusic:Play()
 		TweenService:Create(currentMusic, fade, { Volume = volume }):Play()
 	end

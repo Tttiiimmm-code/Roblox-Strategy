@@ -1,12 +1,13 @@
-local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Gemeinsame UI-Bausteine im Fire-Emblem-Stil: Farben, Fenster, Buttons, Balken, Skalierung
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
 local Config = require(Shared:WaitForChild("Config"))
 
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = {}
 
 UIKit.THEME = {
@@ -32,6 +33,7 @@ UIKit.BAD_HEX = "#ff7864"
 UIKit.GOLD_HEX = "#e4c06c"
 
 local THEME = UIKit.THEME
+local lastHoverSound = -math.huge
 
 UIKit.BUTTON_STYLES = {
 	default = { Color3.fromRGB(50, 68, 128), Color3.fromRGB(76, 100, 172) },
@@ -63,6 +65,12 @@ function UIKit.stroke(parent, color, thickness)
 end
 
 function UIKit.padding(parent, px)
+	local background = parent:FindFirstChild("Background")
+	if background then
+		-- Innenabstände sollen nur den Inhalt, nicht den Fensterhintergrund verkleinern.
+		background.Position = UDim2.fromOffset(-px, -px)
+		background.Size = UDim2.new(1, px * 2, 1, px * 2)
+	end
 	return make("UIPadding", {
 		PaddingTop = UDim.new(0, px), PaddingBottom = UDim.new(0, px),
 		PaddingLeft = UDim.new(0, px), PaddingRight = UDim.new(0, px),
@@ -80,13 +88,20 @@ end
 
 -- Blaues Fenster mit Verlauf und Goldrand
 function UIKit.panel(props, parent)
-	props.BackgroundColor3 = Color3.new(1, 1, 1)
-	props.BackgroundTransparency = props.BackgroundTransparency or 0.04
+	local animated = props.Animated
+	props.Animated = nil
+	local transparency = props.BackgroundTransparency or 0.04
+	props.BackgroundTransparency = 1
 	props.BorderSizePixel = 0
-	local f = make("CanvasGroup", props, parent)
+	local f = make(animated and "CanvasGroup" or "Frame", props, parent)
+	local background = make("Frame", {
+		Name = "Background", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = transparency, BorderSizePixel = 0, ZIndex = 0,
+	}, f)
+	UIKit.corner(background, 8)
+	make("UIGradient", { Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90 }, background)
 	UIKit.corner(f, 8)
 	UIKit.stroke(f, THEME.gold, 2)
-	make("UIGradient", { Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90 }, f)
 	return f
 end
 
@@ -127,11 +142,15 @@ function UIKit.button(text, parent, style, order)
 		if b:GetAttribute("Style") ~= "disabled" then SoundPlayer.play("click") end
 	end)
 	b.MouseEnter:Connect(function()
-		if game:GetService("UserInputService").MouseEnabled and b:GetAttribute("Style") ~= "disabled" then
+		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" then
 			hovered = true
 			animateScale(Config.FEEL.buttonHoverScale, Config.FEEL.buttonReleaseTime)
 		end
-		if b:GetAttribute("Style") ~= "disabled" then SoundPlayer.play("hover") end
+		local now = os.clock()
+		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" and now - lastHoverSound >= Config.FEEL.hoverSoundCooldown then
+			lastHoverSound = now
+			SoundPlayer.play("hover")
+		end
 		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
 		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[2] }):Play()
 		s.Color = THEME.gold
@@ -193,7 +212,9 @@ local counts = setmetatable({}, { __mode = "k" })
 local function windowState(frame)
 	local state = windowStates[frame]
 	if not state then
-		state = { position = frame.Position, background = frame.BackgroundTransparency, scale = frame:FindFirstChild("PopScale") or make("UIScale", { Name = "PopScale" }, frame), tweens = {}, token = 0, visible = frame.Visible }
+		local background
+		if not frame:IsA("CanvasGroup") then background = frame.BackgroundTransparency end
+		state = { position = frame.Position, background = background, scale = frame:FindFirstChild("PopScale") or make("UIScale", { Name = "PopScale" }, frame), tweens = {}, token = 0, visible = frame.Visible }
 		windowStates[frame] = state
 	end
 	return state
@@ -219,12 +240,8 @@ local function animateWindow(frame, visible, duration, slide, scaleTarget)
 	end
 	tween(state.scale, { Scale = scaleTarget }, visible and Enum.EasingStyle.Back or Enum.EasingStyle.Quad)
 	local goal = { Position = state.position + UDim2.fromOffset(0, slide) }
-	if frame:IsA("CanvasGroup") then goal.GroupTransparency = visible and 0 or 1 end
-	goal.BackgroundTransparency = visible and state.background or 1
-	if not frame:IsA("CanvasGroup") then
-		for _, child in frame:GetChildren() do
-			if child:IsA("CanvasGroup") then tween(child, { GroupTransparency = visible and 0 or 1 }) end
-		end
+	if frame:IsA("CanvasGroup") then
+		goal.GroupTransparency = visible and 0 or 1
 	end
 	local movement = tween(frame, goal)
 	if not visible then
@@ -257,6 +274,10 @@ function UIKit.setVisible(frame, visible)
 end
 
 function UIKit.fadePage(frame, visible)
+	if not frame:IsA("CanvasGroup") then
+		frame.Visible = visible
+		return
+	end
 	local state = windowState(frame)
 	if state.visible == visible then return end
 	if visible then

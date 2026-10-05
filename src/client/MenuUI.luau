@@ -1,4 +1,3 @@
-local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Menüs außerhalb des Kampfes: Kartenauswahl (mit Schwierigkeit), Aufstellung, Ergebnis
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9,6 +8,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
 local Stages = require(Shared:WaitForChild("Stages"))
 
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local CollectionUI = require(script.Parent:WaitForChild("CollectionUI"))
 local THEME = UIKit.THEME
@@ -62,6 +62,7 @@ end
 -- Kartenauswahl ---------------------------------------------------------------------
 local function buildLobby(root)
 	local f = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(1000, 640),
 		Visible = false,
 	}, root)
@@ -107,7 +108,7 @@ local function buildLobby(root)
 			MenuUI.update(lastState, lastProfile)
 		end)
 		lobby.tabButtons[tab[1]] = b
-		lobby.pages[tab[1]] = make("CanvasGroup", {
+		lobby.pages[tab[1]] = make("Frame", {
 			Position = UDim2.fromOffset(0, 114), Size = UDim2.new(1, 0, 1, -114), BackgroundTransparency = 1,
 			Visible = false,
 		}, f)
@@ -453,6 +454,7 @@ local function buildResult(root)
 	}, root)
 	result.frame = overlay
 	local box = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(480, 470),
 		ZIndex = 11,
 	}, overlay)
@@ -620,30 +622,32 @@ end
 -- Schnellmenü auf dem Thron ----------------------------------------------------------------
 local function buildThroneMenu(root)
 	local f = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(280, 330),
 		Visible = false,
 	}, root)
-	padding(f, 14)
 	throne.frame = f
-	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, f)
+	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, f)
+	padding(content, 14)
+	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 	label({
 		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 32, TextColor3 = THEME.gold,
 		Text = "♛  Thron", LayoutOrder = 0,
-	}, f)
+	}, content)
 	local entries = {
 		{ "missions", "⚔  Missionen", "primary" },
 		{ "recruit", "✦  Rekrutieren", "default" },
 		{ "barracks", "♜  Kaserne", "default" },
 	}
 	for i, e in entries do
-		local b = button(e[2], f, e[3], i)
+		local b = button(e[2], content, e[3], i)
 		b.Size = UDim2.new(1, 0, 0, 52)
 		b.TextSize = 20
 		b.Activated:Connect(function()
 			MenuUI.openLobby(e[1])
 		end)
 	end
-	local stand = button("Aufstehen", f, "muted", 10)
+	local stand = button("Aufstehen", content, "muted", 10)
 	stand.Size = UDim2.new(1, 0, 0, 44)
 	stand.Activated:Connect(function()
 		callbacks.onStandUp()

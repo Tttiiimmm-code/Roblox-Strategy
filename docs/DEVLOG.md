@@ -225,8 +225,30 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #11 – Review-Fixes Game-Feel
+**Datum:** 05.10.2026
+
+**Ziel:** Die sechs Befunde aus Claudes Review zum Game-Feel-Pass beheben und den bestehenden Branch `feature/game-feel-1` für den manuellen Test vorbereiten.
+
+**Umsetzung**
+- Fensterverlauf auf einen eigenen Background-Frame verschoben; der transparente Fenstercontainer trägt Goldrand und Rundung. Texte, Sterne und Porträts werden nicht mehr vom CanvasGroup-Verlauf eingefärbt.
+- `UIKit.panel` erzeugt nur mit `Animated = true` eine CanvasGroup. Genau neun Fenster nutzen sie: Lobby, Thron-Menü, Aktionsmenü, Kampfvorschau, Level-Up, Ergebnis-Box, Rekrutierungs-Ergebnis, Wahrscheinlichkeiten und Toast. Übrige Panels und Lobby-Reiter sind Frames; CanvasGroups werden nicht ineinander verschachtelt.
+- CanvasGroups blenden über `GroupTransparency`; Frames skalieren und gleiten und werden erst nach dem Schließen unsichtbar. Reiterseiten schalten ihre Sichtbarkeit direkt um.
+- `SetSpeed` im Kampf nur noch durch dessen Besitzer möglich. `enemySpeedBefore` wird beim Aufsetzen einer Mission sowie bei Rückkehr in die Lobby und beim Verlassen des Besitzers zurückgesetzt.
+- `SoundPlayer.playMusic(name, opts)` unterstützt `opts.loop` (Standard `true`); Sieg-/Niederlage-Musik wird mit `loop = false` angefordert.
+- Hover-Sounds nur bei aktivierter Maus und mit zentralem Cooldown von 0,08 Sekunden für alle UIKit-Buttons.
+- Beschreibungskommentare wieder als erste Zeile in den sechs betroffenen Client-Dateien; hinzugefügte Imports im bestehenden Importblock.
+
+**Entscheidungen:** Aktions- und Thron-Menü erhalten einen inneren Inhalts-Frame, damit der neue Hintergrund keinen Platz in ihrem Listenlayout beansprucht. Padding wird am Hintergrund ausgeglichen, damit der Verlauf die gesamte Fensterfläche bedeckt. Keine Änderungen an Kamera, Figurenanimation, Atmosphäre, Laufbewegung, Spielregeln, Balancing oder Profilformat.
+
+**Probleme:** Keine blockierenden Probleme. Der neue Hintergrund musste bei Layout und Padding ausdrücklich berücksichtigt werden.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. `scripts/check.ps1`: **OK, 24 Dateien, Exit 0**. Rojo-Build von `TacticsGame.rbxlx` erfolgreich. Strukturprüfung bestätigt neun animierte Fenster und die sechs Dateikopf-Kommentare. Farben, Porträts, Übergänge und Mehrspieler-Tempo müssen anhand der manuellen Prüfliste bestätigt werden.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Claude-Review des Branches `feature/game-feel-1`.
+1. Claude prüft die Review-Fixes des Branches `feature/game-feel-1`.
 2. Sound-IDs in `src/shared/Sounds.luau` eintragen; Game-Feel-Prüfliste in Studio und auf dem Handy durchgehen (auch Output, Bildrate, Menü-Übergänge und Tempo-Rückstellung).
 3. Effektstärken, Lautstärken und UI-Bewegungen nach Nutzer-Feedback abstimmen.
 4. Belohnungen & Klassenwechsel.

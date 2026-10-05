@@ -1,4 +1,3 @@
-local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Rekrutierung (Banner, Wahrscheinlichkeiten, Enthüllung) und Kaserne (Heldensammlung)
 -- GRUNDGERÜST – Layout und Texte sind bewusst einfach gehalten und können frei umgebaut werden.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,6 +7,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
 local Recruit = require(Shared:WaitForChild("Recruit"))
 
+local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local THEME = UIKit.THEME
 local make, label, panel, button, corner, padding =
@@ -143,6 +143,7 @@ local function buildOdds(root)
 	}, root)
 	odds.frame = overlay
 	local box = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(520, 560),
 		ZIndex = 21,
 	}, overlay)
@@ -200,6 +201,7 @@ local function buildResults(root)
 	}, root)
 	results.frame = overlay
 	local box = panel({
+		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(940, 560),
 		ZIndex = 31,
 	}, overlay)
