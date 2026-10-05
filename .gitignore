@@ -10,6 +10,9 @@ tools/
 # Persönliche Claude-Code-Einstellungen
 .claude/settings.local.json
 
+# Signaldatei Codex → Claude (automatischer Handoff)
+.handoff/
+
 # System
 Thumbs.db
 desktop.ini

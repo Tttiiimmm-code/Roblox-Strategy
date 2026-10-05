@@ -37,6 +37,10 @@ Regel: Wer den Code geschrieben hat, reviewt ihn nicht selbst.
 - Codex arbeitet die Schritte der Reihe nach ab, hakt sie ab (`[x]`) und notiert unter „Notizen (Codex)" Abweichungen.
 - Nichts umsetzen, was nicht in `PLAN.md` steht. Bei Unklarheit: Frage unter „Offene Fragen" eintragen und **stoppen**.
 - Ist ein Plan fertig, kommt der nächste Plan in dieselbe Datei (alter Plan wird durch den Devlog-Eintrag dokumentiert).
+- **Signal an Claude (Pflicht für Codex):** Als allerletzte Aktion eines Durchgangs die Datei `.handoff/status` schreiben (Ordner ggf. anlegen, nicht committen):
+  - `fertig` – alle Schritte abgehakt, Check grün, committet und gepusht.
+  - `frage` – Frage unter „Offene Fragen" eingetragen, Arbeit gestoppt.
+  Claude wartet auf diese Datei und startet danach automatisch Review bzw. Antwort.
 
 ## Regeln für beide
 - Kleine, fokussierte Änderungen; keine Refactorings nebenbei.
