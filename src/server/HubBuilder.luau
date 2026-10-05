@@ -10,8 +10,8 @@ local CharacterBuilder = require(Shared.CharacterBuilder)
 
 local HubBuilder = {}
 
-local WHITE = Color3.fromRGB(242, 238, 230)
-local MARBLE = Color3.fromRGB(228, 224, 216)
+local WHITE = Config.FEEL.hallWhite
+local MARBLE = Config.FEEL.hallMarble
 local RED = Color3.fromRGB(150, 22, 34)
 local DARK_RED = Color3.fromRGB(105, 14, 24)
 local GOLD = Color3.fromRGB(226, 182, 72)
@@ -53,6 +53,8 @@ local function deco(name, size, cf, color, props)
 end
 
 local function label(anchor, title, subtitle, height)
+	-- Ein eigener aufrechter Anker vermeidet gedrehte Beschriftungen bei Zylindern.
+	local upright = deco("LabelAnchor", Vector3.one, CFrame.new(anchor.Position), WHITE, { Transparency = 1 })
 	local bb = Instance.new("BillboardGui")
 	bb.Size = UDim2.fromOffset(240, 60)
 	bb.StudsOffsetWorldSpace = Vector3.new(0, height or 6, 0)
@@ -74,7 +76,7 @@ local function label(anchor, title, subtitle, height)
 	s.TextColor3 = Color3.new(1, 1, 1)
 	s.Text = subtitle
 	s.Parent = bb
-	bb.Parent = anchor
+	bb.Parent = upright
 end
 
 local function prompt(anchor, station, action, object)
@@ -202,7 +204,7 @@ local function buildRoom()
 		end
 		local light = Instance.new("PointLight")
 		light.Color = Color3.fromRGB(255, 220, 170)
-		light.Brightness = 1.6
+		light.Brightness = Config.FEEL.candleBrightness
 		light.Range = 45
 		light:SetAttribute("Flicker", light.Brightness)
 		light:SetAttribute("FlickerPhase", z * 0.17)
@@ -362,7 +364,11 @@ function HubBuilder.build()
 
 	Lighting.Ambient = Color3.fromRGB(120, 110, 100)
 	Lighting.OutdoorAmbient = Color3.fromRGB(150, 140, 130)
-	Lighting.Brightness = 2
+	Lighting.LightingStyle = Enum.LightingStyle.Realistic
+	Lighting.PrioritizeLightingQuality = true
+	Lighting.Brightness = Config.FEEL.hallBrightness
+	Lighting.ExposureCompensation = Config.FEEL.hallExposure
+	Lighting.GlobalShadows = true
 	Lighting.ClockTime = 14
 	return hub
 end

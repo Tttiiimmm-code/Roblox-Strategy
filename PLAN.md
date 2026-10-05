@@ -14,7 +14,7 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
   - Gotham kennt viele Unicode-Zeichen nicht. Erlaubt bleiben nur nachweislich angezeigte: `★ ◆ ♦ ⚔ ⚠ ⓘ`. Alle anderen Deko-Zeichen ersetzen/entfernen: `✕`→`X`, `✦`/`♜`/`⚑`/`↶`/`✓`/`♛` entfernen (Text bleibt, z. B. „Rekrutieren", „Kaserne", „Aufgeben", „Zurück", „Dabei", „★ Anführer"), `⟲ n`→`Rückblende n` (Schrift 13), `▸`/`▶`/`▶▶`/`⏩` → „Zug beenden", „1×", „2×", „Gegnerphase überspringen".
   - Fertig, wenn: `rg "[✕✦♜⚑⟲▸▶⏩↶✓♛]" src` liefert nichts.
 
-- [ ] 2. **Thronsaal: Licht & Schild** – Dateien: `src/server/HubBuilder.luau`, `src/shared/Config.luau`
+- [x] 2. **Thronsaal: Licht & Schild** – Dateien: `src/server/HubBuilder.luau`, `src/shared/Config.luau`
   - Überbelichtung: in `HubBuilder.build` `Lighting.Technology = Enum.Technology.Future`, `Lighting.Brightness = 1.2`, `Lighting.ExposureCompensation = -0.35`, `Lighting.GlobalShadows = true`. Marmor-Farben leicht abdunkeln/wärmer (`WHITE` ≈ RGB 225,218,205; `MARBLE` ≈ 205,198,186).
   - `Config.FEEL.atmosphere.hall`: Bloom `Intensity 0.18, Threshold 1.4`, ColorCorrection `Brightness -0.02, Contrast 0.12`; Kerzen-Licht `Brightness 1.2`.
   - Beschwörungskreis-Schild: Der Kreis ist ein um Z gedrehter Zylinder – `label()` daher an einen eigenen unsichtbaren, aufrechten Anker-Part hängen (`Transparency=1`, `CanCollide/CanQuery=false`, 1×1×1, über dem Kreismittelpunkt) statt an `circle`. Gleiches Muster für alle Labels nutzen, deren Anker gedreht ist.
@@ -88,4 +88,4 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
 - Wenn einzelne Asset-IDs nicht laden: in den Notizen auflisten, nicht durch eigene Suche ersetzen.
 
 ## Notizen (Codex)
--
+- Lighting.Technology ist veraltet: aktuelle Entsprechung LightingStyle.Realistic und PrioritizeLightingQuality im HubBuilder verwendet (Roblox-Dokumentation). Alle Saal-Labels nutzen eigene aufrechte Anker.

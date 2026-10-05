@@ -2,6 +2,8 @@
 local Config = {}
 
 Config.FEEL = {
+	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,
+	hallWhite = Color3.fromRGB(225, 218, 205), hallMarble = Color3.fromRGB(205, 198, 186),
 	hoverSoundCooldown = 0.08,
 	buttonPressScale = 0.94, buttonHoverScale = 1.04, buttonPressTime = 0.08, buttonReleaseTime = 0.2,
 	menuOpenTime = 0.22, menuCloseTime = 0.16, menuOpenScale = 0.9, menuCloseScale = 0.94, menuSlide = 18,
@@ -22,8 +24,8 @@ Config.FEEL = {
 	environmentMargin = 100, environmentCount = 16,
 	atmosphere = {
 		hall = {
-			bloom = { Intensity = 0.35, Size = 28, Threshold = 1.1 },
-			color = { TintColor = Color3.fromRGB(255, 235, 211), Saturation = 0.12, Contrast = 0.05, Brightness = 0.02 },
+			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },
+			color = { TintColor = Color3.fromRGB(255, 235, 211), Saturation = 0.12, Contrast = 0.12, Brightness = -0.02 },
 			rays = { Intensity = 0.035, Spread = 0.6 },
 			haze = { Density = 0.18, Offset = 0.1, Color = Color3.fromRGB(240, 220, 195), Decay = Color3.fromRGB(175, 151, 124), Haze = 0.7, Glare = 0.1 },
 			depth = { FarIntensity = 0.08, NearIntensity = 0, FocusDistance = 45, InFocusRadius = 38 },
