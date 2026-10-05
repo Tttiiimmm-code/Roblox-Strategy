@@ -66,7 +66,7 @@ Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshot
   - „Rückblende N" passt nicht in den Werkzeugknopf: `TextScaled = true` plus `UITextSizeConstraint` (MaxTextSize 13).
   - Fertig, wenn: Text vollständig lesbar.
 
-- [ ] 6. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
+- [x] 6. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
 - [ ] 7. Devlog-Eintrag #14 „Terrain-Fix + Chibi-Prototyp" (Teststatus „ungetestet"), „Nächste Schritte" um den Ausblick unten ergänzen, Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test in Studio (Nutzer)
@@ -100,3 +100,4 @@ Vom Nutzer gewünscht, je eigener Plan nach dem Stil-Entscheid:
 ## Notizen (Codex)
 - Branch `feature/chibi-figuren` von `feature/visual-pass-2` angelegt. Nach Claudes Antwort fortgesetzt: Outfitteile speichern `BaseColor`; `UnitVisuals.update` stellt aktive Farben wieder her und graut fertige Einheiten aus.
 - Helm/Kessel verwenden eine abgeflachte Kugelschale, damit die Gesichtsteile frei bleiben. Die Boden-Aura besteht aus einem offenen Segmentring. `TopY` wird aus den fertigen Teilen ermittelt; die Hutfarbe und Frisur bleiben beim Ergrauen erhalten.
+- Abschlussprüfung: 25 Luau-Dateien, Syntax und undefinierte Variablen OK (Exit 0); Rojo-Build erfolgreich. Einrückung des Abschlusses von `fillTerrain` korrigiert. Studio-/Handy-Test und Claude-Review ausstehend.

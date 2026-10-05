@@ -113,7 +113,7 @@ function BoardBuilder.build()
 				end
 			end
 		end
-		end
+	end
 	fillTerrain({})
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
