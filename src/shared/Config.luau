@@ -31,6 +31,7 @@ Config.FEEL = {
 	selectionJumpHeight = 0.5, selectionJumpDuration = 0.3, selectionRingRadius = 2.6, selectionRingSegments = 24,
 	selectionRingTransparency = 0.2, overlayFade = 0.18, overlayPulseDuration = 0.8, overlayPulseAmount = 0.12,
 	battleZoom = 42, cameraFocusTime = 0.22, cameraRestoreTime = 0.3,
+	touchRotateThreshold = 18, touchPanScale = 1,
 	shakeStrength = 0.28, critShakeStrength = 0.7, shakeDuration = 0.18, critShakeDuration = 0.38,
 	hitStop = 0.06, critFlashTransparency = 0.65, critFlashDuration = 0.2,
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,

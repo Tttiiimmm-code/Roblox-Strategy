@@ -20,7 +20,7 @@ Ursachen (Claude-Analyse):
   - Bei `setActive(true)`: Figurensteuerung deaktivieren (`require(Players.LocalPlayer.PlayerScripts:WaitForChild("PlayerModule")):GetControls():Disable()`) und Touch-Steuerelemente ausblenden (`GuiService.TouchControlsEnabled = false`). Bei `setActive(false)`: beides wieder an. Alles in `pcall` (PlayerModule kann fehlen/umbenannt sein) – bei Fehler einmal `warn`.
   - Fertig, wenn: im Kampf kein Joystick/Sprungknopf sichtbar und Wischen bewegt nie den Avatar; im Thronsaal ist die Steuerung normal.
 
-- [ ] 2. **Eigene Touch-Gesten** – Dateien: `src/client/Main.client.luau` (Eingabe ~Zeile 423–481), `src/client/CameraController.luau`, `src/shared/Config.luau`
+- [x] 2. **Eigene Touch-Gesten** – Dateien: `src/client/Main.client.luau` (Eingabe ~Zeile 423–481), `src/client/CameraController.luau`, `src/shared/Config.luau`
   - Touches **pro Finger** verfolgen: Tabelle `touches[input] = { start, last }` (Schlüssel = InputObject); `activeTouches` ergibt sich aus der Tabelle. Maus-Pfad (`press` mit `MouseButton1`/`MouseMovement`) unverändert lassen.
   - **1 Finger:** ab `DRAG_THRESHOLD` = Ziehen → `CameraController.panBy(pos - touch.last)` mit **dem eigenen** `last` dieses Fingers. Loslassen ohne Ziehen und ohne dass je ein zweiter Finger dabei war = Tippen → `onClick` wie bisher.
   - **2 Finger:** pro `InputChanged` aus beiden aktuellen Positionen: Abstand → `CameraController.zoomBy(neu / alt)`; Mittelpunkt-Verschiebung → `panBy`; Winkeländerung aufsummieren und erst drehen (`rotateBy`), wenn die Summe seit Gestenbeginn `Config.FEEL.touchRotateThreshold` (Grad, Start 18) überschreitet – danach direkt folgen. Kein Tippen auslösen.

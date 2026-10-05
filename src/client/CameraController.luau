@@ -115,28 +115,6 @@ function CameraController.start()
 		end
 	end)
 
-	local lastPinch, lastRotation = 1, 0
-	UserInputService.TouchPinch:Connect(function(_, scale, _, state, processed)
-		if processed or not active then
-			return
-		end
-		if state == Enum.UserInputState.Begin then
-			lastPinch = 1
-		end
-		CameraController.zoomBy(scale / lastPinch)
-		lastPinch = scale
-	end)
-	UserInputService.TouchRotate:Connect(function(_, rotation, _, state, processed)
-		if processed or not active then
-			return
-		end
-		if state == Enum.UserInputState.Begin then
-			lastRotation = 0
-		end
-		CameraController.rotateBy(math.rad(rotation - lastRotation))
-		lastRotation = rotation
-	end)
-
 	RunService.RenderStepped:Connect(function(dt)
 		if not active then
 			return

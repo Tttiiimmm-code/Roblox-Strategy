@@ -421,42 +421,104 @@ local function tileFromRay(ray)
 end
 
 local DRAG_THRESHOLD = 12
-local press = nil -- { start, last, dragged, touch }
+local press = nil -- Maus: { start, last, dragged }
+local touches = {} -- InputObject -> eigene Start-/Letzte-Position
 local activeTouches = 0
+local touchOrder = 0
+local gesture = nil
+
+local function touchPosition(input)
+	return Vector2.new(input.Position.X, input.Position.Y)
+end
+
+local function pairGeometry(first, second)
+	local a, b = touchPosition(first), touchPosition(second)
+	local delta = b - a
+	return delta.Magnitude, (a + b) / 2, math.atan2(delta.Y, delta.X)
+end
+
+local function resetTouchBasis()
+	activeTouches = 0
+	local pair = {}
+	for input, touch in touches do
+		activeTouches += 1
+		touch.last = touchPosition(input)
+		table.insert(pair, input)
+	end
+	gesture = nil
+	if activeTouches > 1 then
+		for _, touch in touches do touch.dragged = true end
+	end
+	if activeTouches == 2 then
+		table.sort(pair, function(a, b) return touches[a].order < touches[b].order end)
+		if touches[pair[1]].blocked or touches[pair[2]].blocked then return end
+		local distance, midpoint, angle = pairGeometry(pair[1], pair[2])
+		gesture = { first = pair[1], second = pair[2], distance = distance, midpoint = midpoint,
+			angle = angle, rotation = 0, rotating = false }
+	end
+end
 
 UserInputService.InputBegan:Connect(function(input, processed)
 	local t = input.UserInputType
 	if t == Enum.UserInputType.Touch then
-		activeTouches += 1
+		local pos = touchPosition(input)
+		touchOrder += 1
+		touches[input] = { start = pos, last = pos, dragged = false, order = touchOrder,
+			blocked = processed or not CameraController.isActive() }
+		resetTouchBasis()
+		return
 	end
 	if processed then
 		return
 	end
-	if t == Enum.UserInputType.MouseButton1 or t == Enum.UserInputType.Touch then
+	if t == Enum.UserInputType.MouseButton1 then
 		local pos = Vector2.new(input.Position.X, input.Position.Y)
-		press = { start = pos, last = pos, dragged = activeTouches > 1, touch = t == Enum.UserInputType.Touch }
+		press = { start = pos, last = pos, dragged = false }
 	elseif t == Enum.UserInputType.MouseButton2 then
 		goBack()
 	end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
+	local t = input.UserInputType
+	if t == Enum.UserInputType.Touch then
+		local touch = touches[input]
+		if not touch then return end
+		local pos = touchPosition(input)
+		if CameraController.isActive() and not touch.blocked then
+			if activeTouches == 1 then
+				if not touch.dragged and (pos - touch.start).Magnitude > DRAG_THRESHOLD then
+					touch.dragged = true
+				end
+				if touch.dragged then CameraController.panBy((pos - touch.last) * Config.FEEL.touchPanScale) end
+			elseif activeTouches == 2 and gesture then
+				local distance, midpoint, angle = pairGeometry(gesture.first, gesture.second)
+				if gesture.distance > 0 and distance > 0 then CameraController.zoomBy(distance / gesture.distance) end
+				CameraController.panBy((midpoint - gesture.midpoint) * Config.FEEL.touchPanScale)
+				local rotation = math.atan2(math.sin(angle - gesture.angle), math.cos(angle - gesture.angle))
+				gesture.rotation += rotation
+				if gesture.rotating then
+					CameraController.rotateBy(rotation)
+				elseif math.abs(gesture.rotation) > math.rad(Config.FEEL.touchRotateThreshold) then
+					gesture.rotating = true
+				end
+				gesture.distance, gesture.midpoint, gesture.angle = distance, midpoint, angle
+			end
+		end
+		touch.last = pos
+		return
+	end
 	if not press then
 		return
 	end
-	local t = input.UserInputType
-	local relevant = (press.touch and t == Enum.UserInputType.Touch)
-		or (not press.touch and t == Enum.UserInputType.MouseMovement)
-	if not relevant then
+	if t ~= Enum.UserInputType.MouseMovement then
 		return
 	end
 	local pos = Vector2.new(input.Position.X, input.Position.Y)
-	if activeTouches > 1 then
-		press.dragged = true -- zwei Finger: Zoom/Drehen übernimmt die Kamera
-	elseif not press.dragged and (pos - press.start).Magnitude > DRAG_THRESHOLD then
+	if not press.dragged and (pos - press.start).Magnitude > DRAG_THRESHOLD then
 		press.dragged = true
 	end
-	if press.dragged and activeTouches <= 1 and CameraController.isActive() then
+	if press.dragged and CameraController.isActive() then
 		CameraController.panBy(pos - press.last)
 	end
 	press.last = pos
@@ -465,18 +527,25 @@ end)
 UserInputService.InputEnded:Connect(function(input)
 	local t = input.UserInputType
 	if t == Enum.UserInputType.Touch then
-		activeTouches = math.max(0, activeTouches - 1)
+		local touch = touches[input]
+		if not touch then return end
+		touches[input] = nil
+		resetTouchBasis()
+		if not touch.blocked and not touch.dragged and CameraController.isActive()
+			and input.UserInputState ~= Enum.UserInputState.Cancel then
+			local x, y = tileFromRay(camera:ScreenPointToRay(input.Position.X, input.Position.Y))
+			if x then onClick(x, y) end
+		end
+		return
 	end
-	if (t == Enum.UserInputType.MouseButton1 or t == Enum.UserInputType.Touch) and press then
+	if t == Enum.UserInputType.MouseButton1 and press then
 		if not press.dragged then
 			local x, y = tileFromRay(camera:ScreenPointToRay(input.Position.X, input.Position.Y))
 			if x then
 				onClick(x, y)
 			end
 		end
-		if activeTouches == 0 then
-			press = nil
-		end
+		press = nil
 	end
 end)
 
