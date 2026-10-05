@@ -74,7 +74,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - Statt `Atmosphere.set(isMine() and "battle" or "hall")`: im Kampf das Preset der Region der aktuellen Mission (`Stages.getRegion(Stages.get(<stageId>).region).atmosphere`, Rückfall `"battle"`). Feldnamen der aktuellen Mission im State per `rg "stageId" src` prüfen.
   - Fertig, wenn: Sumpfkarten sind neblig-grün, Grünland-Karten unverändert.
 
-- [ ] 6. **Weltkarten-Bildschirm** – Datei: `src/client/MenuUI.luau` (`buildLobby` Missionsteil ~Zeile 116–146, `updateLobby` ~Zeile 204–232)
+- [x] 6. **Weltkarten-Bildschirm** – Datei: `src/client/MenuUI.luau` (`buildLobby` Missionsteil ~Zeile 116–146, `updateLobby` ~Zeile 204–232)
   - Reiter heißt „⚔  Weltkarte". Die linke Missionsliste (300 px) wird ersetzt durch eine **Karte** links (Breite `0.6`); die Detail-Ansicht rechts bleibt inhaltlich gleich (Breite `0.4`, gleicher Code für Stufen, Regeln, Ziele, Belohnung, Start – Layout ggf. enger).
   - Karte = `ScrollingFrame` (Scrollen in X und Y, `CanvasSize` 1200×720 px, dünne Scrollbalken, Touch-Wischen). Darauf:
     - **Gebiete:** je Region ein Frame an `area` (Anteile der Canvas), `UICorner` 40, Region-Farbe mit `UIGradient` (oben heller), Transparenz 0.2, Name in `THEME.title` oben links. `comingSoon`: entsättigt (grau, Transparenz 0.45) + Schriftzug „Bald verfügbar".
@@ -111,5 +111,6 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Schritt 6: Weltkarte mit 1200×720-Canvas, vier Gebieten, fünf 72-px-Knoten und vier Wegen ergänzt. Details im 40-%-Bereich untereinander angeordnet. Pulse starten nur bei Zustandswechsel und werden bei Neubau/Zerstörung beendet; Standardauswahl wird im sichtbaren Kartenausschnitt zentriert. Keine gesperrten Emoji mehr in src. UTF-8-Übertragungsfehler aus Schritt 1 korrigiert.
 - Schritt 4: Lokale Flood-Fill-Prüfung der Kartendaten erfolgreich: s4 = 12×9, s5 = 12×10; alle Slots und Gegner (inklusive hardEnemies) stehen auf passierbarem Gelände und sind zu Fuß erreichbar. Spielverhalten und Sternespeicherung in Studio ungetestet.
-- Schritt 1: Gebiete, Vorg?ngergraph und Freischaltregel erg?nzt; s4/s5 folgen mit ihren Kartendaten in Schritt 4.
+- Schritt 1: Gebiete, Vorgängergraph und Freischaltregel ergänzt; s4/s5 folgen mit ihren Kartendaten in Schritt 4.

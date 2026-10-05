@@ -60,6 +60,110 @@ local function updateCurrency(textLabel, profile)
 end
 
 -- Kartenauswahl ---------------------------------------------------------------------
+local MAP_SIZE = Vector2.new(1200, 720)
+
+local function focusSelectedStage()
+	if not lobby.mapFocusPending or not selectedIndex then return end
+	local view = lobby.map.AbsoluteWindowSize
+	if view.X <= 0 or view.Y <= 0 then return end
+	local canvas = lobby.map.AbsoluteCanvasSize
+	local pos = Stages.List[selectedIndex].mapPos
+	lobby.map.CanvasPosition = Vector2.new(
+		math.clamp(pos.X * canvas.X - view.X / 2, 0, math.max(0, canvas.X - view.X)),
+		math.clamp(pos.Y * canvas.Y - view.Y / 2, 0, math.max(0, canvas.Y - view.Y)))
+	lobby.mapFocusPending = false
+end
+
+local function buildWorldMap(missions)
+	for _, entry in lobby.stageButtons or {} do
+		if entry.pulse then entry.pulse:Cancel() end
+	end
+	if lobby.map then lobby.map:Destroy() end
+	local map = make("ScrollingFrame", {
+		Size = UDim2.new(0.6, -12, 1, 0), CanvasSize = UDim2.fromOffset(MAP_SIZE.X, MAP_SIZE.Y),
+		ScrollingDirection = Enum.ScrollingDirection.XY, ScrollBarThickness = 6,
+		ScrollBarImageColor3 = THEME.gold, BackgroundColor3 = THEME.barBg,
+		BackgroundTransparency = 0.15, BorderSizePixel = 0, ClipsDescendants = true, Active = true,
+	}, missions)
+	lobby.map = map
+	map:GetPropertyChangedSignal("AbsoluteWindowSize"):Connect(focusSelectedStage)
+	local canvas = make("Frame", {
+		Size = UDim2.fromOffset(MAP_SIZE.X, MAP_SIZE.Y), BackgroundTransparency = 1,
+	}, map)
+	for _, region in Stages.Regions do
+		local area = region.area
+		local color = region.comingSoon and Color3.fromRGB(110, 115, 125) or region.color
+		local land = make("Frame", {
+			Position = UDim2.fromOffset(area[1] * MAP_SIZE.X, area[2] * MAP_SIZE.Y),
+			Size = UDim2.fromOffset(area[3] * MAP_SIZE.X, area[4] * MAP_SIZE.Y),
+			BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = region.comingSoon and 0.45 or 0.2,
+			BorderSizePixel = 0, ZIndex = 1,
+		}, canvas)
+		corner(land, 40)
+		make("UIGradient", { Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.2), color), Rotation = 90 }, land)
+		label({
+			Position = UDim2.fromOffset(24, 18), Size = UDim2.new(1, -48, 0, 36),
+			Font = THEME.title, TextSize = 30, Text = region.name, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2,
+		}, land)
+		if region.comingSoon then
+			label({ Position = UDim2.fromOffset(24, 58), Size = UDim2.new(1, -48, 0, 24),
+				Text = "Bald verfügbar", TextColor3 = THEME.dim, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 }, land)
+		end
+	end
+	lobby.paths = {}
+	for _, stage in Stages.List do
+		for _, requiredId in stage.requires do
+			local from = Stages.get(requiredId).mapPos * MAP_SIZE
+			local to = stage.mapPos * MAP_SIZE
+			local delta = to - from
+			local path = make("Frame", {
+				AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset((from.X + to.X) / 2, (from.Y + to.Y) / 2),
+				Size = UDim2.fromOffset(delta.Magnitude, 8), Rotation = math.deg(math.atan2(delta.Y, delta.X)),
+				BackgroundColor3 = THEME.goldDark, BackgroundTransparency = 0.5, BorderSizePixel = 0, ZIndex = 3,
+			}, canvas)
+			corner(path, 4)
+			table.insert(lobby.paths, { frame = path, fromId = requiredId })
+		end
+	end
+	lobby.stageButtons = {}
+	for i, stage in Stages.List do
+		local pos = stage.mapPos * MAP_SIZE
+		local b = make("TextButton", {
+			AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(pos.X, pos.Y), Size = UDim2.fromOffset(72, 72),
+			BackgroundColor3 = THEME.barBg, TextColor3 = THEME.text, Text = tostring(i),
+			Font = THEME.title, TextSize = 30, AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 5,
+		}, canvas)
+		corner(b, 36)
+		local stroke = UIKit.stroke(b, THEME.goldDark, 3)
+		local ring = make("Frame", {
+			AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(86, 86),
+			BackgroundTransparency = 1, Visible = false, ZIndex = 6,
+		}, b)
+		corner(ring, 43)
+		UIKit.stroke(ring, THEME.text, 2)
+		local title = label({
+			AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromOffset(pos.X, pos.Y + 44), Size = UDim2.fromOffset(220, 30),
+			Font = THEME.title, TextSize = 24, ZIndex = 5,
+		}, canvas)
+		local stars = label({
+			AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromOffset(pos.X, pos.Y + 76), Size = UDim2.fromOffset(220, 22),
+			TextSize = 13, ZIndex = 5,
+		}, canvas)
+		local entry = { button = b, title = title, stars = stars, stroke = stroke, ring = ring }
+		b.Activated:Connect(function()
+			if b:GetAttribute("Unlocked") then
+				SoundPlayer.play("click")
+				selectedIndex = i
+				MenuUI.update(lastState, lastProfile)
+			end
+		end)
+		b.Destroying:Connect(function()
+			if entry.pulse then entry.pulse:Cancel(); entry.pulse = nil end
+		end)
+		lobby.stageButtons[i] = entry
+	end
+end
+
 local function buildLobby(root)
 	local f = panel({
 		Animated = true,
@@ -71,7 +175,7 @@ local function buildLobby(root)
 
 	lobby.title = label({
 		Size = UDim2.new(0.5, 0, 0, 40), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold,
-		Text = "Kartenauswahl", TextXAlignment = Enum.TextXAlignment.Left,
+		Text = "Weltkarte", TextXAlignment = Enum.TextXAlignment.Left,
 	}, f)
 	lobby.currency = label({
 		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -56, 0, 0), Size = UDim2.new(0.5, -56, 0, 40),
@@ -100,7 +204,7 @@ local function buildLobby(root)
 	}, tabBar)
 	lobby.tabButtons = {}
 	lobby.pages = {}
-	for i, tab in { { "missions", "⚔  Missionen" }, { "recruit", "Rekrutieren" }, { "barracks", "Kaserne" } } do
+	for i, tab in { { "missions", "⚔  Weltkarte" }, { "recruit", "Rekrutieren" }, { "barracks", "Kaserne" } } do
 		local b = button(tab[2], tabBar, "default", i)
 		b.Size = UDim2.fromOffset(200, 42)
 		b.Activated:Connect(function()
@@ -115,53 +219,25 @@ local function buildLobby(root)
 	end
 	local missions = lobby.pages.missions
 
-	-- Missionsliste links
-	local list = make("Frame", {
-		Size = UDim2.new(0, 300, 1, 0), BackgroundTransparency = 1,
-	}, missions)
-	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, list)
-	lobby.stageButtons = {}
-	for i in Stages.List do
-		local b = button("", list, "default", i)
-		b.Size = UDim2.new(1, 0, 0, 92)
-		local title = label({
-			Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 28), Font = THEME.title, TextSize = 24,
-			TextXAlignment = Enum.TextXAlignment.Left,
-		}, b)
-		local sub = label({
-			Position = UDim2.fromOffset(14, 38), Size = UDim2.new(1, -28, 0, 16), TextSize = 13, TextColor3 = THEME.dim,
-			TextXAlignment = Enum.TextXAlignment.Left,
-		}, b)
-		local stars = label({
-			Position = UDim2.fromOffset(14, 60), Size = UDim2.new(1, -28, 0, 20), TextSize = 16,
-			TextXAlignment = Enum.TextXAlignment.Left,
-		}, b)
-		b.Activated:Connect(function()
-			if b:GetAttribute("Style") ~= "disabled" then
-				selectedIndex = i
-				MenuUI.update(lastState, lastProfile)
-			end
-		end)
-		lobby.stageButtons[i] = { button = b, title = title, sub = sub, stars = stars }
-	end
+	buildWorldMap(missions)
 
 	-- Details rechts
 	local d = make("Frame", {
-		Position = UDim2.fromOffset(320, 0), Size = UDim2.new(1, -320, 1, 0),
+		Position = UDim2.fromScale(0.6, 0), Size = UDim2.new(0.4, 0, 1, 0),
 		BackgroundColor3 = Color3.fromRGB(8, 12, 30), BackgroundTransparency = 0.35, BorderSizePixel = 0,
 	}, missions)
 	corner(d, 8)
 	padding(d, 16)
 	lobby.name = label({
-		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 34, TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 30, TextXAlignment = Enum.TextXAlignment.Left,
 	}, d)
 	lobby.desc = label({
-		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 42), TextSize = 15, TextColor3 = THEME.dim,
+		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 60), TextSize = 15, TextColor3 = THEME.dim,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
 	}, d)
 
 	local tabs = make("Frame", {
-		Position = UDim2.fromOffset(0, 92), Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 110), Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1,
 	}, d)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -178,15 +254,15 @@ local function buildLobby(root)
 	end
 
 	lobby.rules = label({
-		Position = UDim2.fromOffset(0, 150), Size = UDim2.new(0.5, -8, 0, 120), TextSize = 15,
+		Position = UDim2.fromOffset(0, 166), Size = UDim2.new(1, 0, 0, 78), TextSize = 14,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
 	}, d)
 	lobby.goals = label({
-		Position = UDim2.new(0.5, 8, 0, 150), Size = UDim2.new(0.5, -8, 0, 120), TextSize = 15,
+		Position = UDim2.fromOffset(0, 252), Size = UDim2.new(1, 0, 0, 86), TextSize = 14,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
 	}, d)
 	lobby.rewards = label({
-		Position = UDim2.fromOffset(0, 284), Size = UDim2.new(1, 0, 0, 44), TextSize = 16,
+		Position = UDim2.fromOffset(0, 344), Size = UDim2.new(1, 0, 0, 50), TextSize = 14,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left,
 	}, d)
 	lobby.start = button("⚔  Mission starten", d, "primary")
@@ -194,6 +270,9 @@ local function buildLobby(root)
 	lobby.start.Position = UDim2.fromScale(0, 1)
 	lobby.start.Size = UDim2.new(1, 0, 0, 56)
 	lobby.start.TextSize = 22
+	lobby.start.TextWrapped = true
+	lobby.start.TextScaled = true
+	make("UITextSizeConstraint", { MinTextSize = 12, MaxTextSize = 22 }, lobby.start)
 	lobby.start.Activated:Connect(function()
 		if lobby.start:GetAttribute("Style") ~= "disabled" then
 			callbacks.onStart(Stages.List[selectedIndex].id, selectedDiff)
@@ -205,28 +284,56 @@ local function updateLobby(profile)
 	updateCurrency(lobby.currency, profile)
 	lobby.saveWarning.Visible = not profile.saveOk
 
-	-- Standard: höchste freigeschaltete Mission
+	-- Standard: erste offene Mission, sonst letzte freigeschaltete Mission.
 	if not selectedIndex then
 		selectedIndex = 1
 		for i in Stages.List do
 			if Stages.isUnlocked(profile, i, "Easy") then
 				selectedIndex = i
+				if not Stages.isCleared(profile, Stages.List[i].id) then break end
 			end
 		end
+		lobby.mapFocusPending = true
+	end
+	if lobby.mapFocusPending then task.defer(focusSelectedStage) end
+
+	for _, path in lobby.paths do
+		local cleared = Stages.isCleared(profile, path.fromId)
+		path.frame.BackgroundColor3 = cleared and THEME.gold or THEME.goldDark
+		path.frame.BackgroundTransparency = cleared and 0 or 0.5
 	end
 
 	for i, stage in Stages.List do
 		local entry = lobby.stageButtons[i]
 		local unlocked = Stages.isUnlocked(profile, i, "Easy")
-		UIKit.setButtonStyle(entry.button, not unlocked and "disabled" or (i == selectedIndex and "active" or "default"))
-		entry.title.Text = unlocked and stage.name or ("🔒 " .. stage.name)
-		entry.sub.Text = unlocked and ("Mission %d"):format(i) or "Schaffe zuerst die vorherige Mission"
+		local cleared = Stages.isCleared(profile, stage.id)
+		local status = not unlocked and "locked" or (cleared and "cleared" or "open")
+		entry.button:SetAttribute("Unlocked", unlocked)
+		entry.button.Active = unlocked
+		entry.button.Selectable = unlocked
+		entry.button.Text = unlocked and tostring(i) or "???"
+		entry.button.BackgroundColor3 = unlocked and Stages.getRegion(stage.region).color or Color3.fromRGB(70, 72, 80)
+		entry.title.Text = unlocked and stage.name or "???"
+		entry.title.TextColor3 = unlocked and THEME.text or THEME.dim
+		entry.ring.Visible = i == selectedIndex
+		if entry.status ~= status then
+			if entry.pulse then entry.pulse:Cancel(); entry.pulse = nil end
+			entry.stroke.Color = cleared and THEME.gold or (unlocked and THEME.text or THEME.dim)
+			entry.stroke.Transparency = 0
+			if status == "open" then
+				entry.pulse = TweenService:Create(entry.stroke,
+					TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.6 })
+				entry.pulse:Play()
+			end
+			entry.status = status
+		end
 		local parts = {}
 		for _, diff in Stages.Difficulties do
 			table.insert(parts, ("<font color='#%s'>%s</font> %s"):format(
 				diff.color:ToHex(), string.sub(diff.name, 1, 1), UIKit.goalStars(Stages.bestStars(profile, stage.id, diff.id))))
 		end
 		entry.stars.Text = table.concat(parts, " ")
+		entry.stars.Visible = unlocked
 	end
 
 	local stage = Stages.List[selectedIndex]
@@ -240,7 +347,7 @@ local function updateLobby(profile)
 	for id, tab in lobby.tabs do
 		local d = Stages.getDifficulty(id)
 		local unlocked = Stages.isUnlocked(profile, selectedIndex, id)
-		tab.Text = (unlocked and "" or "🔒 ") .. d.name
+		tab.Text = d.name
 		UIKit.setButtonStyle(tab, id == selectedDiff and "active" or (unlocked and "default" or "muted"))
 	end
 
@@ -263,13 +370,13 @@ local function updateLobby(profile)
 		UIKit.DIM_HEX, minGold, maxGold, diff.gemsPerStar, 3 - best)
 
 	if otherBattle(lastState) then
-		lobby.start.Text = ("⏳  %s kämpft gerade – bitte warten"):format(lastState.ownerName or "Jemand")
+		lobby.start.Text = ("%s kämpft gerade – bitte warten"):format(lastState.ownerName or "Jemand")
 		UIKit.setButtonStyle(lobby.start, "disabled")
 	elseif Stages.isUnlocked(profile, selectedIndex, diff.id) then
 		lobby.start.Text = "⚔  Mission starten"
 		UIKit.setButtonStyle(lobby.start, "primary")
 	else
-		lobby.start.Text = ("🔒  Zuerst auf %s schaffen"):format(Stages.getDifficulty(diff.requires).name)
+		lobby.start.Text = ("Zuerst auf %s schaffen"):format(Stages.getDifficulty(diff.requires).name)
 		UIKit.setButtonStyle(lobby.start, "disabled")
 	end
 end
@@ -635,7 +742,7 @@ local function buildThroneMenu(root)
 		Text = "★  Thron", LayoutOrder = 0,
 	}, content)
 	local entries = {
-		{ "missions", "⚔  Missionen", "primary" },
+		{ "missions", "⚔  Weltkarte", "primary" },
 		{ "recruit", "Rekrutieren", "default" },
 		{ "barracks", "Kaserne", "default" },
 	}
@@ -687,7 +794,7 @@ function MenuUI.showRecruitResults(list)
 	CollectionUI.showResults(list)
 end
 
-local TAB_TITLES = { missions = "Kartenauswahl", recruit = "Rekrutierung", barracks = "Kaserne" }
+local TAB_TITLES = { missions = "Weltkarte", recruit = "Rekrutierung", barracks = "Kaserne" }
 
 function MenuUI.update(state, profile)
 	if not state then
