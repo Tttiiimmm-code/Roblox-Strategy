@@ -10,7 +10,7 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
 
 ## Schritte
 
-- [ ] 1. **Symbole ohne Kästchen** – Dateien: `src/client/UI.luau`, `MenuUI.luau`, `CollectionUI.luau`, `UIKit.luau`
+- [x] 1. **Symbole ohne Kästchen** – Dateien: `src/client/UI.luau`, `MenuUI.luau`, `CollectionUI.luau`, `UIKit.luau`
   - Gotham kennt viele Unicode-Zeichen nicht. Erlaubt bleiben nur nachweislich angezeigte: `★ ◆ ♦ ⚔ ⚠ ⓘ`. Alle anderen Deko-Zeichen ersetzen/entfernen: `✕`→`X`, `✦`/`♜`/`⚑`/`↶`/`✓`/`♛` entfernen (Text bleibt, z. B. „Rekrutieren", „Kaserne", „Aufgeben", „Zurück", „Dabei", „★ Anführer"), `⟲ n`→`Rückblende n` (Schrift 13), `▸`/`▶`/`▶▶`/`⏩` → „Zug beenden", „1×", „2×", „Gegnerphase überspringen".
   - Fertig, wenn: `rg "[✕✦♜⚑⟲▸▶⏩↶✓♛]" src` liefert nichts.
 

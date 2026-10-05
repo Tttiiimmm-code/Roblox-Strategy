@@ -60,7 +60,7 @@ local function buildTop(callbacks)
 	padding(hintLabel, 8)
 
 	-- Aufgeben mit Bestätigung
-	local forfeit = button("⚑  Aufgeben", hud, "muted")
+	local forfeit = button("Aufgeben", hud, "muted")
 	forfeit.Position = UDim2.fromOffset(12, 86)
 	forfeit.Size = UDim2.fromOffset(150, 34)
 	forfeit.TextSize = 15
@@ -68,7 +68,7 @@ local function buildTop(callbacks)
 	forfeit.Activated:Connect(function()
 		if armed then
 			armed = false
-			forfeit.Text = "⚑  Aufgeben"
+			forfeit.Text = "Aufgeben"
 			callbacks.onForfeit()
 			return
 		end
@@ -77,7 +77,7 @@ local function buildTop(callbacks)
 		UIKit.setButtonStyle(forfeit, "danger")
 		task.delay(3, function()
 			armed = false
-			forfeit.Text = "⚑  Aufgeben"
+			forfeit.Text = "Aufgeben"
 			UIKit.setButtonStyle(forfeit, "muted")
 		end)
 	end)
@@ -172,8 +172,8 @@ local function buildMenu()
 		Text = "Aktion", LayoutOrder = 0,
 	}, content)
 	attackButton = button("⚔  Angriff", content, "danger", 1)
-	local waitButton = button("✓  Warten", content, "default", 2)
-	local cancelButton = button("✕  Abbrechen", content, "muted", 3)
+	local waitButton = button("Warten", content, "default", 2)
+	local cancelButton = button("Abbrechen", content, "muted", 3)
 	for _, b in { attackButton, waitButton, cancelButton } do
 		b.Size = UDim2.new(1, 0, 0, 46)
 	end
@@ -268,7 +268,7 @@ local function buildTools(callbacks)
 		BackgroundTransparency = 1,
 	}, hud)
 
-	tools.endTurn = button("Zug beenden  ▸", col, "primary")
+	tools.endTurn = button("Zug beenden", col, "primary")
 	tools.endTurn.AnchorPoint = Vector2.new(0, 1)
 	tools.endTurn.Position = UDim2.fromScale(0, 1)
 	tools.endTurn.Size = UDim2.new(1, 0, 0, 50)
@@ -293,18 +293,20 @@ local function buildTools(callbacks)
 		end)
 		return b
 	end
-	tools.undo = toolButton("⟲ 0", 1, callbacks.onUndo)
+	tools.undo = toolButton("Rückblende 0", 1, callbacks.onUndo)
+	tools.undo.TextSize = 13
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
-	tools.speed = toolButton("▶ 1×", 3, callbacks.onSpeed)
+	tools.speed = toolButton(" 1×", 3, callbacks.onSpeed)
 
-	tools.skip = button("⏩ Gegnerphase", col, "primary")
+	tools.skip = button("Gegnerphase überspringen", col, "primary")
 	tools.skip.AnchorPoint = Vector2.new(0, 1)
 	tools.skip.Position = UDim2.fromScale(0, 1)
 	tools.skip.Size = UDim2.new(1, 0, 0, 50)
+	tools.skip.TextSize = 14
 	tools.skip.Visible = false
 	tools.skip.Activated:Connect(callbacks.onSkipEnemy)
 
-	tools.back = button("↶  Zurück", col, "muted")
+	tools.back = button("Zurück", col, "muted")
 	tools.back.AnchorPoint = Vector2.new(0, 1)
 	tools.back.Position = UDim2.new(0, 0, 1, -110)
 	tools.back.Size = UDim2.new(1, 0, 0, 44)
@@ -410,10 +412,10 @@ function UI.setTools(flags)
 	tools.endTurn.Visible = flags.controllable
 	tools.skip.Visible = flags.enemyPhase
 	UIKit.setButtonStyle(tools.skip, flags.speed == 3 and "disabled" or "primary")
-	tools.undo.Text = ("⟲ %d"):format(flags.undoLeft)
+	tools.undo.Text = ("Rückblende %d"):format(flags.undoLeft)
 	UIKit.setButtonStyle(tools.undo, (flags.controllable and flags.canUndo and flags.undoLeft > 0) and "default" or "disabled")
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
-	tools.speed.Text = flags.speed == 3 and "⏩ 3×" or flags.speed == 2 and "▶▶ 2×" or "▶ 1×"
+	tools.speed.Text = flags.speed == 3 and " 3×" or flags.speed == 2 and " 2×" or " 1×"
 	UIKit.setButtonStyle(tools.speed, flags.speed == 2 and "active" or "default")
 end
 
@@ -483,7 +485,7 @@ function UI.showInfo(unit, terrain)
 	info.rarity.Text = unit.team == "Player" and UIKit.rarityStars(unit.rarity or 1) or ""
 	info.name.Text = unit.name
 	info.name.TextColor3 = unit.team == "Player" and rarity.color or THEME.enemy
-	local status = unit.deployed == false and "  ·  Reserve" or (unit.done and "  ·  fertig" or "")
+	local status = unit.deployed == false and "·  Reserve" or (unit.done and "·  fertig" or "")
 	info.class.Text = ("%s  ·  Lv %d%s"):format(cls.name, unit.level, status)
 	UIKit.setBar(info.hp, unit.hp, unit.maxHp)
 	info.hp.fill.BackgroundColor3 = UIKit.hpColor(unit.hp / unit.maxHp)
@@ -503,7 +505,7 @@ function UI.hideInfo()
 end
 
 function UI.showTerrain(terrain)
-	local extra = terrain.heal and ("   <font color='%s'>Heilung</font>"):format(UIKit.GOOD_HEX) or ""
+	local extra = terrain.heal and (" <font color='%s'>Heilung</font>"):format(UIKit.GOOD_HEX) or ""
 	terrainLabel.Text = ("<font face='Fondamento' size='20'><b>%s</b></font>\n<font color='%s'>Ausweichen</font> +%d   <font color='%s'>Verteidigung</font> +%d%s")
 		:format(terrain.name, UIKit.DIM_HEX, terrain.avoid, UIKit.DIM_HEX, terrain.def, extra)
 	UIKit.setVisible(terrainFrame, true)
@@ -587,7 +589,7 @@ function UI.showLevelUp(e)
 		local gained = e.gains[stat]
 		cell.Text = ("<font color='%s'>%s</font>  <b>%d</b>%s"):format(
 			UIKit.DIM_HEX, UnitData.STAT_NAMES[stat], e.stats[stat],
-			gained and ("  <font color='%s'><b>+1</b></font>"):format(UIKit.GOOD_HEX) or "")
+			gained and ("<font color='%s'><b>+1</b></font>"):format(UIKit.GOOD_HEX) or "")
 	end
 	UIKit.popIn(level.frame)
 	task.delay(3.2, function()

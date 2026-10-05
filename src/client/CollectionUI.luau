@@ -172,7 +172,7 @@ local function buildOdds(root)
 			28, true)
 		for _, h in entry.heroes do
 			local def = UnitData.Heroes[h.id]
-			row(("      %s  <font color='%s'>(%s)</font>   %s"):format(def.name, UIKit.DIM_HEX,
+			row(("    %s  <font color='%s'>(%s)</font>   %s"):format(def.name, UIKit.DIM_HEX,
 				UnitData.Classes[def.class].name, pct(h.percent)), 20, false)
 		end
 	end
@@ -343,7 +343,7 @@ local function updateBarracks()
 	for heroId, c in barracks.cards do
 		local entry = profile.heroes[heroId]
 		c.badge.Visible = true
-		c.badge.Text = ("Lv %d%s"):format(entry.level or 1, (entry.merges or 0) > 0 and ("  +" .. entry.merges) or "")
+		c.badge.Text = ("Lv %d%s"):format(entry.level or 1, (entry.merges or 0) > 0 and ("+" .. entry.merges) or "")
 	end
 	if not selectedHero or not profile.heroes[selectedHero] then
 		selectedHero = heroes[1]

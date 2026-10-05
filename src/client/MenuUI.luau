@@ -77,7 +77,7 @@ local function buildLobby(root)
 		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -56, 0, 0), Size = UDim2.new(0.5, -56, 0, 40),
 		Font = THEME.bold, TextSize = 20, TextXAlignment = Enum.TextXAlignment.Right,
 	}, f)
-	local close = button("✕", f, "muted")
+	local close = button("X", f, "muted")
 	close.AnchorPoint = Vector2.new(1, 0)
 	close.Position = UDim2.fromScale(1, 0)
 	close.Size = UDim2.fromOffset(44, 40)
@@ -100,7 +100,7 @@ local function buildLobby(root)
 	}, tabBar)
 	lobby.tabButtons = {}
 	lobby.pages = {}
-	for i, tab in { { "missions", "⚔  Missionen" }, { "recruit", "✦  Rekrutieren" }, { "barracks", "♜  Kaserne" } } do
+	for i, tab in { { "missions", "⚔  Missionen" }, { "recruit", "Rekrutieren" }, { "barracks", "Kaserne" } } do
 		local b = button(tab[2], tabBar, "default", i)
 		b.Size = UDim2.fromOffset(200, 42)
 		b.Activated:Connect(function()
@@ -226,7 +226,7 @@ local function updateLobby(profile)
 			table.insert(parts, ("<font color='#%s'>%s</font> %s"):format(
 				diff.color:ToHex(), string.sub(diff.name, 1, 1), UIKit.goalStars(Stages.bestStars(profile, stage.id, diff.id))))
 		end
-		entry.stars.Text = table.concat(parts, "   ")
+		entry.stars.Text = table.concat(parts, " ")
 	end
 
 	local stage = Stages.List[selectedIndex]
@@ -339,10 +339,10 @@ local function refreshPrepCards(state)
 		local selected = isSelected(heroId)
 		c.badge.Visible = true
 		if heroId == "leon" then
-			c.badge.Text = "♛ Anführer"
+			c.badge.Text = "★ Anführer"
 			c.badge.BackgroundColor3 = Color3.fromRGB(150, 110, 30)
 		elseif selected then
-			c.badge.Text = "✓ Dabei"
+			c.badge.Text = " Dabei"
 			c.badge.BackgroundColor3 = Color3.fromRGB(50, 130, 80)
 		else
 			c.badge.Text = "Reserve"
@@ -497,8 +497,8 @@ local function buildResult(root)
 		BackgroundTransparency = 1, ZIndex = 12,
 	}, box)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, buttons)
-	result.next = button("Nächste Mission  ▸", buttons, "primary", 1)
-	result.retry = button("⟲  Nochmal", buttons, "default", 2)
+	result.next = button("Nächste Mission", buttons, "primary", 1)
+	result.retry = button("Nochmal", buttons, "default", 2)
 	result.lobby = button("Kartenauswahl", buttons, "muted", 3)
 	for _, b in { result.next, result.retry, result.lobby } do
 		b.Size = UDim2.new(1, 0, 0, 44)
@@ -560,16 +560,16 @@ local function updateResult(state, profile)
 
 	local lines = {}
 	for i, text in Stages.goalTexts(state.turnGoal) do
-		local mark = info.done[i] and ("<font color='%s'>✓</font>"):format(UIKit.GOOD_HEX)
+		local mark = info.done[i] and ("<font color='%s'></font>"):format(UIKit.GOOD_HEX)
 			or ("<font color='%s'>✗</font>"):format(UIKit.BAD_HEX)
-		table.insert(lines, mark .. "  " .. text)
+		table.insert(lines, mark .. "" .. text)
 	end
 	result.goals.Text = table.concat(lines, "\n")
 
 	local reward = profile.reward
 	if reward then
 		local gems = reward.gems > 0
-			and ("    <font color='#6ee8ff'>♦</font> +%d  <font color='%s'>(%d neue Sterne)</font>"):format(
+			and ("  <font color='#6ee8ff'>♦</font> +%d  <font color='%s'>(%d neue Sterne)</font>"):format(
 				reward.gems, UIKit.DIM_HEX, reward.newStars)
 			or ""
 		local hero = reward.newHero and UnitData.Heroes[reward.newHero]
@@ -632,12 +632,12 @@ local function buildThroneMenu(root)
 	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 	label({
 		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 32, TextColor3 = THEME.gold,
-		Text = "♛  Thron", LayoutOrder = 0,
+		Text = "★  Thron", LayoutOrder = 0,
 	}, content)
 	local entries = {
 		{ "missions", "⚔  Missionen", "primary" },
-		{ "recruit", "✦  Rekrutieren", "default" },
-		{ "barracks", "♜  Kaserne", "default" },
+		{ "recruit", "Rekrutieren", "default" },
+		{ "barracks", "Kaserne", "default" },
 	}
 	for i, e in entries do
 		local b = button(e[2], content, e[3], i)
