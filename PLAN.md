@@ -27,7 +27,7 @@ Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshot
   - `HeroTemplates` (Server) und `UIKit.heroPortrait` bleiben unverändert – sie funktionieren mit beiden Stilen.
   - Fertig, wenn: Umschalten in Config wechselt alle Figuren (Kampf, Saal-NPCs, Porträts).
 
-- [ ] 3. **Aussehen-Daten je Held/Gegner** – Datei: `src/shared/UnitData.luau` (nur Aussehen-Felder ergänzen, Werte nicht anfassen)
+- [x] 3. **Aussehen-Daten je Held/Gegner** – Datei: `src/shared/UnitData.luau` (nur Aussehen-Felder ergänzen, Werte nicht anfassen)
   - Feld `chibi = { skin, eyes, hairStyle, hairColor, headgear, headgearColor, outfit = { primary, secondary, trim }, robe, beard, scale }` je Held in `UnitData.Heroes` und als Klassen-Standard `UnitData.Classes.<Klasse>.chibi` für Gegner/NPCs. Held ohne eigenes Feld → Klassen-Standard.
   - Hautfarben: `S1 = (236,196,164)`, `S2 = (205,150,110)`, `S3 = (150,100,70)`. Frisuren: `spiky`, `short`, `long`, `ponytail`, `bun`, `none`. Kopfbedeckungen: `crown`, `tiara`, `helmet`, `headband`, `wizard`, `hood`, `bandana`, `kettle`, `horned` oder `nil`. Gold = (232,188,74), Metall = (185,192,204).
 

@@ -99,6 +99,55 @@ UnitData.Heroes = {
 		stats = { hp = 15, str = 4, mag = 0, skl = 5, spd = 5, lck = 3, def = 2, res = 1 } },
 }
 
+-- Chibi-Aussehen bleibt unabhängig von Spielwerten und Avatar-Accessoires.
+local rgb = Color3.fromRGB
+local S1, S2, S3 = rgb(236, 196, 164), rgb(205, 150, 110), rgb(150, 100, 70)
+local GOLD, METAL = rgb(232, 188, 74), rgb(185, 192, 204)
+local function chibi(skin, eyes, hairStyle, hairColor, headgear, headgearColor, primary, secondary, trim, robe, beard, scale)
+	return {
+		skin = skin, eyes = eyes, hairStyle = hairStyle, hairColor = hairColor,
+		headgear = headgear, headgearColor = headgearColor,
+		outfit = { primary = primary, secondary = secondary, trim = trim },
+		robe = robe == true, beard = beard == true, scale = scale or 1,
+	}
+end
+
+UnitData.Heroes.leon.chibi = chibi(S1, rgb(60, 110, 200), "spiky", rgb(90, 58, 36), "crown", GOLD,
+	rgb(40, 70, 160), rgb(235, 235, 240), GOLD)
+UnitData.Heroes.aurelia.chibi = chibi(S1, rgb(150, 90, 210), "long", rgb(240, 240, 250), "tiara", GOLD,
+	rgb(245, 245, 250), rgb(220, 190, 110), GOLD, true)
+UnitData.Heroes.siegfried.chibi = chibi(S1, rgb(60, 150, 90), "short", rgb(230, 200, 120), "helmet", METAL,
+	rgb(190, 195, 205), rgb(150, 25, 35), GOLD)
+UnitData.Heroes.siegfried.chibi.plumeColor = GOLD
+UnitData.Heroes.mira.chibi = chibi(S2, rgb(60, 140, 120), "ponytail", rgb(200, 60, 50), "headband", METAL,
+	rgb(40, 140, 140), rgb(190, 195, 205), rgb(230, 230, 235))
+UnitData.Heroes.selina.chibi = chibi(S1, rgb(230, 180, 60), "long", rgb(35, 30, 40), "wizard", rgb(110, 60, 160),
+	rgb(110, 60, 160), rgb(40, 35, 50), GOLD, true)
+UnitData.Heroes.tobi.chibi = chibi(S2, rgb(110, 80, 50), "short", rgb(100, 70, 45), "hood", rgb(70, 120, 60),
+	rgb(70, 120, 60), rgb(120, 90, 60), rgb(60, 45, 35))
+UnitData.Heroes.greta.chibi = chibi(S1, rgb(90, 100, 160), "bun", rgb(120, 130, 170), "wizard", rgb(40, 50, 100),
+	rgb(40, 50, 100), rgb(235, 225, 200), rgb(200, 170, 90), true)
+UnitData.Heroes.bruno.chibi = chibi(S3, rgb(70, 50, 40), "spiky", rgb(30, 25, 25), "bandana", rgb(170, 40, 40),
+	rgb(120, 85, 55), rgb(170, 40, 40), rgb(60, 45, 35))
+UnitData.Heroes.kai.chibi = chibi(S1, rgb(80, 100, 140), "short", rgb(70, 50, 35), "helmet", METAL,
+	rgb(60, 90, 150), rgb(150, 155, 165), rgb(200, 200, 210))
+UnitData.Heroes.finn.chibi = chibi(S1, rgb(80, 130, 70), "spiky", rgb(190, 80, 40), "bandana", rgb(70, 130, 70),
+	rgb(200, 180, 140), rgb(70, 130, 70), rgb(110, 80, 55))
+UnitData.Heroes.ida.chibi = chibi(S2, rgb(110, 80, 50), "ponytail", rgb(235, 205, 120), "headband", rgb(80, 130, 70),
+	rgb(130, 100, 70), rgb(80, 130, 70), rgb(70, 50, 35))
+
+for class, heroId in { Lord = "leon", Cavalier = "kai", Archer = "tobi", Mage = "greta", Fighter = "finn" } do
+	UnitData.Classes[class].chibi = UnitData.Heroes[heroId].chibi
+end
+UnitData.Classes.Brigand.chibi = chibi(S2, rgb(70, 50, 40), "short", rgb(30, 25, 25), "bandana", rgb(110, 25, 30),
+	rgb(110, 25, 30), rgb(90, 70, 50), rgb(50, 40, 30))
+UnitData.Classes.Soldier.chibi = chibi(S1, rgb(80, 100, 140), "short", rgb(90, 60, 40), "kettle", METAL,
+	rgb(150, 155, 165), rgb(120, 30, 35), rgb(80, 80, 90))
+UnitData.Classes.EnemyArcher.chibi = chibi(S2, rgb(110, 80, 50), "short", rgb(90, 60, 40), "hood", rgb(110, 25, 30),
+	rgb(110, 25, 30), rgb(90, 70, 50), rgb(50, 40, 30))
+UnitData.Classes.Chieftain.chibi = chibi(S3, rgb(70, 50, 40), "none", rgb(30, 25, 25), "horned", METAL,
+	rgb(40, 35, 35), rgb(130, 25, 30), rgb(170, 140, 80), false, true, 1.2)
+
 UnitData.Heroes.leon.hairAccessory = 12819292
 UnitData.Heroes.mira.hairAccessory = 1513252656
 UnitData.Heroes.selina.hairAccessory = 376527350
