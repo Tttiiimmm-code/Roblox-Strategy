@@ -52,6 +52,7 @@ UnitData.Classes = {
 	Brigand = { name = "Bandit", mov = 5, moveType = "foot", growths = {} },
 	Soldier = { name = "Soldat", mov = 5, moveType = "foot", growths = {} },
 	EnemyArcher = { name = "Bogenschütze", mov = 5, moveType = "foot", growths = {} },
+	EnemyMage = { name = "Hexe", mov = 5, moveType = "foot", growths = {} },
 	Chieftain = { name = "Bandenführer", mov = 5, moveType = "foot", growths = {} },
 }
 
@@ -62,6 +63,7 @@ UnitData.Classes.Soldier.look = { hat = 8796225 }
 UnitData.Classes.Archer.look = { hat = 102623080 }
 UnitData.Classes.EnemyArcher.look = { hat = 102623080 }
 UnitData.Classes.Mage.look = { hat = 13121508 }
+UnitData.Classes.EnemyMage.look = { hat = 13121508 }
 UnitData.Classes.Fighter.look = { hat = 74221074 }
 UnitData.Classes.Brigand.look = { hat = 74221074 }
 UnitData.Classes.Chieftain.look = { hat = 108829551 }
@@ -147,6 +149,8 @@ UnitData.Classes.EnemyArcher.chibi = chibi(S2, rgb(110, 80, 50), "short", rgb(90
 	rgb(110, 25, 30), rgb(90, 70, 50), rgb(50, 40, 30))
 UnitData.Classes.Chieftain.chibi = chibi(S3, rgb(70, 50, 40), "none", rgb(30, 25, 25), "horned", METAL,
 	rgb(40, 35, 35), rgb(130, 25, 30), rgb(170, 140, 80), false, true, 1.2)
+UnitData.Classes.EnemyMage.chibi = chibi(S2, rgb(150, 60, 160), "long", rgb(60, 40, 70), "wizard", rgb(50, 80, 50),
+	rgb(50, 80, 50), rgb(40, 35, 45), rgb(150, 120, 60), true)
 
 UnitData.Heroes.leon.hairAccessory = 12819292
 UnitData.Heroes.mira.hairAccessory = 1513252656
@@ -160,6 +164,10 @@ UnitData.STARTER_HEROES = { "leon", "bruno", "tobi" }
 
 -- Gegnertypen. ai: "aggressive" (rückt vor) oder "stationary" (greift nur in Reichweite an)
 UnitData.Enemies = {
+	witch = { name = "Sumpfhexe", class = "EnemyMage", weapon = "Fire",
+		stats = { hp = 16, str = 0, mag = 5, skl = 5, spd = 5, lck = 2, def = 1, res = 5 } },
+	morwen = { name = "Morwen", class = "EnemyMage", weapon = "Fire", rarity = 4, ai = "stationary",
+		stats = { hp = 26, str = 0, mag = 8, skl = 7, spd = 6, lck = 4, def = 3, res = 7 } },
 	brigand = { name = "Bandit", class = "Brigand", weapon = "IronAxe",
 		stats = { hp = 18, str = 5, mag = 0, skl = 2, spd = 3, lck = 0, def = 2, res = 0 } },
 	soldier = { name = "Soldat", class = "Soldier", weapon = "IronLance",

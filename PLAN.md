@@ -32,7 +32,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - `UI.luau`: Ausweichen/Verteidigung mit Vorzeichen formatieren (`%+d` statt `+%d`), damit „-15" statt „+-15" erscheint (Terrain-Panel ~Zeile 511 und Info-Panel ~Zeile 499).
   - Fertig, wenn: Morast verlangsamt (Fuß 2, Pferd 3), Ausweichen −15 im Kampf wirksam und korrekt angezeigt; Tiefer Morast ist unbetretbar.
 
-- [ ] 3. **Neuer Gegner: Sumpfhexe** – Datei: `src/shared/UnitData.luau`
+- [x] 3. **Neuer Gegner: Sumpfhexe** – Datei: `src/shared/UnitData.luau`
   - Klasse `UnitData.Classes.EnemyMage = { name = "Hexe", mov = 5, moveType = "foot", growths = {} }` mit Chibi-Aussehen: Haut S2, Augen (150,60,160), `long` (60,40,70), `wizard` (50,80,50), Outfit (50,80,50) / (40,35,45) / (150,120,60), `robe = true`. Prüfen, ob weitere Stellen eine Klassenliste erwarten (`rg "EnemyArcher" src`) und dort gleich behandeln (z. B. R15-`look`).
   - `UnitData.Enemies.witch = { name = "Sumpfhexe", class = "EnemyMage", weapon = "Fire", stats = { hp = 16, str = 0, mag = 5, skl = 5, spd = 5, lck = 2, def = 1, res = 5 } }`
   - `UnitData.Enemies.morwen = { name = "Morwen", class = "EnemyMage", weapon = "Fire", rarity = 4, ai = "stationary", stats = { hp = 26, str = 0, mag = 8, skl = 7, spd = 6, lck = 4, def = 3, res = 7 } }` (Bosshexe, ★4-Effekte durch `rarity`).
