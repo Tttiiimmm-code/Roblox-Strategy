@@ -1,3 +1,4 @@
+local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 -- Client: Eingabe (Maus & Touch), Reichweiten, Bewegungsvorschau, Kampfvorschau, Menüs, Animationen
 local Players = game:GetService("Players")
@@ -588,6 +589,7 @@ local function applyState(newState)
 	-- Kamera und Avatar: Taktik-Ansicht nur im eigenen Kampf, sonst frei im Thronsaal
 	CameraController.setActive(isMine())
 	Hub.setBattleView(isMine())
+	Atmosphere.set(isMine() and "battle" or "hall")
 	SoundPlayer.playMusic(isMine() and (state.result and (state.result.victory and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub")
 	resetSelection()
 	UI.setHudVisible(inBattle() and not state.result)

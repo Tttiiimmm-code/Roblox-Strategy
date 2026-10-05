@@ -109,6 +109,20 @@ function BoardBuilder.build()
 		Material = Enum.Material.Slate,
 	}, board)
 
+	deco({ Name = "SurroundingGrass", Size = Vector3.new(w + Config.FEEL.environmentMargin * 2, 2, h + Config.FEEL.environmentMargin * 2), Position = Vector3.new(w / 2, -4, h / 2), Color = Config.TERRAIN["."].color, Material = Enum.Material.Grass }, board)
+	for i = 1, Config.FEEL.environmentCount do
+		local edge = i % 4
+		local fraction = ((i * 37) % 97) / 97
+		local x = edge < 2 and (-16 - i % 3 * 7) or (w + 16 + i % 3 * 7)
+		local z = fraction * h
+		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -18 or h + 18 end
+		if i % 3 == 0 then
+			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, -1, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
+		else
+			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, 1.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
+			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, 9, z), Color = Config.TERRAIN.F.color, Material = Enum.Material.Grass }, board)
+		end
+	end
 	board.Parent = workspace
 	return board
 end

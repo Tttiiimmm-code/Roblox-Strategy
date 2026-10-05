@@ -3,6 +3,25 @@ local Config = {}
 
 Config.FEEL = {
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
+	atmosphereFade = 0.8, flickerStrength = 0.12, flickerRate = 7,
+	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
+	environmentMargin = 100, environmentCount = 16,
+	atmosphere = {
+		hall = {
+			bloom = { Intensity = 0.35, Size = 28, Threshold = 1.1 },
+			color = { TintColor = Color3.fromRGB(255, 235, 211), Saturation = 0.12, Contrast = 0.05, Brightness = 0.02 },
+			rays = { Intensity = 0.035, Spread = 0.6 },
+			haze = { Density = 0.18, Offset = 0.1, Color = Color3.fromRGB(240, 220, 195), Decay = Color3.fromRGB(175, 151, 124), Haze = 0.7, Glare = 0.1 },
+			depth = { FarIntensity = 0.08, NearIntensity = 0, FocusDistance = 45, InFocusRadius = 38 },
+		},
+		battle = {
+			bloom = { Intensity = 0.12, Size = 20, Threshold = 1.5 },
+			color = { TintColor = Color3.fromRGB(245, 250, 255), Saturation = 0.18, Contrast = 0.1, Brightness = 0 },
+			rays = { Intensity = 0.02, Spread = 0.8 },
+			haze = { Density = 0.22, Offset = 0.15, Color = Color3.fromRGB(210, 230, 245), Decay = Color3.fromRGB(145, 165, 180), Haze = 0.8, Glare = 0 },
+			depth = { FarIntensity = 0, NearIntensity = 0, FocusDistance = 75, InFocusRadius = 100 },
+		},
+	},
 }
 
 Config.TILE_SIZE = 8

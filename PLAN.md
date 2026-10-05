@@ -18,7 +18,7 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
   - Musik: Thronsaal → `musicHub`, eigener Kampf → `musicBattle`, Ergebnis → `musicVictory`/`musicDefeat` (Umschalten in `Main.client.luau` `applyState`, dort wo `Hub.setBattleView` aufgerufen wird).
   - Fertig, wenn: alle Stellen rufen `SoundPlayer` auf; mit leeren IDs läuft das Spiel fehlerfrei; Doku-Kommentar in `Sounds.luau`, wie man IDs einträgt.
 
-- [ ] 2. **Licht & Atmosphäre**
+- [x] 2. **Licht & Atmosphäre**
   - Neu `src/client/Atmosphere.luau` mit zwei Presets `hall` und `battle`, umgeschaltet in `applyState` (wie Musik). Lokal per Client erzeugen/anpassen: `BloomEffect`, `ColorCorrectionEffect`, `SunRaysEffect`, `Atmosphere`, `DepthOfFieldEffect` (nur `hall`, dezent) in `Lighting`; Übergang per Tween (0,8 s).
     - `hall`: warm, leicht gesättigt, Bloom für Gold/Kerzen; `battle`: klar, kräftigere Farben, leichter Dunst am Horizont.
   - `src/server/HubBuilder.luau`: Staubpartikel im Saal (ein großer unsichtbarer, nicht kollidierender Part mit langsam schwebenden, schwach leuchtenden Partikeln), Kerzen-Lichter in den Kronleuchtern leicht flackern lassen (Attribut `Flicker`, Animation im Client `Hub.luau` wie die bestehenden `Spin`-Objekte), 2–4 hohe Fenster in Ost-/Westwand mit Lichtstrahlen (halbtransparente Neon-Beams, `CanQuery=false`).

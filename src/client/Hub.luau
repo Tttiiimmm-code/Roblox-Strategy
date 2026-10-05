@@ -1,3 +1,4 @@
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 -- Thronsaal auf dem Client: Einrichtungen (ProximityPrompts), Thron-Schnellmenü, Deko-Animation,
 -- Avatar-Steuerung im Kampf sperren. GRUNDGERÜST – frei erweiterbar.
 local Players = game:GetService("Players")
@@ -67,13 +68,16 @@ end
 
 -- Langsam drehende Deko (Attribut "Spin" in Grad/s; Modelle drehen um "SpinCenter")
 local spinners = {}
+local flickers = {}
 local function collectSpinners()
 	table.clear(spinners)
+	table.clear(flickers)
 	local hubModel = workspace:FindFirstChild("Hub")
 	if not hubModel then
 		return
 	end
 	for _, d in hubModel:GetDescendants() do
+		if d:IsA("PointLight") and d:GetAttribute("Flicker") then table.insert(flickers, d) end
 		if d:GetAttribute("Spin") then
 			table.insert(spinners, d)
 		end
@@ -81,6 +85,12 @@ local function collectSpinners()
 end
 
 local function spin(dt)
+	for _, light in flickers do
+		if light.Parent then
+			local t = os.clock() * Config.FEEL.flickerRate + (light:GetAttribute("FlickerPhase") or 0)
+			light.Brightness = light:GetAttribute("Flicker") * (1 + Config.FEEL.flickerStrength * math.sin(t) * math.sin(t * 0.71))
+		end
+	end
 	for _, obj in spinners do
 		if obj.Parent then
 			local angle = math.rad(obj:GetAttribute("Spin") * dt)

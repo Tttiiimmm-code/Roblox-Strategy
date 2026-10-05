@@ -160,6 +160,36 @@ local function buildRoom()
 		end
 	end
 
+	local dust = deco("HallDust", Vector3.new(85, 30, 130), at(0, 20, 0), WHITE, { Transparency = 1 })
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	emitter.Rate = Config.FEEL.hallDustRate
+	emitter.Lifetime = NumberRange.new(Config.FEEL.hallDustLifetime)
+	emitter.Speed = NumberRange.new(Config.FEEL.hallDustSpeed)
+	emitter.SpreadAngle = Vector2.new(180, 180)
+	emitter.Size = NumberSequence.new(0.06)
+	emitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.2, 0.8), NumberSequenceKeypoint.new(0.8, 0.8), NumberSequenceKeypoint.new(1, 1) })
+	emitter.LightEmission = 0.3
+	emitter.Parent = dust
+	for _, side in { -1, 1 } do
+		for _, z in { -55, 55 } do
+			local window = deco("HighWindow", Vector3.new(0.2, 18, 8), at(side * 49.8, 29, z), Color3.fromRGB(255, 239, 196), { Material = Enum.Material.Neon, Transparency = 0.25 })
+			local source = Instance.new("Attachment")
+			source.Parent = window
+			local target = Instance.new("Attachment")
+			target.Position = Vector3.new(-side * 32, -26, 12)
+			target.Parent = window
+			local beam = Instance.new("Beam")
+			beam.Attachment0, beam.Attachment1 = source, target
+			beam.Width0, beam.Width1 = 6, 14
+			beam.FaceCamera = true
+			beam.LightEmission = 1
+			beam.Color = ColorSequence.new(Color3.fromRGB(255, 235, 185))
+			beam.Transparency = NumberSequence.new(0.93)
+			beam.Parent = window
+		end
+	end
+
 	-- Kronleuchter
 	for _, z in { -40, 0, 40 } do
 		deco("Chain", Vector3.new(0.4, 8, 0.4), at(0, H - 4, z), GOLD, { Material = Enum.Material.Metal })
@@ -174,6 +204,8 @@ local function buildRoom()
 		light.Color = Color3.fromRGB(255, 220, 170)
 		light.Brightness = 1.6
 		light.Range = 45
+		light:SetAttribute("Flicker", light.Brightness)
+		light:SetAttribute("FlickerPhase", z * 0.17)
 		light.Parent = ring
 	end
 end
