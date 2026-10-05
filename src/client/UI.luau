@@ -294,7 +294,7 @@ local function buildTools(callbacks)
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
 	tools.speed = toolButton("▶ 1×", 3, callbacks.onSpeed)
 
-	tools.skip = button("? Gegnerphase", col, "primary")
+	tools.skip = button("⏩ Gegnerphase", col, "primary")
 	tools.skip.AnchorPoint = Vector2.new(0, 1)
 	tools.skip.Position = UDim2.fromScale(0, 1)
 	tools.skip.Size = UDim2.new(1, 0, 0, 50)
@@ -408,7 +408,7 @@ function UI.setTools(flags)
 	tools.undo.Text = ("⟲ %d"):format(flags.undoLeft)
 	UIKit.setButtonStyle(tools.undo, (flags.controllable and flags.canUndo and flags.undoLeft > 0) and "default" or "disabled")
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
-	tools.speed.Text = flags.speed == 2 and "▶▶ 2×" or "▶ 1×"
+	tools.speed.Text = flags.speed == 3 and "⏩ 3×" or flags.speed == 2 and "▶▶ 2×" or "▶ 1×"
 	UIKit.setButtonStyle(tools.speed, flags.speed == 2 and "active" or "default")
 end
 
@@ -467,6 +467,7 @@ function UI.showInfo(unit, terrain)
 	local w = UnitData.Weapons[unit.weapon]
 	local rarity = UnitData.Rarities[unit.rarity or 1]
 	if portraitId ~= unit.id then
+		UIKit.popIn(info.frame)
 		portraitId = unit.id
 		local units = workspace:FindFirstChild("Units")
 		UIKit.portrait(info.viewport, info.camera, units and units:FindFirstChild(unit.id))
@@ -489,22 +490,22 @@ function UI.showInfo(unit, terrain)
 	end
 	info.weapon.Text = ("<font color='%s'>Waffe</font>  <b>%s</b>  <font color='%s'>Mt %d · Rw %d–%d · %s +%d/+%d</font>"):format(
 		UIKit.DIM_HEX, w.name, UIKit.DIM_HEX, w.might, w.minRange, w.maxRange, terrain.name, terrain.avoid, terrain.def)
-	info.frame.Visible = true
+	UIKit.setVisible(info.frame, true)
 end
 
 function UI.hideInfo()
-	info.frame.Visible = false
+	UIKit.setVisible(info.frame, false)
 end
 
 function UI.showTerrain(terrain)
 	local extra = terrain.heal and ("   <font color='%s'>Heilung</font>"):format(UIKit.GOOD_HEX) or ""
 	terrainLabel.Text = ("<font face='Fondamento' size='20'><b>%s</b></font>\n<font color='%s'>Ausweichen</font> +%d   <font color='%s'>Verteidigung</font> +%d%s")
 		:format(terrain.name, UIKit.DIM_HEX, terrain.avoid, UIKit.DIM_HEX, terrain.def, extra)
-	terrainFrame.Visible = true
+	UIKit.setVisible(terrainFrame, true)
 end
 
 function UI.hideTerrain()
-	terrainFrame.Visible = false
+	UIKit.setVisible(terrainFrame, false)
 end
 
 function UI.showMenu(canAttack, callbacks)
@@ -514,7 +515,7 @@ function UI.showMenu(canAttack, callbacks)
 end
 
 function UI.hideMenu()
-	menuFrame.Visible = false
+	UIKit.setVisible(menuFrame, false)
 	menuCallbacks = {}
 end
 
@@ -556,7 +557,7 @@ function UI.showForecast(attacker, defender, f, callbacks)
 end
 
 function UI.hideForecast()
-	forecast.frame.Visible = false
+	UIKit.setVisible(forecast.frame, false)
 	forecastCallbacks = {}
 end
 
@@ -567,7 +568,7 @@ function UI.toast(text, duration)
 	UIKit.popIn(toastFrame)
 	task.delay(duration or 2, function()
 		if token == toastToken then
-			toastFrame.Visible = false
+			UIKit.popOut(toastFrame)
 		end
 	end)
 end
@@ -586,7 +587,7 @@ function UI.showLevelUp(e)
 	UIKit.popIn(level.frame)
 	task.delay(3.2, function()
 		if token == levelToken then
-			level.frame.Visible = false
+			UIKit.popOut(level.frame)
 		end
 	end)
 end

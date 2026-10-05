@@ -546,6 +546,23 @@ local function floatText(unitId, text, color, size)
 	Debris:AddItem(bb, 1.2)
 end
 
+local hapticToken = 0
+local function impactHaptic(critical, speed)
+	if not TOUCH then return end
+	hapticToken += 1
+	local token = hapticToken
+	pcall(function()
+		local service = game:GetService("HapticService")
+		local input = Enum.UserInputType.Touch
+		local motor = Enum.VibrationMotor.Small
+		if not service:IsVibrationSupported(input) or not service:IsMotorSupported(input, motor) then return end
+		service:SetMotor(input, motor, critical and Config.FEEL.hapticCrit or Config.FEEL.hapticHit)
+		task.delay(Config.FEEL.hapticDuration / speed, function()
+			if token == hapticToken then pcall(function() service:SetMotor(input, motor, 0) end) end
+		end)
+	end)
+end
+
 local cameraEvent = 0
 BattleEvent.OnClientEvent:Connect(function(payload)
 	if not isMine() then return end
@@ -571,6 +588,7 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 					SoundPlayer.play(not s.hit and "miss" or s.crit and "crit" or "hit", { varyPitch = true })
 					if s.hpAfter == 0 then SoundPlayer.play("death") end
 					if s.hit then
+						impactHaptic(s.crit, speed)
 						CameraController.shake(s.crit and Config.FEEL.critShakeStrength or Config.FEEL.shakeStrength, (s.crit and Config.FEEL.critShakeDuration or Config.FEEL.shakeDuration) / speed)
 						if s.crit then UI.flashCrit(speed) end
 					end

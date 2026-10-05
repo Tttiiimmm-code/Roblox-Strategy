@@ -45,7 +45,7 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
   - Reichweiten-Overlays in `Main.client.luau` `addOverlay`: sanftes Einblenden (Transparenz-Tween) und leichtes Pulsieren der Angriffsfelder.
   - Fertig, wenn: Laufen wirkt flüssig ohne Ruckeln; Figuren bewegen sich auch im Stand sichtbar; Auswahl hat klares visuelles Feedback.
 
-- [ ] 5. **Menüs mit Bewegung & Feedback**
+- [x] 5. **Menüs mit Bewegung & Feedback**
   - `src/client/UIKit.luau`:
     - `button`: beim Drücken auf 0,94 skalieren und zurückfedern (UIScale, `Back`-Easing), Hover 1,04 (nur Maus).
     - `popIn` ergänzen um `popOut(frame)` (Schließen mit Skalieren + Ausblenden, danach `Visible=false`) und Öffnen mit leichtem Hineingleiten von unten.
@@ -82,4 +82,7 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
 - Echte 3D-Modelle (Meshes) statt Klötzchen wären ein eigener späterer Schritt (Blender/Asset-Erstellung) – nicht Teil dieses Plans.
 
 ## Notizen (Codex)
--
+- Audio-IDs bleiben absichtlich leer. Effekte werden nur im eigenen Kampf abgespielt.
+- Hit-Stop wie im Plan als verzögerte Trefferreaktion umgesetzt; Server-Trefferzeiten bleiben unverändert.
+- Fenster und Reiter nutzen CanvasGroups zum gemeinsamen Ausblenden von Texten und Porträts. Studio-/Handy-Test und Claude-Review stehen aus.
+- Bei der Umsetzung mussten die Ergebnismusik an den vorhandenen Ergebnis-String (Victory/Defeat) und die Tempo-Rückstellung an das tatsächliche Phasenende angepasst werden.

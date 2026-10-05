@@ -41,6 +41,8 @@ local function clampFocus()
 end
 
 function CameraController.setBounds(center, size)
+	saved, transition = nil, nil
+	shakeStrength = 0
 	focus = center
 	bounds = size
 	zoom = math.clamp(math.max(size.X, size.Z) * 0.85, 45, 120)

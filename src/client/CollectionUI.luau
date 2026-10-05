@@ -131,7 +131,7 @@ local function buildRecruit(frame)
 	end)
 	oddsButton.Activated:Connect(function()
 		UIKit.popIn(odds.box)
-		odds.frame.Visible = true
+		UIKit.setVisible(odds.frame, true)
 	end)
 end
 
@@ -188,7 +188,7 @@ local function buildOdds(root)
 	close.Size = UDim2.new(1, 0, 0, 44)
 	close.ZIndex = 22
 	close.Activated:Connect(function()
-		overlay.Visible = false
+		UIKit.setVisible(overlay, false)
 	end)
 end
 
@@ -226,7 +226,7 @@ local function buildResults(root)
 	done.Size = UDim2.fromOffset(260, 46)
 	done.ZIndex = 32
 	done.Activated:Connect(function()
-		overlay.Visible = false
+		UIKit.setVisible(overlay, false)
 	end)
 end
 
@@ -236,7 +236,7 @@ function CollectionUI.showResults(list)
 			child:Destroy()
 		end
 	end
-	results.frame.Visible = true
+	UIKit.setVisible(results.frame, true)
 	UIKit.popIn(results.box)
 	for i, r in list do
 		local c = UIKit.heroCard(results.grid, r.heroId, { LayoutOrder = i, ZIndex = 33 })

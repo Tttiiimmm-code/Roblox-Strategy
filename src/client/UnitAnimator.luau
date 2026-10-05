@@ -355,6 +355,7 @@ function Animator.select(id)
 		segment.CFrame = CFrame.new(math.cos(angle) * radius, 0.13, math.sin(angle) * radius) * CFrame.Angles(0, -angle, 0)
 		segment.Parent = selectionRing
 	end
+	selectionRing.WorldPivot = CFrame.new()
 	selectionRing.Parent = fxFolder
 end
 
@@ -397,7 +398,14 @@ local function idle(dt)
 	elseif selectionRing then
 		Animator.select(nil)
 	end
-	for _, model in unitsFolder:GetChildren() do
+	local models = unitsFolder:GetChildren()
+	local hall = workspace:FindFirstChild("Hub")
+	if hall then
+		for _, model in hall:GetChildren() do
+			if model:IsA("Model") and model:FindFirstChild("Root") then table.insert(models, model) end
+		end
+	end
+	for _, model in models do
 		if not busy[model] then
 			local m = motors(model)
 			if m.RootJoint then

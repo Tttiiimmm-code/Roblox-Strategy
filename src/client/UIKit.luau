@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
+local Config = require(Shared:WaitForChild("Config"))
 
 local UIKit = {}
 
@@ -82,7 +83,7 @@ function UIKit.panel(props, parent)
 	props.BackgroundColor3 = Color3.new(1, 1, 1)
 	props.BackgroundTransparency = props.BackgroundTransparency or 0.04
 	props.BorderSizePixel = 0
-	local f = make("Frame", props, parent)
+	local f = make("CanvasGroup", props, parent)
 	UIKit.corner(f, 8)
 	UIKit.stroke(f, THEME.gold, 2)
 	make("UIGradient", { Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90 }, f)
@@ -104,16 +105,40 @@ function UIKit.button(text, parent, style, order)
 	UIKit.corner(b, 6)
 	local s = UIKit.stroke(b, THEME.goldDark, 1.5)
 	UIKit.setButtonStyle(b, style or "default")
+	local scale = make("UIScale", { Name = "ButtonScale" }, b)
+	local scaleTween
+	local hovered = false
+	local function animateScale(value, duration, easing)
+		if scaleTween then scaleTween:Cancel() end
+		scaleTween = TweenService:Create(scale, TweenInfo.new(duration, easing or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = value })
+		scaleTween:Play()
+	end
+	b.InputBegan:Connect(function(input)
+		if b:GetAttribute("Style") ~= "disabled" and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+			animateScale(Config.FEEL.buttonPressScale, Config.FEEL.buttonPressTime)
+		end
+	end)
+	b.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			animateScale(hovered and Config.FEEL.buttonHoverScale or 1, Config.FEEL.buttonReleaseTime, Enum.EasingStyle.Back)
+		end
+	end)
 	b.Activated:Connect(function()
 		if b:GetAttribute("Style") ~= "disabled" then SoundPlayer.play("click") end
 	end)
 	b.MouseEnter:Connect(function()
+		if game:GetService("UserInputService").MouseEnabled and b:GetAttribute("Style") ~= "disabled" then
+			hovered = true
+			animateScale(Config.FEEL.buttonHoverScale, Config.FEEL.buttonReleaseTime)
+		end
 		if b:GetAttribute("Style") ~= "disabled" then SoundPlayer.play("hover") end
 		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
 		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[2] }):Play()
 		s.Color = THEME.gold
 	end)
 	b.MouseLeave:Connect(function()
+		hovered = false
+		animateScale(1, Config.FEEL.buttonReleaseTime)
 		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
 		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[1] }):Play()
 		s.Color = THEME.goldDark
@@ -162,11 +187,106 @@ function UIKit.hpColor(ratio)
 	return Color3.fromRGB(225, 65, 65)
 end
 
+local windowStates = setmetatable({}, { __mode = "k" })
+local counts = setmetatable({}, { __mode = "k" })
+
+local function windowState(frame)
+	local state = windowStates[frame]
+	if not state then
+		state = { position = frame.Position, background = frame.BackgroundTransparency, scale = frame:FindFirstChild("PopScale") or make("UIScale", { Name = "PopScale" }, frame), tweens = {}, token = 0, visible = frame.Visible }
+		windowStates[frame] = state
+	end
+	return state
+end
+
+local function cancelWindow(state)
+	state.token += 1
+	for _, tween in state.tweens do tween:Cancel() end
+	table.clear(state.tweens)
+end
+
+local function animateWindow(frame, visible, duration, slide, scaleTarget)
+	local state = windowState(frame)
+	cancelWindow(state)
+	state.visible = visible
+	local token = state.token
+	-- CanvasGroups blenden auch ihre Texte und Porträts gemeinsam aus.
+	local function tween(object, goal, easing)
+		local animation = TweenService:Create(object, TweenInfo.new(duration, easing or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal)
+		table.insert(state.tweens, animation)
+		animation:Play()
+		return animation
+	end
+	tween(state.scale, { Scale = scaleTarget }, visible and Enum.EasingStyle.Back or Enum.EasingStyle.Quad)
+	local goal = { Position = state.position + UDim2.fromOffset(0, slide) }
+	if frame:IsA("CanvasGroup") then goal.GroupTransparency = visible and 0 or 1 end
+	goal.BackgroundTransparency = visible and state.background or 1
+	if not frame:IsA("CanvasGroup") then
+		for _, child in frame:GetChildren() do
+			if child:IsA("CanvasGroup") then tween(child, { GroupTransparency = visible and 0 or 1 }) end
+		end
+	end
+	local movement = tween(frame, goal)
+	if not visible then
+		movement.Completed:Once(function(status)
+			if status == Enum.PlaybackState.Completed and state.token == token then frame.Visible = false end
+		end)
+	end
+end
+
 function UIKit.popIn(frame)
-	local scale = frame:FindFirstChild("PopScale") or make("UIScale", { Name = "PopScale" }, frame)
-	scale.Scale = 0.85
+	local state = windowState(frame)
+	state.scale.Scale = Config.FEEL.menuOpenScale
+	frame.Position = state.position + UDim2.fromOffset(0, Config.FEEL.menuSlide)
+	if not frame.Visible then
+		if frame:IsA("CanvasGroup") then frame.GroupTransparency = 1 end
+	end
 	frame.Visible = true
-	TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	animateWindow(frame, true, Config.FEEL.menuOpenTime, 0, 1)
+end
+
+function UIKit.popOut(frame)
+	if not frame.Visible then return end
+	animateWindow(frame, false, Config.FEEL.menuCloseTime, Config.FEEL.menuSlide, Config.FEEL.menuCloseScale)
+end
+
+function UIKit.setVisible(frame, visible)
+	local state = windowState(frame)
+	if state.visible == visible then return end
+	if visible then UIKit.popIn(frame) else UIKit.popOut(frame) end
+end
+
+function UIKit.fadePage(frame, visible)
+	local state = windowState(frame)
+	if state.visible == visible then return end
+	if visible then
+		frame.Visible = true
+		if frame:IsA("CanvasGroup") then frame.GroupTransparency = 1 end
+	end
+	animateWindow(frame, visible, Config.FEEL.tabFadeTime, 0, 1)
+	frame.Active = visible
+end
+
+function UIKit.countUp(textLabel, from, to, formatFn)
+	local previous = counts[textLabel]
+	if previous then previous.tween:Cancel(); previous.value:Destroy() end
+	local value = Instance.new("NumberValue")
+	value.Value = from
+	local function update()
+		textLabel.Text = formatFn and formatFn(value.Value) or tostring(math.floor(value.Value + 0.5))
+	end
+	update()
+	value.Changed:Connect(update)
+	local animation = TweenService:Create(value, TweenInfo.new(Config.FEEL.countUpTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = to })
+	local record = { tween = animation, value = value }
+	counts[textLabel] = record
+	animation.Completed:Once(function(status)
+		if counts[textLabel] ~= record then return end
+		if status == Enum.PlaybackState.Completed then value.Value = to; update() end
+		counts[textLabel] = nil
+		value:Destroy()
+	end)
+	animation:Play()
 end
 
 -- "★★★☆☆" in Seltenheitsfarbe

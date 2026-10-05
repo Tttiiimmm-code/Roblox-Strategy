@@ -43,6 +43,22 @@ end
 
 local EMPTY_PROFILE = { gold = 0, gems = 0, stars = {}, saveOk = true }
 
+local function updateCurrency(textLabel, profile)
+	local gold, gems = profile.gold or 0, profile.gems or 0
+	if textLabel:GetAttribute("TargetGold") == gold and textLabel:GetAttribute("TargetGems") == gems then return end
+	local fromGold = textLabel:GetAttribute("CurrentGold") or gold
+	local fromGems = textLabel:GetAttribute("CurrentGems") or gems
+	textLabel:SetAttribute("TargetGold", gold)
+	textLabel:SetAttribute("TargetGems", gems)
+	UIKit.countUp(textLabel, 0, 1, function(alpha)
+		local shownGold = math.floor(fromGold + (gold - fromGold) * alpha + 0.5)
+		local shownGems = math.floor(fromGems + (gems - fromGems) * alpha + 0.5)
+		textLabel:SetAttribute("CurrentGold", shownGold)
+		textLabel:SetAttribute("CurrentGems", shownGems)
+		return ("<font color='%s'>◆</font> %d Gold     <font color='#6ee8ff'>♦</font> %d Edelsteine"):format(UIKit.GOLD_HEX, shownGold, shownGems)
+	end)
+end
+
 -- Kartenauswahl ---------------------------------------------------------------------
 local function buildLobby(root)
 	local f = panel({
@@ -91,7 +107,7 @@ local function buildLobby(root)
 			MenuUI.update(lastState, lastProfile)
 		end)
 		lobby.tabButtons[tab[1]] = b
-		lobby.pages[tab[1]] = make("Frame", {
+		lobby.pages[tab[1]] = make("CanvasGroup", {
 			Position = UDim2.fromOffset(0, 114), Size = UDim2.new(1, 0, 1, -114), BackgroundTransparency = 1,
 			Visible = false,
 		}, f)
@@ -185,8 +201,7 @@ local function buildLobby(root)
 end
 
 local function updateLobby(profile)
-	lobby.currency.Text = ("<font color='%s'>◆</font> %d Gold     <font color='#6ee8ff'>♦</font> %d Edelsteine"):format(
-		UIKit.GOLD_HEX, profile.gold, profile.gems)
+	updateCurrency(lobby.currency, profile)
 	lobby.saveWarning.Visible = not profile.saveOk
 
 	-- Standard: höchste freigeschaltete Mission
@@ -685,35 +700,36 @@ function MenuUI.update(state, profile)
 
 	-- Thronsaal-Anzeige
 	hubHud.frame.Visible = inHall and not lobbyOpen
-	hubHud.currency.Text = ("<font color='%s'>◆</font> %d Gold     <font color='#6ee8ff'>♦</font> %d Edelsteine"):format(
-		UIKit.GOLD_HEX, profile.gold or 0, profile.gems or 0)
+	updateCurrency(hubHud.currency, profile)
 	hubHud.notice.Visible = otherBattle(state)
 	if otherBattle(state) then
 		local stage = Stages.get(state.stageId)
 		hubHud.notice.Text = ("⚔ %s kämpft gerade: %s"):format(state.ownerName or "Jemand", stage and stage.name or "")
 	end
-	throne.frame.Visible = inHall and throneSeated and not lobbyOpen
+	UIKit.setVisible(throne.frame, inHall and throneSeated and not lobbyOpen)
 
-	lobby.frame.Visible = inHall and lobbyOpen
-	if lobby.frame.Visible then
+	UIKit.setVisible(lobby.frame, inHall and lobbyOpen)
+	if inHall and lobbyOpen then
 		lobby.title.Text = TAB_TITLES[lobbyTab]
 		for tab, page in lobby.pages do
-			page.Visible = tab == lobbyTab
+			UIKit.fadePage(page, tab == lobbyTab)
 			UIKit.setButtonStyle(lobby.tabButtons[tab], tab == lobbyTab and "active" or "default")
 		end
 		updateLobby(profile)
 		CollectionUI.update(profile)
 	end
 
-	prep.frame.Visible = mine and state.phase == "Prep" and profile.heroes ~= nil
-	if prep.frame.Visible then
+	local showPrep = mine and state.phase == "Prep" and profile.heroes ~= nil
+	UIKit.setVisible(prep.frame, showPrep)
+	if showPrep then
 		updatePrep(state, profile)
 	else
 		prep.key = nil
 	end
 
-	result.frame.Visible = mine and state.result ~= nil
-	if result.frame.Visible then
+	local showResult = mine and state.result ~= nil
+	UIKit.setVisible(result.frame, showResult)
+	if showResult then
 		updateResult(state, profile)
 	else
 		resultKey = nil

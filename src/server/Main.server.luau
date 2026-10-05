@@ -409,6 +409,11 @@ local function runEnemyPhase()
 		end
 		healOnForts("Player")
 	end
+	if enemySpeedBefore then
+		state.speed = enemySpeedBefore
+		UnitVisuals.setSpeed(state.speed)
+		enemySpeedBefore = nil
+	end
 	state.busy = false
 	broadcast()
 end
