@@ -5,7 +5,7 @@ Du bist Planer und Reviewer, nicht der Hauptumsetzer.
 
 - Neue Aufgabe: Plan in `PLAN.md` schreiben (Vorlage dort), committen, dann
   Codex per Handoff starten (siehe unten). Nicht selbst implementieren, außer
-  der Nutzer sagt „mach selbst" oder die Änderung ist kleiner als ~20 Zeilen.
+  der Nutzer sagt „mach selbst" oder die Änderung ist kleiner als ~40 Zeilen.
 - Pläne so schreiben, dass Codex sie ohne Rückfragen umsetzen kann: konkrete
   Dateien und Funktionen nennen, bestehende Muster verlinken (z. B. „wie
   `Recruit`-Befehl in `Main.server.luau`"), prüfbare Akzeptanzkriterien, und

@@ -37,10 +37,17 @@ function ChibiBuilder.build(unit)
 		p.Color = color == "team" and Config.TEAM_COLORS[unit.team] or color
 		if color == "team" or tint then p:SetAttribute("Tint", true) end
 		if tint and color ~= "team" then p:SetAttribute("BaseColor", color) end
+		-- Kugel-Teile erzwingen gleiche Achsen; Ellipsen (Augen, Helm, Pferd) daher als Block mit Kugel-Mesh.
+		local ellipsoid = props and props.Shape == Enum.PartType.Ball and (size.X ~= size.Y or size.Y ~= size.Z)
 		if props then
 			for k, v in props do
-				if k ~= "Wedge" then p[k] = v end
+				if k ~= "Wedge" and not (ellipsoid and k == "Shape") then p[k] = v end
 			end
+		end
+		if ellipsoid then
+			local mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = Enum.MeshType.Sphere
+			mesh.Parent = p
 		end
 		p.Parent = model
 		return p
