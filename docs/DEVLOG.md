@@ -195,9 +195,39 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #10 – Game-Feel-Pass 1: Sound, Licht, Kampf und UI
+**Datum:** 05.10.2026
+
+**Ziel:** Lebendigeres Spielgefühl im Thronsaal, auf dem Schlachtfeld und in den Menüs, ohne Änderungen an Spielregeln, Balancing oder Profilformat.
+
+**Umsetzung**
+- `shared/Sounds.luau` und `client/SoundPlayer.luau`: stumme Audio-Platzhalter mit Lautstärken, optionaler Pitch-Variation und Musik-Überblendung. Buttons, Menüs, Treffer/Krit/Verfehlen, Tod, Level-Up, Phasen, Ergebnissterne und Rekrutierung sind angebunden; Musik folgt Saal, Kampf und Ergebnis.
+- `client/Atmosphere.luau`: lokale Licht-Presets für warmen Saal und klareres Schlachtfeld mit Bloom, Farbkorrektur, Sonnenstrahlen, Dunst und dezenter Tiefenunschärfe im Saal. Wechsel über 0,8 Sekunden.
+- Saal mit schwebendem Staub, flackernden Kronleuchtern und vier hohen Fensterflächen mit Lichtstrahlen. Grasboden, deterministische Bäume und Felsen außerhalb des Bretts; Dekoration bleibt für Feld-Klicks durchlässig (`CanQuery=false`).
+- Kamera fokussiert Schlagabtausche und gegnerische Bewegungsziele, wackelt beim Treffer und kehrt anschließend zurück. Krits erhalten stärkeren/längeren Shake und Weißblitz. Trefferreaktion um 0,06 Sekunden verzögert, über das Kampf-Tempo skaliert.
+- HUD-Button „⏩ Gegnerphase“ setzt Tempo 3; am Phasenende stellt der Server das vorherige Tempo wieder her. Neues `enemyMove`-Event vor Gegnerbewegungen.
+- Laufpfade als durchgehende Bewegung mit Sinus-Anlauf/Auslauf und weichen Richtungswechseln. Staub-Bursts, Atmen, zufällige Gesten, nachschwingende Umhänge und Auswahlhüpfer mit leuchtendem Ring; auch Saal-Figuren bewegen sich im Stand.
+- Figuren mit Händen, Stiefeln, konfigurierbarem Gesichts-Decal und abgeschrägten Schulterstücken. Körper-Hitboxen bleiben gleich. Reichweiten blenden ein, Angriffsfelder pulsieren.
+- Buttons skalieren beim Drücken/Hovern; Fenster gleiten und blenden auf/zu, Reiter überblenden, Gold/Edelsteine zählen bei Änderungen. Info-Panel und Toasts animiert; Haptik bei Treffer/Krit wird geschützt über `pcall` versucht, falls vom Gerät unterstützt.
+
+**Entscheidungen**
+- Neue Effekt-Einstellungen zentral in `Config.FEEL`; Audio-IDs und Einzellautstärken in `Sounds`.
+- Audio-IDs bleiben leer, bis der Nutzer passende freigegebene Roblox-Audios auswählt. Leere IDs erzeugen weder Sounds noch Warnungen.
+- Hit-Stop nutzt die im Plan vorgesehene verzögerte Rückstoß-Reaktion; `Config.IMPACT_TIME` und `Config.STRIKE_TIME` bleiben unverändert.
+- CanvasGroups erlauben gemeinsames Ausblenden der Fensterinhalte einschließlich Texten und Porträts. Schnell aufeinanderfolgende Animationen brechen ihre Vorgänger ab.
+- Kampf-Effekte laufen nur für den Besitzer des Kampfes. Kamera-Effekte werden beim Wechsel der Karte/Ansicht zurückgesetzt.
+
+**Sound-Platzhalter (alle IDs leer):** `musicHub`, `musicBattle`, `musicVictory`, `musicDefeat`, `click`, `hover`, `open`, `close`, `hit`, `crit`, `miss`, `death`, `levelUp`, `phase`, `recruit`, `recruitRare`, `recruitLegendary`, `coin`, `step`.
+
+**Probleme:** Verbindung während der Umsetzung unterbrochen; auf dem bestehenden Feature-Branch fortgesetzt. Undefinierte Config-Referenz sowie PowerShell-Zeichenkodierung bei einzelnen Ersetzungen korrigiert. Ergebnismusik an den vorhandenen Ergebnis-String `Victory`/`Defeat` angepasst; Tempo-Rückstellung am tatsächlichen Phasenende ergänzt.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. `scripts/check.ps1`: **OK, 24 Dateien, Exit 0**. Rojo-Build von `TacticsGame.rbxlx` erfolgreich. Manuelle Prüfliste steht in `PLAN.md`; unabhängiger Review durch Claude steht aus.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Etappe 2 in Studio testen und Werte abstimmen (Kosten, Raten, Startguthaben, Helden-Werte)
-2. Belohnungen & Klassenwechsel
-3. Tägliche Belohnungen / Quests
-4. Co-op-Raid
-5. Saison-Pass, Rewarded Ads
+1. Claude-Review des Branches `feature/game-feel-1`.
+2. Sound-IDs in `src/shared/Sounds.luau` eintragen; Game-Feel-Prüfliste in Studio und auf dem Handy durchgehen (auch Output, Bildrate, Menü-Übergänge und Tempo-Rückstellung).
+3. Effektstärken, Lautstärken und UI-Bewegungen nach Nutzer-Feedback abstimmen.
+4. Belohnungen & Klassenwechsel.
+5. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.

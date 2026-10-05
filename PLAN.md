@@ -55,9 +55,9 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
   - Mobil: `HapticService` – kurzer Impuls bei Treffer/Krit, falls verfügbar (`pcall`).
   - Fertig, wenn: kein Fenster erscheint/verschwindet mehr „hart"; Buttons reagieren sichtbar auf Drücken.
 
-- [ ] 6. `scripts/check.ps1` ausführen – fertig, wenn: `OK` / Exit 0
-- [ ] 7. Spieldatei bauen (`tools/rojo.exe build default.project.json -o TacticsGame.rbxlx`) – fertig, wenn: Build ohne Fehler
-- [ ] 8. Devlog-Eintrag #10 in `docs/DEVLOG.md` (Teststatus „ungetestet", Liste der Sound-Platzhalter), „Nächste Schritte" aktualisieren; Branch pushen – fertig, wenn: Eintrag vorhanden, Branch auf GitHub
+- [x] 6. `scripts/check.ps1` ausführen – fertig, wenn: `OK` / Exit 0
+- [x] 7. Spieldatei bauen (`tools/rojo.exe build default.project.json -o TacticsGame.rbxlx`) – fertig, wenn: Build ohne Fehler
+- [x] 8. Devlog-Eintrag #10 in `docs/DEVLOG.md` (Teststatus „ungetestet", Liste der Sound-Platzhalter), „Nächste Schritte" aktualisieren; Branch pushen – fertig, wenn: Eintrag vorhanden, Branch auf GitHub
 
 ## Manueller Test in Studio (Nutzer)
 - [ ] Ein paar Sound-IDs in `Sounds.luau` eintragen (Musik Saal/Kampf, hit, click) → hörbar; leere IDs verursachen keine Fehler
