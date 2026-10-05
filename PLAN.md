@@ -34,7 +34,7 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
   - **Überspringen:** Button „⏩ Gegnerphase" im HUD (`UI.luau`, Werkzeugleiste), der während der Gegnerphase Tempo 3 setzt; `SetSpeed` im Server um `3` erweitern (Zeile mit `cmd.speed == 1 or cmd.speed == 2`), nach der Gegnerphase zurück auf den vorherigen Wert.
   - Fertig, wenn: jeder Angriff zoomt heran und wackelt beim Treffer; Krit wirkt deutlich stärker; Gegnerzüge sind mitzuverfolgen; Gegnerphase lässt sich beschleunigen.
 
-- [ ] 4. **Bewegung & Figuren lebendiger**
+- [x] 4. **Bewegung & Figuren lebendiger**
   - `src/server/UnitVisuals.luau` `moveAlong`: Pfad als **eine** durchgehende Bewegung (konstante Geschwindigkeit, `EasingStyle.Sine` nur am Anfang/Ende, keine Mini-Stopps an jedem Feld); Drehung zur Laufrichtung weich.
   - `src/client/UnitAnimator.luau`:
     - Staubwölkchen an den Füßen beim Laufen (Partikel-Burst alle ~0,25 s, solange `Moving`).

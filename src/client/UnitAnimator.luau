@@ -11,10 +11,13 @@ local UnitData = require(Shared:WaitForChild("UnitData"))
 local Animator = {}
 
 local unitsFolder, fxFolder
-local MOTOR_NAMES = { "RootJoint", "Neck", "RightShoulder", "LeftShoulder", "RightHip", "LeftHip" }
+local MOTOR_NAMES = { "RootJoint", "Neck", "RightShoulder", "LeftShoulder", "RightHip", "LeftHip", "CapeJoint" }
 local motorCache = setmetatable({}, { __mode = "k" })
 local baseC0 = setmetatable({}, { __mode = "k" })
 local busy = setmetatable({}, { __mode = "k" }) -- Modelle in einer Kampfanimation
+local life = setmetatable({}, { __mode = "k" })
+local random = Random.new()
+local selected, selectedAt, selectionRing
 
 -- Alle Zeiten laufen über diese Helfer, damit das Tempo (1×/2×) überall wirkt
 local speed = 1
@@ -338,29 +341,101 @@ function Animator.playStrike(strike, weaponKey, onImpact)
 	end)
 end
 
-local function idle()
+function Animator.select(id)
+	if selectionRing then selectionRing:Destroy(); selectionRing = nil end
+	selected = id and unitsFolder:FindFirstChild(id)
+	selectedAt = os.clock()
+	if not selected then return end
+	selectionRing = Instance.new("Model")
+	selectionRing.Name = "SelectionRing"
+	for i = 1, Config.FEEL.selectionRingSegments do
+		local angle = i / Config.FEEL.selectionRingSegments * math.pi * 2
+		local radius = Config.FEEL.selectionRingRadius
+		local segment = fxPart({ Size = Vector3.new(0.12, 0.12, radius * math.pi * 2 / Config.FEEL.selectionRingSegments), Color = Config.OVERLAY.Cursor, Material = Enum.Material.Neon, Transparency = Config.FEEL.selectionRingTransparency })
+		segment.CFrame = CFrame.new(math.cos(angle) * radius, 0.13, math.sin(angle) * radius) * CFrame.Angles(0, -angle, 0)
+		segment.Parent = selectionRing
+	end
+	selectionRing.Parent = fxFolder
+end
+
+local function livingState(model, t)
+	local data = life[model]
+	if not data then
+		data = { phase = random:NextNumber(0, math.pi * 2), nextGesture = t + random:NextNumber(Config.FEEL.idleGestureMin, Config.FEEL.idleGestureMax), gesture = 0, dustAt = 0, cape = 0 }
+		life[model] = data
+	end
+	return data
+end
+
+local function dust(model, data, t)
+	local root = model:FindFirstChild("Root")
+	if not root or t < data.dustAt then return end
+	data.dustAt = t + Config.FEEL.stepDustInterval / speed
+	if not data.emitter then
+		local attachment = Instance.new("Attachment")
+		attachment.Parent = root
+		local emitter = Instance.new("ParticleEmitter")
+		emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		emitter.Color = ColorSequence.new(Color3.fromRGB(193, 176, 144))
+		emitter.Rate = 0
+		emitter.SpreadAngle = Vector2.new(65, 65)
+		emitter.Size = NumberSequence.new(Config.FEEL.stepDustSize, 0)
+		emitter.Transparency = NumberSequence.new(0.6, 1)
+		emitter.Parent = attachment
+		data.emitter = emitter
+	end
+	data.emitter.Lifetime = NumberRange.new(Config.FEEL.stepDustLifetime / speed)
+	data.emitter.Speed = NumberRange.new(Config.FEEL.stepDustSpeed * speed)
+	data.emitter:Emit(Config.FEEL.stepDustCount)
+end
+
+local function idle(dt)
 	local t = os.clock()
-	for i, model in unitsFolder:GetChildren() do
+	if selected and selected.Parent and selectionRing then
+		local root = selected:FindFirstChild("Root")
+		if root then selectionRing:PivotTo(CFrame.new(root.Position)) end
+	elseif selectionRing then
+		Animator.select(nil)
+	end
+	for _, model in unitsFolder:GetChildren() do
 		if not busy[model] then
 			local m = motors(model)
 			if m.RootJoint then
+				local data = livingState(model, t)
+				local jump = 0
+				if model == selected then
+					local alpha = (t - selectedAt) * speed / Config.FEEL.selectionJumpDuration
+					if alpha < 1 then jump = math.sin(alpha * math.pi) * Config.FEEL.selectionJumpHeight end
+				end
+				local moving = model:GetAttribute("Moving")
+				local capeTarget = moving and Config.FEEL.capeMovingAngle or Config.FEEL.capeIdleAngle * math.sin(t * Config.FEEL.breathRate + data.phase)
+				data.cape += (capeTarget - data.cape) * (1 - math.exp(-dt * Config.FEEL.capeSmoothness * speed))
+				pose(m.CapeJoint, CFrame.Angles(-data.cape, 0, 0))
 				if model:GetAttribute("Moving") then
-					local w = math.sin(t * 14)
-					pose(m.RootJoint, CFrame.new(0, math.abs(w) * 0.2, 0))
+					dust(model, data, t)
+					local w = math.sin(t * 14 * speed)
+					pose(m.RootJoint, CFrame.new(0, math.abs(w) * 0.2 + jump, 0))
 					pose(m.RightShoulder, CFrame.Angles(w * 0.6, 0, 0))
 					pose(m.LeftShoulder, CFrame.Angles(-w * 0.6, 0, 0))
 					pose(m.RightHip, CFrame.Angles(-w * 0.7, 0, 0))
 					pose(m.LeftHip, CFrame.Angles(w * 0.7, 0, 0))
 					pose(m.Neck, CFrame.identity)
 				else
-					local phase = i * 1.3
-					local b = math.sin(t * 2 + phase)
-					pose(m.RootJoint, CFrame.new(0, b * 0.06, 0))
-					pose(m.RightShoulder, CFrame.Angles(b * 0.05, 0, 0))
+					if t >= data.nextGesture then
+						data.gesture = t
+						data.kind = random:NextInteger(1, 2)
+						data.nextGesture = t + random:NextNumber(Config.FEEL.idleGestureMin, Config.FEEL.idleGestureMax)
+					end
+					local alpha = math.clamp((t - data.gesture) * speed / Config.FEEL.idleGestureDuration, 0, 1)
+					local gesture = math.sin(alpha * math.pi) * Config.FEEL.idleGestureAngle
+					local phase = data.phase
+					local b = math.sin(t * Config.FEEL.breathRate + phase)
+					pose(m.RootJoint, CFrame.new(0, b * Config.FEEL.breathHeight + jump, 0))
+					pose(m.RightShoulder, CFrame.Angles(b * 0.05 - (data.kind == 2 and gesture or 0), 0, 0))
 					pose(m.LeftShoulder, CFrame.Angles(-b * 0.05, 0, 0))
 					pose(m.RightHip, CFrame.identity)
 					pose(m.LeftHip, CFrame.identity)
-					pose(m.Neck, CFrame.Angles(0, math.sin(t * 0.7 + phase) * 0.12, 0))
+					pose(m.Neck, CFrame.Angles(0, math.sin(t * 0.7 + phase) * 0.12 + (data.kind == 1 and gesture or 0), 0))
 				end
 			end
 		end

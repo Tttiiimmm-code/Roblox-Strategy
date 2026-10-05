@@ -95,6 +95,17 @@ local function addOverlay(list, x, y, color, transparency, height)
 	local T = Config.TILE_SIZE
 	local p = makeFxPart(Vector3.new(T - 0.8, 0.1, T - 0.8), color, transparency or 0.5)
 	p.Position = Grid.toWorld(x, y) + Vector3.new(0, height or 0.06, 0)
+	local target = transparency or 0.5
+	p.Transparency = 1
+	local fade = TweenService:Create(p, TweenInfo.new(Config.FEEL.overlayFade), { Transparency = target })
+	fade:Play()
+	if color == Config.OVERLAY.Attack or color == Config.OVERLAY.Danger then
+		fade.Completed:Once(function(status)
+			if status == Enum.PlaybackState.Completed and p.Parent then
+				TweenService:Create(p, TweenInfo.new(Config.FEEL.overlayPulseDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = math.min(1, target + Config.FEEL.overlayPulseAmount) }):Play()
+			end
+		end)
+	end
 	table.insert(list, p)
 end
 
@@ -243,6 +254,7 @@ local function setMode(newMode)
 end
 
 local function resetSelection()
+	UnitAnimator.select(nil)
 	selectedId, nodes, dest, pendingTargetId, inspectedId = nil, nil, nil, nil, nil
 	targets = {}
 	clearList(overlays)
@@ -269,6 +281,7 @@ end
 local function selectUnit(unit)
 	resetSelection()
 	selectedId = unit.id
+	UnitAnimator.select(unit.id)
 	nodes = showRanges(unit, Config.OVERLAY.Move)
 	setMode("Selected")
 end

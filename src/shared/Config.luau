@@ -2,6 +2,13 @@
 local Config = {}
 
 Config.FEEL = {
+	faceTexture = "rbxasset://textures/face.png",
+	moveEaseFraction = 0.12, turnSmoothness = 14,
+	stepDustInterval = 0.25, stepDustCount = 4, stepDustLifetime = 0.45, stepDustSize = 0.6, stepDustSpeed = 1.4,
+	idleGestureMin = 6, idleGestureMax = 12, idleGestureDuration = 1.3, idleGestureAngle = 0.3,
+	breathHeight = 0.09, breathRate = 2, capeMovingAngle = 0.25, capeIdleAngle = 0.04, capeSmoothness = 8,
+	selectionJumpHeight = 0.5, selectionJumpDuration = 0.3, selectionRingRadius = 2.6, selectionRingSegments = 24,
+	selectionRingTransparency = 0.2, overlayFade = 0.18, overlayPulseDuration = 0.8, overlayPulseAmount = 0.12,
 	battleZoom = 42, cameraFocusTime = 0.22, cameraRestoreTime = 0.3,
 	shakeStrength = 0.28, critShakeStrength = 0.7, shakeDuration = 0.18, critShakeDuration = 0.38,
 	hitStop = 0.06, critFlashTransparency = 0.65, critFlashDuration = 0.2,

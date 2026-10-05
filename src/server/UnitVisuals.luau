@@ -1,4 +1,5 @@
 -- 3D-Darstellung der Einheiten: Figuren platzieren, bewegen, drehen, KP-Anzeige, Tod
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -30,12 +31,6 @@ local function yawBetween(a, b)
 		return nil
 	end
 	return math.atan2(-d.X, -d.Z)
-end
-
-local function tweenAndWait(inst, time, goal, style)
-	local tween = TweenService:Create(inst, TweenInfo.new(time, style or Enum.EasingStyle.Quad), goal)
-	tween:Play()
-	tween.Completed:Wait()
 end
 
 local function getModel(id)
@@ -143,17 +138,33 @@ function UnitVisuals.update(unit)
 	UnitVisuals.setHp(unit.id, unit.hp, unit.maxHp)
 end
 
--- Läuft den Pfad Feld für Feld ab und schaut dabei in Laufrichtung (blockiert bis zum Ende)
+-- Ein durchgehender Weg; Tempoänderungen wirken auch während des Laufens.
 function UnitVisuals.moveAlong(unit, path)
 	local model, root = getModel(unit.id)
-	if not model or #path < 2 then
-		return
-	end
+	if not model or #path < 2 then return end
 	model:SetAttribute("Moving", true)
-	for i = 2, #path do
-		local from, to = path[i - 1], path[i]
-		local yaw = yawBetween(Grid.toWorld(from.x, from.y), Grid.toWorld(to.x, to.y)) or 0
-		tweenAndWait(root, Config.MOVE_STEP_TIME / speed, { CFrame = rootCFrame(to.x, to.y, yaw) }, Enum.EasingStyle.Linear)
+	local progress, length = 0, #path - 1
+	local rotation = root.CFrame.Rotation
+	while progress < length and root.Parent do
+		local dt = RunService.Heartbeat:Wait()
+		progress = math.min(length, progress + dt * speed / Config.MOVE_STEP_TIME)
+		local alpha = progress / length
+		local edge = Config.FEEL.moveEaseFraction
+		local normalization = 1 - 2 * edge + 4 * edge / math.pi
+		if alpha < edge then
+			alpha = edge * 2 / math.pi * (1 - math.cos(alpha / edge * math.pi / 2)) / normalization
+		elseif alpha > 1 - edge then
+			alpha = 1 - edge * 2 / math.pi * (1 - math.cos((1 - alpha) / edge * math.pi / 2)) / normalization
+		else
+			alpha = (alpha - edge + 2 * edge / math.pi) / normalization
+		end
+		local distance = alpha * length
+		local index = math.min(math.floor(distance) + 1, length)
+		local a, b = path[index], path[index + 1]
+		local from, to = Grid.toWorld(a.x, a.y), Grid.toWorld(b.x, b.y)
+		local target = CFrame.Angles(0, yawBetween(from, to) or 0, 0)
+		rotation = rotation:Lerp(target, 1 - math.exp(-Config.FEEL.turnSmoothness * dt * speed))
+		root.CFrame = CFrame.new(from:Lerp(to, distance - index + 1) + Vector3.new(0, 0.1, 0)) * rotation
 	end
 	model:SetAttribute("Moving", false)
 end

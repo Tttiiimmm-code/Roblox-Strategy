@@ -44,7 +44,7 @@ function CharacterBuilder.build(unit)
 	end
 
 	local function part(name, size, cf, color, props)
-		local p = Instance.new("Part")
+		local p = Instance.new(props and props.Wedge and "WedgePart" or "Part")
 		p.Name = name
 		p.Size = size * s
 		p.CFrame = cf
@@ -63,7 +63,7 @@ function CharacterBuilder.build(unit)
 		end
 		if props then
 			for k, v in props do
-				p[k] = v
+				if k ~= "Wedge" then p[k] = v end
 			end
 		end
 		p.Parent = model
@@ -129,13 +129,17 @@ function CharacterBuilder.build(unit)
 		local rLeg = part("RightLeg", Vector3.new(0.95, 2, 0.95), at(0.5, 1, 0), look.legs)
 		motor("LeftHip", root, lLeg, at(-0.5, 2, 0))
 		motor("RightHip", root, rLeg, at(0.5, 2, 0))
+		for _, leg in { lLeg, rLeg } do
+			local boot = part(leg.Name .. "Boot", Vector3.new(0.98, 0.65, 1.08), at(leg == lLeg and -0.5 or 0.5, 0.33, -0.04), LEATHER, { CanQuery = false })
+			weld(leg, boot)
+		end
 	end
 
 	local hy = hipY + 2.8
 	local head = part("Head", Vector3.new(1.6, 1.6, 1.6), at(0, hy, 0), SKIN)
 	motor("Neck", torso, head, at(0, hipY + 2, 0))
 	local face = Instance.new("Decal")
-	face.Texture = "rbxasset://textures/face.png"
+	face.Texture = Config.FEEL.faceTexture
 	face.Face = Enum.NormalId.Front
 	face.Parent = head
 
@@ -151,6 +155,9 @@ function CharacterBuilder.build(unit)
 		weld(attachTo, p)
 		return p
 	end
+
+	extra("RightHand", Vector3.new(0.65, 0.5, 0.65), at(1.4, hipY + 0.1, 0), SKIN, rArm)
+	extra("LeftHand", Vector3.new(0.65, 0.5, 0.65), at(-1.4, hipY + 0.1, 0), SKIN, lArm)
 
 	local heroDef = unit.heroId and UnitData.Heroes[unit.heroId]
 	local hair = (heroDef and heroDef.hair) or look.hair
@@ -189,8 +196,8 @@ function CharacterBuilder.build(unit)
 			{ Material = Enum.Material.Fabric })
 	end
 	if look.pads then
-		extra("PadR", Vector3.new(1.0, 0.5, 1.0), at(1.4, hipY + 2.0, 0), METAL, rArm, { Material = Enum.Material.Metal })
-		extra("PadL", Vector3.new(1.0, 0.5, 1.0), at(-1.4, hipY + 2.0, 0), METAL, lArm, { Material = Enum.Material.Metal })
+		extra("PadR", Vector3.new(1.0, 0.5, 1.0), at(1.4, hipY + 2.0, 0), METAL, rArm, { Material = Enum.Material.Metal, Wedge = true })
+		extra("PadL", Vector3.new(1.0, 0.5, 1.0), at(-1.4, hipY + 2.0, 0), METAL, lArm, { Material = Enum.Material.Metal, Wedge = true })
 	end
 	if look.quiver then
 		extra("Quiver", Vector3.new(0.6, 1.8, 0.6), at(0.5, hipY + 1.3, 0.75) * CFrame.Angles(0, 0, math.rad(-25)), LEATHER, torso)
@@ -274,6 +281,19 @@ function CharacterBuilder.build(unit)
 			{ Transparency = 1, CastShadow = false })
 		local e = sparkles(emitter, 8, 0.4, 1.4, 3)
 		e.EmissionDirection = Enum.NormalId.Top
+	end
+
+	local cape = model:FindFirstChild("Cape")
+	if cape then
+		local constraint = cape:FindFirstChildOfClass("WeldConstraint")
+		if constraint then constraint:Destroy() end
+		motor("CapeJoint", torso, cape, at(0, hipY + 2.1, 0.62))
+		local trim = model:FindFirstChild("CapeTrim")
+		if trim then
+			local trimWeld = trim:FindFirstChildOfClass("WeldConstraint")
+			if trimWeld then trimWeld:Destroy() end
+			weld(cape, trim)
+		end
 	end
 
 	local topY = hipY + 3.8 + (g == "wizard" and 1.4 or 0) + (g == "horned" and 0.6 or 0)
