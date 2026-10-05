@@ -20,7 +20,7 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
   - Beschwörungskreis-Schild: Der Kreis ist ein um Z gedrehter Zylinder – `label()` daher an einen eigenen unsichtbaren, aufrechten Anker-Part hängen (`Transparency=1`, `CanCollide/CanQuery=false`, 1×1×1, über dem Kreismittelpunkt) statt an `circle`. Gleiches Muster für alle Labels nutzen, deren Anker gedreht ist.
   - Fertig, wenn: Saal nicht mehr weiß ausgebrannt, Schatten sichtbar, Schild über dem Kreis lesbar.
 
-- [ ] 3. **Sounds eintragen** – Datei: `src/shared/Sounds.luau` (Format `"rbxassetid://<id>"`)
+- [x] 3. **Sounds eintragen** – Datei: `src/shared/Sounds.luau` (Format `"rbxassetid://<id>"`)
   | Platz | ID | Titel (Quelle) |
   |---|---|---|
   | musicHub | 1839906422 | Medieval Castle (APMOfficial) – Alternative 139186694323000 Royal Court Background Music |
