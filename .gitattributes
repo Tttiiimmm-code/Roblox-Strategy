@@ -1,0 +1,5 @@
+# Einheitliche Zeilenenden (LF), damit Claude und Codex keine Zeilenende-Diffs erzeugen
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.exe binary
+*.rbxlx binary

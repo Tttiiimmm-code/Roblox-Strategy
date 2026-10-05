@@ -1,0 +1,121 @@
+-- Taktik-Kamera: WASD/Ziehen verschieben, Q/E/Zwei-Finger drehen, Mausrad/Pinch zoomen
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Players = game:GetService("Players")
+
+local CameraController = {}
+
+local active = false -- true = Taktik-Kamera (eigener Kampf), false = normale Avatar-Kamera im Thronsaal
+local focus = Vector3.zero
+local bounds = Vector3.new(100, 0, 100)
+local zoom = 75
+local yaw = 0
+
+local function clampFocus()
+	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), 0, math.clamp(focus.Z, 0, bounds.Z))
+end
+
+function CameraController.setBounds(center, size)
+	focus = center
+	bounds = size
+	zoom = math.clamp(math.max(size.X, size.Z) * 0.85, 45, 120)
+end
+
+-- Bildschirm-Verschiebung in Pixeln ("Karte greifen")
+function CameraController.panBy(delta)
+	local rotation = CFrame.Angles(0, yaw, 0)
+	local k = zoom / 520
+	focus += rotation:VectorToWorldSpace(Vector3.new(-delta.X, 0, -delta.Y)) * k
+	clampFocus()
+end
+
+function CameraController.zoomBy(factor)
+	if factor > 0 then
+		zoom = math.clamp(zoom / factor, 30, 140)
+	end
+end
+
+function CameraController.rotateBy(radians)
+	yaw += radians
+end
+
+function CameraController.isActive()
+	return active
+end
+
+function CameraController.setActive(on)
+	if on == active then
+		return
+	end
+	active = on
+	if not on then
+		local camera = workspace.CurrentCamera
+		camera.CameraType = Enum.CameraType.Custom
+		local character = Players.LocalPlayer.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			camera.CameraSubject = humanoid
+		end
+	end
+end
+
+function CameraController.start()
+	local camera = workspace.CurrentCamera
+
+	UserInputService.InputChanged:Connect(function(input, processed)
+		if active and not processed and input.UserInputType == Enum.UserInputType.MouseWheel then
+			zoom = math.clamp(zoom - input.Position.Z * 6, 30, 140)
+		end
+	end)
+
+	local lastPinch, lastRotation = 1, 0
+	UserInputService.TouchPinch:Connect(function(_, scale, _, state, processed)
+		if processed or not active then
+			return
+		end
+		if state == Enum.UserInputState.Begin then
+			lastPinch = 1
+		end
+		CameraController.zoomBy(scale / lastPinch)
+		lastPinch = scale
+	end)
+	UserInputService.TouchRotate:Connect(function(_, rotation, _, state, processed)
+		if processed or not active then
+			return
+		end
+		if state == Enum.UserInputState.Begin then
+			lastRotation = 0
+		end
+		CameraController.rotateBy(math.rad(rotation - lastRotation))
+		lastRotation = rotation
+	end)
+
+	RunService.RenderStepped:Connect(function(dt)
+		if not active then
+			return
+		end
+		if camera.CameraType ~= Enum.CameraType.Scriptable then
+			camera.CameraType = Enum.CameraType.Scriptable
+		end
+
+		local move = Vector3.zero
+		if not UserInputService:GetFocusedTextBox() then
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += Vector3.new(0, 0, -1) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then move += Vector3.new(0, 0, 1) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then move += Vector3.new(-1, 0, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += Vector3.new(1, 0, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Q) then yaw += dt * 1.5 end
+			if UserInputService:IsKeyDown(Enum.KeyCode.E) then yaw -= dt * 1.5 end
+		end
+
+		local rotation = CFrame.Angles(0, yaw, 0)
+		focus += rotation:VectorToWorldSpace(move) * dt * 45
+		clampFocus()
+
+		local offset = rotation:VectorToWorldSpace(Vector3.new(0, 1, 0.75).Unit * zoom)
+		camera.CFrame = CFrame.lookAt(focus + offset, focus)
+	end)
+end
+
+return CameraController

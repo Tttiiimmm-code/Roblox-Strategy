@@ -1,0 +1,203 @@
+# Devlog – Tactics (Roblox, Fire-Emblem-Stil)
+
+Chronologisches Entwicklungstagebuch. Jeder Eintrag: Ziel · Umsetzung · Entscheidungen · Probleme · Teststatus.
+Neue Einträge kommen ans Ende.
+
+---
+
+## #1 – Spielbarer Prototyp
+**Datum:** 05.10.2026
+
+**Ziel:** Ein rundenbasiertes Strategiespiel im Stil von Fire Emblem als Roblox-Grundgerüst.
+
+**Umsetzung**
+- Projektstruktur für **Rojo** (`default.project.json`): `src/shared` → ReplicatedStorage, `src/server` → ServerScriptService, `src/client` → StarterPlayerScripts. Avatar deaktiviert (`CharacterAutoLoads = false`), reine Taktik-Kamera.
+- **Karte** als ASCII-Text (12×10): Ebene, Wald, Berg, Wasser, Festung – jeweils mit Bewegungskosten, Ausweich- und Verteidigungsbonus; Festungen heilen 20 % pro Runde.
+- **Bewegung:** Dijkstra-Wegfindung (`Grid.luau`); Verbündete passierbar, Gegner blockieren; Reiter im Wald langsamer, auf Bergen nicht möglich.
+- **Kampf** (`Combat.luau`): Waffendreieck (Schwert > Axt > Lanze > Schwert, ±15 Treffer/±1 Schaden), Treffer/Krit-Formeln wie in den GBA-Teilen, „2RN“-Trefferwurf, Doppelangriff ab +4 Tempo, Gegenangriff nur in Reichweite, Bögen 2 Felder, Magie 1–2 Felder gegen Resistenz.
+- **Kampfvorschau** vor jedem Angriff; **EP & Level-Up** mit Wachstumsraten pro Klasse; **Permadeath**; Sieg (alle Gegner besiegt) / Niederlage (Lord fällt).
+- **Gegner-KI** (`EnemyAI.luau`): bewertet alle erreichbaren Angriffe (erwarteter Schaden, Kill-Bonus, Gegenangriff-Risiko), sonst Vorrücken auf echtem Weg; Boss bleibt stationär.
+- **Server-autoritativ:** Client schickt nur „Einheit → Feld → Warten/Angriff“, Server prüft alles. Bewegung + Aktion als ein Befehl (Bewegung im Client nur als Vorschau) → kein Rückgängig-Problem.
+- 5 Helden (Fürst, Kavalier, Bogenschütze, Magier, Kämpfer) gegen 7 Gegner inkl. Boss.
+
+**Teststatus:** nicht ausgeführt (kein Studio/Luau-Werkzeug auf dem PC), nur Code-Review.
+
+---
+
+## #2 – Werkzeuge & Roblox Studio einrichten
+**Datum:** 05.10.2026
+
+**Umsetzung**
+- Rojo 7.4.4 nach `tools/` heruntergeladen, Spieldatei `TacticsGame.rbxlx` per `rojo build` erzeugt.
+- Roblox Studio war nicht installiert → offiziellen Installer geladen (Signatur der Roblox Corporation geprüft) und installiert.
+- Rojo-Plugin für Studio installiert; `rojo serve` läuft im Hintergrund (Port 34872) für Live-Sync.
+
+**Probleme**
+- `rojo plugin install` schlug vor dem ersten Studio-Login fehl (fehlende Registry-Einträge) → Plugin (`Rojo.rbxm`) direkt in `%LOCALAPPDATA%\Roblox\Plugins` gelegt; nach dem Login funktionierte der reguläre Befehl.
+
+**Teststatus:** ✅ Erster Start in Studio – Spiel lief, keine Script-Fehler im Log. Feedback: „Es scheint alles zu funktionieren.“
+
+---
+
+## #3 – Figuren, Kampfanimationen, UI im FE-Stil
+**Datum:** 05.10.2026
+
+**Ziel:** Platzhalter-Zylinder durch Charaktermodelle ersetzen, Kämpfe animieren, UI aufhübschen.
+
+**Umsetzung**
+- **CharacterBuilder** (Server): Block-Figuren mit Motor6D-Gelenken (Hüfte, Schultern, Nacken, Beine) – je Klasse eigenes Aussehen: Fürst mit Umhang & Diadem, Kavalier auf Pferd, Magier mit Spitzhut & Buch, Bogenschütze mit Kapuze & Köcher, Banditen mit Kopftuch, Soldaten mit Helm, Boss größer mit Hörnerhelm. Waffen sichtbar in der Hand.
+- **UnitAnimator** (Client): Idle-Wippen, Laufanimation, Angriffe je Waffentyp (Schwert/Axt: Ausholen & Schlag, Lanze: Stoß, Bogen: Pfeil fliegt, Magie: Feuerball + Explosion), Treffer-Aufleuchten mit Rückstoß, Ausweichen zur Seite, Krit mit Sprung, Umfallen beim Tod.
+- Server dreht Kämpfer zueinander und setzt KP exakt im Trefferzeitpunkt (`IMPACT_TIME`), Client animiert – synchron über feste Timings.
+- **UI:** blaue Fenster mit Goldrand, Fondamento-Schrift, Phasen-Banner, 3D-Porträt (ViewportFrame) im Info-Fenster, KP-Balken mit Schadensvorschau, Geländeanzeige, Level-Up-Fenster, Waffendreieck-Pfeile ▲▼.
+
+**Entscheidungen:** Animationen laufen nur auf dem Client (flüssig, keine Netzlast); der Server bestimmt nur Ergebnis und Timing.
+
+**Qualität:** Offiziellen Luau-Compiler nach `tools/luau` geladen → alle Skripte syntaxgeprüft (Prüfung meldet Fehler nachweislich korrekt).
+
+**Teststatus:** ✅ in Studio verwendet (Grundlage für die nächsten Schritte).
+
+---
+
+## #4 – Marktrecherche
+**Datum:** 05.10.2026
+
+**Ziel:** Von den erfolgreichsten Roblox-Spielen lernen (Gameplay, Optik, Monetarisierung, Spielschleife).
+
+**Ergebnis** (Details: `docs/recherche-roblox-markt.md`, 22 Quellen)
+- Hits haben einen in einem Satz erklärbaren Loop, Sammeln mit Seltenheiten, Events, soziale Elemente.
+- Roblox-Algorithmus belohnt: wenig Absprung in den ersten 60 s, viele Spieltage, Spielen mit Freunden.
+- 72 % Handy-Nutzung → Touch-Steuerung ist Pflicht.
+- Zufallsitems gegen Robux erfordern sichtbare Wahrscheinlichkeiten.
+- Kein großes Roblox-Taktikspiel gefunden → Nische; nächstes Genre ist Tower Defense mit Einheiten-Sammeln.
+
+**Entscheidungen (mit dir abgestimmt):** Zugänglichkeit für alle Alters- und Könnensstufen + ansprechende Figuren mit Seltenheitsstufen haben Priorität.
+
+---
+
+## #5 – Etappe 1: Schwierigkeit, Sterne, Seltenheit, Zugänglichkeit
+**Datum:** 05.10.2026
+
+**Ziel:** Spiel für alle zugänglich machen; Leistung belohnen; Seltenheiten sichtbar machen.
+
+**Umsetzung**
+- **Spielablauf:** Kartenauswahl → Aufstellung → Kampf → Ergebnis → Nächste Mission / Nochmal.
+- **3 Missionen** (`Stages.luau`): Grenzdorf (Einstieg, 3 Helden), Waldpass (Fluss mit Brücken – neues Gelände „Brücke“), Banditenfestung (Boss). Helden kommen nach und nach dazu.
+- **Schwierigkeitsstufen pro Mission:**
+  - *Leicht:* schwächere Gegner, 3× Rückblende, +4 Runden Ziel, 1× Gold, 5 ♦/Stern
+  - *Normal:* Standard, 1× Rückblende, 2× Gold, 10 ♦/Stern
+  - *Schwer:* stärkere + zusätzliche Gegner, max. 4 Einheiten, keine Rückblende, −1 Runde, 3× Gold, 20 ♦/Stern, erst nach Normal freigeschaltet
+- **3 Sterne:** Sieg · keine Verluste · Rundenziel. Gold je Sieg (mehr bei mehr Sternen), Edelsteine nur für **neue** Sterne → Wiederholen lohnt sich.
+- **Rückblende** (Zug zurücknehmen) serverseitig per Zustands-Snapshot.
+- **Speichern** (`ProfileStore.luau`, DataStore): Gold, Edelsteine, Sterne; fällt ohne API-Zugriff sauber auf Sitzungsspeicher zurück (Hinweis in der Kartenauswahl).
+- **Seltenheiten ★1–★5** (Gewöhnlich → Legendär) mit aufwendigerem Design je Stufe: Schnalle → Metallkragen → leuchtende Waffe mit Funken & Umhangsaum → goldenes Wappen & Aura mit aufsteigenden Funken. Farbige Namen, Kartenrahmen, Porträts.
+- **Zugänglichkeit:** Touch (Tippen, Ziehen, Pinch-Zoom, Zwei-Finger-Drehen), Zurück-Button, Kontext-Hinweise je Schritt, Gefahrenzone (alle Gegnerreichweiten), Tempo 1×/2×, Aufgeben mit Bestätigung, UI skaliert mit der Bildschirmgröße.
+- Neue Client-Module: `UIKit` (gemeinsame Bausteine), `MenuUI` (Kartenauswahl, Aufstellung, Ergebnis mit animierten Sternen).
+
+**Probleme**
+- Tempo-Helfer in `UnitAnimator` wurden vor ihrer Definition benutzt → beim Prüfen gefunden und behoben.
+- Luau-Analyzer zusätzlich eingesetzt: keine undefinierten Variablen (nur Roblox-Globals gemeldet).
+- Hook „GateGuard“ blockierte jede neue Datei → `src/**` und `docs/**` per `.claude/settings.local.json` freigegeben.
+
+**Offen:** Speichern in Studio erst nach Veröffentlichung + „Enable Studio Access to API Services“.
+
+**Teststatus:** ✅ In Studio getestet – Feedback: „Hat alles funktioniert“.
+
+---
+
+## #6 – Etappe 2 (Grundgerüst): Rekrutierung, Kaserne, dauerhafte Helden
+**Datum:** 05.10.2026
+
+> ⚠ **Grundgerüst, nicht final.** Alle Zahlen, Helden, Texte und Layouts sind Platzhalter und bewusst zentral in Konfigurationstabellen abgelegt, damit sie jederzeit geändert werden können.
+
+**Ziel:** Sammel- und Fortschrittssystem: Helden rekrutieren, sammeln, dauerhaft verbessern.
+
+**Umsetzung**
+- **Heldenpool:** 6 neue Helden → je 2 rekrutierbare pro Seltenheit (★1 Finn, Ida · ★2 Bruno, Kai · ★3 Tobi, Greta · ★4 Mira, Selina · ★5 Aurelia, Siegfried). Leon bleibt fester Startheld. Neue Helden mit eigener Haarfarbe zur Unterscheidung.
+- **Rekrutierung** (`shared/Recruit.luau`, Server-seitig gewürfelt):
+  - 1× = 50 ♦, 10× = 450 ♦
+  - Chancen: ★5 2 % · ★4 8 % · ★3 20 % · ★2 30 % · ★1 40 %, innerhalb einer Stufe gleich verteilt
+  - Pity: spätestens 30. Ruf ★4+, spätestens 80. Ruf ★5 (Zähler im Profil gespeichert)
+  - Doppelte Helden → Verschmelzung (+1 KP je Stufe, max. 10) – Platzhalter-Effekt
+  - Vollständige Wahrscheinlichkeitsliste je Held vor dem Kauf einsehbar (Roblox-Pflicht, sobald Edelsteine mit Robux kaufbar werden)
+  - Enthüllung: Karten erscheinen nacheinander, „NEU!“ bzw. „+1 Verschm.“, Goldblitz bei ★5
+- **Kaserne:** Sammlung mit Fortschritt („Helden gesammelt: x / y“), Detailansicht mit 3D-Porträt, Werten, Level, EP, Verschmelzungen.
+- **Dauerhafte Helden:** Level, EP und durch Level-Ups gestiegene Werte werden nach jedem Kampf (Sieg oder Niederlage) ins Profil geschrieben.
+- **Aufstellung neu:** Missionen haben Startfelder statt fester Helden; du wählst deinen Trupp aus der Sammlung (Leon immer dabei, Limit je Karte/Stufe). Letzter Trupp wird vorausgewählt.
+- **Story-Freischaltung:** Erster Sieg in Grenzdorf → Mira, in Waldpass → Selina (Anzeige im Ergebnis).
+- **Lobby mit Reitern:** Missionen · Rekrutieren · Kaserne.
+- Neue Profile: Leon, Bruno, Tobi + 300 ♦ Startguthaben (zum Ausprobieren).
+- `CharacterBuilder` nach `shared` verschoben, damit der Client Porträts für Helden bauen kann, die nicht auf dem Feld stehen.
+
+**Technik:** Profil-Schema v2 (`heroes`, `pity`) mit automatischer Ergänzung fehlender Felder. Bei der Rückblende werden die Helden-Referenzen mit den wiederhergestellten Einheiten aktualisiert, damit der Fortschritt korrekt gespeichert wird.
+
+**Qualität:** alle 19 Skripte syntaxgeprüft, Luau-Analyzer ohne undefinierte Variablen.
+
+**Teststatus:** ⏳ noch nicht in Studio getestet.
+
+---
+
+## #7 – Fix: Rojo-Verbindung („Unknown HTTP error“)
+**Datum:** 05.10.2026
+
+**Problem:** Studio konnte sich nicht mehr mit dem Rojo-Server verbinden – erst endloses Laden, dann „Unknown HTTP error“.
+
+**Analyse:** Server lief und lieferte die Projektdaten korrekt aus (geprüft über `/api/rojo` und `/api/read`). Er lauscht aber nur auf `127.0.0.1` (IPv4); Studio löste `localhost` teils als IPv6 (`::1`) auf und erreichte ihn nicht. Server zusätzlich frisch neu gestartet.
+
+**Lösung:** Im Rojo-Plugin als Adresse **`127.0.0.1`** eintragen (Port 34872). Hinweis in die README aufgenommen.
+
+**Teststatus:** ✅ Verbindung klappt – bestätigt.
+
+Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
+
+---
+
+## #8 – Thronsaal-Hub (Grundgerüst)
+**Datum:** 05.10.2026
+
+**Idee (von dir):** 3D-Thronsaal in Weiß/Rot/Gold als Hub. Spieler laufen mit eigenem Avatar herum und treffen sich. Einrichtungen: Kriegstisch/Lageplan → Missionen, Soldatenquartier → Kaserne, Hofmagier mit Beschwörungskreis → Rekrutieren. Auf den großen Thron springen öffnet ein Schnellmenü mit allen Einrichtungen.
+
+**Erledigt (Server)**
+- `server/HubBuilder.luau`: Saal mit Marmorboden, rotem Teppich mit Goldkanten, Säulen, Wandbannern, Kronleuchtern, Empore mit Thron (`Seat` „Throne“), Kriegstisch mit Mini-Lageplan aus der echten Karte, Waffenständer + Hauptmann, Beschwörungskreis mit Runen, Partikeln und Magier. ProximityPrompts (Taste E) mit Attribut `Station` = missions/recruit/barracks. Spawn im Saal (`HubSpawn`).
+- Avatare aktiviert (`CharacterAutoLoads = true`, auch in `default.project.json`).
+- Kampf-Besitzer: Wer eine Mission startet, steuert sie allein (`ownerUserId/ownerName` im Snapshot); andere Spieler können nur noch rekrutieren und die Kaserne nutzen.
+
+- Verlässt der Kampf-Besitzer das Spiel, wird der Kampf beendet.
+
+**Erledigt (Client)**
+- `CameraController.setActive`: Taktik-Kamera nur im eigenen Kampf, sonst normale Avatar-Kamera.
+- `client/Hub.luau`: Prompts → Menü öffnen, Sitzen auf dem Thron → Schnellmenü, drehende Runen/Kreis, Avatar-Steuerung und Prompts im Kampf gesperrt.
+- `MenuUI`: Menüs öffnen nur auf Wunsch (✕ zum Schließen), Schnellmenü am Thron (Missionen/Rekrutieren/Kaserne/Aufstehen), Saal-Anzeige mit Gold/Edelsteinen und Hinweis „X kämpft gerade“; Missionsstart gesperrt, solange ein anderer kämpft. Nach Kampf/Aufstellung zurück → Missionsmenü öffnet sich direkt wieder.
+- `Main.client`: Kampfansicht, Eingaben und EP-Meldungen nur im eigenen Kampf.
+
+**Qualität:** Syntaxcheck und Analyzer ohne Fehler.
+
+**Teststatus:** ⏳ noch nicht in Studio getestet.
+
+**Bekannte Einschränkung:** Der Server führt nur einen Kampf gleichzeitig. Eigene Kampf-Instanzen pro Spieler wären der nächste größere Umbau.
+
+---
+
+## #9 – Arbeitsweise: Claude + Codex
+**Datum:** 05.10.2026
+
+**Ziel:** Weiterentwicklung auf zwei KI-Agenten aufteilen, um Nutzungslimits zu schonen: Claude plant und reviewt, Codex setzt um, du testest.
+
+**Umsetzung**
+- `AGENTS.md` (gemeinsame Regeln) mit echten Projektdaten gefüllt: Roblox/Luau/Rojo, Ordnerstruktur, Befehle, Architekturregeln (Server autoritativ, Werte zentral, Profil-Schema, Odds-Pflicht), manueller Testablauf, Devlog-Pflicht für beide Agenten.
+- `CLAUDE.md`: Rolle Planer/Reviewer; Pläne mit konkreten Dateien, Mustern und Studio-Prüfpunkten.
+- `PLAN.md`: Vorlage um Kontext, Prüf-/Build-/Devlog-Schritte und einen Abschnitt „Manueller Test in Studio“ ergänzt.
+- `scripts/check.ps1`: ein Befehl für Syntax + undefinierte Variablen über alle Skripte (Exit 0 = ok).
+- Git-Repository angelegt (`main`), `.gitignore` für Build-Datei, `tools/` und lokale Einstellungen.
+
+**Probleme:** Windows PowerShell 5.1 wertet stderr des Analyzers bei `ErrorActionPreference = Stop` als Abbruch → auf `Continue` gestellt; Umlaute in der Ausgabe durch ASCII ersetzt.
+
+**Teststatus:** ✅ `check.ps1` läuft (21 Dateien, OK).
+
+---
+
+## Nächste Schritte (Plan)
+1. Etappe 2 in Studio testen und Werte abstimmen (Kosten, Raten, Startguthaben, Helden-Werte)
+2. Belohnungen & Klassenwechsel
+3. Tägliche Belohnungen / Quests
+4. Co-op-Raid
+5. Saison-Pass, Rewarded Ads

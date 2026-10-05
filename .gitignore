@@ -1,0 +1,16 @@
+# Build-Ergebnis (wird aus src/ erzeugt)
+*.rbxlx
+*.rbxl
+*.rbxlx.lock
+*.rbxl.lock
+
+# Lokale Werkzeuge (Rojo, Luau) – siehe README zum Herunterladen
+tools/
+
+# Persönliche Claude-Code-Einstellungen
+.claude/settings.local.json
+
+# System
+Thumbs.db
+desktop.ini
+.DS_Store
