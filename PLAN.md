@@ -85,7 +85,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
   - Gesperrt-Texte ohne Emoji: Knoten „???", Start-Knopf „Zuerst auf %s schaffen", Warte-Text ohne „⏳" („%s kämpft gerade – bitte warten"); alle übrigen „🔒"/„⏳" in `src` ebenso ersetzen (`rg "🔒|⏳" src`).
   - Fertig, wenn: Weltkarte zeigt 4 Gebiete (2 aktiv, 2 „Bald verfügbar"), 5 Knoten, Wege inkl. Verzweigung nach s2; Auswahl und Missionsstart funktionieren am PC und per Touch.
 
-- [ ] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
+- [x] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
 - [ ] 8. Devlog-Eintrag #15 „Weltkarte + Nebelsumpf" (Teststatus „ungetestet"), Ausblick unten unter „Nächste Schritte" übernehmen, Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test in Studio (Nutzer)
@@ -111,6 +111,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Schritt 7: Pflicht-Check OK (25 Dateien, Exit 0), Rojo-Build erfolgreich. Lokaler Luau-Lauf mit tatsächlichen Shared-Modulen und Roblox-Werttyp-Stubs bestätigt Verzweigung s2→s3/s4, s4→s5, ODER-Vorgängerregel, alte Sternedaten und unveränderte Schwer-Regel; Morast-Kosten 2/3, D unpassierbar, Trefferchance bei Morast +15 und Anzeige -15; jeder Gegner beider Karten von jedem Slot mit Grid.reachable erreichbar; Hexen-/Atmosphärendaten korrekt. Prüfhilfe nur lokal unter .handoff, nicht im Commit. Studio-/Handy-Test und Claude-Review ausstehend.
 - Schritt 6: Weltkarte mit 1200×720-Canvas, vier Gebieten, fünf 72-px-Knoten und vier Wegen ergänzt. Details im 40-%-Bereich untereinander angeordnet. Pulse starten nur bei Zustandswechsel und werden bei Neubau/Zerstörung beendet; Standardauswahl wird im sichtbaren Kartenausschnitt zentriert. Keine gesperrten Emoji mehr in src. UTF-8-Übertragungsfehler aus Schritt 1 korrigiert.
 - Schritt 4: Lokale Flood-Fill-Prüfung der Kartendaten erfolgreich: s4 = 12×9, s5 = 12×10; alle Slots und Gegner (inklusive hardEnemies) stehen auf passierbarem Gelände und sind zu Fuß erreichbar. Spielverhalten und Sternespeicherung in Studio ungetestet.
 - Schritt 1: Gebiete, Vorgängergraph und Freischaltregel ergänzt; s4/s5 folgen mit ihren Kartendaten in Schritt 4.
