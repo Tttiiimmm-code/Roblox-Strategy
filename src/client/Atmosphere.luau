@@ -23,5 +23,12 @@ function Atmosphere.set(name)
 		table.insert(tweens, tween)
 		tween:Play()
 	end
+	-- Helligkeit/Belichtung je Ort: der Saal ist gedämpft, das Schlachtfeld hell.
+	local lighting = Config.FEEL.atmosphere[name].lighting
+	if lighting then
+		local tween = TweenService:Create(Lighting, TweenInfo.new(Config.FEEL.atmosphereFade), lighting)
+		table.insert(tweens, tween)
+		tween:Play()
+	end
 end
 return Atmosphere

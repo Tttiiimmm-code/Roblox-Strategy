@@ -69,7 +69,8 @@ function ChibiBuilder.build(unit)
 		weld(attachTo, p)
 		return p
 	end
-	local fabric = { Material = Enum.Material.Fabric }
+	-- Stoff-Textur wirkt bei Chibi-Größe grau und verrauscht; glatte Flächen zeigen die Outfitfarben klar.
+	local fabric = { Material = Enum.Material.SmoothPlastic }
 	local metal = { Material = Enum.Material.Metal }
 	local ball = { Shape = Enum.PartType.Ball }
 	local function sphere(name, diameter, cf, color, attachTo, props)

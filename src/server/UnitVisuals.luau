@@ -70,6 +70,13 @@ function UnitVisuals.create(unit)
 		end
 	end
 	model:SetAttribute("UnitId", unit.id)
+	-- Auf dem Brett größer als in Porträts, damit Gesichter aus der Taktik-Kamera lesbar bleiben.
+	local scale = Config.FEEL.boardUnitScale
+	model:ScaleTo(scale)
+	for _, name in { "HeadY", "TopY", "GroundOffset" } do
+		local value = model:GetAttribute(name)
+		if value then model:SetAttribute(name, value * scale) end
+	end
 	model:PivotTo(rootCFrame(unit.x, unit.y, unit.team == "Player" and 0 or math.pi, model:GetAttribute("GroundOffset")))
 	local root = model.PrimaryPart
 
