@@ -50,7 +50,7 @@ Ursachen (Claude-Analyse):
   - Terrain-Panel (`UI.showTerrain`): zweite Zeile um Bewegungskosten ergänzen: „Bewegung: Fuß 2 · Pferd 3" bzw. „Fuß –" für unpassierbar (aus `terrain.cost`, Namen `foot` = Fuß, `horse` = Pferd).
   - Fertig, wenn: man nie rätselt, warum ein Feld nicht geht.
 
-- [ ] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
+- [x] 7. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
 - [ ] 8. Devlog-Eintrag #16 „Handy-Kamera + Sumpf-Lesbarkeit" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer, vor allem Handy)
