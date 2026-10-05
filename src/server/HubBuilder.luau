@@ -93,21 +93,13 @@ local function prompt(anchor, station, action, object)
 end
 
 -- Statische Figur aus dem Charakter-Baukasten (Hauptmann, Magier)
-local function npc(class, weapon, rarity, x, z, yaw, hair)
+local function npc(class, weapon, rarity, x, z, yaw)
 	local ok, model = pcall(CharacterBuilder.build, {
 		id = "NPC", team = "Royal", class = class, weapon = weapon, rarity = rarity,
 	})
 	if not ok then
 		warn(("Saal-NPC %s wird weggelassen: %s"):format(class, tostring(model)))
 		return nil
-	end
-	if hair then
-		for _, name in { "Hair", "HairBack" } do
-			local p = model:FindFirstChild(name)
-			if p then
-				p.Color = hair
-			end
-		end
 	end
 	model:PivotTo(at(x, (model:GetAttribute("GroundOffset") or 0) + 0.1, z) * CFrame.Angles(0, yaw, 0))
 	model.Parent = hub
@@ -334,7 +326,7 @@ local function buildSummoningCircle(x, z)
 	light.Range = 18
 	light.Parent = circle
 
-	task.defer(npc, "Mage", "Fire", 5, x - 9, z, math.rad(-90), Color3.fromRGB(240, 240, 250))
+	task.defer(npc, "Mage", "Fire", 5, x - 9, z, math.rad(-90))
 	label(circle, "Beschwörungskreis", "Rekrutieren", 8)
 	prompt(circle, "recruit", "Beschwören", "Hofmagier")
 end

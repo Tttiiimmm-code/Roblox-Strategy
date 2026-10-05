@@ -36,7 +36,7 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
   - Ist `HeroTemplates` oder die Vorlage `heroId` noch nicht da: Viewport leeren und per `task.spawn` mit `WaitForChild(…, 10)` auf die Vorlage warten; danach `UIKit.portrait` aufrufen, **aber nur**, wenn der Viewport noch existiert (`viewport.Parent`) und inzwischen kein anderer Held dort angezeigt wird (Attribut `PortraitHero = heroId` am Viewport setzen und vor dem späten Aufruf vergleichen).
   - Fertig, wenn: Kaserne/Rekrutierung direkt nach dem Spielstart zeigt Porträts, sobald die Vorlagen da sind, ohne erneutes Öffnen; schnelles Durchklicken zeigt nie den falschen Helden.
 
-- [ ] 6. **Toter Haarfarben-Code im Thronsaal** – Datei: `src/server/HubBuilder.luau`, Funktion `npc`
+- [x] 6. **Toter Haarfarben-Code im Thronsaal** – Datei: `src/server/HubBuilder.luau`, Funktion `npc`
   - Die Schleife über `"Hair", "HairBack"` und den Parameter `hair` entfernen (R15-Avatare haben keine solchen Teile); Aufrufe von `npc(...)` entsprechend anpassen.
   - Fertig, wenn: `rg '"HairBack"' src` liefert nichts.
 
