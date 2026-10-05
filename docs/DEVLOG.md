@@ -320,9 +320,36 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 
+## #14 – Terrain-Fix + Chibi-Prototyp
+**Datum:** 05.10.2026
+
+**Ziel:** Raster, Bewegungsfelder und Figuren auf dem Terrain sichtbar machen und eigene Chibi-Figuren als Vergleich zu den R15-Avataren bereitstellen.
+
+**Umsetzung**
+- Terrain-Füllung in `fillTerrain(sinkByChar)` ausgelagert. Nach der ersten Füllung wird je vorhandenem Geländezeichen außer Wasser eine Feldmitte mit einem Terrain-RayCast gemessen. Positive Höhenabweichungen einschließlich 0,15 Stud Abstand senken die zweite Füllung ab; Grundschichten und Umgebung berücksichtigen den Ebenenwert. Die Werte erscheinen einmal je Brettaufbau als „Terrain-Kalibrierung: …“ im Output. Grashalme abgeschaltet und Rasterlinien auf +0,08 Stud angehoben.
+- Zentraler Schalter `Config.CHARACTER_STYLE = "chibi"`; `"avatar"` nutzt weiterhin den bestehenden R15-Pfad. Heldenvorlagen und Porträtanzeige verwenden denselben Schalter ohne weitere Anpassungen.
+- Individuelle Aussehen-Daten für alle elf Helden und Standards für alle neun Klassen: Haut, Augen, Frisur, Haarfarbe, Kopfbedeckung, Outfit, Robe, Bart und Skalierung. Siegfrieds Federbusch ist goldfarben, Kais Federbusch trägt die Teamfarbe.
+- Neuer netzwerkunabhängiger `ChibiBuilder` in Shared: großer Kugelkopf, farbige Augen mit Glanzpunkten, Mund, Wangenröte, sechs Frisuren und neun Kopfbedeckungen. Kurzer Körper mit Gürtel, Stiefeln und optionaler Robe; Teamfarbe an Schulterstücken und Brustschärpe.
+- Gelenke `Root`, `Neck`, Schultern, Hüften und `CapeJoint` sowie Körpernamen und Attribute an die bestehenden Animator-/Porträtzugriffe angepasst. Waffen, Pferd mit Sitzpose und Seltenheits-Effekte aus dem früheren Teile-Baukasten an die Chibi-Maße angepasst: Schnalle, Kragen, Waffenglühen/Funken, Umhang/Saum, Wappen und Boden-Aura.
+- Outfitteile speichern `BaseColor` zusätzlich zu `Tint`. Die von Claude freigegebene Ergänzung in `UnitVisuals.update` stellt aktive Outfitfarben wieder her und färbt fertige bzw. nicht eingesetzte Einheiten grau; Teile ohne `BaseColor` verwenden die Teamfarbe.
+- Rückblende-Knopf mit `TextScaled` und `UITextSizeConstraint` auf höchstens Schriftgröße 13 begrenzt.
+
+**Entscheidungen:** Chibi-Proportionen zentral in `Config.CHIBI`, Aussehen in `UnitData`; Spielwerte unverändert. Abgeflachte Helmschalen halten das Gesicht frei, die Boden-Aura ist ein offener Segmentring. `TopY` wird aus der tatsächlichen Teilehöhe einschließlich Kopfbedeckung berechnet. Haut, Gesicht und Haare erhalten kein `Tint`. Keine neuen Netz-Assets; R15-Modellbau und Asset-IDs unverändert.
+
+**Probleme:** Der Konflikt zwischen individuellen Outfitfarben und dem bisherigen Teamfarben-Update führte zunächst zur Rückfrage in `PLAN.md`. Claude hat `BaseColor` und die gezielte Änderung von `UnitVisuals.update` freigegeben. Die zuvor gemeldeten R15-Ladefehler bei Kavalieren/Aurelia gehören weiterhin nicht zu diesem Plan.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Nach jedem Umsetzungsschritt `scripts/check.ps1`: **OK**; Abschlussprüfung **25 Dateien, Exit 0**. Rojo-Build von `TacticsGame.rbxlx` erfolgreich. Terrain-Kalibrierwerte, Feldsichtbarkeit, Füße/Sitzpose, vollständige Modelle, Animationen, Porträts, Seltenheits-Effekte und Avatar-Vergleich müssen anhand der Prüfliste in `PLAN.md` bestätigt werden; Claude-Review ausstehend.
+
+---
+
 ## Nächste Schritte (Plan)
-1. Claude prüft die Review-Fixes auf `feature/visual-pass-2`.
-2. Visual-Pass-Prüfliste in Studio und auf dem Handy durchführen; Sounds probehören, Accessoires/Porträts und Terrain-Klicks prüfen, Output und Bildrate beobachten.
-3. Gemeldete Asset-Ladefehler mit ID dokumentieren; Sounds und Optik nach Nutzer-Feedback abstimmen.
-4. Belohnungen & Klassenwechsel.
-5. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
+1. Claude prüft `feature/chibi-figuren`; Nutzer testet die Terrain-/Chibi-Prüfliste in Studio und auf dem Handy und entscheidet zwischen Chibi und R15.
+2. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
+3. Nach dem Stil-Entscheid je eigener Plan: Ausrüstung/Items mit am Modell sichtbaren Waffen und Gegenständen.
+4. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
+5. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
+6. Eigene Angriffs-Effekte für ★4/★5.
+7. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
+8. Option KI-generierte 3D-Modelle: Nutzer prüft Tools; möglicher dritter Stil `"mesh"` im selben Schalter.
+9. Belohnungen & Klassenwechsel.
+10. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
