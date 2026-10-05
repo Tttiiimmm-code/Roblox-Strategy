@@ -296,7 +296,7 @@ local function buildTools(callbacks)
 	tools.undo = toolButton("Rückblende 0", 1, callbacks.onUndo)
 	tools.undo.TextSize = 13
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
-	tools.speed = toolButton(" 1×", 3, callbacks.onSpeed)
+	tools.speed = toolButton("1×", 3, callbacks.onSpeed)
 
 	tools.skip = button("Gegnerphase überspringen", col, "primary")
 	tools.skip.AnchorPoint = Vector2.new(0, 1)
@@ -415,7 +415,7 @@ function UI.setTools(flags)
 	tools.undo.Text = ("Rückblende %d"):format(flags.undoLeft)
 	UIKit.setButtonStyle(tools.undo, (flags.controllable and flags.canUndo and flags.undoLeft > 0) and "default" or "disabled")
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
-	tools.speed.Text = flags.speed == 3 and " 3×" or flags.speed == 2 and " 2×" or " 1×"
+	tools.speed.Text = flags.speed == 3 and "3×" or flags.speed == 2 and "2×" or "1×"
 	UIKit.setButtonStyle(tools.speed, flags.speed == 2 and "active" or "default")
 end
 

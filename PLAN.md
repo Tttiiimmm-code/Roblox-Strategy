@@ -52,7 +52,7 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
   - Deko: `SurroundingGrass`-Part entfernen (Terrain übernimmt); Waldbäume als 2–3 gestapelte Kugeln/Kegel-Optik, Außenbäume/-felsen beibehalten aber auf Terrainhöhe setzen. Alles Deko `CanQuery=false`.
   - Fertig, wenn: Berge sind erhöht, Wasser ist echtes Roblox-Wasser, Gras/Fels haben Terrain-Texturen; Klicks auf jedes Feld (auch Berg/Wasser-Rand) treffen das richtige Feld; Einheiten stehen sichtbar auf der Oberfläche.
 
-- [ ] 5. **Avatar-Figuren (R15)** – Dateien: `src/shared/UnitData.luau`, `src/shared/CharacterBuilder.luau`, `src/server/UnitVisuals.luau`, `src/server/HubBuilder.luau`, Client-Stellen mit `"Root"`
+- [x] 5. **Avatar-Figuren (R15)** – Dateien: `src/shared/UnitData.luau`, `src/shared/CharacterBuilder.luau`, `src/server/UnitVisuals.luau`, `src/server/HubBuilder.luau`, Client-Stellen mit `"Root"`
   - **Aussehen-Daten** in `UnitData`: je Klasse `look = { hat = <id>, face = <id oder nil> }`, je Held optional `hairAccessory = <id>`. Startwerte (offizielle Roblox-Katalog-Accessoires):
     - Lord: Krone 3756500192 (Crown of the Golden Serpent); Kavalier: Helm 98450287 (Knights of the Splintered Skies: Helmet); Soldat: 8796225 (Black Knight Helmet); Bogenschütze (beide Teams): Kapuze 102623080 (Brown Riding Hood); Magier: 13121508 (Frumpled Wizard Hat of Old Coots); Kämpfer/Bandit: Bandana 74221074 (Renegade Bandana, Gesichts-Accessoire); Bandenführer: 108829551 (Crimson Studded Viking).
     - Haare (Heldinnen): Mira 1513252656 (Red Action Ponytail), Selina 376527350 (Black Ponytail), Aurelia/Ida 398673196 (Blonde Action Ponytail), Greta 1708329071 (Black Action Ponytail); übrige ohne Haar-Accessoire oder 12819292 (Long Brown Hair) für Leon.
@@ -89,3 +89,7 @@ Kontext: Nutzer-Feedback nach Game-Feel-Pass: „sieht noch ziemlich gleich aus"
 
 ## Notizen (Codex)
 - Lighting.Technology ist veraltet: aktuelle Entsprechung LightingStyle.Realistic und PrioritizeLightingQuality im HubBuilder verwendet (Roblox-Dokumentation). Alle Saal-Labels nutzen eigene aufrechte Anker.
+- Avatar-Bau nutzt die aktuelle Async-Variante CreateHumanoidModelFromDescriptionAsync. Bei Fehlern wird ohne Accessoires erneut aufgebaut; unvollständig geladene Accessoires werden mit ihren vorgegebenen IDs protokolliert. Keine Asset-Ladefehler bestätigt, da Studio-Test aussteht.
+- R15 benötigt einen GroundOffset zwischen Root und Fußboden. Platzierung, Laufweg, Saal-NPCs, Bewegungsvorschau, Staub und Auswahlring berücksichtigen ihn. Kamerafokus behält die Gelände-Höhe.
+- Porträts klonen die serverseitigen HeroTemplates in einen WorldModel im ViewportFrame. Der verbliebene Name Root bezeichnet nur das R15-Gelenk bzw. den UI-Root.
+- Sämtliche Asset-IDs stammen unverändert aus dem Plan. Hörprobe, Accessoires, Animationen, Terrain-Oberflächen/Klicks und Handy-Bildrate sind noch ungetestet.

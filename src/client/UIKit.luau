@@ -327,7 +327,7 @@ end
 -- 3D-Kopie einer Figur in einem ViewportFrame (Porträt)
 function UIKit.portrait(viewport, camera, source, zoomOut)
 	for _, child in viewport:GetChildren() do
-		if child:IsA("Model") then
+		if child:IsA("Model") or child:IsA("WorldModel") then
 			child:Destroy()
 		end
 	end
@@ -341,30 +341,17 @@ function UIKit.portrait(viewport, camera, source, zoomOut)
 		end
 	end
 	clone:PivotTo(CFrame.new())
-	clone.Parent = viewport
+	local world = make("WorldModel", {}, viewport)
+	clone.Parent = world
 	local headY = source:GetAttribute("HeadY") or 4.8
 	local d = zoomOut and 9 or 6
 	camera.CFrame = CFrame.lookAt(Vector3.new(1.8, headY + 0.4, -d), Vector3.new(0, headY - (zoomOut and 1.6 or 0.8), 0))
 end
 
--- Porträt eines Helden, der gerade nicht auf dem Feld steht (Figur wird lokal gebaut, Vorlage gecacht)
-local CharacterBuilder = require(Shared:WaitForChild("CharacterBuilder"))
-local heroTemplates = {}
-
+-- Heldenporträts klonen die beim Serverstart erzeugten R15-Vorlagen.
 function UIKit.heroPortrait(viewport, camera, heroId, zoomOut)
-	local template = heroTemplates[heroId]
-	if not template then
-		local def = UnitData.Heroes[heroId]
-		if not def then
-			return
-		end
-		template = CharacterBuilder.build({
-			id = heroId, heroId = heroId, team = "Player", class = def.class, weapon = def.weapon,
-			rarity = def.rarity, isLord = def.isLord,
-		})
-		heroTemplates[heroId] = template
-	end
-	UIKit.portrait(viewport, camera, template, zoomOut)
+	local templates = ReplicatedStorage:FindFirstChild("HeroTemplates")
+	UIKit.portrait(viewport, camera, templates and templates:FindFirstChild(heroId), zoomOut)
 end
 
 -- ViewportFrame mit Kamera für Porträts

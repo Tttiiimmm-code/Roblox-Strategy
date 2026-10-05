@@ -1,11 +1,10 @@
--- Baut Block-Figuren mit Gelenken (Motor6D), die der Client animiert.
--- Die Figur schaut entlang -Z; Root liegt am Boden und ist unsichtbar.
--- Liegt in Shared: Server baut die Spielfiguren, Client baut Porträts (Kaserne, Rekrutierung).
+-- R15-Avatare mit Waffen und Seltenheits-Deko; ausschliesslich auf dem Server bauen.
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local Config = require(script.Parent.Config)
 local UnitData = require(script.Parent.UnitData)
-
 local CharacterBuilder = {}
-
+local bases = {}
 local SKIN = Color3.fromRGB(236, 196, 164)
 local METAL = Color3.fromRGB(185, 192, 204)
 local DARK_METAL = Color3.fromRGB(105, 110, 124)
@@ -15,197 +14,139 @@ local GOLD = Color3.fromRGB(232, 188, 74)
 local PANTS = Color3.fromRGB(58, 52, 64)
 local HORSE = Color3.fromRGB(128, 86, 54)
 local HORSE_HAIR = Color3.fromRGB(50, 35, 25)
-local BONE = Color3.fromRGB(235, 225, 200)
 
--- "team" = Teamfarbe (wird grau, wenn die Einheit fertig ist)
-local LOOKS = {
-	Lord = { torso = "team", arms = "team", legs = PANTS, hair = Color3.fromRGB(70, 48, 32), headgear = "circlet", cape = true },
-	Cavalier = { torso = METAL, arms = "team", legs = PANTS, headgear = "helmet", mount = true, pads = true },
-	Archer = { torso = "team", arms = "team", legs = LEATHER, hair = Color3.fromRGB(196, 150, 80), headgear = "hood", quiver = true },
-	Mage = { torso = "team", arms = "team", legs = "team", hair = Color3.fromRGB(150, 60, 50), headgear = "wizard" },
-	Fighter = { torso = "team", arms = SKIN, legs = LEATHER, hair = Color3.fromRGB(40, 30, 25), headgear = "bandana" },
-	Brigand = { torso = "team", arms = SKIN, legs = LEATHER, hair = Color3.fromRGB(40, 30, 25), headgear = "bandana" },
-	Soldier = { torso = METAL, arms = "team", legs = PANTS, headgear = "helmet", pads = true },
-	EnemyArcher = { torso = "team", arms = "team", legs = LEATHER, hair = Color3.fromRGB(60, 40, 30), headgear = "hood", quiver = true },
-	Chieftain = { torso = "team", arms = SKIN, legs = LEATHER, headgear = "horned", pads = true, scale = 1.2 },
-}
+local function avatar(unit)
+	local look = UnitData.Classes[unit.class].look or {}
+	local hero = unit.heroId and UnitData.Heroes[unit.heroId]
+	local hair = hero and hero.hairAccessory
+	local color = Config.TEAM_COLORS[unit.team]
+	local key = unit.class .. ":" .. unit.team .. ":" .. tostring(hair)
+	if bases[key] then return bases[key]:Clone() end
+	local description = Instance.new("HumanoidDescription")
+	description.HeadColor = SKIN
+	description.TorsoColor = color
+	description.LeftArmColor, description.RightArmColor = color, color
+	description.LeftLegColor, description.RightLegColor = PANTS, PANTS
+	if look.hat then
+		if unit.class == "Fighter" or unit.class == "Brigand" then
+			description.FaceAccessory = tostring(look.hat)
+		else
+			description.HatAccessory = tostring(look.hat)
+		end
+	end
+	if hair then description.HairAccessory = tostring(hair) end
+	if look.face then description.Face = look.face end
+	local ok, result = pcall(function()
+		return Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
+	end)
+	if not ok then
+		warn(("Avatar %s: Accessoires %s/%s konnten nicht geladen werden; versuche ohne Accessoires. %s"):format(unit.class, tostring(look.hat), tostring(hair), tostring(result)))
+		description.HatAccessory, description.HairAccessory, description.FaceAccessory = "", "", ""
+		result = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
+	end
+	local expected = (look.hat and 1 or 0) + (hair and 1 or 0)
+	local loaded = 0
+	for _, child in result:GetChildren() do
+		if child:IsA("Accessory") then loaded += 1 end
+	end
+	if loaded < expected then
+		warn(("Avatar %s: Accessoires unvollstaendig; IDs %s / %s in Studio pruefen."):format(unit.class, tostring(look.hat), tostring(hair)))
+	end
+	description:Destroy()
+	result.Archivable = true
+	bases[key] = result
+	return result:Clone()
+end
 
 function CharacterBuilder.build(unit)
-	local look = LOOKS[unit.class] or LOOKS.Fighter
-	local s = look.scale or 1
-	local teamColor = Config.TEAM_COLORS[unit.team]
-	local weapon = UnitData.Weapons[unit.weapon]
-
-	local model = Instance.new("Model")
+	assert(RunService:IsServer(), "Avatar-Vorlagen werden nur auf dem Server gebaut")
+	local model = avatar(unit)
 	model.Name = unit.id
-
-	local function at(x, y, z)
-		return CFrame.new(x * s, y * s, z * s)
-	end
-
-	local function part(name, size, cf, color, props)
-		local p = Instance.new(props and props.Wedge and "WedgePart" or "Part")
-		p.Name = name
-		p.Size = size * s
-		p.CFrame = cf
-		p.Anchored = false
-		p.CanCollide = false
-		p.CanTouch = false
-		p.Massless = true
-		p.TopSurface = Enum.SurfaceType.Smooth
-		p.BottomSurface = Enum.SurfaceType.Smooth
-		p.Material = Enum.Material.SmoothPlastic
-		if color == "team" then
-			p.Color = teamColor
-			p:SetAttribute("Tint", true)
-		else
-			p.Color = color
-		end
-		if props then
-			for k, v in props do
-				if k ~= "Wedge" then p[k] = v end
+	local root = model:FindFirstChild("HumanoidRootPart")
+	model.PrimaryPart = root
+	model:PivotTo(CFrame.new())
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	humanoid.EvaluateStateMachine = false
+	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
+	animator.Parent = humanoid
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = d == root
+			d.CanCollide, d.CanTouch, d.Massless = false, false, true
+			if d ~= root and not d:FindFirstAncestorOfClass("Accessory") then
+				d:SetAttribute("Tint", d.Name ~= "Head" and not string.find(d.Name, "Leg") and not string.find(d.Name, "Foot") and not string.find(d.Name, "Hand"))
 			end
-		end
+		elseif d:IsA("Script") or d:IsA("LocalScript") then d:Destroy() end
+	end
+	local mounted = unit.class == "Cavalier"
+	local low = math.min(model.LeftFoot.Position.Y - model.LeftFoot.Size.Y / 2, model.RightFoot.Position.Y - model.RightFoot.Size.Y / 2)
+	local groundOffset = -low + (mounted and Config.FEEL.riderLift or 0)
+	model:SetAttribute("GroundOffset", groundOffset)
+	model:SetAttribute("Mounted", mounted)
+	local torso, lower = model.UpperTorso, model.LowerTorso
+	local head = model.Head
+	local rArm, lArm = model.RightHand, model.LeftHand
+	rArm.Color, lArm.Color = SKIN, SKIN
+	local weapon = UnitData.Weapons[unit.weapon]
+	local s = 1
+	local look = { cape = unit.class == "Lord" }
+	local function at(x, y, z) return CFrame.new(x, y, z) end
+	local function part(name, size, cf, color, props)
+		local p = Instance.new("Part")
+		p.Name, p.Size, p.CFrame = name, size, cf
+		p.CanCollide, p.CanQuery, p.CanTouch, p.Massless = false, false, false, true
+		p.Color = color == "team" and Config.TEAM_COLORS[unit.team] or color
+		if color == "team" then p:SetAttribute("Tint", true) end
+		p.Material = Enum.Material.SmoothPlastic
+		for k, v in props or {} do p[k] = v end
 		p.Parent = model
 		return p
 	end
-
 	local function weld(p0, p1)
 		local w = Instance.new("WeldConstraint")
-		w.Part0 = p0
-		w.Part1 = p1
-		w.Parent = p1
+		w.Part0, w.Part1, w.Parent = p0, p1, p1
 	end
-
-	-- Gelenk an der Weltposition jointCF (C0/C1 so, dass die aktuelle Pose die Ruhepose ist)
-	local function motor(name, p0, p1, jointCF)
-		local m = Instance.new("Motor6D")
-		m.Name = name
-		m.Part0 = p0
-		m.Part1 = p1
-		m.C0 = p0.CFrame:ToObjectSpace(jointCF)
-		m.C1 = p1.CFrame:ToObjectSpace(jointCF)
-		m.Parent = p0
-	end
-
-	local root = part("Root", Vector3.new(1, 0.2, 1), CFrame.new(), Color3.new(), {
-		Anchored = true, Transparency = 1, CanQuery = false,
-	})
-	model.PrimaryPart = root
-
-	local mounted = look.mount == true
-	local hipY = mounted and 4.2 or 2
-
-	-- Pferd ------------------------------------------------------------------
-	if mounted then
-		local horse = {
-			part("HorseBody", Vector3.new(2, 2, 4.2), at(0, 3.1, 0.2), HORSE),
-			part("HorseNeck", Vector3.new(0.9, 2.2, 1), at(0, 4.4, -1.9) * CFrame.Angles(math.rad(-35), 0, 0), HORSE),
-			part("HorseHead", Vector3.new(0.85, 0.85, 1.7), at(0, 5.4, -2.75), HORSE),
-			part("HorseMane", Vector3.new(0.3, 1.9, 0.5), at(0, 4.7, -1.55) * CFrame.Angles(math.rad(-35), 0, 0), HORSE_HAIR),
-			part("HorseTail", Vector3.new(0.35, 1.6, 0.35), at(0, 3.3, 2.5) * CFrame.Angles(math.rad(30), 0, 0), HORSE_HAIR),
-			part("Saddle", Vector3.new(2.1, 0.3, 1.6), at(0, 4.15, 0.2), "team"),
-		}
-		for _, dx in { -0.65, 0.65 } do
-			for _, dz in { -1.5, 1.8 } do
-				table.insert(horse, part("HorseLeg", Vector3.new(0.55, 2.1, 0.55), at(dx, 1.05, dz), HORSE))
-			end
-		end
-		for _, p in horse do
-			weld(root, p)
-		end
-		for _, dx in { -1.15, 1.15 } do
-			weld(root, part("RiderLeg", Vector3.new(0.8, 1.8, 0.8), at(dx, 3.7, -0.1), look.legs))
-		end
-	end
-
-	-- Körper -----------------------------------------------------------------
-	local torso = part("Torso", Vector3.new(2, 2, 1), at(0, hipY + 1, 0), look.torso)
-	motor("RootJoint", root, torso, at(0, hipY, 0))
-	weld(torso, part("Belt", Vector3.new(2.05, 0.3, 1.05), at(0, hipY + 0.15, 0), LEATHER))
-
-	if not mounted then
-		local lLeg = part("LeftLeg", Vector3.new(0.95, 2, 0.95), at(-0.5, 1, 0), look.legs)
-		local rLeg = part("RightLeg", Vector3.new(0.95, 2, 0.95), at(0.5, 1, 0), look.legs)
-		motor("LeftHip", root, lLeg, at(-0.5, 2, 0))
-		motor("RightHip", root, rLeg, at(0.5, 2, 0))
-		for _, leg in { lLeg, rLeg } do
-			local boot = part(leg.Name .. "Boot", Vector3.new(0.98, 0.65, 1.08), at(leg == lLeg and -0.5 or 0.5, 0.33, -0.04), LEATHER, { CanQuery = false })
-			weld(leg, boot)
-		end
-	end
-
-	local hy = hipY + 2.8
-	local head = part("Head", Vector3.new(1.6, 1.6, 1.6), at(0, hy, 0), SKIN)
-	motor("Neck", torso, head, at(0, hipY + 2, 0))
-	local face = Instance.new("Decal")
-	face.Texture = Config.FEEL.faceTexture
-	face.Face = Enum.NormalId.Front
-	face.Parent = head
-
-	local rArm = part("RightArm", Vector3.new(0.8, 2, 0.8), at(1.4, hipY + 1, 0), look.arms)
-	local lArm = part("LeftArm", Vector3.new(0.8, 2, 0.8), at(-1.4, hipY + 1, 0), look.arms)
-	motor("RightShoulder", torso, rArm, at(1.4, hipY + 1.9, 0))
-	motor("LeftShoulder", torso, lArm, at(-1.4, hipY + 1.9, 0))
-
-	-- Zubehör (nicht anklickbar) ----------------------------------------------
 	local function extra(name, size, cf, color, attachTo, props)
 		local p = part(name, size, cf, color, props)
-		p.CanQuery = false
 		weld(attachTo, p)
 		return p
 	end
-
-	extra("RightHand", Vector3.new(0.65, 0.5, 0.65), at(1.4, hipY + 0.1, 0), SKIN, rArm)
-	extra("LeftHand", Vector3.new(0.65, 0.5, 0.65), at(-1.4, hipY + 0.1, 0), SKIN, lArm)
-
-	local heroDef = unit.heroId and UnitData.Heroes[unit.heroId]
-	local hair = (heroDef and heroDef.hair) or look.hair
-	if hair then
-		extra("Hair", Vector3.new(1.7, 0.45, 1.7), at(0, hy + 0.7, 0.05), hair, head)
-		extra("HairBack", Vector3.new(1.7, 1.1, 0.4), at(0, hy + 0.2, 0.7), hair, head)
+	local function makeCape(size, cf, color)
+		local cape = part("Cape", size, cf, color, { Material = Enum.Material.Fabric })
+		local joint = Instance.new("Motor6D")
+		joint.Name, joint.Part0, joint.Part1 = "CapeJoint", torso, cape
+		local pivot = torso.CFrame * CFrame.new(0, torso.Size.Y / 2, torso.Size.Z / 2)
+		joint.C0, joint.C1 = torso.CFrame:ToObjectSpace(pivot), cape.CFrame:ToObjectSpace(pivot)
+		joint.Parent = torso
+		return cape
 	end
-
-	local g = look.headgear
-	if g == "circlet" then
-		extra("Circlet", Vector3.new(1.72, 0.18, 1.72), at(0, hy + 0.45, 0), GOLD, head, { Material = Enum.Material.Metal })
-		extra("Gem", Vector3.new(0.28, 0.28, 0.1), at(0, hy + 0.45, -0.88), Color3.fromRGB(80, 200, 255), head, { Material = Enum.Material.Neon })
-	elseif g == "helmet" then
-		extra("Helmet", Vector3.new(1.8, 0.9, 1.8), at(0, hy + 0.5, 0), METAL, head, { Material = Enum.Material.Metal })
-		extra("Plume", Vector3.new(0.3, 0.7, 1.4), at(0, hy + 1.2, 0.1), "team", head)
-	elseif g == "hood" then
-		extra("Hood", Vector3.new(1.8, 0.5, 1.8), at(0, hy + 0.65, 0.05), "team", head)
-		extra("HoodBack", Vector3.new(1.8, 1.6, 0.45), at(0, hy + 0.05, 0.7), "team", head)
-	elseif g == "wizard" then
-		extra("Brim", Vector3.new(0.15, 2.6, 2.6), at(0, hy + 0.75, 0) * CFrame.Angles(0, 0, math.rad(90)), "team", head,
-			{ Shape = Enum.PartType.Cylinder })
-		extra("Cone1", Vector3.new(1.3, 0.6, 1.3), at(0, hy + 1.1, 0) * CFrame.Angles(0, math.rad(45), 0), "team", head)
-		extra("Cone2", Vector3.new(0.85, 0.6, 0.85), at(0.1, hy + 1.65, 0.1) * CFrame.Angles(0, math.rad(45), 0), "team", head)
-		extra("Cone3", Vector3.new(0.4, 0.6, 0.4), at(0.25, hy + 2.15, 0.25) * CFrame.Angles(0, math.rad(45), 0), "team", head)
-	elseif g == "bandana" then
-		extra("Bandana", Vector3.new(1.7, 0.4, 1.7), at(0, hy + 0.4, 0), "team", head)
-		extra("Knot", Vector3.new(0.3, 0.5, 0.5), at(0, hy + 0.3, 0.95), "team", head)
-	elseif g == "horned" then
-		extra("Helmet", Vector3.new(1.8, 0.9, 1.8), at(0, hy + 0.5, 0), DARK_METAL, head, { Material = Enum.Material.Metal })
-		extra("HornL", Vector3.new(0.3, 1.1, 0.3), at(-1.0, hy + 1.1, 0) * CFrame.Angles(0, 0, math.rad(30)), BONE, head)
-		extra("HornR", Vector3.new(0.3, 1.1, 0.3), at(1.0, hy + 1.1, 0) * CFrame.Angles(0, 0, math.rad(-30)), BONE, head)
-	end
-
+	extra("Surcoat", torso.Size + Vector3.new(0.1, 0.05, 0.12), torso.CFrame, "team", torso, { Material = Enum.Material.Fabric })
 	if look.cape then
-		extra("Cape", Vector3.new(1.9, 2.4, 0.15), at(0, hipY + 0.9, 0.62) * CFrame.Angles(math.rad(8), 0, 0), "team", torso,
-			{ Material = Enum.Material.Fabric })
+		makeCape(Vector3.new(1.9, 2.4, 0.15), torso.CFrame * CFrame.new(0, -0.6, torso.Size.Z / 2 + 0.2) * CFrame.Angles(math.rad(Config.FEEL.capeAngle), 0, 0), "team")
 	end
-	if look.pads then
-		extra("PadR", Vector3.new(1.0, 0.5, 1.0), at(1.4, hipY + 2.0, 0), METAL, rArm, { Material = Enum.Material.Metal, Wedge = true })
-		extra("PadL", Vector3.new(1.0, 0.5, 1.0), at(-1.4, hipY + 2.0, 0), METAL, lArm, { Material = Enum.Material.Metal, Wedge = true })
+	if mounted then
+		for _, name in { "RightHip", "LeftHip" } do
+			local joint = model:FindFirstChild(name, true)
+			if joint then joint.C0 *= CFrame.Angles(-math.pi / 2, 0, 0) end
+		end
+		local horse = {
+			part("HorseBody", Vector3.new(2, 2, 4.2), at(0, 3.1 - groundOffset, 0.2), HORSE),
+			part("HorseNeck", Vector3.new(0.9, 2.2, 1), at(0, 4.4 - groundOffset, -1.9) * CFrame.Angles(math.rad(-35), 0, 0), HORSE),
+			part("HorseHead", Vector3.new(0.85, 0.85, 1.7), at(0, 5.4 - groundOffset, -2.75), HORSE),
+			part("HorseMane", Vector3.new(0.3, 1.9, 0.5), at(0, 4.7 - groundOffset, -1.55), HORSE_HAIR),
+			part("HorseTail", Vector3.new(0.35, 1.6, 0.35), at(0, 3.3 - groundOffset, 2.5), HORSE_HAIR),
+			part("Saddle", Vector3.new(2.1, 0.3, 1.6), at(0, 4.15 - groundOffset, 0.2), "team"),
+		}
+		for _, x in { -0.65, 0.65 } do
+			for _, z in { -1.5, 1.8 } do table.insert(horse, part("HorseLeg", Vector3.new(0.55, 2.1, 0.55), at(x, 1.05 - groundOffset, z), HORSE)) end
+		end
+		for _, p in horse do weld(root, p) end
 	end
-	if look.quiver then
-		extra("Quiver", Vector3.new(0.6, 1.8, 0.6), at(0.5, hipY + 1.3, 0.75) * CFrame.Angles(0, 0, math.rad(-25)), LEATHER, torso)
-	end
-
 	-- Waffe: in Ruhepose nach vorne (-Z) aus der Hand -------------------------
 	local metal = { Material = Enum.Material.Metal }
-	local hx, hY = 1.4, hipY + 0.1
+	local hx, hY = rArm.Position.X, rArm.Position.Y
 	local t = weapon.type
 	if t == "Sword" then
 		extra("Grip", Vector3.new(0.2, 0.2, 0.6), at(hx, hY, 0), LEATHER, rArm)
@@ -222,11 +163,11 @@ function CharacterBuilder.build(unit)
 		extra("Tip", Vector3.new(0.3, 0.3, 0.8), at(hx, hY, -len + 0.4) * CFrame.Angles(0, 0, math.rad(45)), METAL, rArm, metal)
 	elseif t == "Bow" then
 		-- liegt waagerecht in der linken Hand; beim Anheben des Arms steht er senkrecht
-		extra("Bow", Vector3.new(0.15, 0.25, 3.2), at(-hx, hY, -0.3), WOOD, lArm)
-		extra("String", Vector3.new(0.05, 0.05, 3.0), at(-hx, hY + 0.35, -0.3), Color3.fromRGB(240, 240, 230), lArm)
+		extra("Bow", Vector3.new(0.15, 0.25, 3.2), lArm.CFrame * CFrame.new(0, 0, -0.3), WOOD, lArm)
+		extra("String", Vector3.new(0.05, 0.05, 3.0), lArm.CFrame * CFrame.new(0, 0.35, -0.3), Color3.fromRGB(240, 240, 230), lArm)
 	elseif t == "Anima" then
-		extra("Tome", Vector3.new(0.25, 1.1, 0.9), at(-hx, hY - 0.1, -0.35), Color3.fromRGB(180, 40, 30), lArm)
-		extra("Pages", Vector3.new(0.3, 0.95, 0.8), at(-hx, hY - 0.1, -0.33), Color3.fromRGB(245, 240, 225), lArm)
+		extra("Tome", Vector3.new(0.25, 1.1, 0.9), lArm.CFrame * CFrame.new(0, -0.1, -0.35), Color3.fromRGB(180, 40, 30), lArm)
+		extra("Pages", Vector3.new(0.3, 0.95, 0.8), lArm.CFrame * CFrame.new(0, -0.1, -0.33), Color3.fromRGB(245, 240, 225), lArm)
 	end
 
 	-- Seltenheit: jede Stufe legt sichtbar etwas drauf ----------------------
@@ -247,11 +188,11 @@ function CharacterBuilder.build(unit)
 	end
 
 	if rarity >= 2 then -- Ungewöhnlich: farbige Gürtelschnalle
-		extra("Buckle", Vector3.new(0.5, 0.35, 0.1), at(0, hipY + 0.15, -0.55), rarityColor, torso,
+		extra("Buckle", Vector3.new(0.5, 0.35, 0.1), lower.CFrame * CFrame.new(0, 0, -lower.Size.Z / 2 - 0.1), rarityColor, lower,
 			{ Material = Enum.Material.Neon })
 	end
 	if rarity >= 3 then -- Selten: Kragen-Verzierung
-		extra("Collar", Vector3.new(2.1, 0.25, 1.1), at(0, hipY + 1.9, 0), rarity >= 5 and GOLD or METAL, torso,
+		extra("Collar", Vector3.new(2.1, 0.25, 1.1), torso.CFrame * CFrame.new(0, torso.Size.Y / 2, 0), rarity >= 5 and GOLD or METAL, torso,
 			{ Material = Enum.Material.Metal })
 	end
 	if rarity >= 4 then -- Episch: leuchtende Waffe mit Funken, Umhang mit Saum
@@ -266,41 +207,26 @@ function CharacterBuilder.build(unit)
 			sparkles(weaponPart, 4, 0.25 * s, 0.8, 1)
 		end
 		if not look.cape and not mounted then
-			extra("Cape", Vector3.new(1.9, 2.4, 0.15), at(0, hipY + 0.9, 0.62) * CFrame.Angles(math.rad(8), 0, 0), "team",
-				torso, { Material = Enum.Material.Fabric })
+			makeCape(Vector3.new(1.9, 2.4, 0.15), torso.CFrame * CFrame.new(0, -0.6, torso.Size.Z / 2 + 0.2) * CFrame.Angles(math.rad(Config.FEEL.capeAngle), 0, 0), "team")
 		end
-		extra("CapeTrim", Vector3.new(1.95, 0.25, 0.18), at(0, hipY - 0.25, 0.79) * CFrame.Angles(math.rad(8), 0, 0),
-			rarityColor, torso, { Material = Enum.Material.Neon })
+		local cape = model:FindFirstChild("Cape")
+		if cape then
+			extra("CapeTrim", Vector3.new(1.95, 0.25, 0.18), cape.CFrame * CFrame.new(0, -cape.Size.Y / 2, 0), rarityColor, cape, { Material = Enum.Material.Neon })
+		end
 	end
 	if rarity >= 5 then -- Legendär: goldenes Wappen und Aura am Boden
-		extra("Crest", Vector3.new(0.7, 0.7, 0.1), at(0, hipY + 1.2, -0.55) * CFrame.Angles(0, 0, math.rad(45)), GOLD,
+		extra("Crest", Vector3.new(0.7, 0.7, 0.1), torso.CFrame * CFrame.new(0, 0, -torso.Size.Z / 2 - 0.12) * CFrame.Angles(0, 0, math.rad(45)), GOLD,
 			torso, { Material = Enum.Material.Neon })
-		extra("AuraRing", Vector3.new(0.1, 5.5, 5.5), at(0, 0.08, 0) * CFrame.Angles(0, 0, math.rad(90)), rarityColor, root,
+		extra("AuraRing", Vector3.new(0.1, 5.5, 5.5), at(0, -groundOffset + 0.08, 0) * CFrame.Angles(0, 0, math.rad(90)), rarityColor, root,
 			{ Material = Enum.Material.Neon, Shape = Enum.PartType.Cylinder, Transparency = 0.65, CastShadow = false })
-		local emitter = extra("AuraEmitter", Vector3.new(4, 0.1, 4), at(0, 0.1, 0), rarityColor, root,
+		local emitter = extra("AuraEmitter", Vector3.new(4, 0.1, 4), at(0, -groundOffset + 0.1, 0), rarityColor, root,
 			{ Transparency = 1, CastShadow = false })
 		local e = sparkles(emitter, 8, 0.4, 1.4, 3)
 		e.EmissionDirection = Enum.NormalId.Top
 	end
 
-	local cape = model:FindFirstChild("Cape")
-	if cape then
-		local constraint = cape:FindFirstChildOfClass("WeldConstraint")
-		if constraint then constraint:Destroy() end
-		motor("CapeJoint", torso, cape, at(0, hipY + 2.1, 0.62))
-		local trim = model:FindFirstChild("CapeTrim")
-		if trim then
-			local trimWeld = trim:FindFirstChildOfClass("WeldConstraint")
-			if trimWeld then trimWeld:Destroy() end
-			weld(cape, trim)
-		end
-	end
-
-	local topY = hipY + 3.8 + (g == "wizard" and 1.4 or 0) + (g == "horned" and 0.6 or 0)
-	model:SetAttribute("TopY", topY * s)
-	model:SetAttribute("HeadY", hy * s)
-
+	model:SetAttribute("HeadY", head.Position.Y)
+	model:SetAttribute("TopY", head.Position.Y + head.Size.Y / 2)
 	return model
 end
-
 return CharacterBuilder

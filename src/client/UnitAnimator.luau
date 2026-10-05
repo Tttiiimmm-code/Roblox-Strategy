@@ -45,7 +45,8 @@ local function motors(model)
 	end
 	m = {}
 	for _, name in MOTOR_NAMES do
-		local motor = model:FindFirstChild(name, true)
+		local motor = model:FindFirstChild(name == "RootJoint" and "Root" or name, true)
+		if motor and not motor:IsA("Motor6D") then motor = nil end
 		if motor then
 			m[name] = motor
 			baseC0[motor] = motor.C0
@@ -79,8 +80,8 @@ local rad = math.rad
 
 -- Waagerechte Richtung von Modell a zu Modell b
 local function towards(a, b)
-	local ra = a:FindFirstChild("Root")
-	local rb = b and b:FindFirstChild("Root")
+	local ra = a.PrimaryPart
+	local rb = b and b.PrimaryPart
 	if rb then
 		local d = (rb.Position - ra.Position) * Vector3.new(1, 0, 1)
 		if d.Magnitude > 0.01 then
@@ -91,12 +92,12 @@ local function towards(a, b)
 end
 
 local function chest(model)
-	local torso = model and model:FindFirstChild("Torso")
+	local torso = model and model:FindFirstChild("UpperTorso")
 	return torso and torso.Position
 end
 
 local function hand(model, side)
-	local arm = model:FindFirstChild(side .. "Arm")
+	local arm = model:FindFirstChild(side .. "Hand")
 	return arm and (arm.CFrame * CFrame.new(0, -arm.Size.Y / 2, 0)).Position or chest(model)
 end
 
@@ -154,7 +155,7 @@ end
 local function melee(windAngle, hitAngle, reach)
 	return function(a, b, strike)
 		local m = motors(a)
-		local root = a.Root
+		local root = a.PrimaryPart
 		local origin = root.CFrame
 		local dir = towards(a, b)
 		local lift = strike.crit and Vector3.new(0, 1.6, 0) or Vector3.zero
@@ -181,7 +182,7 @@ end
 
 local function thrust(a, b, strike)
 	local m = motors(a)
-	local root = a.Root
+	local root = a.PrimaryPart
 	local origin = root.CFrame
 	local dir = towards(a, b)
 	if strike.crit then
@@ -203,7 +204,7 @@ end
 
 local function shootArrow(a, b, strike)
 	local m = motors(a)
-	local root = a.Root
+	local root = a.PrimaryPart
 	local origin = root.CFrame
 	local dir = towards(a, b)
 
@@ -236,7 +237,7 @@ end
 
 local function castFire(a, b, strike)
 	local m = motors(a)
-	local root = a.Root
+	local root = a.PrimaryPart
 	local origin = root.CFrame
 	local dir = towards(a, b)
 
@@ -281,7 +282,7 @@ local STYLES = {
 
 -- Reaktion des Ziels im Moment des Treffers
 local function react(target, attacker, strike)
-	local root = target:FindFirstChild("Root")
+	local root = target.PrimaryPart
 	if not root then
 		return
 	end
@@ -329,7 +330,7 @@ function Animator.playStrike(strike, weaponKey, onImpact)
 		end
 	end)
 
-	if not a or not a:FindFirstChild("Root") then
+	if not a or not a.PrimaryPart then
 		return
 	end
 	local weapon = UnitData.Weapons[weaponKey]
@@ -368,12 +369,46 @@ local function livingState(model, t)
 	return data
 end
 
+local function standardAnimation(model, data)
+	if not data.animationAttempted then
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+		if not animator then return end
+		data.animationAttempted = true
+		data.tracks = {}
+		for name, id in { idle = Config.FEEL.avatarIdle, walk = Config.FEEL.avatarWalk } do
+			local animation = Instance.new("Animation")
+			animation.AnimationId = id
+			local ok, track = pcall(function() return animator:LoadAnimation(animation) end)
+			animation:Destroy()
+			if ok then
+				track.Looped = true
+				track.Priority = name == "walk" and Enum.AnimationPriority.Movement or Enum.AnimationPriority.Idle
+				data.tracks[name] = track
+			else warn("Avatar-Animation konnte nicht geladen werden: " .. id) end
+		end
+		model.Destroying:Once(function()
+			for _, track in data.tracks do track:Stop(0); track:Destroy() end
+		end)
+	end
+	local name = model:GetAttribute("Moving") and not model:GetAttribute("Mounted") and "walk" or "idle"
+	if data.trackName ~= name then
+		for key, track in data.tracks do
+			if key == name then track:Play(Config.FEEL.avatarAnimationFade / speed) else track:Stop(Config.FEEL.avatarAnimationFade / speed) end
+		end
+		data.trackName = name
+	end
+	local track = data.tracks[name]
+	if track then track:AdjustSpeed(name == "walk" and speed or 1) end
+end
+
 local function dust(model, data, t)
-	local root = model:FindFirstChild("Root")
+	local root = model.PrimaryPart
 	if not root or t < data.dustAt then return end
 	data.dustAt = t + Config.FEEL.stepDustInterval / speed
 	if not data.emitter then
 		local attachment = Instance.new("Attachment")
+		attachment.Position = Vector3.new(0, -(model:GetAttribute("GroundOffset") or 0), 0)
 		attachment.Parent = root
 		local emitter = Instance.new("ParticleEmitter")
 		emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
@@ -393,8 +428,8 @@ end
 local function idle(dt)
 	local t = os.clock()
 	if selected and selected.Parent and selectionRing then
-		local root = selected:FindFirstChild("Root")
-		if root then selectionRing:PivotTo(CFrame.new(root.Position)) end
+		local root = selected.PrimaryPart
+		if root then selectionRing:PivotTo(CFrame.new(root.Position - Vector3.new(0, selected:GetAttribute("GroundOffset") or 0, 0))) end
 	elseif selectionRing then
 		Animator.select(nil)
 	end
@@ -402,14 +437,15 @@ local function idle(dt)
 	local hall = workspace:FindFirstChild("Hub")
 	if hall then
 		for _, model in hall:GetChildren() do
-			if model:IsA("Model") and model:FindFirstChild("Root") then table.insert(models, model) end
+			if model:IsA("Model") and model.PrimaryPart then table.insert(models, model) end
 		end
 	end
 	for _, model in models do
+		local data = livingState(model, t)
+		standardAnimation(model, data)
 		if not busy[model] then
 			local m = motors(model)
 			if m.RootJoint then
-				local data = livingState(model, t)
 				local jump = 0
 				if model == selected then
 					local alpha = (t - selectedAt) * speed / Config.FEEL.selectionJumpDuration

@@ -2,6 +2,8 @@
 local Config = {}
 
 Config.FEEL = {
+	avatarIdle = "rbxassetid://507766388", avatarWalk = "rbxassetid://507777826",
+	avatarAnimationFade = 0.15, riderLift = 3.2, capeAngle = 8,
 	terrainDepth = 12, terrainClearTop = 20, gridLineWidth = 0.06, gridTransparency = 0.75,
 	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,
 	hallWhite = Color3.fromRGB(225, 218, 205), hallMarble = Color3.fromRGB(205, 198, 186),

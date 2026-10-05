@@ -55,6 +55,17 @@ UnitData.Classes = {
 	Chieftain = { name = "Bandenführer", mov = 5, moveType = "foot", growths = {} },
 }
 
+-- Offizielle Roblox-Accessoires aus PLAN.md; nur Aussehen, keine Spielwerte.
+UnitData.Classes.Lord.look = { hat = 3756500192 }
+UnitData.Classes.Cavalier.look = { hat = 98450287 }
+UnitData.Classes.Soldier.look = { hat = 8796225 }
+UnitData.Classes.Archer.look = { hat = 102623080 }
+UnitData.Classes.EnemyArcher.look = { hat = 102623080 }
+UnitData.Classes.Mage.look = { hat = 13121508 }
+UnitData.Classes.Fighter.look = { hat = 74221074 }
+UnitData.Classes.Brigand.look = { hat = 74221074 }
+UnitData.Classes.Chieftain.look = { hat = 108829551 }
+
 -- Spielbare Helden (Schlüssel = Helden-ID). GRUNDGERÜST – Werte/Namen/Looks frei änderbar.
 -- recruitable = false: nicht im Rekrutierungs-Pool · hair: optionale Haarfarbe (sonst Klassen-Standard)
 UnitData.Heroes = {
@@ -87,6 +98,13 @@ UnitData.Heroes = {
 	ida = { name = "Ida", class = "Archer", weapon = "IronBow", rarity = 1, hair = Color3.fromRGB(235, 205, 120),
 		stats = { hp = 15, str = 4, mag = 0, skl = 5, spd = 5, lck = 3, def = 2, res = 1 } },
 }
+
+UnitData.Heroes.leon.hairAccessory = 12819292
+UnitData.Heroes.mira.hairAccessory = 1513252656
+UnitData.Heroes.selina.hairAccessory = 376527350
+UnitData.Heroes.aurelia.hairAccessory = 398673196
+UnitData.Heroes.ida.hairAccessory = 398673196
+UnitData.Heroes.greta.hairAccessory = 1708329071
 
 -- Startaufstellung neuer Profile; weitere Helden über Story (Stages.unlockHero) und Rekrutierung
 UnitData.STARTER_HEROES = { "leon", "bruno", "tobi" }

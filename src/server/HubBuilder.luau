@@ -104,7 +104,7 @@ local function npc(class, weapon, rarity, x, z, yaw, hair)
 			end
 		end
 	end
-	model:PivotTo(at(x, 0.1, z) * CFrame.Angles(0, yaw, 0))
+	model:PivotTo(at(x, (model:GetAttribute("GroundOffset") or 0) + 0.1, z) * CFrame.Angles(0, yaw, 0))
 	model.Parent = hub
 	return model
 end

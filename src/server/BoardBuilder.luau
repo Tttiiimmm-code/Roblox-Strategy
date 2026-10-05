@@ -118,7 +118,7 @@ function BoardBuilder.build()
 			local tile = Instance.new("Part")
 			tile.Name = ("Tile_%d_%d"):format(x, y)
 			tile.Anchored = true
-			tile.Size = Vector3.new(T, 0.2, T) -- kleine Fuge = Gitterlinien
+			tile.Size = Vector3.new(T, 0.2, T)
 			tile.Position = Grid.toWorld(x, y) - Vector3.new(0, 0.1, 0)
 			tile.Transparency = 1
 			tile.CanCollide = false
@@ -137,7 +137,6 @@ function BoardBuilder.build()
 		end
 	end
 
-	local w, h = Grid.width() * T, Grid.height() * T
 	for i = 1, Config.FEEL.environmentCount do
 		local edge = i % 4
 		local fraction = ((i * 37) % 97) / 97

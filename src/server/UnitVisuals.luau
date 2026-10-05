@@ -20,8 +20,8 @@ function UnitVisuals.setSpeed(s)
 	speed = s
 end
 
-local function rootCFrame(x, y, yaw)
-	return CFrame.new(Grid.toWorld(x, y) + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, yaw, 0)
+local function rootCFrame(x, y, yaw, offset)
+	return CFrame.new(Grid.toWorld(x, y) + Vector3.new(0, (offset or 0) + 0.1, 0)) * CFrame.Angles(0, yaw, 0)
 end
 
 -- Blickrichtung (-Z) von a nach b
@@ -40,12 +40,19 @@ end
 
 function UnitVisuals.init(unitsFolder)
 	folder = unitsFolder
+	local templates = Instance.new("Folder")
+	templates.Name = "HeroTemplates"
+	for heroId, definition in UnitData.Heroes do
+		local template = CharacterBuilder.build({ id = heroId, heroId = heroId, team = "Player", class = definition.class, weapon = definition.weapon, rarity = definition.rarity, isLord = definition.isLord })
+		template.Parent = templates
+	end
+	templates.Parent = ReplicatedStorage
 end
 
 function UnitVisuals.create(unit)
 	local model = CharacterBuilder.build(unit)
 	model:SetAttribute("UnitId", unit.id)
-	model:PivotTo(rootCFrame(unit.x, unit.y, unit.team == "Player" and 0 or math.pi))
+	model:PivotTo(rootCFrame(unit.x, unit.y, unit.team == "Player" and 0 or math.pi, model:GetAttribute("GroundOffset")))
 	local root = model.PrimaryPart
 
 	local bb = Instance.new("BillboardGui")
@@ -164,7 +171,7 @@ function UnitVisuals.moveAlong(unit, path)
 		local from, to = Grid.toWorld(a.x, a.y), Grid.toWorld(b.x, b.y)
 		local target = CFrame.Angles(0, yawBetween(from, to) or 0, 0)
 		rotation = rotation:Lerp(target, 1 - math.exp(-Config.FEEL.turnSmoothness * dt * speed))
-		root.CFrame = CFrame.new(from:Lerp(to, distance - index + 1) + Vector3.new(0, 0.1, 0)) * rotation
+		root.CFrame = CFrame.new(from:Lerp(to, distance - index + 1) + Vector3.new(0, (model:GetAttribute("GroundOffset") or 0) + 0.1, 0)) * rotation
 	end
 	model:SetAttribute("Moving", false)
 end

@@ -164,7 +164,7 @@ local function showGhost(unit, x, y)
 			d:Destroy()
 		end
 	end
-	ghost:PivotTo(CFrame.new(Grid.toWorld(x, y) + Vector3.new(0, 0.1, 0)) * rotation)
+	ghost:PivotTo(CFrame.new(Grid.toWorld(x, y) + Vector3.new(0, (model:GetAttribute("GroundOffset") or 0) + 0.1, 0)) * rotation)
 	ghost.Parent = fxFolder
 
 	if moved then
@@ -513,7 +513,7 @@ end)
 -- Schadenszahlen über den Einheiten
 local function floatText(unitId, text, color, size)
 	local model = unitsFolder:FindFirstChild(unitId)
-	local root = model and model:FindFirstChild("Root")
+	local root = model and model.PrimaryPart
 	if not root then
 		return
 	end
