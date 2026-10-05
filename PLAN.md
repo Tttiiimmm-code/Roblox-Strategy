@@ -45,7 +45,7 @@ Ursachen (Claude-Analyse):
   - Für Felder **direkt neben** dem blauen Bereich, die für diese Einheit unpassierbar sind (`Grid.moveCost` = nil, ohne Einheiten-Blockade), ein dezentes graues Overlay mit Beschriftung „X" anzeigen (Config.OVERLAY: neuer Eintrag `Blocked`, grau, Transparenz ~0.55). Gemeinsam mit den anderen Overlays aufräumen.
   - Fertig, wenn: bei ausgewählter Einheit sieht man auf einen Blick, welche Felder doppelt/dreifach kosten und welche angrenzenden Felder gesperrt sind.
 
-- [ ] 6. **Gesperrte Felder erklären** – Dateien: `src/client/Main.client.luau` (`onClick` ~Zeile 355–380), `src/client/UI.luau` (`UI.showTerrain` ~Zeile 507)
+- [x] 6. **Gesperrte Felder erklären** – Dateien: `src/client/Main.client.luau` (`onClick` ~Zeile 355–380), `src/client/UI.luau` (`UI.showTerrain` ~Zeile 507)
   - Tippt/klickt man bei ausgewählter eigener Einheit auf ein nicht erreichbares Feld: kurzer `UI.toast` mit Grund, z. B. „Tiefer Morast – für Fußtruppen unpassierbar", „Wasser – nicht betretbar", „Zu weit – Bewegung reicht nicht", „Feld besetzt". Reihenfolge der Prüfung: besetzt → unpassierbar (`Grid.moveCost` nil) → zu weit. Bestehendes Verhalten (Abwählen o. Ä.) danach unverändert.
   - Terrain-Panel (`UI.showTerrain`): zweite Zeile um Bewegungskosten ergänzen: „Bewegung: Fuß 2 · Pferd 3" bzw. „Fuß –" für unpassierbar (aus `terrain.cost`, Namen `foot` = Fuß, `horse` = Pferd).
   - Fertig, wenn: man nie rätselt, warum ein Feld nicht geht.

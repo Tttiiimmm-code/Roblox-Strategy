@@ -9,6 +9,7 @@ local Debris = game:GetService("Debris")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Grid = require(Shared:WaitForChild("Grid"))
+local UnitData = require(Shared:WaitForChild("UnitData"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Stages = require(Shared:WaitForChild("Stages"))
 
@@ -398,6 +399,21 @@ local function onClick(x, y)
 		end
 	elseif mode == "Selected" then
 		local node = nodes[Grid.key(x, y)]
+		if not node or not node.canStop then
+			local selected = state.units[selectedId]
+			if unit then
+				UI.toast("Feld besetzt")
+			elseif selected and Grid.moveCost(selected, x, y) == nil then
+				local terrain = Grid.terrainAt(x, y)
+				local moveType = UnitData.Classes[selected.class].moveType
+				local troops = moveType == "horse" and "Reiter" or "Fußtruppen"
+				if terrain then
+					UI.toast(terrain.name .. (terrain.name == "Wasser" and " – nicht betretbar" or " – für " .. troops .. " unpassierbar"))
+				end
+			else
+				UI.toast("Zu weit – Bewegung reicht nicht")
+			end
+		end
 		if node and node.canStop then
 			openMenu(x, y)
 		elseif unit and unit.team == "Player" and not unit.done then
@@ -599,7 +615,12 @@ RunService.RenderStepped:Connect(function()
 		UI.showTerrain(Grid.terrainAt(x, y))
 	else
 		cursor.Transparency = 1
-		UI.hideTerrain()
+		local selected = TOUCH and selectedId and state.units[selectedId]
+		if selected then
+			UI.showTerrain(Grid.terrainAt(selected.x, selected.y))
+		else
+			UI.hideTerrain()
+		end
 	end
 
 	local hovered = x and Grid.unitAt(state.units, x, y)

@@ -83,7 +83,7 @@ local function buildTop(callbacks)
 	end)
 
 	terrainFrame = panel({
-		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.fromOffset(250, 56),
+		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.fromOffset(340, 78),
 		Visible = false,
 	}, hud)
 	padding(terrainFrame, 8)
@@ -508,8 +508,8 @@ end
 
 function UI.showTerrain(terrain)
 	local extra = terrain.heal and (" <font color='%s'>Heilung</font>"):format(UIKit.GOOD_HEX) or ""
-	terrainLabel.Text = ("<font face='Fondamento' size='20'><b>%s</b></font>\n<font color='%s'>Ausweichen</font> %+d   <font color='%s'>Verteidigung</font> %+d%s")
-		:format(terrain.name, UIKit.DIM_HEX, terrain.avoid, UIKit.DIM_HEX, terrain.def, extra)
+	terrainLabel.Text = ("<font face='Fondamento' size='20'><b>%s</b></font>\nBewegung: Fuß %s · Pferd %s\n<font color='%s'>Ausweichen</font> %+d   <font color='%s'>Verteidigung</font> %+d%s")
+		:format(terrain.name, tostring(terrain.cost.foot or "–"), tostring(terrain.cost.horse or "–"), UIKit.DIM_HEX, terrain.avoid, UIKit.DIM_HEX, terrain.def, extra)
 	UIKit.setVisible(terrainFrame, true)
 end
 
