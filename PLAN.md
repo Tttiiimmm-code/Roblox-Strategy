@@ -40,7 +40,7 @@ Ursachen (Claude-Analyse):
   - `S` (Morast) zusätzlich: je Feld eine **Pfütze** (Terrain `Water`, 3×0.6×3, pseudozufällig versetzt aus x/y, Oberkante knapp über der Morastoberfläche) und 3–4 Schilfhalme mit brauner Kolben-Spitze (kleiner Zylinder 0.25×0.5 oben).
   - Fertig, wenn: Sumpfkarten wirken auf den ersten Blick braun-matschig mit Pfützen und Schilf, klar anders als Grünland.
 
-- [ ] 5. **Bewegungskosten anzeigen** – Datei: `src/client/Main.client.luau` (`showRanges` ~Zeile 176, `addOverlay`)
+- [x] 5. **Bewegungskosten anzeigen** – Datei: `src/client/Main.client.luau` (`showRanges` ~Zeile 176, `addOverlay`)
   - In `showRanges`: für jedes blaue Bewegungsfeld mit `Grid.moveCost(unit, x, y) >= 2` auf das Overlay eine kleine Beschriftung legen (`SurfaceGui` auf der Oberseite oder `BillboardGui` flach, Text `"×2"`/`"×3"`, dunkle Schrift mit hellem Rand, gut lesbar aus der Taktik-Kamera) **und** das Overlay etwas transparenter zeichnen.
   - Für Felder **direkt neben** dem blauen Bereich, die für diese Einheit unpassierbar sind (`Grid.moveCost` = nil, ohne Einheiten-Blockade), ein dezentes graues Overlay mit Beschriftung „X" anzeigen (Config.OVERLAY: neuer Eintrag `Blocked`, grau, Transparenz ~0.55). Gemeinsam mit den anderen Overlays aufräumen.
   - Fertig, wenn: bei ausgewählter Einheit sieht man auf einen Blick, welche Felder doppelt/dreifach kosten und welche angrenzenden Felder gesperrt sind.

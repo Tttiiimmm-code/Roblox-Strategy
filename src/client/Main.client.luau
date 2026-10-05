@@ -15,6 +15,7 @@ local Stages = require(Shared:WaitForChild("Stages"))
 local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UI = require(script.Parent:WaitForChild("UI"))
+local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local MenuUI = require(script.Parent:WaitForChild("MenuUI"))
 local CameraController = require(script.Parent:WaitForChild("CameraController"))
 local UnitAnimator = require(script.Parent:WaitForChild("UnitAnimator"))
@@ -107,6 +108,19 @@ local function addOverlay(list, x, y, color, transparency, height)
 		end)
 	end
 	table.insert(list, p)
+	return p
+end
+
+local function addOverlayLabel(overlay, text)
+	local surface = UIKit.make("SurfaceGui", {
+		Face = Enum.NormalId.Top, CanvasSize = Vector2.new(256, 256),
+		AlwaysOnTop = true, LightInfluence = 0, Active = false,
+	}, overlay)
+	UIKit.label({
+		Size = UDim2.fromScale(1, 1), Text = text, TextSize = 80,
+		Font = UIKit.THEME.bold, TextColor3 = Color3.fromRGB(25, 30, 40),
+		TextStrokeColor3 = Color3.fromRGB(245, 245, 230), TextStrokeTransparency = 0,
+	}, surface)
 end
 
 local function clearList(list)
@@ -176,11 +190,29 @@ end
 local function showRanges(unit, moveColor)
 	local n = Grid.reachable(unit, state.units)
 	local move, attack = Grid.ranges(unit, state.units, n)
+	local blocked = {}
 	for _, t in move do
-		addOverlay(overlays, t.x, t.y, moveColor)
+		local cost = Grid.moveCost(unit, t.x, t.y)
+		local costly = moveColor == Config.OVERLAY.Move and cost and cost >= 2
+		local overlay = addOverlay(overlays, t.x, t.y, moveColor, costly and Config.FEEL.costOverlayTransparency or nil)
+		if costly then addOverlayLabel(overlay, "×" .. cost) end
+		if moveColor == Config.OVERLAY.Move then
+			for _, direction in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+				local x, y = t.x + direction[1], t.y + direction[2]
+				local key = Grid.key(x, y)
+				if Grid.inBounds(x, y) and not blocked[key] and Grid.moveCost(unit, x, y) == nil
+					and not Grid.unitAt(state.units, x, y) then
+					blocked[key] = true
+					local barrier = addOverlay(overlays, x, y, Config.OVERLAY.Blocked, Config.FEEL.blockedOverlayTransparency)
+					addOverlayLabel(barrier, "X")
+				end
+			end
+		end
 	end
 	for _, t in attack do
-		addOverlay(overlays, t.x, t.y, Config.OVERLAY.Attack)
+		if not blocked[Grid.key(t.x, t.y)] then
+			addOverlay(overlays, t.x, t.y, Config.OVERLAY.Attack)
+		end
 	end
 	return n
 end
