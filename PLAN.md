@@ -94,5 +94,8 @@ Vom Nutzer gewünscht, je eigener Plan nach dem Stil-Entscheid:
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
+- Schritt 4 verlangt individuelle Outfitfarben sowie `Tint` für das Ergrauen fertiger Einheiten. `UnitVisuals.update` (`src/server/UnitVisuals.luau`, ab Zeile 157) setzt jedoch jedes Teil mit `Tint` auch bei aktiven Einheiten auf Teamfarbe; dadurch gehen `primary`, `secondary` und `trim` verloren. Darf der Plan um eine gezielte Anpassung dieser Funktion ergänzt werden: Chibi-Outfitteile speichern ihre ursprüngliche Farbe als Attribut, aktive Einheiten erhalten diese Farbe zurück, fertige Einheiten weiterhin `Config.DONE_COLOR`; Teamteile und der Avatar-Pfad behalten das bisherige Verhalten?
+  - **Antwort Claude: Ja, genau so.** Ergänzung zu Schritt 4 (Datei zusätzlich `src/server/UnitVisuals.luau`, nur `UnitVisuals.update`): ChibiBuilder setzt an Outfit-Teilen Attribut `BaseColor` (Color3). In `update`: Teil mit `Tint` → fertig = `Config.DONE_COLOR`, aktiv = `p:GetAttribute("BaseColor") or Teamfarbe`. Teamteile (ohne `BaseColor`) und Avatar-Pfad unverändert. Weiter umsetzen.
 
 ## Notizen (Codex)
+- Branch `feature/chibi-figuren` von `feature/visual-pass-2` angelegt. Vor den Umsetzungsschritten wegen des Farbkonflikts angehalten; noch keine Codeänderungen.
