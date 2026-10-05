@@ -352,6 +352,7 @@ local function battle(attacker, defender)
 	end
 end
 
+local enemySpeedBefore
 local function runEnemyPhase()
 	table.clear(undoStack)
 	state.phase = "Enemy"
@@ -380,6 +381,7 @@ local function runEnemyPhase()
 			local plan = EnemyAI.plan(enemy, state.units)
 			if plan then
 				if #plan.path > 1 then
+					BattleEvent:FireAllClients({ enemyMove = { unitId = enemy.id, x = plan.x, y = plan.y } })
 					UnitVisuals.moveAlong(enemy, plan.path)
 					enemy.x, enemy.y = plan.x, plan.y
 				end
@@ -507,7 +509,10 @@ local function handleCommand(player, cmd)
 	local t = cmd.type
 
 	if t == "SetSpeed" then
-		if cmd.speed == 1 or cmd.speed == 2 then
+		if cmd.speed == 1 or cmd.speed == 2 or cmd.speed == 3 then
+			if cmd.speed == 3 and state.phase == "Enemy" and not enemySpeedBefore then
+				enemySpeedBefore = state.speed
+			end
 			state.speed = cmd.speed
 			UnitVisuals.setSpeed(cmd.speed)
 			broadcast()

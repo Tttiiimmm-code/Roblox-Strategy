@@ -320,7 +320,9 @@ function Animator.playStrike(strike, weaponKey, onImpact)
 	later(Config.IMPACT_TIME, function()
 		onImpact()
 		if b and b.Parent then
-			react(b, a, strike)
+			later(strike.hit and Config.FEEL.hitStop or 0, function()
+				if b.Parent then react(b, a, strike) end
+			end)
 		end
 	end)
 

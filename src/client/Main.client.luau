@@ -232,6 +232,7 @@ local function updateTools()
 		danger = dangerOn,
 		speed = state.speed or 1,
 		controllable = canControl(),
+		enemyPhase = state.phase == "Enemy" and not state.result,
 	})
 end
 
@@ -532,8 +533,22 @@ local function floatText(unitId, text, color, size)
 	Debris:AddItem(bb, 1.2)
 end
 
+local cameraEvent = 0
 BattleEvent.OnClientEvent:Connect(function(payload)
-	if payload.strikes then
+	if not isMine() then return end
+	if payload.enemyMove then
+		cameraEvent += 1
+		local move = payload.enemyMove
+		CameraController.focusOn(Grid.toWorld(move.x, move.y), Config.FEEL.battleZoom, Config.FEEL.cameraFocusTime / (state.speed or 1))
+	elseif payload.strikes then
+		cameraEvent += 1
+		local token = cameraEvent
+		local first = payload.strikes[1]
+		local a = first and state.units[first.attackerId]
+		local b = first and state.units[first.targetId]
+		if a and b then
+			CameraController.focusOn((Grid.toWorld(a.x, a.y) + Grid.toWorld(b.x, b.y)) / 2, Config.FEEL.battleZoom, Config.FEEL.cameraFocusTime / (state.speed or 1))
+		end
 		local speed = state and state.speed or 1
 		for i, s in payload.strikes do
 			task.delay((i - 1) * Config.STRIKE_TIME / speed, function()
@@ -542,6 +557,10 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 				UnitAnimator.playStrike(s, weaponKey, function()
 					SoundPlayer.play(not s.hit and "miss" or s.crit and "crit" or "hit", { varyPitch = true })
 					if s.hpAfter == 0 then SoundPlayer.play("death") end
+					if s.hit then
+						CameraController.shake(s.crit and Config.FEEL.critShakeStrength or Config.FEEL.shakeStrength, (s.crit and Config.FEEL.critShakeDuration or Config.FEEL.shakeDuration) / speed)
+						if s.crit then UI.flashCrit(speed) end
+					end
 					if not s.hit then
 						floatText(s.targetId, "Verfehlt", Color3.fromRGB(190, 196, 210), 140)
 					elseif s.crit then
@@ -554,6 +573,9 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 				end)
 			end)
 		end
+		task.delay(#payload.strikes * Config.STRIKE_TIME / speed, function()
+			if token == cameraEvent then CameraController.restore(Config.FEEL.cameraRestoreTime / speed) end
+		end)
 	elseif payload.exp and isMine() then
 		local e = payload.exp
 		if e.level then
@@ -586,11 +608,15 @@ local function applyState(newState)
 	end
 
 	UnitAnimator.setSpeed(state.speed or 1)
+	if previous and previous.phase == "Enemy" and state.phase ~= "Enemy" then
+		cameraEvent += 1
+		CameraController.restore(Config.FEEL.cameraRestoreTime / (state.speed or 1))
+	end
 	-- Kamera und Avatar: Taktik-Ansicht nur im eigenen Kampf, sonst frei im Thronsaal
 	CameraController.setActive(isMine())
 	Hub.setBattleView(isMine())
 	Atmosphere.set(isMine() and "battle" or "hall")
-	SoundPlayer.playMusic(isMine() and (state.result and (state.result.victory and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub")
+	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub")
 	resetSelection()
 	UI.setHudVisible(inBattle() and not state.result)
 	if inBattle() then
@@ -631,6 +657,9 @@ local root = UI.init({
 	end,
 	onSpeed = function()
 		send({ type = "SetSpeed", speed = (state and state.speed == 2) and 1 or 2 })
+	end,
+	onSkipEnemy = function()
+		if isMine() and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
 	end,
 	onForfeit = function()
 		send({ type = "ToLobby" })

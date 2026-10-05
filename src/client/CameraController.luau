@@ -11,6 +11,30 @@ local focus = Vector3.zero
 local bounds = Vector3.new(100, 0, 100)
 local zoom = 75
 local yaw = 0
+local saved, transition
+local shakeTime, shakeDuration, shakeStrength = 0, 0, 0
+local random = Random.new()
+
+local function transitionTo(position, distance, duration)
+	transition = { from = focus, to = position, zoomFrom = zoom, zoomTo = distance, elapsed = 0, duration = math.max(duration, 0.001) }
+end
+
+function CameraController.focusOn(position, distance, duration)
+	if not active then return end
+	if not saved then saved = { focus = focus, zoom = zoom } end
+	transitionTo(position * Vector3.new(1, 0, 1), distance, duration)
+end
+
+function CameraController.restore(duration)
+	if not active or not saved then return end
+	transitionTo(saved.focus, saved.zoom, duration)
+	saved = nil
+end
+
+function CameraController.shake(strength, duration)
+	if not active then return end
+	shakeStrength, shakeDuration, shakeTime = strength, math.max(duration, 0.001), 0
+end
 
 local function clampFocus()
 	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), 0, math.clamp(focus.Z, 0, bounds.Z))
@@ -49,6 +73,7 @@ function CameraController.setActive(on)
 		return
 	end
 	active = on
+	if not on then saved, transition = nil, nil; shakeStrength = 0 end
 	if not on then
 		local camera = workspace.CurrentCamera
 		camera.CameraType = Enum.CameraType.Custom
@@ -109,12 +134,27 @@ function CameraController.start()
 			if UserInputService:IsKeyDown(Enum.KeyCode.E) then yaw -= dt * 1.5 end
 		end
 
+		if transition then
+			transition.elapsed += dt
+			local alpha = math.clamp(transition.elapsed / transition.duration, 0, 1)
+			local eased = (1 - math.cos(alpha * math.pi)) / 2
+			focus = transition.from:Lerp(transition.to, eased)
+			zoom = transition.zoomFrom + (transition.zoomTo - transition.zoomFrom) * eased
+			if alpha == 1 then transition = nil end
+		end
 		local rotation = CFrame.Angles(0, yaw, 0)
 		focus += rotation:VectorToWorldSpace(move) * dt * 45
 		clampFocus()
 
 		local offset = rotation:VectorToWorldSpace(Vector3.new(0, 1, 0.75).Unit * zoom)
-		camera.CFrame = CFrame.lookAt(focus + offset, focus)
+		local shakeOffset = Vector3.zero
+		if shakeStrength > 0 then
+			shakeTime += dt
+			local decay = math.max(0, 1 - shakeTime / shakeDuration)
+			shakeOffset = Vector3.new(random:NextNumber(-1, 1), random:NextNumber(-1, 1), 0) * shakeStrength * decay
+			if decay == 0 then shakeStrength = 0 end
+		end
+		camera.CFrame = CFrame.lookAt(focus + offset, focus) * CFrame.new(shakeOffset)
 	end)
 end
 

@@ -25,7 +25,7 @@ Kontext: Nutzer-Feedback „wirkt altbacken, nicht dynamisch" (alle Bereiche). P
   - Schlachtfeld (`src/server/BoardBuilder.luau`): Umgebung statt Leere – großer Grasboden rund um das Brett (tiefer als die Felder), vereinzelte Bäume/Felsen außerhalb der Karte (deterministisch platziert, `CanQuery=false`), damit das Brett nicht im Nichts schwebt.
   - Fertig, wenn: Wechsel Saal ↔ Kampf blendet sichtbar zwischen beiden Stimmungen um; keine Auswirkung auf Klick-Erkennung der Felder.
 
-- [ ] 3. **Kampf-Inszenierung (Kamera & Wucht)**
+- [x] 3. **Kampf-Inszenierung (Kamera & Wucht)**
   - `src/client/CameraController.luau`: neu `shake(strength, duration)` (abklingendes Zittern als Offset auf `camera.CFrame`), `focusOn(position, zoom, duration)` (weiches Hinfahren, merkt sich vorherigen Fokus/Zoom) und `restore(duration)`. Nur wirksam, wenn `active`.
   - `Main.client.luau` / `UnitAnimator.playStrike`: zu Beginn eines Schlagabtauschs Kamera auf den Mittelpunkt beider Kämpfer fokussieren und näher zoomen (`Config.FEEL.battleZoom`), nach dem letzten Schlag `restore`. Beim Treffer `shake` (Krit stärker, Verfehlt keiner).
   - **Hit-Stop:** im Treffer-Moment alle laufenden Kampfanimationen ~0,06 s „einfrieren" (einfachste Umsetzung: `later`-Verzögerung der Rückstoß-Reaktion + kurzer Kamera-Ruck) – Server-Timing (`Config.IMPACT_TIME`) **nicht** verändern.

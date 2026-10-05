@@ -6,6 +6,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
+local Config = require(Shared:WaitForChild("Config"))
 local Stages = require(Shared:WaitForChild("Stages"))
 
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
@@ -15,7 +16,7 @@ local make, label, panel, button, corner, padding =
 
 local UI = {}
 
-local root, hud
+local root, hud, critFlash
 local phaseLabel, turnLabel, stageLabel, hintLabel
 local info = {}
 local menuFrame, attackButton
@@ -293,6 +294,13 @@ local function buildTools(callbacks)
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
 	tools.speed = toolButton("▶ 1×", 3, callbacks.onSpeed)
 
+	tools.skip = button("? Gegnerphase", col, "primary")
+	tools.skip.AnchorPoint = Vector2.new(0, 1)
+	tools.skip.Position = UDim2.fromScale(0, 1)
+	tools.skip.Size = UDim2.new(1, 0, 0, 50)
+	tools.skip.Visible = false
+	tools.skip.Activated:Connect(callbacks.onSkipEnemy)
+
 	tools.back = button("↶  Zurück", col, "muted")
 	tools.back.AnchorPoint = Vector2.new(0, 1)
 	tools.back.Position = UDim2.new(0, 0, 1, -110)
@@ -371,7 +379,16 @@ function UI.init(callbacks)
 	buildForecast()
 	buildTools(callbacks)
 	buildPopups()
+	critFlash = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 100, Active = false }, root)
 	return root
+end
+
+local flashTween
+function UI.flashCrit(speed)
+	if flashTween then flashTween:Cancel() end
+	critFlash.BackgroundTransparency = Config.FEEL.critFlashTransparency
+	flashTween = TweenService:Create(critFlash, TweenInfo.new(Config.FEEL.critFlashDuration / speed), { BackgroundTransparency = 1 })
+	flashTween:Play()
 end
 
 function UI.setHudVisible(visible)
@@ -386,6 +403,8 @@ end
 function UI.setTools(flags)
 	tools.back.Visible = flags.back
 	tools.endTurn.Visible = flags.controllable
+	tools.skip.Visible = flags.enemyPhase
+	UIKit.setButtonStyle(tools.skip, flags.speed == 3 and "disabled" or "primary")
 	tools.undo.Text = ("⟲ %d"):format(flags.undoLeft)
 	UIKit.setButtonStyle(tools.undo, (flags.controllable and flags.canUndo and flags.undoLeft > 0) and "default" or "disabled")
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
