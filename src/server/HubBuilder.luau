@@ -21,6 +21,7 @@ local ARCANE = Color3.fromRGB(170, 110, 255)
 
 local origin = Config.HUB_ORIGIN
 local hub
+local lightingWarningShown = false
 
 -- Lokale Koordinaten relativ zur Saalmitte (Thron im Norden = -Z, Eingang im Süden = +Z)
 local function at(x, y, z)
@@ -368,8 +369,16 @@ function HubBuilder.build()
 
 	Lighting.Ambient = Color3.fromRGB(120, 110, 100)
 	Lighting.OutdoorAmbient = Color3.fromRGB(150, 140, 130)
-	Lighting.LightingStyle = Enum.LightingStyle.Realistic
-	Lighting.PrioritizeLightingQuality = true
+	local styleOk = pcall(function()
+		Lighting.LightingStyle = Enum.LightingStyle.Realistic
+	end)
+	local qualityOk = pcall(function()
+		Lighting.PrioritizeLightingQuality = true
+	end)
+	if (not styleOk or not qualityOk) and not lightingWarningShown then
+		lightingWarningShown = true
+		warn("LightingStyle per Skript nicht setzbar – in Studio unter Lighting einstellen")
+	end
 	Lighting.Brightness = Config.FEEL.hallBrightness
 	Lighting.ExposureCompensation = Config.FEEL.hallExposure
 	Lighting.GlobalShadows = true

@@ -27,7 +27,7 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
   - Bei `npc` im Thronsaal: Fehler → `warn`, NPC weglassen, Saal-Aufbau läuft weiter (Proximity-Prompt bleibt am Möbel-Anker, nicht am NPC – prüfen, dass das so ist; sonst Prompt an den Anker hängen).
   - Fertig, wenn: Ein Avatar-Ladefehler bricht weder Kampfstart noch Thronsaal ab.
 
-- [ ] 4. **Licht-Eigenschaften absichern** – Datei: `src/server/HubBuilder.luau` (Ende von `HubBuilder.build`)
+- [x] 4. **Licht-Eigenschaften absichern** – Datei: `src/server/HubBuilder.luau` (Ende von `HubBuilder.build`)
   - `Lighting.LightingStyle` und `Lighting.PrioritizeLightingQuality` jeweils in eigenes `pcall` setzen; bei Fehler einmalig `warn("LightingStyle per Skript nicht setzbar – in Studio unter Lighting einstellen")`.
   - Zusätzlich in `default.project.json` unter `Lighting` die Eigenschaft `"Technology": "Future"` als `$properties` eintragen (falls `Lighting` dort noch nicht existiert, Knoten `"Lighting": { "$properties": { "Technology": "Future" } }` anlegen). Rojo setzt sie beim Sync/Build, unabhängig von Skript-Rechten. Mit `tools/rojo.exe build` prüfen, dass der Build fehlerfrei bleibt; meldet Rojo die Eigenschaft als unbekannt, Eintrag wieder entfernen und in den Notizen vermerken.
   - Fertig, wenn: `HubBuilder.build` läuft auch durch, wenn die Licht-Eigenschaften nicht setzbar sind.
