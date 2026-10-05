@@ -9,7 +9,7 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
 
 ## Schritte
 
-- [ ] 1. **Thronsaal zuerst, Avatar-Vorlagen im Hintergrund** – Dateien: `src/server/Main.server.luau`, `src/server/UnitVisuals.luau`
+- [x] 1. **Thronsaal zuerst, Avatar-Vorlagen im Hintergrund** – Dateien: `src/server/Main.server.luau`, `src/server/UnitVisuals.luau`
   - Problem: `Main.server.luau:41` `UnitVisuals.init(unitsFolder)` baut in einer Schleife synchron alle Helden-Vorlagen (`CharacterBuilder.build` → `CreateHumanoidModelFromDescriptionAsync`, lädt aus dem Netz). Erst danach baut Zeile 44 `HubBuilder.build()`. Spieler können also ein paar Sekunden ins Leere fallen.
   - `UnitVisuals.init` setzt nur noch `folder`. Den Bau der Vorlagen in eine neue Funktion `UnitVisuals.buildHeroTemplates()` verschieben.
   - Dort den Ordner `HeroTemplates` **sofort** (leer) in `ReplicatedStorage` anlegen und jede fertige Vorlage einzeln hineinlegen. Jeden Helden in `pcall` bauen; bei Fehler `warn` mit Helden-ID und mit dem nächsten Helden weitermachen.
@@ -60,3 +60,4 @@ Kontext: `docs/DEVLOG.md` #12 (Visual-Pass 2, ungetestet).
 - (Codex: hier eintragen und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Zusätzlich werden die beiden NPC-Aufrufe im HubBuilder mit task.defer nach dem synchronen Saalbau ausgeführt. Ohne diese Anpassung würde HubBuilder.build selbst weiterhin auf Avatar-Ladevorgänge warten.

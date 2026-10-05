@@ -40,13 +40,22 @@ end
 
 function UnitVisuals.init(unitsFolder)
 	folder = unitsFolder
+end
+
+function UnitVisuals.buildHeroTemplates()
 	local templates = Instance.new("Folder")
 	templates.Name = "HeroTemplates"
-	for heroId, definition in UnitData.Heroes do
-		local template = CharacterBuilder.build({ id = heroId, heroId = heroId, team = "Player", class = definition.class, weapon = definition.weapon, rarity = definition.rarity, isLord = definition.isLord })
-		template.Parent = templates
-	end
 	templates.Parent = ReplicatedStorage
+	for heroId, definition in UnitData.Heroes do
+		local ok, template = pcall(function()
+			return CharacterBuilder.build({ id = heroId, heroId = heroId, team = "Player", class = definition.class, weapon = definition.weapon, rarity = definition.rarity, isLord = definition.isLord })
+		end)
+		if ok then
+			template.Parent = templates
+		else
+			warn(("Helden-Vorlage %s konnte nicht gebaut werden: %s"):format(heroId, tostring(template)))
+		end
+	end
 end
 
 function UnitVisuals.create(unit)

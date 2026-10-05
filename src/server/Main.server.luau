@@ -42,6 +42,7 @@ UnitVisuals.init(unitsFolder)
 Grid.setMap(Stages.List[1].map) -- Kulisse für die Kartenauswahl
 BoardBuilder.build()
 HubBuilder.build()
+task.spawn(UnitVisuals.buildHeroTemplates)
 
 local rng = Random.new()
 local nextUnitId = 0

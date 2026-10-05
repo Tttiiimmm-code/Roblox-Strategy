@@ -290,7 +290,7 @@ local function buildBarracks(x, z)
 	part("ArmorStand", Vector3.new(2, 4, 1.2), at(x + 2, 4, z + 6), METAL, { Material = Enum.Material.Metal })
 	deco("ArmorHelm", Vector3.new(1.6, 1.4, 1.6), at(x + 2, 6.8, z + 6), METAL, { Material = Enum.Material.Metal })
 	deco("BarracksBanner", Vector3.new(0.3, 10, 6), at(x + 6.6, 11, z), RED, { Material = Enum.Material.Fabric })
-	npc("Soldier", "IronLance", 3, x, z, math.rad(90))
+	task.defer(npc, "Soldier", "IronLance", 3, x, z, math.rad(90))
 	label(rack, "Soldatenquartier", "Kaserne", 9)
 	prompt(rack, "barracks", "Kaserne", "Soldatenquartier")
 end
@@ -329,7 +329,7 @@ local function buildSummoningCircle(x, z)
 	light.Range = 18
 	light.Parent = circle
 
-	npc("Mage", "Fire", 5, x - 9, z, math.rad(-90), Color3.fromRGB(240, 240, 250))
+	task.defer(npc, "Mage", "Fire", 5, x - 9, z, math.rad(-90), Color3.fromRGB(240, 240, 250))
 	label(circle, "Beschwörungskreis", "Rekrutieren", 8)
 	prompt(circle, "recruit", "Beschwören", "Hofmagier")
 end
