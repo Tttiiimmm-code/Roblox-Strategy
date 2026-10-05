@@ -62,7 +62,7 @@ Kontext: Nutzer-Test nach Visual-Pass 2 (`docs/DEVLOG.md` #12–#13), Screenshot
   - Alle Teile: `CanCollide/CanTouch = false`, `Massless = true`; Material SmoothPlastic (Metall-Teile Metal, Stoffe Fabric).
   - Fertig, wenn: `ChibiBuilder.build(unit)` liefert für jeden Helden/Gegner/NPC ein Modell ohne Fehler; Laufen, Atmen, Angriffe und Treffer laufen über die bestehenden Motor-Namen.
 
-- [ ] 5. **Abgeschnittener Knopftext** – Datei: `src/client/UI.luau` (`tools.undo`)
+- [x] 5. **Abgeschnittener Knopftext** – Datei: `src/client/UI.luau` (`tools.undo`)
   - „Rückblende N" passt nicht in den Werkzeugknopf: `TextScaled = true` plus `UITextSizeConstraint` (MaxTextSize 13).
   - Fertig, wenn: Text vollständig lesbar.
 

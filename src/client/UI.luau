@@ -295,6 +295,8 @@ local function buildTools(callbacks)
 	end
 	tools.undo = toolButton("Rückblende 0", 1, callbacks.onUndo)
 	tools.undo.TextSize = 13
+	tools.undo.TextScaled = true
+	make("UITextSizeConstraint", { MaxTextSize = 13 }, tools.undo)
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
 	tools.speed = toolButton("1×", 3, callbacks.onSpeed)
 
