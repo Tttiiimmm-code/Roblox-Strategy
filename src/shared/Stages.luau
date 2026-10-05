@@ -25,9 +25,17 @@ Stages.Difficulties = {
 	},
 }
 
+Stages.Regions = {
+	{ id = "greenland", name = "Gr?nland", color = Color3.fromRGB(110, 170, 90), area = { 0.02, 0.38, 0.42, 0.58 }, atmosphere = "battle" },
+	{ id = "swamp", name = "Nebelsumpf", color = Color3.fromRGB(85, 115, 85), area = { 0.40, 0.45, 0.30, 0.50 }, atmosphere = "swamp" },
+	{ id = "ice", name = "Frostgipfel", color = Color3.fromRGB(175, 205, 235), area = { 0.30, 0.02, 0.40, 0.38 }, comingSoon = true },
+	{ id = "volcano", name = "Glutberg", color = Color3.fromRGB(175, 75, 50), area = { 0.70, 0.30, 0.28, 0.65 }, comingSoon = true },
+}
+
 Stages.List = {
 	{
 		id = "s1", name = "Grenzdorf", baseGold = 100, turnGoal = 6,
+		region = "greenland", mapPos = Vector2.new(0.10, 0.80), requires = {  },
 		description = "Banditen plündern ein Dorf an der Grenze. Vertreibe sie, bevor sie mit der Beute verschwinden!",
 		map = {
 			"..F....F..",
@@ -57,6 +65,7 @@ Stages.List = {
 	},
 	{
 		id = "s2", name = "Waldpass", baseGold = 150, turnGoal = 8,
+		region = "greenland", mapPos = Vector2.new(0.22, 0.58), requires = { "s1" },
 		description = "Soldaten des Grafen bewachen die Brücken über den Fluss. Nur wer den Pass hält, kommt weiter.",
 		map = {
 			"FF..F..FF..F",
@@ -90,6 +99,7 @@ Stages.List = {
 	},
 	{
 		id = "s3", name = "Banditenfestung", baseGold = 220, turnGoal = 10,
+		region = "greenland", mapPos = Vector2.new(0.32, 0.82), requires = { "s2" },
 		description = "Garrick, der Anführer der Banditen, verschanzt sich in seiner Festung. Zeit, das zu beenden.",
 		map = {
 			"....F..MM.H.",
@@ -130,6 +140,15 @@ function Stages.get(id)
 	for _, stage in Stages.List do
 		if stage.id == id then
 			return stage
+		end
+	end
+	return nil
+end
+
+function Stages.getRegion(id)
+	for _, region in Stages.Regions do
+		if region.id == id then
+			return region
 		end
 	end
 	return nil
@@ -186,14 +205,21 @@ function Stages.isCleared(profile, stageId)
 	return false
 end
 
--- Mission freigeschaltet, wenn die vorherige geschafft ist; Schwer erst nach Normal
+-- Eine erf?llte Vorg?ngermission gen?gt; Schwer erst nach Normal
 function Stages.isUnlocked(profile, index, diffId)
 	local stage = Stages.List[index]
 	local diff = Stages.getDifficulty(diffId)
 	if not stage or not diff then
 		return false
 	end
-	if index > 1 and not Stages.isCleared(profile, Stages.List[index - 1].id) then
+	local unlocked = #stage.requires == 0
+	for _, requiredId in stage.requires do
+		if Stages.isCleared(profile, requiredId) then
+			unlocked = true
+			break
+		end
+	end
+	if not unlocked then
 		return false
 	end
 	if diff.requires and Stages.bestStars(profile, stage.id, diff.requires) == 0 then

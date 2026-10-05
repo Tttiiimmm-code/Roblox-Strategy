@@ -11,7 +11,7 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
 
 ## Schritte
 
-- [ ] 1. **Gebiete + Kartengraph** – Datei: `src/shared/Stages.luau`
+- [x] 1. **Gebiete + Kartengraph** – Datei: `src/shared/Stages.luau`
   - Neue Tabelle `Stages.Regions` (Reihenfolge = Anzeige):
     | id | name | color | area (Anteile der Kartenfläche x, y, w, h) | atmosphere | comingSoon |
     |---|---|---|---|---|---|
@@ -111,3 +111,4 @@ Kontext: Nutzerwunsch (Entscheidungen): 2D-Kartenbildschirm; Story-Karten handge
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Schritt 1: Gebiete, Vorg?ngergraph und Freischaltregel erg?nzt; s4/s5 folgen mit ihren Kartendaten in Schritt 4.
