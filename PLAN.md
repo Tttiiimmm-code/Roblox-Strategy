@@ -33,7 +33,7 @@ Ursachen (Claude-Analyse):
   - `ArmorStand`/`ArmorHelm` ersetzen durch einen Ständer, der auf dem Boden steht (Oberkante Boden = y 0): Fußplatte (2.4×0.3×2.4, Holz, y 0.15), Stange (0.3×4.6×0.3, Holz, y 2.6), Querholz (2.6×0.3×0.3, y 4.4), Brustpanzer (2×2×1, Metall, y 3.7), Helm (Kugel Ø1.4 Metall, y 5.4) – alle über `part`/`deco` wie bisher an `at(x + 2, …, z + 6)`.
   - Fertig, wenn: nichts schwebt an der Kaserne (alle Teile berühren sich bzw. den Boden).
 
-- [ ] 4. **Sumpf sichtbar machen** – Dateien: `src/server/BoardBuilder.luau`, `src/server/Main.server.luau` (~Zeile 162), `src/shared/Stages.luau`, `src/shared/Config.luau`
+- [x] 4. **Sumpf sichtbar machen** – Dateien: `src/server/BoardBuilder.luau`, `src/server/Main.server.luau` (~Zeile 162), `src/shared/Stages.luau`, `src/shared/Config.luau`
   - `BoardBuilder.build(regionId)` (optional; Aufruf in `setupStage` mit `stage.region`, Startaufruf ~Zeile 43 ohne). Region-Daten in `Stages.Regions` ergänzen: `surroundMaterial` (greenland `Grass`, swamp `Mud`), `treeColor` (greenland wie bisher `Config.TERRAIN.F.color`, swamp (55,75,45)).
   - Umgebung (äußere Grasschicht und `OuterLeaves`) nutzt diese Werte.
   - Terrain-Farben: `workspace.Terrain:SetMaterialColor(Enum.Material.Mud, Config.FEEL.mudColor)` mit `mudColor = (70,58,38)` (deutlich dunkler/brauner als Gras).

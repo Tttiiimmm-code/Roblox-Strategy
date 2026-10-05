@@ -159,7 +159,7 @@ local function setupStage(stageId, diffId)
 	local diff = Stages.getDifficulty(diffId)
 	clearUnits()
 	Grid.setMap(stage.map)
-	BoardBuilder.build()
+	BoardBuilder.build(stage.region)
 
 	-- Eigene Helden werden erst bei "BeginBattle" aus dem Profil des Spielers aufgestellt
 	state = {

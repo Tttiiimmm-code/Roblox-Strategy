@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Grid = require(Shared.Grid)
+local Stages = require(Shared.Stages)
 
 local BoardBuilder = {}
 local lastTerrainRegion
@@ -39,12 +40,21 @@ local function decorate(ch, x, y, parent)
 			end
 		end
 	elseif ch == "S" then
-		for i = 1, 2 + (x + y) % 2 do
+		local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = { workspace.Terrain }
+		local surface = workspace:Raycast(puddle + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
+		local puddleY = (surface and surface.Position.Y or center.Y) + Config.FEEL.swampPuddleSurfaceOffset - Config.FEEL.swampPuddleSize.Y / 2
+		workspace.Terrain:FillBlock(CFrame.new(puddle.X, puddleY, puddle.Z), Config.FEEL.swampPuddleSize, Enum.Material.Water)
+		for i = 1, 3 + (x + y) % 2 do
 			local off = Vector3.new(((x * 17 + y * 11 + i * 7) % 2 == 0 and -1 or 1) * c, 0,
 				((x * 13 + y * 19 + i * 5) % 7 / 3 - 1) * c)
-			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 0.15, 0.15),
-				CFrame = CFrame.new(center + off + Vector3.new(0, 0.8, 0)) * CFrame.Angles(math.rad(i * 7), 0, math.rad(80 + i * 4)),
+			local stalk = CFrame.new(center + off + Vector3.new(0, 0.8, 0)) * CFrame.Angles(math.rad(i * 7), 0, math.rad(80 + i * 4))
+			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 0.15, 0.15), CFrame = stalk,
 				Color = Color3.fromRGB(110, 120, 60), Material = Enum.Material.Grass }, parent)
+			deco({ Name = "ReedTip", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, 0.25, 0.25),
+				CFrame = stalk * CFrame.new(0.8, 0, 0), Color = Color3.fromRGB(80, 50, 30), Material = Enum.Material.Wood }, parent)
 		end
 	elseif ch == "D" then
 		for i = 1, 1 + (x + y) % 2 do
@@ -85,7 +95,10 @@ function BoardBuilder.ensureUnitsFolder()
 end
 
 -- Baut die aktuelle Karte aus Grid.getMap() (vorher Grid.setMap aufrufen)
-function BoardBuilder.build()
+function BoardBuilder.build(regionId)
+	local region = Stages.getRegion(regionId)
+	local surroundMaterial = region and region.surroundMaterial or Enum.Material.Grass
+	local treeColor = region and region.treeColor or Config.TERRAIN.F.color
 	-- Standard-Baseplate/Spawn würden mit dem Brett kollidieren
 	for _, name in { "Baseplate", "SpawnLocation", "Board" } do
 		local old = workspace:FindFirstChild(name)
@@ -96,6 +109,7 @@ function BoardBuilder.build()
 
 	local T = Config.TILE_SIZE
 	local terrain = workspace.Terrain
+	terrain:SetMaterialColor(Enum.Material.Mud, Config.FEEL.mudColor)
 	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
 	local w, h = Grid.width() * T, Grid.height() * T
 	if lastTerrainRegion then terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
@@ -107,7 +121,7 @@ function BoardBuilder.build()
 	local function fillTerrain(sinkByChar)
 		local groundSink = sinkByChar["."] or 0
 		terrain:FillBlock(CFrame.new(w / 2, -depth / 2 - groundSink, h / 2), Vector3.new(w + margin * 2, depth, h + margin * 2), Enum.Material.Ground)
-		terrain:FillBlock(CFrame.new(w / 2, -2 - groundSink, h / 2), Vector3.new(w + margin * 2, 4, h + margin * 2), Enum.Material.Grass)
+		terrain:FillBlock(CFrame.new(w / 2, -2 - groundSink, h / 2), Vector3.new(w + margin * 2, 4, h + margin * 2), surroundMaterial)
 		for y = 1, Grid.height() do
 			for x = 1, Grid.width() do
 				local definition = Grid.terrainAt(x, y)
@@ -194,7 +208,7 @@ function BoardBuilder.build()
 			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, 2, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
 		else
 			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, 4.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
-			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, 12, z), Color = Config.TERRAIN.F.color, Material = Enum.Material.Grass }, board)
+			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, 12, z), Color = treeColor, Material = Enum.Material.Grass }, board)
 		end
 	end
 	board.Parent = workspace
