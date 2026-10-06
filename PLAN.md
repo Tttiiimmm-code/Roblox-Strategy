@@ -23,7 +23,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
   - Treffer-Reaktion und Tod (Umfallen/Ausblenden) für übergebene Modelle nutzbar machen (z. B. `Animator.playDeath(model)`), damit die Szene den Tod zeigt.
   - Fertig, wenn: Brett-Kampf unverändert; Szene kann Animationen auf eigenen Klonen abspielen.
 
-- [ ] 3. **Kampfszene** – neue Datei `src/client/BattleScene.luau`
+- [x] 3. **Kampfszene** – neue Datei `src/client/BattleScene.luau`
   - `BattleScene.play(info)`; `info = { left, right, strikes, speed, onDone }`. Seiten wie im Referenzbild: **Gegner links, Spieler rechts**; ohne Spieler-Einheit (Sonderfall) Angreifer rechts.
   - Pro Seite: `unit` (State-Daten inkl. KP **vor** dem Kampf), `model` (Klon aus `workspace.Units`, `ScaleTo(1)` wie in `UIKit.portrait`, BillboardGuis entfernt), `forecast` (`Combat.forecast` aus Sicht dieser Seite – Werte für HIT/DMG/CRT; Seite ohne Konter zeigt `--`), `terrain` (Feld, auf dem die Einheit steht).
   - **Darstellung:** Vollbild-`ScreenGui` (über HUD, unter Toasts/Level-Up) mit `ViewportFrame` + `WorldModel`:

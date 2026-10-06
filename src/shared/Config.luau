@@ -14,6 +14,7 @@ Config.CHIBI = {
 
 Config.FEEL = {
 	battleSceneIntro = 0.45, battleSceneOutro = 0.5,
+	battleSceneHpTime = 0.25, battleSceneTextTime = 0.4, battleSceneDeathDelay = 0.1,
 	avatarIdle = "rbxassetid://507766388", avatarWalk = "rbxassetid://507777826",
 	avatarAnimationFade = 0.15, riderLift = 3.2, capeAngle = 8,
 	touchEndGrace = 0.25, -- Sekunden, bevor ein Touch ohne InputEnded aufgeräumt wird
