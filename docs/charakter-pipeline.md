@@ -34,19 +34,19 @@ Kurz prüfen: In Studio ein Standard-Animationsskript testweise drauf (oder „P
 4. Kavaliere: Pferd baut das Spiel weiterhin selbst dazu (Reiter wird draufgesetzt). Ein eigenes Pferdemodell kann später als `assets/characters/horse.rbxm` folgen.
 
 ## 5. Design-Briefings (nach `docs/stil-guide.md`)
-Verbindliche Regeln (Proportionen 1 : 7, Cel-Shading 2-Ton, Gesicht wie Leon, 1 Haupt- + 1 Akzentfarbe, Fraktionsformen, Seltenheitsstufen) und die Prompt-Vorlage stehen im **Style-Guide**. Hauptfarben sind unter den Helden eindeutig; Rot/Rotbraun bleibt den Banditen vorbehalten, damit Freund und Feind auf dem Brett klar sind.
+Verbindliche Regeln (Proportionen 1 : 7, Cel-Shading 2-Ton, Gesicht wie Leon, 1 Haupt- + 1 Akzentfarbe, Fraktionsformen, Seltenheitsstufen) und die Prompt-Vorlage stehen im **Style-Guide**. Seltenheit = Rang (★1–2 einfache Leute, ★3 Profis, ★4 Anführer, ★5 einzeln geplante Legenden). Farben sind Vorschläge und dürfen sich wiederholen. Die Liste unten sind die **aktuellen** Figuren – weitere kommen nach diesem Schema dazu.
 
 | ID | Klasse / ★ | Hauptfarbe / Akzent | Beschreibung (für `[BESCHREIBUNG]`) |
 |---|---|---|---|
 | leon | Fürst ★5 | Königsblau / Gold | **fertig** – blondes Stachelhaar, blaue Augen, Silber-Gold-Rüstung, blauer Schal/Umhang, Wappenrock mit Gold-Raute, Schwert auf dem Rücken |
-| aurelia | Magierin ★5 | Weiß / Gold | junge Erzmagierin, langes silberweißes Haar, violette Augen, goldenes Diadem, weiße Robe mit hohem Kragen, Sternen-Goldstickerei und Rauten-Emblem, Zauberbuch an der Hüfte |
-| siegfried | Kavalier ★5 | Smaragdgrün / Gold | erfahrener Ritter, kurzes blondes Haar, grüne Augen, volle Plattenrüstung mit Gold-Ornamenten, smaragdgrüner Umhang, Helm mit goldenem Federbusch am Gürtel, Lanze auf dem Rücken |
-| mira | Kavalierin ★4 | Türkis / Weiß | lebhafte Reiterin, roter hoher Pferdeschwanz, volle leichte Rüstung mit Goldkanten, türkisfarbener Umhang und Waffenrock, Metall-Stirnband, Reithandschuhe |
-| selina | Magierin ★4 | Violett / Gold | geheimnisvolle Magierin, langes schwarzes Haar, goldene Augen, breiter violetter Zaubererhut, aufwendige violette Robe mit Goldmond-Motiven und Umhang |
+| aurelia | Magierin ★5 | Weiß / Gold | *Entwurf – ★5 wird einzeln geplant:* junge Erzmagierin, langes silberweißes Haar, violette Augen, goldenes Diadem, weiße Robe mit hohem Kragen, Sternen-Goldstickerei und Rauten-Emblem, Zauberbuch an der Hüfte |
+| siegfried | Kavalier ★5 | Smaragdgrün / Gold | *Entwurf – ★5 wird einzeln geplant:* erfahrener Ritter, kurzes blondes Haar, grüne Augen, volle Plattenrüstung mit Gold-Ornamenten, smaragdgrüner Umhang, Helm mit goldenem Federbusch am Gürtel, Lanze auf dem Rücken |
+| mira | Kavalierin ★4 | Türkis / Weiß | Anführerin der Grenzreiter (Rangabzeichen am Umhang), lebhaft, roter hoher Pferdeschwanz, volle leichte Rüstung mit Goldkanten, türkisfarbener Umhang und Waffenrock, Metall-Stirnband, Reithandschuhe |
+| selina | Magierin ★4 | Violett / Gold | Zaubermeisterin mit Meisterstab-Emblem, geheimnisvoll, langes schwarzes Haar, goldene Augen, breiter violetter Zaubererhut, aufwendige violette Robe mit Goldmond-Motiven und Umhang |
 | tobi | Bogenschütze ★3 | Olivgrün / Ocker | junger Jäger, kurzes braunes Haar, olivgrüne Kapuze mit Goldsaum, Lederweste, ein Armschutz aus Stahl, Köcher auf dem Rücken |
 | greta | Magierin ★3 | Senfgelb / Navy | ruhige Gelehrte, blaugraues Haar im Dutt, Brille, senfgelbe Robe mit Goldsaum und navyblauem Kragen, Schriftrollen am Gürtel, eine Brosche |
 | bruno | Kämpfer ★2 | Kupferorange / Dunkelbraun | kräftiger Axtkämpfer, schwarzes Stachelhaar, dunklere Haut, kupferfarbenes Stirntuch, ärmelloses Lederwams, schlicht |
-| kai | Kavalier ★2 | Stahlgrau / Hellblau | junger Knappe, dunkelbraunes Haar, schlichter stahlgrauer Waffenrock, einfache Kettenhaube, wenig Metall |
+| kai | Kavalier ★2 | Stahlgrau / Hellblau | Knappe (einfache Leute), dunkelbraunes Haar, schlichter stahlgrauer Waffenrock, einfache Kettenhaube, wenig Metall |
 | finn | Kämpfer ★1 | Sandbeige / Hellgrün | Bauernjunge, orange Stachelhaare, hellgrünes Bandana, beiges Hemd, geflickte Hose, schlicht |
 | ida | Bogenschützin ★1 | Altrosa / Braun | Dorf-Jägerin, blonder Pferdeschwanz, altrosa Tunika, braunes Stirnband, Lederkleidung, kleiner Köcher |
 | Brigand | Bandit | Dunkelrot / Braun | gezackt, geflickt, Fell-Kragen, dunkelrotes Bandana, Narben |

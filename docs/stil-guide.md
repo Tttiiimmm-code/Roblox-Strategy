@@ -8,7 +8,7 @@ Verbindliche Regeln für alle Figuren-Designs. Stil-Anker: **Leon-Referenzblatt*
 | Proportionen | **1 : 7** (Kopf zu Körper) wie Leon – realistische Anime-Proportionen, schlank, heroisch. Gegner-Bosse dürfen massiger sein, nicht größer als 1 : 7,5. |
 | Rendering | **Cel-Shading, 2 Töne**: flache Farbflächen + eine harte Schattenstufe, Glanzkanten auf Metall. Licht/Schatten in die Textur gemalt, **keine** Konturlinie. |
 | Gesicht | **wie Leon**: mittelgroße Anime-Augen mit klarer Irisfarbe, schmale Nase, kleiner Mund; Helden entschlossen bis neutral, Gegner grimmig/verschlagen. |
-| Farben | Jede Figur: **1 Hauptfarbe** (dominante Stofffläche) + **1 Akzentfarbe** (Säume, Embleme, Schmuck). Neutrale Basis für alle: Schwarz (Unteranzug), Braun (Leder), Messing (Schnallen). Keine zwei Helden mit gleicher Hauptfarbe. |
+| Farben | Richtwert: **1 Hauptfarbe** (dominante Stofffläche) + **1 Akzentfarbe** (Säume, Embleme, Schmuck). Neutrale Basis für alle: Schwarz (Unteranzug), Braun (Leder), Messing (Schnallen). Farben dürfen sich zwischen Figuren wiederholen – unterscheidbar werden sie über **Silhouette, Rolle und Ausstattung**. Je höher die Seltenheit, desto eigenständiger die Farbgebung. |
 
 ## 2. Feste Material-Bausteine (auf allen Figuren)
 1. **Braunes Leder + Messing** – Gurte, Schnallen, Taschen, Riemen als verbindendes Element.
@@ -26,15 +26,22 @@ Rüstung ist **kein** Pflichtbaustein: Menge und Art hängen von Klasse und Selt
 | **Eis** (später) | kristallin, spitz | Weiß, Hellblau | Eiszapfen-Zacken, Pelzkragen |
 | **Vulkan** (später) | gezackt, glühend | Schwarz, Orange | Glutrisse, Obsidian, Rauchspuren |
 
-## 4. Seltenheit am Design (deutlich gestaffelt)
-| Stufe | Ausstattung |
-|---|---|
-| ★1–2 | schlichte Kleidung und Leder, kaum Metall, einfacher Saum, keine Embleme |
-| ★3 | teilweise Rüstung (z. B. Schulter- oder Armschutz), **ein** Zierelement, Goldsaum am Stoff |
-| ★4 | volle Rüstung bzw. aufwendige Robe, Umhang, Goldkanten an Metall |
-| ★5 | wie Leon: Gold-Ornamente, Fraktions-Emblem, Umhang/Schal, Signaturwaffe als Deko (Rücken/Hüfte) |
+## 4. Seltenheit = Rang der Figur
+Je höher die Seltenheit, desto **eigenständiger** das Design. Untere Stufen sind bewusst archetypisch (viele Figuren, schnell erkennbare Rollen), ★5 sind Einzelstücke.
+
+| Stufe | Rolle (Beispiele) | Design |
+|---|---|---|
+| ★1–2 | **einfache Leute:** Bauern, Diebe, Schläger, Magierlehrlinge, Knappen | Alltagskleidung, Leder, Flicken, kaum Metall, einfacher Saum, keine Embleme. Archetypisch: Rolle auf einen Blick erkennbar. |
+| ★3 | **Profis:** Söldner, Magier, Hexen, Ritter, Jäger | Berufskleidung bzw. teilweise Rüstung, **ein** persönliches Zierelement, Goldsaum am Stoff. |
+| ★4 | **Anführer:** Prinzen, Diebesgruppen-Anführer, Zaubermeister, Pegasusritter | volle Rüstung bzw. aufwendige Robe, Umhang, Goldkanten, Rangabzeichen; deutlich eigene Silhouette (z. B. Pegasus, Krone, Meisterstab). |
+| ★5 | **Legenden** – die stärksten Einheiten | **einzeln geplant**, kein Schema: eigene Geschichte, eigene Farbwelt, Signaturwaffe, Gold-Ornamente/Emblem, unverwechselbare Silhouette (Maßstab: Leon). |
 
 Leuchteffekte (Aura, Funken, Glühen) fügt das Spiel selbst hinzu – **nicht** ins Design malen.
+
+### Produktion bei vielen Figuren
+- **★1–3:** pro Rolle eine **Grundfigur** (z. B. „Bauer", „Dieb", „Söldner", „Magier") als Vorlage; neue Figuren entstehen als Varianten davon (Haare, Gesicht, Farben, 1–2 Ausrüstungsteile). Spart Zeit und hält den Stil einheitlich.
+- **★4:** eigene Figur, darf aber auf einer ★3-Grundfigur der gleichen Rolle aufbauen (z. B. Ritter → Pegasusritter).
+- **★5:** immer eigenes Design-Blatt, einzeln abgestimmt.
 
 ## 5. Waffen
 - **Separat** als eigene 3D-Modelle im selben Stil (Schwert, Axt, Lanze, Speer, Bogen, Zauberbuch); das Spiel gibt sie in die Hand → später Ausrüstung/Items möglich.
@@ -54,6 +61,6 @@ Negativ: *chibi, realistic, photo, 3D render look, outline, text, watermark, wea
 
 ## 8. Abnahme (vor dem 3D-Schritt)
 1. Neues Blatt **neben Leon** legen: Proportionen, Gesicht, Schattenstil gleich?
-2. Haupt-/Akzentfarbe eindeutig und von allen anderen Helden unterscheidbar?
-3. Seltenheitsstufe am Aufwand erkennbar?
+2. Rolle und Silhouette auf einen Blick erkennbar (auch klein auf dem Brett)?
+3. Seltenheitsstufe am Rang/Aufwand erkennbar? ★5 wirklich einzigartig?
 4. Alle Blätter **gemeinsam** ansehen (Aufstellungsprobe) – fällt eine Figur heraus, zuerst nachbessern.
