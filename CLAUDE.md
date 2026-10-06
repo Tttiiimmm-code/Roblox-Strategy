@@ -25,7 +25,9 @@ Du bist Planer und Reviewer, nicht der Hauptumsetzer.
    das Fenster wird beim ersten Mal angelegt, danach wiederverwendet):
    `Start-Process wt -ArgumentList '-w codex nt -d . --title Codex powershell -NoExit -Command "codex ''Setze PLAN.md um''"'`
    (Umweg über PowerShell nötig: Codex ist per npm als `codex.cmd`/`.ps1` installiert, wt startet es nicht direkt.)
-   Bei Review-Fixes denselben Befehl mit dem jeweiligen Auftrag.
+   Andere Aufträge (Review, Weiterarbeit): Text zuerst nach `.handoff/auftrag.md`
+   schreiben, dann denselben Befehl mit `codex ''Lies .handoff/auftrag.md und fuehre den Auftrag aus.''`
+   – nie längeren Text direkt übergeben: `;` trennt in wt Tabs, Sonderzeichen brechen den Start.
 3. Im Hintergrund warten (Bash, `run_in_background`):
    `until [ -f .handoff/status ]; do sleep 20; done; cat .handoff/status`
 4. Bei Meldung: Inhalt `fertig` → Review starten (siehe oben) und Ergebnis melden.
