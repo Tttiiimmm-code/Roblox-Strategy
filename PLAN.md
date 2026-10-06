@@ -41,8 +41,8 @@ Ursachen (Claude-Analyse):
   - Fertig, wenn: Sumpfkarten wirken auf den ersten Blick braun-matschig mit Pfützen und Schilf, klar anders als Grünland.
 
 - [x] 5. **Bewegungskosten anzeigen** – Datei: `src/client/Main.client.luau` (`showRanges` ~Zeile 176, `addOverlay`)
-  - In `showRanges`: für jedes blaue Bewegungsfeld mit `Grid.moveCost(unit, x, y) >= 2` auf das Overlay eine kleine Beschriftung legen (`SurfaceGui` auf der Oberseite oder `BillboardGui` flach, Text `"×2"`/`"×3"`, dunkle Schrift mit hellem Rand, gut lesbar aus der Taktik-Kamera) **und** das Overlay etwas transparenter zeichnen.
-  - Für Felder **direkt neben** dem blauen Bereich, die für diese Einheit unpassierbar sind (`Grid.moveCost` = nil, ohne Einheiten-Blockade), ein dezentes graues Overlay mit Beschriftung „X" anzeigen (Config.OVERLAY: neuer Eintrag `Blocked`, grau, Transparenz ~0.55). Gemeinsam mit den anderen Overlays aufräumen.
+  - **Überholt (Nutzerwunsch, Commit 7d45dc1): Beschriftungen entfernt, Gelände über Aussehen erkennbar.** In `showRanges`: für jedes blaue Bewegungsfeld mit `Grid.moveCost(unit, x, y) >= 2` auf das Overlay eine kleine Beschriftung legen (`SurfaceGui` auf der Oberseite oder `BillboardGui` flach, Text `"×2"`/`"×3"`, dunkle Schrift mit hellem Rand, gut lesbar aus der Taktik-Kamera) **und** das Overlay etwas transparenter zeichnen.
+  - **Überholt (7d45dc1).** Für Felder **direkt neben** dem blauen Bereich, die für diese Einheit unpassierbar sind (`Grid.moveCost` = nil, ohne Einheiten-Blockade), ein dezentes graues Overlay mit Beschriftung „X" anzeigen (Config.OVERLAY: neuer Eintrag `Blocked`, grau, Transparenz ~0.55). Gemeinsam mit den anderen Overlays aufräumen.
   - Fertig, wenn: bei ausgewählter Einheit sieht man auf einen Blick, welche Felder doppelt/dreifach kosten und welche angrenzenden Felder gesperrt sind.
 
 - [x] 6. **Gesperrte Felder erklären** – Dateien: `src/client/Main.client.luau` (`onClick` ~Zeile 355–380), `src/client/UI.luau` (`UI.showTerrain` ~Zeile 507)
@@ -59,7 +59,7 @@ Ursachen (Claude-Analyse):
 - [ ] PC: Maus-Ziehen, Mausrad, Q/E, WASD wie vorher
 - [ ] Kaserne: Rüstungsständer steht auf dem Boden, nichts schwebt
 - [ ] Sumpfkarten: braun-matschig, Pfützen, Schilf, dunklere Bäume; klar anders als Grünland
-- [ ] Einheit wählen: Morastfelder zeigen „×2" (Pferd „×3"), angrenzende gesperrte Felder grau mit „X"
+- [ ] Sumpfkarten ohne Beschriftung lesbar: Morast = brauner Schlamm mit Pfützen/Schilf, Tiefer Morast = trüber Tümpel mit Seerosen, Umgebung dunkles Gras
 - [ ] Tippen auf Tiefen Morast/Wasser/zu weit/besetzt → Hinweis mit Grund; Terrain-Panel zeigt „Bewegung: Fuß 2 · Pferd 3"
 - [ ] Output ohne rote Zeilen
 
