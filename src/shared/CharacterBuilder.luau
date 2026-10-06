@@ -72,6 +72,7 @@ end
 
 local function prepareRig(model, unit, mesh)
 	model.Name = unit.id
+	if mesh then model:SetAttribute("MeshRig", true) end
 	local root = model:FindFirstChild("HumanoidRootPart")
 	model.PrimaryPart = root
 	model:PivotTo(CFrame.new())

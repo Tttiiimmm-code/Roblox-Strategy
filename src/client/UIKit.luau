@@ -347,11 +347,23 @@ function UIKit.portrait(viewport, camera, source, zoomOut)
 	local world = make("WorldModel", {}, viewport)
 	clone.Parent = world
 	local headY = (source:GetAttribute("HeadY") or 4.8) / scale
+	if source:GetAttribute("MeshRig") then
+		local topY = (source:GetAttribute("TopY") or headY * scale) / scale
+		local ground = (source:GetAttribute("GroundOffset") or 0) / scale
+		local height = math.max(topY - headY, 0.1) + math.max(headY + ground, 1) * (zoomOut and 0.6 or 0.4)
+		local torso = clone:FindFirstChild("UpperTorso")
+		local aspect = viewport.AbsoluteSize.X / math.max(viewport.AbsoluteSize.Y, 1)
+		local width = torso and torso.Size.X * 1.3 or height
+		local d = math.max(height, width / math.max(aspect, 0.5)) / (2 * math.tan(math.rad(camera.FieldOfView / 2))) * 1.15
+		local targetY = topY - height / 2
+		camera.CFrame = CFrame.lookAt(Vector3.new(d * 0.3, targetY + height * 0.12, -d), Vector3.new(0, targetY, 0))
+		return
+	end
 	local d = zoomOut and 9 or 6
 	camera.CFrame = CFrame.lookAt(Vector3.new(1.8, headY + 0.4, -d), Vector3.new(0, headY - (zoomOut and 1.6 or 0.8), 0))
 end
 
--- Heldenporträts klonen die beim Serverstart erzeugten R15-Vorlagen.
+-- Heldenporträts klonen die beim Serverstart erzeugten Figurenvorlagen.
 function UIKit.heroPortrait(viewport, camera, heroId, zoomOut)
 	viewport:SetAttribute("PortraitHero", heroId)
 	local templates = ReplicatedStorage:FindFirstChild("HeroTemplates")
