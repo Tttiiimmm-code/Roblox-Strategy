@@ -451,7 +451,7 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 3. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
 4. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
 5. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
-6. Nach dem Stil-Entscheid je eigener Plan: Ausrüstung/Items mit am Modell sichtbaren Waffen und Gegenständen.
+6. Ausrüstung/Items als reine Werte (Aussehen bleibt die eigene Waffe der Figur).
 7. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
 8. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
 9. Eigene Angriffs-Effekte für ★4/★5.
