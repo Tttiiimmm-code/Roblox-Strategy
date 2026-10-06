@@ -1,7 +1,7 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
-Config.CHARACTER_STYLE = "chibi" -- "chibi", "avatar" oder "mesh"; auf "mesh" umstellen, sobald R15-Modelle vorliegen.
+Config.CHARACTER_STYLE = "mesh" -- "chibi", "avatar" oder "mesh"; auf "mesh" umstellen, sobald R15-Modelle vorliegen.
 
 Config.CHIBI = {
 	legSize = Vector3.new(0.7, 1.0, 0.7), hipY = 1.0, legX = 0.45, bootHeight = 0.35,
@@ -17,6 +17,7 @@ Config.FEEL = {
 	battleSceneHpTime = 0.25, battleSceneTextTime = 0.4, battleSceneDeathDelay = 0.1,
 	avatarIdle = "rbxassetid://507766388", avatarWalk = "rbxassetid://507777826",
 	avatarAnimationFade = 0.15, riderLift = 3.2, capeAngle = 8,
+	meshTargetHeight = 5.5, -- Studs: importierte 3D-Figuren werden auf diese Höhe skaliert
 	touchEndGrace = 0.25, -- Sekunden, bevor ein Touch ohne InputEnded aufgeräumt wird
 	boardUnitScale = 1.35, turnRingRadius = 2.3, turnRingWidth = 0.3, turnRingTransparency = 0.2, turnRingPulse = 0.45, turnRingPulseRate = 3, -- Zug-Ring (blau/rot)
 	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.06, gridTransparency = 0.75,

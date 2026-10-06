@@ -70,9 +70,34 @@ local function avatar(unit)
 	return result:Clone()
 end
 
+-- Avatar Auto Setup erzeugt physikbasierte AnimationConstraint-Gelenke; Animator und
+-- eigene Posen arbeiten mit Motor6D. Gleichnamige Motor6D an denselben Attachments anlegen.
+local function convertJoints(model)
+	for _, joint in model:GetDescendants() do
+		if joint:IsA("AnimationConstraint") and joint.Attachment0 and joint.Attachment1 then
+			local a0, a1 = joint.Attachment0, joint.Attachment1
+			local motor = Instance.new("Motor6D")
+			motor.Name = joint.Name
+			motor.Part0, motor.Part1 = a0.Parent, a1.Parent
+			motor.C0, motor.C1 = a0.CFrame, a1.CFrame
+			motor.Parent = a1.Parent
+			joint:Destroy()
+		end
+	end
+	for _, d in model:GetDescendants() do
+		if d:IsA("BallSocketConstraint") or d:IsA("NoCollisionConstraint") then d:Destroy() end
+	end
+end
+
 local function prepareRig(model, unit, mesh)
 	model.Name = unit.id
-	if mesh then model:SetAttribute("MeshRig", true) end
+	if mesh then
+		model:SetAttribute("MeshRig", true)
+		convertJoints(model)
+		-- Importgröße angleichen, damit alle Modelle gleich groß auf dem Brett stehen
+		local height = model:GetExtentsSize().Y
+		if height > 0 then model:ScaleTo(model:GetScale() * Config.FEEL.meshTargetHeight / height) end
+	end
 	local root = model:FindFirstChild("HumanoidRootPart")
 	model.PrimaryPart = root
 	model:PivotTo(CFrame.new())
