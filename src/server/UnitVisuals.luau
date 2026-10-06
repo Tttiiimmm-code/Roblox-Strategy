@@ -70,6 +70,7 @@ function UnitVisuals.create(unit)
 		end
 	end
 	model:SetAttribute("UnitId", unit.id)
+	model:SetAttribute("Team", unit.team)
 	-- Auf dem Brett größer als in Porträts, damit Gesichter aus der Taktik-Kamera lesbar bleiben.
 	local scale = Config.FEEL.boardUnitScale
 	model:ScaleTo(scale)
@@ -160,21 +161,11 @@ function UnitVisuals.update(unit)
 	if not model then
 		return
 	end
-	local grey = unit.done or unit.deployed == false
+	-- Kein Ausgrauen mehr: der Client blendet den pulsierenden Zug-Ring aus, sobald "Done" gesetzt ist
+	model:SetAttribute("Done", unit.done or unit.deployed == false)
 	for _, p in model:GetDescendants() do
 		if p:IsA("BasePart") and p:GetAttribute("Tint") then
-			local base = p:GetAttribute("BaseColor") or Config.TEAM_COLORS[unit.team]
-			p.Color = grey and base:Lerp(Config.DONE_COLOR, Config.FEEL.doneGreyAmount) or base
-		elseif p:IsA("BasePart") and p.Transparency < 1 then
-			-- Kopf, Haare, Hut, Waffe & Co. ebenfalls entsättigen, damit fertige Figuren klar erkennbar sind
-			local original = p:GetAttribute("OrigColor")
-			if not original then
-				original = p.Color
-				p:SetAttribute("OrigColor", original)
-			end
-			p.Color = grey and original:Lerp(Config.DONE_COLOR, Config.FEEL.doneGreyAmount) or original
-		elseif p:IsA("ParticleEmitter") or p:IsA("PointLight") then
-			p.Enabled = not grey
+			p.Color = p:GetAttribute("BaseColor") or Config.TEAM_COLORS[unit.team]
 		end
 	end
 	UnitVisuals.setHp(unit.id, unit.hp, unit.maxHp)

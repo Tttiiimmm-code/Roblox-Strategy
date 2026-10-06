@@ -425,6 +425,33 @@ local function dust(model, data, t)
 	data.emitter:Emit(Config.FEEL.stepDustCount)
 end
 
+-- Zug-Ring: blau (eigene) bzw. rot (Gegner), pulsiert, verschwindet nach dem Zug
+local function turnRing(model, data, t)
+	if not data.turnRing then
+		local ring = Instance.new("Model")
+		ring.Name = "TurnRing"
+		local color = Config.TEAM_COLORS[model:GetAttribute("Team") or "Player"]
+		local segments, radius = Config.FEEL.selectionRingSegments, Config.FEEL.turnRingRadius
+		for i = 1, segments do
+			local angle = i / segments * math.pi * 2
+			local segment = fxPart({ Size = Vector3.new(0.1, 0.1, radius * math.pi * 2 / segments), Color = color, Material = Enum.Material.Neon })
+			segment.CFrame = CFrame.new(math.cos(angle) * radius, 0.1, math.sin(angle) * radius) * CFrame.Angles(0, -angle, 0)
+			segment.Parent = ring
+		end
+		ring.WorldPivot = CFrame.new()
+		ring.Parent = fxFolder
+		data.turnRing = ring
+		model.Destroying:Once(function() ring:Destroy() end)
+	end
+	local root = model.PrimaryPart
+	local hidden = model:GetAttribute("Done") or not root or not model.Parent or model.Name ~= model:GetAttribute("UnitId") -- gefallen
+	local alpha = hidden and 1 or Config.FEEL.turnRingTransparency + Config.FEEL.turnRingPulse * (0.5 + 0.5 * math.sin(t * Config.FEEL.turnRingPulseRate))
+	for _, segment in data.turnRing:GetChildren() do segment.Transparency = alpha end
+	if root and not hidden then
+		data.turnRing:PivotTo(CFrame.new(root.Position - Vector3.new(0, model:GetAttribute("GroundOffset") or 0, 0)))
+	end
+end
+
 local function idle(dt)
 	local t = os.clock()
 	if selected and selected.Parent and selectionRing then
@@ -442,6 +469,7 @@ local function idle(dt)
 	end
 	for _, model in models do
 		local data = livingState(model, t)
+		if model:GetAttribute("UnitId") then turnRing(model, data, t) end
 		standardAnimation(model, data)
 		if not busy[model] then
 			local m = motors(model)
