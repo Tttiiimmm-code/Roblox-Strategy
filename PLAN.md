@@ -45,7 +45,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
   - Neuer Werkzeugknopf „Szenen an" / „Szenen aus" (Stil `active` wenn an) → sendet `SetBattleScenes`; nur für den Besitzer sichtbar.
   - Fertig, wenn: Umschalten wirkt ab dem nächsten Kampf und bleibt gespeichert.
 
-- [ ] 6. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
+- [x] 6. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
 - [ ] 7. Devlog-Eintrag #18 „Kampfszene" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer, PC + Handy)

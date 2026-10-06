@@ -54,6 +54,7 @@ local function later(t, fn)
 	local thread = task.delay(t / animationSpeed(), function()
 		if ctx then contexts[coroutine.running()] = ctx end
 		fn()
+		contexts[coroutine.running()] = nil
 	end)
 	if ctx then table.insert(ctx.threads, thread) end
 end
@@ -347,9 +348,12 @@ local function newContext(options)
 	local ctx = { speed = options.speed or speed, fxParent = options.fxParent or fxFolder, threads = {}, tweens = {} }
 	local function cancel()
 		for _, thread in ctx.threads do
+			contexts[thread] = nil
 			if coroutine.status(thread) ~= "dead" and thread ~= coroutine.running() then task.cancel(thread) end
 		end
 		for _, tween in ctx.tweens do tween:Cancel() end
+		table.clear(ctx.threads)
+		table.clear(ctx.tweens)
 	end
 	return ctx, cancel
 end
@@ -383,6 +387,7 @@ function Animator.playStrike(strike, weaponKey, onImpact, options)
 	local thread = task.spawn(function()
 		if ctx then contexts[coroutine.running()] = ctx end
 		style(a, b, strike)
+		contexts[coroutine.running()] = nil
 	end)
 	if ctx then table.insert(ctx.threads, thread) end
 	later(Config.STRIKE_TIME, function()
