@@ -425,8 +425,28 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 **Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Nach jedem Umsetzungsschritt `scripts/check.ps1`: **OK**; Abschlussprüfung **26 Dateien, Exit 0**. Rojo-Build von `TacticsGame.rbxlx` erfolgreich. Darstellung, Viewport-Effekte, Konter/Doppelschläge, Treffer-/Krit-/Tod-Animationen, Audio, KP-Balken, Überspringen, Tempo, Besitzerrechte und Speichern nach Rejoin müssen anhand der manuellen Prüfliste in `PLAN.md` bestätigt werden. Claude-Review ausstehend.
 
 ---
+## #19 – Figurenstil mesh
+**Datum:** 06.10.2026
+
+**Ziel:** Fertige Anime-R15-Modelle je Held oder Gegnerklasse verwenden und bei fehlenden Vorlagen automatisch auf Chibi zurückfallen. Modell-Erstellung und Import sind in [charakter-pipeline.md](charakter-pipeline.md) beschrieben.
+
+**Umsetzung**
+- Rojo bindet `assets/characters` als `ReplicatedStorage.CharacterModels` ein. Eine ignorierte README hält den Ordner auch ohne Modelle im Projekt.
+- Neuer Figurenstil `mesh`: Helden-ID vor Klassenname, Nicht-Model-Kinder ignoriert, Pflichtteile und ihre Typen geprüft. Fehlende, unvollständige oder nicht klonbare Vorlagen ergeben Chibi mit höchstens einer Warnung je Modell-ID.
+- Avatar und Mesh verwenden gemeinsame R15-Aufbereitung: Skripte entfernen, Root/PrimaryPart verankern, übrige Teile ohne Kollision/Touch und masselos, Humanoid-Anzeige aus, Animator ergänzen, Fußhöhe als GroundOffset, Waffen, Seltenheits-Effekte, Pferd und HeadY/TopY. Mesh-Waffen folgen der Handposition und -ausrichtung.
+- Aufbereitete Mesh-Vorlagen werden nach Modell-ID, Klasse, Team, Waffe, Seltenheit und isLord getrennt zwischengespeichert und pro Einheit geklont. Der Mesh-Pfad funktioniert auf Client und Server ohne Netzaufrufe; die Avatar-Sperre für Clients bleibt bestehen.
+- Importierte Farben und Texturen bleiben erhalten; Tint nur auf vom Spiel ergänzten Teamteilen. Zusätzlicher Avatar-Wappenrock und Avatar-Umhang entfallen bei Mesh, damit die modellierte Kleidung sichtbar bleibt.
+- Porträtkamera für Mesh verwendet Kopf-/Oberkörperspanne aus TopY/HeadY/GroundOffset sowie Sichtfeld und Seitenverhältnis. Bestehende Brett-Skalierung, R15-Animationen, Zug-Ring, Kampfszene und Ghost-Vorschau sind angeschlossen; Chibi-Porträtkamera unverändert.
+
+**Entscheidungen:** Standard bleibt `chibi`, bis der Nutzer Modelle importiert und auf `mesh` umstellt. Keine echten Modelldateien erstellt; die R15-Testvorlage und Prüfhilfen bleiben ausschließlich unter `.handoff` und uncommittet. Spielregeln, Karten, ProfileStore und Servervalidierung unverändert. Ein Commit pro Planschritt auf `feature/mesh-figuren`, abgezweigt von `feature/kampfszene`.
+
+**Probleme:** Der Git-Index erforderte die bereits autorisierten Aufrufe außerhalb der Sandbox. Die lokale Prüfhilfe benötigte den Roblox-Standardwert Anchored=false; nach Korrektur des Stubs alle Prüfungen erfolgreich. Keine blockierenden Syntax- oder Buildprobleme.
+
+**Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Pflichtcheck nach jedem Schritt: **OK**; Abschluss **26 Dateien, Exit 0**. Rojo-Build erfolgreich. **175 lokale Prüfungen** mit aktuellen Originalmodulen und API-Stubs: vollständiges R15, jeder fehlende Pflichtteil, falscher Teiltyp, Klassenersatz, Skriptentfernung, Physik, Humanoid/Animator, Waffen/Aura, Pferd, Texturerhalt, einmalige Warnungen, Cache-Trennung und Klonisolation, Client-/Serverpfade ohne Mesh-Netzaufrufe. Alle 11 Helden und 7 Gegnertypen fallen ohne Modelle auf dieselbe Teile-/Farbsignatur wie Chibi zurück. Statische Anschlussprüfung gemäß PLAN.md durchgeführt; unabhängiger Claude-Review ausstehend. Stubs simulieren weder Rendering noch Rotationen, Animationen oder Replikation. Echte Modelle und die manuelle Prüfliste müssen im Studio/auf dem Handy getestet werden.
+
+---
 ## Nächste Schritte (Plan)
-1. Claude prüft `feature/kampfszene`, insbesondere Darstellung, Lebenszyklus/Abbruch und Synchronisierung mit dem Server. Nutzer testet die Kampfszenen-Prüfliste in `PLAN.md` auf PC und Handy. Review/Test von Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfaden, Handy-Kamera, Weltkarte/Terrain/Chibis sowie Stil-Entscheid bleiben offen.
+1. Claude prüft `feature/mesh-figuren`, insbesondere Vorlagenprüfung, R15-Aufbereitung, Cache und Porträtkamera. Nutzer testet zunächst `mesh` ohne Modelle und danach importierte R15-Modelle gemäß `docs/charakter-pipeline.md` und der Prüfliste in `PLAN.md` auf PC und Handy. Review/Test von Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfaden, Handy-Kamera und Weltkarte/Terrain/Chibis bleiben offen.
 2. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
 3. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
 4. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
@@ -436,6 +456,6 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 8. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
 9. Eigene Angriffs-Effekte für ★4/★5.
 10. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
-11. Option KI-generierte 3D-Modelle: Nutzer prüft Tools; möglicher dritter Stil `"mesh"` im selben Schalter.
+11. Anime-R15-Modelle schrittweise gemäß `docs/charakter-pipeline.md` erstellen/importieren; der Figurenstil `mesh` ist vorbereitet, fehlende Modelle bleiben Chibi.
 12. Belohnungen & Klassenwechsel.
 13. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
