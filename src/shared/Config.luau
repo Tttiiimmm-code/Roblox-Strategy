@@ -17,6 +17,7 @@ Config.FEEL = {
 	battleSceneHpTime = 0.25, battleSceneTextTime = 0.4, battleSceneDeathDelay = 0.1,
 	avatarIdle = "rbxassetid://507766388", avatarWalk = "rbxassetid://507777826",
 	avatarAnimationFade = 0.15, riderLift = 3.2, capeAngle = 8,
+	meshArmDrop = 75, -- Grad: T-Pose-Arme importierter Figuren in Ruhepose absenken
 	meshTargetHeight = 5.5, -- Studs: importierte 3D-Figuren werden auf diese Höhe skaliert
 	touchEndGrace = 0.25, -- Sekunden, bevor ein Touch ohne InputEnded aufgeräumt wird
 	boardUnitScale = 1.35, turnRingRadius = 2.3, turnRingWidth = 0.3, turnRingTransparency = 0.2, turnRingPulse = 0.45, turnRingPulseRate = 3, -- Zug-Ring (blau/rot)

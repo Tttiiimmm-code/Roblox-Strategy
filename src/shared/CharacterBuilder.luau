@@ -87,12 +87,33 @@ local function convertJoints(model)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BallSocketConstraint") or d:IsA("NoCollisionConstraint") then d:Destroy() end
 	end
+	-- Bild-zu-3D-Modelle stehen in T-Pose; Roblox-Animationen erwarten hängende Arme als Ruhepose
+	local drop = math.rad(Config.FEEL.meshArmDrop)
+	for name, sign in { RightShoulder = -1, LeftShoulder = 1 } do
+		local motor = model:FindFirstChild(name, true)
+		if motor and motor:IsA("Motor6D") then motor.C0 *= CFrame.Angles(0, 0, sign * drop) end
+	end
+	-- Teile entlang der Gelenkkette neu setzen, damit Maße (Bodenhöhe, Hand für Waffen) zur Ruhepose passen
+	local byChild = {}
+	for _, d in model:GetDescendants() do
+		if d:IsA("Motor6D") and d.Part0 and d.Part1 then byChild[d.Part1] = d end
+	end
+	local function place(part, depth)
+		local motor = byChild[part]
+		if not motor or depth > 20 then return end
+		place(motor.Part0, depth + 1)
+		part.CFrame = motor.Part0.CFrame * motor.C0 * motor.C1:Inverse()
+	end
+	for part in byChild do place(part, 0) end
 end
 
 local function prepareRig(model, unit, mesh)
 	model.Name = unit.id
 	if mesh then
 		model:SetAttribute("MeshRig", true)
+		-- Automatische Humanoid-Skalierung würde unsere Größenangleichung später überschreiben (Figur sinkt ein)
+		local rigHumanoid = model:FindFirstChildOfClass("Humanoid")
+		if rigHumanoid then rigHumanoid.AutomaticScalingEnabled = false end
 		convertJoints(model)
 		-- Importgröße angleichen, damit alle Modelle gleich groß auf dem Brett stehen
 		local height = model:GetExtentsSize().Y
@@ -236,11 +257,11 @@ local function prepareRig(model, unit, mesh)
 		return e
 	end
 
-	if rarity >= 2 then -- Ungewöhnlich: farbige Gürtelschnalle
+	if rarity >= 2 and not mesh then -- Ungewöhnlich: farbige Gürtelschnalle
 		extra("Buckle", Vector3.new(0.5, 0.35, 0.1), lower.CFrame * CFrame.new(0, 0, -lower.Size.Z / 2 - 0.1), rarityColor, lower,
 			{ Material = Enum.Material.Neon })
 	end
-	if rarity >= 3 then -- Selten: Kragen-Verzierung
+	if rarity >= 3 and not mesh then -- Selten: Kragen-Verzierung
 		extra("Collar", Vector3.new(2.1, 0.25, 1.1), torso.CFrame * CFrame.new(0, torso.Size.Y / 2, 0), rarity >= 5 and GOLD or METAL, torso,
 			{ Material = Enum.Material.Metal })
 	end
@@ -264,10 +285,13 @@ local function prepareRig(model, unit, mesh)
 		end
 	end
 	if rarity >= 5 then -- Legendär: goldenes Wappen und Aura am Boden
-		extra("Crest", Vector3.new(0.7, 0.7, 0.1), torso.CFrame * CFrame.new(0, 0, -torso.Size.Z / 2 - 0.12) * CFrame.Angles(0, 0, math.rad(45)), GOLD,
-			torso, { Material = Enum.Material.Neon })
-		extra("AuraRing", Vector3.new(0.1, 5.5, 5.5), at(0, -groundOffset + 0.08, 0) * CFrame.Angles(0, 0, math.rad(90)), rarityColor, root,
-			{ Material = Enum.Material.Neon, Shape = Enum.PartType.Cylinder, Transparency = 0.65, CastShadow = false })
+		-- Mesh-Designs haben eigene Ornamente; dort nur Partikel-Aura, kein Wappen/keine Bodenscheibe
+		if not mesh then
+			extra("Crest", Vector3.new(0.7, 0.7, 0.1), torso.CFrame * CFrame.new(0, 0, -torso.Size.Z / 2 - 0.12) * CFrame.Angles(0, 0, math.rad(45)), GOLD,
+				torso, { Material = Enum.Material.Neon })
+			extra("AuraRing", Vector3.new(0.1, 5.5, 5.5), at(0, -groundOffset + 0.08, 0) * CFrame.Angles(0, 0, math.rad(90)), rarityColor, root,
+				{ Material = Enum.Material.Neon, Shape = Enum.PartType.Cylinder, Transparency = 0.65, CastShadow = false })
+		end
 		local emitter = extra("AuraEmitter", Vector3.new(4, 0.1, 4), at(0, -groundOffset + 0.1, 0), rarityColor, root,
 			{ Transparency = 1, CastShadow = false })
 		local e = sparkles(emitter, 8, 0.4, 1.4, 3)
