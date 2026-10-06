@@ -159,11 +159,15 @@ local function setupStage(stageId, diffId)
 	local diff = Stages.getDifficulty(diffId)
 	clearUnits()
 	Grid.setMap(stage.map)
+	local boardStart = os.clock()
 	BoardBuilder.build(stage.region)
+	local boardDuration = os.clock() - boardStart
 
 	-- Eigene Helden werden erst bei "BeginBattle" aus dem Profil des Spielers aufgestellt
 	state = {
 		mode = "Battle",
+		ownerUserId = state.ownerUserId,
+		ownerName = state.ownerName,
 		stageId = stageId,
 		difficulty = diffId,
 		units = {},
@@ -178,6 +182,7 @@ local function setupStage(stageId, diffId)
 		maxUnits = Stages.unitLimit(stage, diff),
 	}
 
+	local unitsStart = os.clock()
 	local enemies = table.clone(stage.enemies)
 	if diff.extraEnemies then
 		for _, e in stage.hardEnemies do
@@ -189,6 +194,7 @@ local function setupStage(stageId, diffId)
 		state.units[unit.id] = unit
 		UnitVisuals.create(unit)
 	end
+	print(("Missionsaufbau %s: Brett %.0f ms, Figuren %.0f ms"):format(stageId, boardDuration * 1000, (os.clock() - unitsStart) * 1000))
 
 	broadcast()
 end
@@ -607,10 +613,12 @@ local function handleCommand(player, cmd)
 				end
 			end
 			local stage = Stages.get(state.stageId)
+			local unitsStart = os.clock()
 			for i, heroId in chosen do
 				local slot = stage.slots[i]
 				spawnHero(heroId, profile.heroes[heroId], slot.x, slot.y)
 			end
+			print(("Missionsaufbau %s (Helden): Brett 0 ms, Figuren %.0f ms"):format(state.stageId, (os.clock() - unitsStart) * 1000))
 			state.ownerUserId = player.UserId
 			state.phase = "Player"
 			broadcast()

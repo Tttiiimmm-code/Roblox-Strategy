@@ -13,7 +13,7 @@ Ursachen (Claude-Analyse):
 
 ## Schritte
 
-- [ ] 1. **Messen** – Datei: `src/server/Main.server.luau` (`setupStage`)
+- [x] 1. **Messen** – Datei: `src/server/Main.server.luau` (`setupStage`)
   - Mit `os.clock()` die Dauer von `BoardBuilder.build` und vom Erstellen der Einheiten messen und einmal pro Start ausgeben: `print(("Missionsaufbau %s: Brett %.0f ms, Figuren %.0f ms"):format(stageId, ...))`. Gleiches für den Aufbau bei `BeginBattle` (Helden), falls dort Figuren entstehen.
   - Fertig, wenn: die Zeile erscheint bei jedem Start im Output.
 
@@ -60,3 +60,5 @@ Ursachen (Claude-Analyse):
 
 ## Notizen (Codex)
 - Branch `feature/ladezeit` von `feature/mobile-lesbarkeit` angelegt. Vor der Umsetzung wegen des Widerspruchs zwischen Retry-Besitz und erlaubtem Serverumfang gestoppt; noch keine Codeänderungen.
+
+- Schritt 1: Aufbauzeiten für Brett/Gegner und BeginBattle-Helden ergänzt; Besitzerfelder in setupStage gemäß Antwort erhalten (Retry-Fehler behoben). Check: OK; Output in Studio ungetestet.
