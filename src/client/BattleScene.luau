@@ -123,9 +123,10 @@ function BattleScene.play(info)
 	make("Part", { Name = "Gelände", Anchored = true, Size = Vector3.new(16, 0.3, 6), Position = Vector3.new(0, 0.25, 0), Color = terrain.color, Material = terrain.material }, world)
 	for i, side in { info.left, info.right } do
 		local model = side.model
-		local sourceScale = model:GetScale()
+		local base = model:GetAttribute("BaseScale") or 1
+		local sourceScale = model:GetScale() / base
 		local ground = (model:GetAttribute("GroundOffset") or 0) / sourceScale
-		model:ScaleTo(1)
+		model:ScaleTo(base)
 		for _, child in model:GetDescendants() do
 			if child:IsA("BillboardGui") or child:IsA("Script") or child:IsA("LocalScript") then child:Destroy() end
 		end

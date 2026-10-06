@@ -341,8 +341,10 @@ function UIKit.portrait(viewport, camera, source, zoomOut)
 		end
 	end
 	-- Brett-Figuren sind vergrößert (Config.FEEL.boardUnitScale); Porträts zeigen Originalgröße.
-	local scale = source:GetScale()
-	clone:ScaleTo(1)
+	-- BaseScale = Maßstab der aufbereiteten Vorlage (Mesh-Figuren sind auf Zielhöhe normiert)
+	local base = source:GetAttribute("BaseScale") or 1
+	local scale = source:GetScale() / base
+	clone:ScaleTo(base)
 	clone:PivotTo(CFrame.new())
 	local world = make("WorldModel", {}, viewport)
 	clone.Parent = world

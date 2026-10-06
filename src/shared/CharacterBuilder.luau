@@ -97,6 +97,10 @@ local function prepareRig(model, unit, mesh)
 		-- Importgröße angleichen, damit alle Modelle gleich groß auf dem Brett stehen
 		local height = model:GetExtentsSize().Y
 		if height > 0 then model:ScaleTo(model:GetScale() * Config.FEEL.meshTargetHeight / height) end
+		model:SetAttribute("BaseScale", model:GetScale())
+		-- Posen-Speicher von Avatar Setup wird im Spiel nicht gebraucht und bläht jede Kopie auf
+		local poses = model:FindFirstChild("InitialPoses")
+		if poses then poses:Destroy() end
 	end
 	local root = model:FindFirstChild("HumanoidRootPart")
 	model.PrimaryPart = root

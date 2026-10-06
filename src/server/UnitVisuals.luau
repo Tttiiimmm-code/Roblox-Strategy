@@ -73,7 +73,8 @@ function UnitVisuals.create(unit)
 	model:SetAttribute("Team", unit.team)
 	-- Auf dem Brett größer als in Porträts, damit Gesichter aus der Taktik-Kamera lesbar bleiben.
 	local scale = Config.FEEL.boardUnitScale
-	model:ScaleTo(scale)
+	-- ScaleTo ist absolut zur Importgröße: auf den Vorlagen-Maßstab (BaseScale) aufsetzen
+	model:ScaleTo((model:GetAttribute("BaseScale") or 1) * scale)
 	for _, name in { "HeadY", "TopY", "GroundOffset" } do
 		local value = model:GetAttribute(name)
 		if value then model:SetAttribute(name, value * scale) end
