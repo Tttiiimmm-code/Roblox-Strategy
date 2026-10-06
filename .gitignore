@@ -17,3 +17,6 @@ tools/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Rohdaten der 3D-Pipeline (groß, nicht ins Repo)
+assets/raw/
