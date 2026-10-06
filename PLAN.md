@@ -44,6 +44,7 @@ Kontext: Nutzerziel: „alle Figuren den gleichen Artstyle wie in dem Bild" (Leo
 - Chibi-Aussehen und -Verhalten
 
 ## Offene Fragen
+- Übergabe dieses Reviews (06.10.2026): Der Review-Commit `d22edde` ist lokal fertig, aber `git push` scheitert auch außerhalb der Sandbox mit `Could not resolve host: github.com`. Kann Claude den Push nach Wiederherstellung der Netzwerk-/DNS-Verbindung ausführen bzw. den Auftrag anschließend erneut freigeben? Bis zum erfolgreichen Push bleibt `.handoff/status` gemäß Übergaberegel auf `frage`, nicht `fertig`. Kein Spielcode geändert; Pflichtcheck und lokale Prüfungen sind grün.
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
