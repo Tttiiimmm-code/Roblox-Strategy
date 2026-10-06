@@ -32,7 +32,7 @@ Du bist Planer und Reviewer, nicht der Hauptumsetzer.
    – endet mit `fertig`/`frage` oder mit `STILL`, wenn Codex' Sitzungsprotokoll
    3 Minuten still steht (wartet vermutlich auf eine Freigabe im Terminal):
    dann den Nutzer sofort bitten, ins Codex-Fenster zu schauen, und erneut warten.
-   Nach `fertig` pusht Claude den Branch (Codex pusht nicht).
+   Nach `fertig` prüfen, ob der Branch gepusht ist (`git status -sb`), sonst selbst pushen.
 4. Bei Meldung: Inhalt `fertig` → Review starten (siehe oben) und Ergebnis melden.
    Inhalt `frage` → „Offene Fragen" in `PLAN.md` lesen; technische Fragen selbst
    im Plan beantworten und Codex erneut starten, Entscheidungen des Nutzers ihm vorlegen.
