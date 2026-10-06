@@ -79,7 +79,11 @@ local function convertJoints(model)
 			local motor = Instance.new("Motor6D")
 			motor.Name = joint.Name
 			motor.Part0, motor.Part1 = a0.Parent, a1.Parent
-			motor.C0, motor.C1 = a0.CFrame, a1.CFrame
+			-- Gelenkachsen an den Weltachsen ausrichten (wie Standard-R15): Auto Setup dreht sie
+			-- entlang der Gliedmaßen, dann würden unsere Posen den Arm nur um sich selbst drehen.
+			local jointFrame = CFrame.new(a0.WorldPosition)
+			motor.C0 = a0.Parent.CFrame:ToObjectSpace(jointFrame)
+			motor.C1 = a1.Parent.CFrame:ToObjectSpace(jointFrame)
 			motor.Parent = a1.Parent
 			joint:Destroy()
 		end
@@ -125,6 +129,8 @@ local function prepareRig(model, unit, mesh)
 	end
 	local root = model:FindFirstChild("HumanoidRootPart")
 	model.PrimaryPart = root
+	-- Drehpunkt in die Hüfte: importierte Modelle haben ihn oft an den Füßen, der Server setzt beim Laufen aber die Wurzel
+	if root then root.PivotOffset = CFrame.new() end
 	model:PivotTo(CFrame.new())
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
