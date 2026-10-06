@@ -40,7 +40,7 @@ Ursachen (Claude-Analyse):
   - Fertig, wenn: gleiche Gegner (z. B. mehrere Banditen) werden geklont statt neu gebaut; Aussehen unverändert.
 
 - [x] 5. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
-- [ ] 6. Devlog-Eintrag #17 „Flüssiger Missionsstart" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
+- [x] 6. Devlog-Eintrag #17 „Flüssiger Missionsstart" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer, PC + Handy)
 - [ ] Weltkarte → Mission starten: Weltkarte verschwindet **sofort**, Ladebildschirm mit Missionsname erscheint
@@ -59,7 +59,7 @@ Ursachen (Claude-Analyse):
   - **Antwort Claude: Ja.** Guter Fund – das ist sogar ein bestehender Fehler (nach `Retry` ist `ownerUserId` leer, dadurch lehnt `Main.server.luau:538` alle Kampfbefehle ab). `setupStage` übernimmt `ownerUserId`/`ownerName` aus dem bisherigen State in den neuen State; `StartStage` setzt sie danach wie bisher. Sonst nichts an der Validierung ändern. In den Notizen und im Devlog als behobenen Fehler vermerken. Weiter umsetzen.
 
 ## Notizen (Codex)
-- Branch `feature/ladezeit` von `feature/mobile-lesbarkeit` angelegt. Vor der Umsetzung wegen des Widerspruchs zwischen Retry-Besitz und erlaubtem Serverumfang gestoppt; noch keine Codeänderungen.
+- Branch `feature/ladezeit` von `feature/mobile-lesbarkeit` angelegt. Vor der Umsetzung wegen des Widerspruchs zwischen Retry-Besitz und erlaubtem Serverumfang gestoppt; nach Claudes Antwort fortgesetzt.
 
 - Schritt 1: Aufbauzeiten für Brett/Gegner und BeginBattle-Helden ergänzt; Besitzerfelder in setupStage gemäß Antwort erhalten (Retry-Fehler behoben). Check: OK; Output in Studio ungetestet.
 
@@ -70,3 +70,5 @@ Ursachen (Claude-Analyse):
 - Schritt 4: ChibiBuilder legt unveränderte Geometrie unparented als Vorlage ab; jeder Aufruf liefert einen separaten Klon mit aktueller Unit-ID. Der Schlüssel enthält zusätzlich die Klasse, da diese auch bei heroId Pferd/Augenbrauen/Umhang bestimmt. Lokale API-Stubs bestätigen Wiederverwendung, getrennte Aussehensvarianten und Isolation von Modellmutationen/UnitId/Team; alle Heldenporträts und Gegnertypen gebaut. Check: OK; Aussehen, Skalierung und Animation in Studio ungetestet.
 
 - Schritt 5: Abschlusscheck OK (25 Dateien, Exit 0); Rojo-Build TacticsGame.rbxlx erfolgreich. Lokale Prüfung der originalen Ladefunktionen mit API-Stubs bestätigt neue States, Besitzer/Stage/Schwierigkeit, alte Retry-Ergebnisse, alle Bereitschaftssperren, Doppelklick-Unterdrückung, Lobby-Ablehnung und beide Timeout-Pfade. Die Prüfhilfen bleiben unter .handoff und werden nicht committet.
+
+- Schritt 6: Devlog #17 ergänzt, Nächste Schritte aktualisiert. Abschluss auf feature/ladezeit; Teststatus in Studio/auf dem Handy ungetestet. Branch wird vor dem abschließenden Signal an Claude gepusht.
