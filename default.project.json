@@ -6,7 +6,8 @@
       "$properties": { "Technology": "Future" }
     },
     "ReplicatedStorage": {
-      "Shared": { "$path": "src/shared" }
+      "Shared": { "$path": "src/shared" },
+      "CharacterModels": { "$path": "assets/characters" }
     },
     "ServerScriptService": {
       "Server": { "$path": "src/server" }

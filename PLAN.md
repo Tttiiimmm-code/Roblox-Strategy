@@ -10,7 +10,7 @@ Kontext: Nutzerziel: „alle Figuren den gleichen Artstyle wie in dem Bild" (Leo
 
 ## Schritte
 
-- [ ] 1. **Modellordner über Rojo** – Dateien: `default.project.json`, neuer Ordner `assets/characters/`
+- [x] 1. **Modellordner über Rojo** – Dateien: `default.project.json`, neuer Ordner `assets/characters/`
   - `ReplicatedStorage.CharacterModels` ← `assets/characters` (`$path`). Der Ordner muss ohne Modelle bauen: eine Platzhalterdatei anlegen, die Rojo akzeptiert bzw. ignoriert (prüfen mit `tools/rojo.exe build`; z. B. `README.md` mit Kurzverweis auf `docs/charakter-pipeline.md` – falls Rojo das als Instanz anlegt, im Code Nicht-Model-Kinder ignorieren).
   - Fertig, wenn: Build ohne Fehler, `ReplicatedStorage.CharacterModels` existiert im Spiel.
 
@@ -47,3 +47,4 @@ Kontext: Nutzerziel: „alle Figuren den gleichen Artstyle wie in dem Bild" (Leo
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Schritt 1: `README.md` wird von Rojo ignoriert; der leere Ordner erscheint als `ReplicatedStorage.CharacterModels` im gebauten Spiel. Pflichtcheck und Rojo-Build erfolgreich.
