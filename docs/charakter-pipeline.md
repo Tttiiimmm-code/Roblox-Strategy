@@ -6,7 +6,7 @@ Ziel: Alle Figuren im Anime-Stil des Leon-Designs (realistische Anime-Proportion
 Pro Figur **zwei Bilder** wie beim Leon-Design:
 - **Vorderansicht + Rückansicht in T-Pose**, ganzer Körper, neutraler grauer Hintergrund, keine Schatten am Boden, kein Text.
 - Arme waagerecht, Finger gestreckt, Beine leicht auseinander – erleichtert das spätere Rigging.
-- **Waffe nicht in der Hand.** Waffen in der Hand fügt das Spiel selbst hinzu (sie wechseln mit der Ausrüstung). Schwerter/Bögen/Bücher dürfen als Deko auf dem Rücken oder an der Hüfte sein.
+- **Waffe nicht in der Hand.** Die eigene Waffe der Figur wird separat generiert (`<id>_waffe.rbxm`, siehe Style-Guide Abschnitt 5) und vom Spiel in die Hand gesetzt. Deko-Waffen auf Rücken/Hüfte sind erlaubt.
 - Gleicher Stil für alle: Leons Blatt als Stil-Referenz an den Bildgenerator geben und die Prompt-Vorlage aus `docs/stil-guide.md` verwenden.
 
 ## 2. Bild → 3D-Modell

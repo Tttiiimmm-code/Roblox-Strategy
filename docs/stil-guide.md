@@ -44,9 +44,10 @@ Leuchteffekte (Aura, Funken, Glühen) fügt das Spiel selbst hinzu – **nicht**
 - **★5:** immer eigenes Design-Blatt, einzeln abgestimmt.
 
 ## 5. Waffen
-- **Separat** als eigene 3D-Modelle im selben Stil (Schwert, Axt, Lanze, Speer, Bogen, Zauberbuch); das Spiel gibt sie in die Hand → später Ausrüstung/Items möglich.
-- Figuren-Designs zeigen **keine Waffe in der Hand**. Deko-Waffen auf Rücken/Hüfte sind erlaubt (z. B. Leons Schwert).
-- ★5-**Signaturwaffen** als besondere Variante der Grundwaffe (Gold, Edelstein in Fraktionsfarbe).
+- **Jede Figur hat ihre eigene Waffe** (gehört zum Design, nicht austauschbar). Ausrüstung ändert nur Werte, nie das Aussehen.
+- Herstellung: Waffe aus demselben Design-Blatt **separat** generieren und als `assets/characters/<id>_waffe.rbxm` ablegen. In Studio den **Pivot auf den Griff** setzen, Klinge/Spitze zeigt nach **-Z** (Pivot-Pfeil nach vorne). Länge wird automatisch angeglichen (Schwert 2,8 · Axt 3 · Lanze 5 · Bogen 3,2 · Buch 1,1 Studs; abweichend per Attribut `Laenge`). Bogen/Buch sitzen in der linken Hand, alles andere rechts. Fehlt die Datei, zeigt das Spiel eine Platzhalterwaffe.
+- Figuren-Designs zeigen **keine Waffe in der Hand** (sonst zerschneidet Avatar Setup die Klinge). Deko-Waffen auf Rücken/Hüfte sind erlaubt (z. B. Leons Schwert).
+- ★5-**Signaturwaffen** dürfen besonders aufwendig sein (Gold, Edelstein in Fraktionsfarbe).
 
 ## 6. Design-Blatt (Format)
 - Vorder- + Rückansicht in **T-Pose**, ganzer Körper, neutral grauer Hintergrund, kein Text, keine Bodenschatten.

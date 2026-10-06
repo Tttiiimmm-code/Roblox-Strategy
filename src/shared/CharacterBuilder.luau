@@ -9,6 +9,8 @@ local CharacterBuilder = {}
 local bases = {}
 local templates = {}
 local warned = {}
+-- Standardlänge eigener Waffenmodelle in Studs (überschreibbar per Attribut "Laenge" am Modell)
+local WEAPON_LENGTH = { Sword = 2.8, Axe = 3, Lance = 5, Bow = 3.2, Anima = 1.1 }
 local SKIN = Color3.fromRGB(236, 196, 164)
 local METAL = Color3.fromRGB(185, 192, 204)
 local DARK_METAL = Color3.fromRGB(105, 110, 124)
@@ -91,11 +93,17 @@ local function convertJoints(model)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BallSocketConstraint") or d:IsA("NoCollisionConstraint") then d:Destroy() end
 	end
-	-- Bild-zu-3D-Modelle stehen in T-Pose; Roblox-Animationen erwarten hängende Arme als Ruhepose
+	-- Bild-zu-3D-Modelle stehen oft in T-Pose; Roblox-Animationen erwarten hängende Arme als Ruhepose.
+	-- Nur absenken, wenn die Hand höchstens 30° unter der Schulter liegt (fertige Ruheposen bleiben).
+	-- Drehung in C1, damit C0 an den Weltachsen bleibt und Posen den Arm quer zum Körper schwingen.
 	local drop = math.rad(Config.FEEL.meshArmDrop)
-	for name, sign in { RightShoulder = -1, LeftShoulder = 1 } do
-		local motor = model:FindFirstChild(name, true)
-		if motor and motor:IsA("Motor6D") then motor.C0 *= CFrame.Angles(0, 0, sign * drop) end
+	for side, sign in { Right = -1, Left = 1 } do
+		local motor = model:FindFirstChild(side .. "Shoulder", true)
+		local hand, upper = model:FindFirstChild(side .. "Hand"), model:FindFirstChild(side .. "UpperArm")
+		if motor and motor:IsA("Motor6D") and hand and upper then
+			local arm = hand.Position - upper.Position
+			if arm.Magnitude > 0 and -arm.Y < arm.Magnitude * 0.5 then motor.C1 *= CFrame.Angles(0, 0, -sign * drop) end
+		end
 	end
 	-- Teile entlang der Gelenkkette neu setzen, damit Maße (Bodenhöhe, Hand für Waffen) zur Ruhepose passen
 	local byChild = {}
@@ -111,7 +119,7 @@ local function convertJoints(model)
 	for part in byChild do place(part, 0) end
 end
 
-local function prepareRig(model, unit, mesh)
+local function prepareRig(model, unit, mesh, modelId)
 	model.Name = unit.id
 	if mesh then
 		model:SetAttribute("MeshRig", true)
@@ -224,7 +232,24 @@ local function prepareRig(model, unit, mesh)
 		return at(x, y, z)
 	end
 	local t = weapon.type
-	if t == "Sword" then
+	-- Eigene Waffe der Figur (CharacterModels.<id>_waffe): Pivot = Griff, -Z = Klingenrichtung
+	local own = modelId and ReplicatedStorage.CharacterModels:FindFirstChild(modelId .. "_waffe")
+	if own and own:IsA("Model") then
+		local w = own:Clone()
+		w.Name = "Waffe"
+		local length = w:GetAttribute("Laenge") or WEAPON_LENGTH[t] or 2.8
+		local size = w:GetExtentsSize()
+		w:ScaleTo(w:GetScale() * length / math.max(size.X, size.Y, size.Z))
+		local hand = t == "Bow" and lArm or rArm
+		w:PivotTo(hand.CFrame)
+		for _, p in w:GetDescendants() do
+			if p:IsA("BasePart") then
+				p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Massless = false, false, false, false, true
+				weld(hand, p)
+			end
+		end
+		w.Parent = model
+	elseif t == "Sword" then
 		extra("Grip", Vector3.new(0.2, 0.2, 0.6), weaponAt(hx, hY, 0), LEATHER, rArm)
 		extra("Guard", Vector3.new(0.9, 0.18, 0.2), weaponAt(hx, hY, -0.35), unit.isLord and GOLD or DARK_METAL, rArm, metal)
 		extra("Blade", Vector3.new(0.14, 0.32, 2.6), weaponAt(hx, hY, -1.75), METAL, rArm, metal)
@@ -272,7 +297,8 @@ local function prepareRig(model, unit, mesh)
 			{ Material = Enum.Material.Metal })
 	end
 	if rarity >= 4 then -- Episch: leuchtende Waffe mit Funken, Umhang mit Saum
-		local weaponPart = model:FindFirstChild("Blade") or model:FindFirstChild("AxeHead") or model:FindFirstChild("Tip")
+		local own = model:FindFirstChild("Waffe")
+		local weaponPart = own and own:FindFirstChildWhichIsA("BasePart", true) or model:FindFirstChild("Blade") or model:FindFirstChild("AxeHead") or model:FindFirstChild("Tip")
 			or model:FindFirstChild("Bow") or model:FindFirstChild("Tome")
 		if weaponPart then
 			local light = Instance.new("PointLight")
@@ -352,7 +378,7 @@ local function meshModel(unit)
 			warnOnce(id, "Vorlage ist nicht klonbar (Archivable)")
 			return ChibiBuilder.build(unit)
 		end
-		template = prepareRig(model, unit, true)
+		template = prepareRig(model, unit, true, id)
 		templates[key] = template
 	end
 	local model = template:Clone()
