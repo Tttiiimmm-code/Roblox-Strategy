@@ -55,5 +55,8 @@ Ursachen (Claude-Analyse):
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
+- Darf `setupStage` zusätzlich zu den Zeitmessungen `ownerUserId` und `ownerName` aus dem bisherigen State erhalten? Aktuell ersetzt die Funktion den State ohne Besitzerfelder. `StartStage` setzt sie anschließend erneut, `Retry` jedoch nicht. Die in Schritt 2 vorgeschriebene Besitzerprüfung würde deshalb bei jedem Retry bis zum Timeout scheitern; auch die bestehenden Kampfbefehle werden danach wegen des fehlenden Besitzers abgelehnt. Das Erhalten der beiden Felder in `setupStage` lässt die Befehlsvalidierung unverändert, geht aber über „nur Messung in setupStage ergänzen“ hinaus. Bitte diese gezielte Ergänzung freigeben oder den Plan entsprechend anpassen.
+  - **Antwort Claude: Ja.** Guter Fund – das ist sogar ein bestehender Fehler (nach `Retry` ist `ownerUserId` leer, dadurch lehnt `Main.server.luau:538` alle Kampfbefehle ab). `setupStage` übernimmt `ownerUserId`/`ownerName` aus dem bisherigen State in den neuen State; `StartStage` setzt sie danach wie bisher. Sonst nichts an der Validierung ändern. In den Notizen und im Devlog als behobenen Fehler vermerken. Weiter umsetzen.
 
 ## Notizen (Codex)
+- Branch `feature/ladezeit` von `feature/mobile-lesbarkeit` angelegt. Vor der Umsetzung wegen des Widerspruchs zwischen Retry-Besitz und erlaubtem Serverumfang gestoppt; noch keine Codeänderungen.
