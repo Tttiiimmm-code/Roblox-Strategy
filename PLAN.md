@@ -46,7 +46,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
   - Fertig, wenn: Umschalten wirkt ab dem nächsten Kampf und bleibt gespeichert.
 
 - [x] 6. `scripts/check.ps1` = `OK`; `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx` ohne Fehler.
-- [ ] 7. Devlog-Eintrag #18 „Kampfszene" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
+- [x] 7. Devlog-Eintrag #18 „Kampfszene" (Teststatus „ungetestet"), Branch pushen, dann `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer, PC + Handy)
 - [ ] Eigener Angriff: Szene blendet ein, Gegner links/rot, eigene Figur rechts/blau, Plattform im Look des Felds, HIT/DMG/CRT stimmen mit der Kampfvorschau überein
@@ -66,3 +66,5 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
 
 - Schritt 4 ergänzt im Server-Kampfereignis die aktuellen Feldkoordinaten: Der letzte State liegt vor der Bewegung; ohne diese Daten wären Gelände und Kontervorschau falsch. Kampfregeln und KP-Timing bleiben unverändert.
 - Intro, Szeneneinstellung und Tempo werden pro Kampfereignis mitgegeben, damit Brett und Szene denselben Start verwenden. Bei fehlenden Klonen greift die bisherige Brettdarstellung.
+- Abschluss: check.ps1 OK (26 Dateien, Exit 0), Rojo-Build erfolgreich. Studio-/Handy-Test ungetestet; manueller Test und Claude-Review bleiben offen. Devlog #18 ergänzt.
+- Schritt 6 enthält zusätzlich die explizite Freigabe der Thread-Kontextzuordnungen und Animationslisten, damit Szenenklone nach Ende/Abbruch nicht darüber festgehalten werden. Check und Build danach erneut erfolgreich.
