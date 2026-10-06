@@ -165,6 +165,16 @@ function UnitVisuals.update(unit)
 	for _, p in model:GetDescendants() do
 		if p:IsA("BasePart") and p:GetAttribute("Tint") then
 			p.Color = grey and Config.DONE_COLOR or (p:GetAttribute("BaseColor") or color)
+		elseif p:IsA("BasePart") and p.Transparency < 1 then
+			-- Kopf, Haare, Hut, Waffe & Co. ebenfalls entsättigen, damit fertige Figuren klar erkennbar sind
+			local original = p:GetAttribute("OrigColor")
+			if not original then
+				original = p.Color
+				p:SetAttribute("OrigColor", original)
+			end
+			p.Color = grey and original:Lerp(Config.DONE_COLOR, Config.FEEL.doneGreyAmount) or original
+		elseif p:IsA("ParticleEmitter") or p:IsA("PointLight") then
+			p.Enabled = not grey
 		end
 	end
 	UnitVisuals.setHp(unit.id, unit.hp, unit.maxHp)
