@@ -41,7 +41,8 @@ Config.FEEL = {
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
 	atmosphereFade = 0.8, flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
-	environmentMargin = 100, environmentCount = 16,
+	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
+	environmentMargin = 612, environmentCount = 16,
 	atmosphere = {
 		hall = {
 			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },

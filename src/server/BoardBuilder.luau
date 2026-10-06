@@ -8,6 +8,8 @@ local Stages = require(Shared.Stages)
 
 local BoardBuilder = {}
 local lastTerrainRegion
+local lastTerrainKey
+local sinkCache = {}
 
 local function deco(props, parent)
 	local p = Instance.new("Part")
@@ -25,7 +27,7 @@ local function deco(props, parent)
 end
 
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
-local function decorate(ch, x, y, parent)
+local function decorate(ch, x, y, parent, reuseTerrain)
 	local center = Grid.toWorld(x, y)
 	local c = Config.TILE_SIZE / 2 - 1.3
 	if ch == "F" then
@@ -40,13 +42,15 @@ local function decorate(ch, x, y, parent)
 			end
 		end
 	elseif ch == "S" then
-		local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Include
-		params.FilterDescendantsInstances = { workspace.Terrain }
-		local surface = workspace:Raycast(puddle + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
-		local puddleY = (surface and surface.Position.Y or center.Y) + Config.FEEL.swampPuddleSurfaceOffset - Config.FEEL.swampPuddleSize.Y / 2
-		workspace.Terrain:FillBlock(CFrame.new(puddle.X, puddleY, puddle.Z), Config.FEEL.swampPuddleSize, Enum.Material.Water)
+		if not reuseTerrain then
+			local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Include
+			params.FilterDescendantsInstances = { workspace.Terrain }
+			local surface = workspace:Raycast(puddle + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
+			local puddleY = (surface and surface.Position.Y or center.Y) + Config.FEEL.swampPuddleSurfaceOffset - Config.FEEL.swampPuddleSize.Y / 2
+			workspace.Terrain:FillBlock(CFrame.new(puddle.X, puddleY, puddle.Z), Config.FEEL.swampPuddleSize, Enum.Material.Water)
+		end
 		for i = 1, 3 + (x + y) % 2 do
 			local off = Vector3.new(((x * 17 + y * 11 + i * 7) % 2 == 0 and -1 or 1) * c, 0,
 				((x * 13 + y * 19 + i * 5) % 7 / 3 - 1) * c)
@@ -127,11 +131,10 @@ function BoardBuilder.build(regionId)
 	terrain.WaterColor = region and region.waterColor or Config.FEEL.waterColor
 	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
 	local w, h = Grid.width() * T, Grid.height() * T
-	if lastTerrainRegion then terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
+	local terrainKey = table.concat(Grid.getMap(), "|") .. (regionId or "")
+	local reuseTerrain = terrainKey == lastTerrainKey
 	local size = Vector3.new(w + margin * 2, depth + Config.FEEL.terrainClearTop, h + margin * 2)
 	local cf = CFrame.new(w / 2, (Config.FEEL.terrainClearTop - depth) / 2, h / 2)
-	terrain:FillBlock(cf, size, Enum.Material.Air)
-	lastTerrainRegion = { cf = cf, size = size }
 	pcall(function() terrain.Decoration = false end)
 	local function fillTerrain(sinkByChar)
 		local groundSink = sinkByChar["."] or 0
@@ -161,29 +164,41 @@ function BoardBuilder.build(regionId)
 			end
 		end
 	end
-	fillTerrain({})
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { terrain }
-	local sink, measured, calibration = {}, {}, {}
-	for y = 1, Grid.height() do
-		for x = 1, Grid.width() do
-			local ch = string.sub(Grid.getMap()[y], x, x)
-			if ch ~= "W" and not measured[ch] then
-				measured[ch] = true
-				local center = Grid.toWorld(x, y)
-				local hit = workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
-				if hit then
-					local amount = hit.Position.Y - center.Y + Config.FEEL.terrainSurfaceMargin
-					if amount > 0 then sink[ch] = amount end
+	if not reuseTerrain then
+		if lastTerrainRegion then terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
+		terrain:FillBlock(cf, size, Enum.Material.Air)
+		local missing = {}
+		for y = 1, Grid.height() do
+			for x = 1, Grid.width() do
+				local ch = string.sub(Grid.getMap()[y], x, x)
+				if sinkCache[ch] == nil and missing[ch] == nil then
+					if ch == "W" then
+						sinkCache[ch] = 0
+					else
+						missing[ch] = Grid.toWorld(x, y)
+					end
 				end
-				table.insert(calibration, ("%s=%.3f"):format(ch, sink[ch] or 0))
 			end
 		end
+		if next(missing) then
+			fillTerrain({})
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Include
+			params.FilterDescendantsInstances = { terrain }
+			local calibration = {}
+			for ch, center in missing do
+				local hit = workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
+				if hit then
+					sinkCache[ch] = math.max(0, hit.Position.Y - center.Y + Config.FEEL.terrainSurfaceMargin)
+					table.insert(calibration, ("%s=%.3f"):format(ch, sinkCache[ch]))
+				end
+			end
+			terrain:FillBlock(cf, size, Enum.Material.Air)
+			if #calibration > 0 then print("Terrain-Kalibrierung: " .. table.concat(calibration, ", ")) end
+		end
+		fillTerrain(sinkCache)
+		lastTerrainRegion = { cf = cf, size = size }
 	end
-	terrain:FillBlock(cf, size, Enum.Material.Air)
-	fillTerrain(sink)
-	print("Terrain-Kalibrierung: " .. table.concat(calibration, ", "))
 	local board = Instance.new("Folder")
 	board.Name = "Board"
 
@@ -205,7 +220,7 @@ function BoardBuilder.build(regionId)
 			tile:SetAttribute("X", x)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
-			decorate(ch, x, y, board)
+			decorate(ch, x, y, board, reuseTerrain)
 			local center = Grid.toWorld(x, y)
 			for _, offset in { Vector3.new(-T / 2, 0, 0), Vector3.new(T / 2, 0, 0), Vector3.new(0, 0, -T / 2), Vector3.new(0, 0, T / 2) } do
 				deco({ Name = "GridLine", Size = offset.X ~= 0 and Vector3.new(Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth, T) or Vector3.new(T, Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth), Position = center + offset + Vector3.new(0, 0.08, 0), Color = Color3.fromRGB(40, 45, 35), Transparency = Config.FEEL.gridTransparency }, board)
@@ -216,9 +231,10 @@ function BoardBuilder.build(regionId)
 	for i = 1, Config.FEEL.environmentCount do
 		local edge = i % 4
 		local fraction = ((i * 37) % 97) / 97
-		local x = edge < 2 and (-16 - i % 3 * 7) or (w + 16 + i % 3 * 7)
+		local distance = margin * (0.15 + (i % 3) * 0.15)
+		local x = edge < 2 and -distance or (w + distance)
 		local z = fraction * h
-		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -18 or h + 18 end
+		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -distance or h + distance end
 		if i % 3 == 0 then
 			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, 2, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
 		else
@@ -227,6 +243,7 @@ function BoardBuilder.build(regionId)
 		end
 	end
 	board.Parent = workspace
+	lastTerrainKey = terrainKey
 	return board
 end
 
