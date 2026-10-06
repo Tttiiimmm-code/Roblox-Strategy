@@ -445,6 +445,24 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 **Teststatus:** **ungetestet in Roblox Studio und auf dem Handy**. Pflichtcheck nach jedem Schritt: **OK**; Abschluss **26 Dateien, Exit 0**. Rojo-Build erfolgreich. **175 lokale Prüfungen** mit aktuellen Originalmodulen und API-Stubs: vollständiges R15, jeder fehlende Pflichtteil, falscher Teiltyp, Klassenersatz, Skriptentfernung, Physik, Humanoid/Animator, Waffen/Aura, Pferd, Texturerhalt, einmalige Warnungen, Cache-Trennung und Klonisolation, Client-/Serverpfade ohne Mesh-Netzaufrufe. Alle 11 Helden und 7 Gegnertypen fallen ohne Modelle auf dieselbe Teile-/Farbsignatur wie Chibi zurück. Statische Anschlussprüfung gemäß PLAN.md durchgeführt; unabhängiger Claude-Review ausstehend. Stubs simulieren weder Rendering noch Rotationen, Animationen oder Replikation. Echte Modelle und die manuelle Prüfliste müssen im Studio/auf dem Handy getestet werden.
 
 ---
+## #20 – Leon-Import, eigene Figurenwaffen, Startlicht
+**Datum:** 06.10.2026
+
+**Ziel:** Erstes echtes Anime-Modell (Leon, TRELLIS → Avatar Setup) spielbar machen; Waffen festlegen; verzögertes Licht/unscharfen Text beim Start beheben.
+
+**Umsetzung**
+- `CHARACTER_STYLE = "mesh"`, `assets/characters/leon.rbxm`. AnimationConstraints → Motor6D mit weltachsen-ausgerichteten Gelenkframes; T-Pose-Arme um `meshArmDrop` abgesenkt (in C1, nur wenn die Hand < 30° unter dem Oberarm liegt), damit Angriffsposen den Arm quer zum Körper heben.
+- Größe auf `meshTargetHeight` normiert, `BaseScale`-Attribut für Brett/Porträt/Kampfszene; AutomaticScaling aus; Root-PivotOffset zurückgesetzt (Figur sank nach dem Laufen ein); InitialPoses entfernt; bei Mesh keine Buckle/Collar/Crest/AuraRing-Deko.
+- **Eigene Waffe je Figur:** `CharacterModels.<id>_waffe` (Pivot = Griff, −Z = Klinge), Länge je Waffentyp oder Attribut `Laenge`, Bogen/Buch links, sonst rechts; ohne Datei Platzhalter. Ausrüstung ändert nur Werte (Nutzerentscheidung). Style-Guide (Abschnitt 5) und Pipeline-Doku angepasst.
+- Atmosphäre-Effekte sofort beim Clientstart mit Zielwerten, Tiefenunschärfe ohne Überblenden; Saal-Lighting direkt in `default.project.json` statt erst nach dem Brettaufbau.
+
+**Entscheidungen:** Figuren und Waffen entwirft/generiert der Nutzer selbst (`docs/stil-guide.md`); steife Animationen werden in der Endphase verbessert.
+
+**Probleme:** Rojo 7.4.4 konnte Avatar-Setup-Instanzen nicht lesen → Upgrade auf 7.7.1. Codex-Reviews fanden u. a. absolute ScaleTo-Semantik, Armachse entlang des Arms, pauschalen Drop, Buch in falscher Hand – alle behoben.
+
+**Teststatus:** Vom Nutzer in Studio bestätigt: Leon steht auf dem Boden, Arme hängen, Angriff hebt den Arm (noch etwas steif), Hub sofort richtig beleuchtet. Eigene Waffenmodelle noch ungetestet (keine Datei vorhanden). Pflichtcheck OK.
+
+---
 ## Nächste Schritte (Plan)
 1. Claude prüft `feature/mesh-figuren`, insbesondere Vorlagenprüfung, R15-Aufbereitung, Cache und Porträtkamera. Nutzer testet zunächst `mesh` ohne Modelle und danach importierte R15-Modelle gemäß `docs/charakter-pipeline.md` und der Prüfliste in `PLAN.md` auf PC und Handy. Review/Test von Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfaden, Handy-Kamera und Weltkarte/Terrain/Chibis bleiben offen.
 2. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
