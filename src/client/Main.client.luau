@@ -289,12 +289,25 @@ local function selectUnit(unit)
 	setMode("Selected")
 end
 
+-- Laufweg + Zielfeld sichtbar lassen, damit vor dem Bestätigen klar ist, wohin die Figur geht
+local function showDestination()
+	if not dest or not nodes then return end
+	addOverlay(overlays, dest.x, dest.y, Config.OVERLAY.Move, 0.25, 0.08)
+	local path = Grid.pathTo(nodes, dest.x, dest.y)
+	for i = 2, #path - 1 do
+		local dot = makeFxPart(Vector3.new(1.6, 0.12, 1.6), Config.OVERLAY.Cursor, 0.2)
+		dot.Position = Grid.toWorld(path[i].x, path[i].y) + Vector3.new(0, 0.1, 0)
+		table.insert(overlays, dot)
+	end
+end
+
 local function startTargeting()
 	UI.hideMenu()
 	clearList(overlays)
 	for _, t in targets do
 		addOverlay(overlays, t.x, t.y, Config.OVERLAY.Attack)
 	end
+	showDestination()
 	setMode("Target")
 end
 
@@ -304,7 +317,7 @@ local function openMenu(x, y)
 	pendingTargetId = nil
 	clearList(overlays)
 	UI.hideForecast()
-	addOverlay(overlays, x, y, Config.OVERLAY.Move)
+	showDestination()
 	showGhost(unit, x, y)
 	targets = Grid.targetsFrom(unit, state.units, x, y)
 	UI.showMenu(#targets > 0, {
