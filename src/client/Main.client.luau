@@ -14,6 +14,7 @@ local Combat = require(Shared:WaitForChild("Combat"))
 local Stages = require(Shared:WaitForChild("Stages"))
 
 local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
+Atmosphere.set("hall") -- sofort, nicht erst wenn der erste Spielstand vom Server kommt
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UI = require(script.Parent:WaitForChild("UI"))
 local MenuUI = require(script.Parent:WaitForChild("MenuUI"))
