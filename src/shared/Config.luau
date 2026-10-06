@@ -42,7 +42,7 @@ Config.FEEL = {
 	atmosphereFade = 0.8, flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
 	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
-	environmentMargin = 612, environmentCount = 16,
+	environmentMargin = 72, environmentCount = 16, -- klein halten: jede Stud Rand kostet Terrain-Aufbau und Replikation; Ferne verdeckt der Dunst
 	atmosphere = {
 		hall = {
 			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },
