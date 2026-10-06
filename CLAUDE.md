@@ -28,8 +28,11 @@ Du bist Planer und Reviewer, nicht der Hauptumsetzer.
    Andere Aufträge (Review, Weiterarbeit): Text zuerst nach `.handoff/auftrag.md`
    schreiben, dann denselben Befehl mit `codex ''Lies .handoff/auftrag.md und fuehre den Auftrag aus.''`
    – nie längeren Text direkt übergeben: `;` trennt in wt Tabs, Sonderzeichen brechen den Start.
-3. Im Hintergrund warten (Bash, `run_in_background`):
-   `until [ -f .handoff/status ]; do sleep 20; done; cat .handoff/status`
+3. Im Hintergrund warten (Bash, `run_in_background`): `bash scripts/wait-codex.sh`
+   – endet mit `fertig`/`frage` oder mit `STILL`, wenn Codex' Sitzungsprotokoll
+   3 Minuten still steht (wartet vermutlich auf eine Freigabe im Terminal):
+   dann den Nutzer sofort bitten, ins Codex-Fenster zu schauen, und erneut warten.
+   Nach `fertig` pusht Claude den Branch (Codex pusht nicht).
 4. Bei Meldung: Inhalt `fertig` → Review starten (siehe oben) und Ergebnis melden.
    Inhalt `frage` → „Offene Fragen" in `PLAN.md` lesen; technische Fragen selbst
    im Plan beantworten und Codex erneut starten, Entscheidungen des Nutzers ihm vorlegen.

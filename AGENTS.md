@@ -38,7 +38,8 @@ Regel: Wer den Code geschrieben hat, reviewt ihn nicht selbst.
 - Nichts umsetzen, was nicht in `PLAN.md` steht. Bei Unklarheit: Frage unter „Offene Fragen" eintragen und **stoppen**.
 - Ist ein Plan fertig, kommt der nächste Plan in dieselbe Datei (alter Plan wird durch den Devlog-Eintrag dokumentiert).
 - **Signal an Claude (Pflicht für Codex):** Als allerletzte Aktion eines Durchgangs die Datei `.handoff/status` schreiben (Ordner ggf. anlegen, nicht committen):
-  - `fertig` – alle Schritte abgehakt, Check grün, committet und gepusht.
+  - `fertig` – alle Schritte abgehakt, Check grün, committet. **Nicht pushen** (braucht Netzwerk-Freigabe) – Claude pusht nach dem Review.
+- **Keine Rückfragen im Terminal:** Claude sieht das Codex-Fenster nicht. Unklarheiten/Entscheidungen immer unter „Offene Fragen" in `PLAN.md` eintragen, `.handoff/status` = `frage` schreiben und stoppen. Befehle, die eine Freigabe außerhalb der Sandbox bräuchten (Netzwerk, Dateien außerhalb des Projekts, `git push`, destruktive Git-Befehle), nicht ausführen, sondern ebenfalls als Frage eintragen.
   - `frage` – Frage unter „Offene Fragen" eingetragen, Arbeit gestoppt.
   Claude wartet auf diese Datei und startet danach automatisch Review bzw. Antwort.
 
