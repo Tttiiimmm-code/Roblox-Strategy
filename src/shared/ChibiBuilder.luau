@@ -2,6 +2,7 @@
 local Config = require(script.Parent.Config)
 local UnitData = require(script.Parent.UnitData)
 local ChibiBuilder = {}
+local templates = {}
 
 local METAL = Color3.fromRGB(185, 192, 204)
 local DARK_METAL = Color3.fromRGB(105, 110, 124)
@@ -13,7 +14,7 @@ local HORSE_HAIR = Color3.fromRGB(50, 35, 25)
 local BONE = Color3.fromRGB(235, 225, 200)
 local DARK = Color3.fromRGB(65, 35, 35)
 
-function ChibiBuilder.build(unit)
+local function buildTemplate(unit)
 	local hero = unit.heroId and UnitData.Heroes[unit.heroId]
 	local look = (hero and hero.chibi) or UnitData.Classes[unit.class].chibi
 	local s, body = look.scale or 1, Config.CHIBI
@@ -23,7 +24,7 @@ function ChibiBuilder.build(unit)
 	local mounted = unit.class == "Cavalier"
 	local lift = mounted and body.riderLift or 0
 	local model = Instance.new("Model")
-	model.Name = unit.id
+	model.Name = "ChibiVorlage"
 
 	local function at(x, y, z)
 		return CFrame.new(x * s, y * s, z * s)
@@ -323,6 +324,22 @@ function ChibiBuilder.build(unit)
 	end
 	model:SetAttribute("HeadY", headY * s)
 	model:SetAttribute("TopY", topY)
+	return model
+end
+
+function ChibiBuilder.build(unit)
+	-- Die Klasse beeinflusst auch bei Helden Pferd, Augenbrauen und Umhang.
+	local key = table.concat({
+		unit.heroId or unit.class, unit.class, unit.team, unit.weapon,
+		tostring(unit.rarity or 1), tostring(unit.isLord == true),
+	}, "|")
+	local template = templates[key]
+	if not template then
+		template = buildTemplate(unit)
+		templates[key] = template
+	end
+	local model = template:Clone()
+	model.Name = unit.id
 	return model
 end
 
