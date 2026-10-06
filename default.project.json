@@ -3,7 +3,17 @@
   "tree": {
     "$className": "DataModel",
     "Lighting": {
-      "$properties": { "Technology": "Future" }
+      "$properties": {
+        "Technology": "Future",
+        "LightingStyle": "Realistic",
+        "PrioritizeLightingQuality": true,
+        "Ambient": [0.4706, 0.4314, 0.3922],
+        "OutdoorAmbient": [0.5882, 0.549, 0.5098],
+        "Brightness": 1.2,
+        "ExposureCompensation": -0.35,
+        "GlobalShadows": true,
+        "ClockTime": 14
+      }
     },
     "ReplicatedStorage": {
       "Shared": { "$path": "src/shared" },
