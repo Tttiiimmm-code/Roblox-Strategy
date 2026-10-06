@@ -21,17 +21,41 @@ local selected, selectedAt, selectionRing
 
 -- Alle Zeiten laufen über diese Helfer, damit das Tempo (1×/2×) überall wirkt
 local speed = 1
+local contexts = setmetatable({}, { __mode = "k" })
+local dying = setmetatable({}, { __mode = "k" })
+
+local function context()
+	return contexts[coroutine.running()]
+end
+
+local function animationSpeed()
+	local ctx = context()
+	return ctx and ctx.speed or speed
+end
+
+local function playTween(object, tweenInfo, props)
+	local tween = TweenService:Create(object, tweenInfo, props)
+	local ctx = context()
+	if ctx then table.insert(ctx.tweens, tween) end
+	tween:Play()
+	return tween
+end
 
 local function info(t, ...)
-	return TweenInfo.new(t / speed, ...)
+	return TweenInfo.new(t / animationSpeed(), ...)
 end
 
 local function pause(t)
-	task.wait(t / speed)
+	task.wait(t / animationSpeed())
 end
 
 local function later(t, fn)
-	task.delay(t / speed, fn)
+	local ctx = context()
+	local thread = task.delay(t / animationSpeed(), function()
+		if ctx then contexts[coroutine.running()] = ctx end
+		fn()
+	end)
+	if ctx then table.insert(ctx.threads, thread) end
 end
 
 function Animator.setSpeed(s)
@@ -67,13 +91,13 @@ end
 local function tweenPose(motor, cf, time, style)
 	if motor then
 		local tweenInfo = info(time, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		TweenService:Create(motor, tweenInfo, { C0 = baseC0[motor] * cf }):Play()
+		playTween(motor, tweenInfo, { C0 = baseC0[motor] * cf })
 	end
 end
 
 local function tweenRoot(root, cf, time, style)
 	local tweenInfo = info(time, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	TweenService:Create(root, tweenInfo, { CFrame = cf }):Play()
+	playTween(root, tweenInfo, { CFrame = cf })
 end
 
 local rad = math.rad
@@ -108,8 +132,9 @@ local function flash(model, color)
 	h.FillTransparency = 0.15
 	h.OutlineColor = Color3.new(1, 1, 1)
 	h.OutlineTransparency = 0.2
-	h.Parent = fxFolder
-	TweenService:Create(h, info(0.35), { FillTransparency = 1, OutlineTransparency = 1 }):Play()
+	local ctx = context()
+	h.Parent = ctx and ctx.fxParent or fxFolder
+	playTween(h, info(0.35), { FillTransparency = 1, OutlineTransparency = 1 })
 	Debris:AddItem(h, 0.4)
 end
 
@@ -123,7 +148,8 @@ local function fxPart(props)
 	for k, v in props do
 		p[k] = v
 	end
-	p.Parent = fxFolder
+	local ctx = context()
+	p.Parent = ctx and ctx.fxParent or fxFolder
 	return p
 end
 
@@ -137,8 +163,8 @@ local function explosion(pos, color)
 	light.Brightness = 4
 	light.Range = 14
 	light.Parent = ball
-	TweenService:Create(ball, info(0.35), { Size = Vector3.one * 6, Transparency = 1 }):Play()
-	TweenService:Create(light, info(0.35), { Brightness = 0 }):Play()
+	playTween(ball, info(0.35), { Size = Vector3.one * 6, Transparency = 1 })
+	playTween(light, info(0.35), { Brightness = 0 })
 	Debris:AddItem(ball, 0.4)
 end
 
@@ -225,9 +251,9 @@ local function shootArrow(a, b, strike)
 		arrow.Material = Enum.Material.Neon
 		arrow.Color = Color3.fromRGB(255, 200, 90)
 	end
-	TweenService:Create(arrow, info(0.18, Enum.EasingStyle.Linear), {
+	playTween(arrow, info(0.18, Enum.EasingStyle.Linear), {
 		CFrame = CFrame.lookAt(to, to + (to - from)),
-	}):Play()
+	})
 	Debris:AddItem(arrow, 0.2)
 	tweenPose(m.RightShoulder, CFrame.Angles(rad(70), rad(-45), 0), 0.08)
 	pause(0.36)
@@ -255,7 +281,7 @@ local function castFire(a, b, strike)
 	light.Brightness = 3
 	light.Range = 10
 	light.Parent = fire
-	TweenService:Create(fire, info(0.2), { Size = Vector3.one * (strike.crit and 1.8 or 1.2) }):Play()
+	playTween(fire, info(0.2), { Size = Vector3.one * (strike.crit and 1.8 or 1.2) })
 	pause(0.2)
 
 	-- Werfen
@@ -263,7 +289,7 @@ local function castFire(a, b, strike)
 	tweenPose(m.LeftShoulder, CFrame.Angles(rad(100), 0, 0), 0.1)
 	tweenPose(m.RootJoint, CFrame.Angles(rad(-10), 0, 0), 0.1)
 	local to = chest(b) or spawnPos + dir * 10
-	TweenService:Create(fire, info(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = to }):Play()
+	playTween(fire, info(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = to })
 	pause(0.2)
 	fire:Destroy()
 	explosion(to, strike.crit and Color3.fromRGB(255, 220, 90) or Color3.fromRGB(255, 110, 40))
@@ -283,7 +309,7 @@ local STYLES = {
 -- Reaktion des Ziels im Moment des Treffers
 local function react(target, attacker, strike)
 	local root = target.PrimaryPart
-	if not root then
+	if not root or dying[target] then
 		return
 	end
 	local m = motors(target)
@@ -296,7 +322,7 @@ local function react(target, attacker, strike)
 		tweenRoot(root, origin + origin.RightVector * sign * 1.6, 0.12)
 		tweenPose(m.RootJoint, CFrame.Angles(0, 0, rad(-12 * sign)), 0.12)
 		later(0.2, function()
-			recover(target, root, origin, 0.2)
+			if not dying[target] then recover(target, root, origin, 0.2) end
 		end)
 	else
 		local color = strike.crit and Color3.fromRGB(255, 150, 40)
@@ -307,7 +333,7 @@ local function react(target, attacker, strike)
 		tweenPose(m.RootJoint, CFrame.Angles(rad(strike.crit and 25 or 15), 0, 0), 0.08)
 		tweenPose(m.Neck, CFrame.Angles(rad(15), 0, 0), 0.08)
 		later(0.12, function()
-			recover(target, root, origin, 0.25)
+			if not dying[target] then recover(target, root, origin, 0.25) end
 		end)
 	end
 
@@ -317,12 +343,29 @@ local function react(target, attacker, strike)
 end
 
 -- Öffentliche API ---------------------------------------------------------------
-function Animator.playStrike(strike, weaponKey, onImpact)
-	local a = unitsFolder:FindFirstChild(strike.attackerId)
-	local b = unitsFolder:FindFirstChild(strike.targetId)
+local function newContext(options)
+	local ctx = { speed = options.speed or speed, fxParent = options.fxParent or fxFolder, threads = {}, tweens = {} }
+	local function cancel()
+		for _, thread in ctx.threads do
+			if coroutine.status(thread) ~= "dead" and thread ~= coroutine.running() then task.cancel(thread) end
+		end
+		for _, tween in ctx.tweens do tween:Cancel() end
+	end
+	return ctx, cancel
+end
+
+function Animator.playStrike(strike, weaponKey, onImpact, options)
+	local previous = context()
+	local ctx, cancel
+	if options then
+		ctx, cancel = newContext(options)
+		contexts[coroutine.running()] = ctx
+	end
+	local a = options and options.attacker or unitsFolder:FindFirstChild(strike.attackerId)
+	local b = options and options.target or unitsFolder:FindFirstChild(strike.targetId)
 
 	later(Config.IMPACT_TIME, function()
-		onImpact()
+		if onImpact then onImpact() end
 		if b and b.Parent then
 			later(strike.hit and Config.FEEL.hitStop or 0, function()
 				if b.Parent then react(b, a, strike) end
@@ -331,15 +374,39 @@ function Animator.playStrike(strike, weaponKey, onImpact)
 	end)
 
 	if not a or not a.PrimaryPart then
-		return
+		contexts[coroutine.running()] = previous
+		return cancel
 	end
 	local weapon = UnitData.Weapons[weaponKey]
 	local style = STYLES[weapon and weapon.type] or STYLES.Sword
 	busy[a] = true
-	task.spawn(style, a, b, strike)
+	local thread = task.spawn(function()
+		if ctx then contexts[coroutine.running()] = ctx end
+		style(a, b, strike)
+	end)
+	if ctx then table.insert(ctx.threads, thread) end
 	later(Config.STRIKE_TIME, function()
 		busy[a] = nil
 	end)
+	contexts[coroutine.running()] = previous
+	return cancel
+end
+
+function Animator.playDeath(model, options)
+	if not model or not model.PrimaryPart or dying[model] then return end
+	dying[model] = true
+	local previous = context()
+	local ctx, cancel = newContext(options or {})
+	contexts[coroutine.running()] = ctx
+	local root = model.PrimaryPart
+	tweenRoot(root, root.CFrame * CFrame.Angles(0, 0, rad(85)), 0.28)
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") or part:IsA("Decal") then
+			playTween(part, info(0.4), { Transparency = 1 })
+		end
+	end
+	contexts[coroutine.running()] = previous
+	return cancel
 end
 
 function Animator.select(id)

@@ -18,7 +18,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
   - In `battle()`: wenn `state.battleScenes`, vor den Schlägen `pause(Config.FEEL.battleSceneIntro)` (0.45 s) und danach zusätzlich `pause(Config.FEEL.battleSceneOutro)` (0.5 s). Prüfen, ob `pause` mit dem Tempo skaliert; sonst durch `state.speed` teilen. Sonst keine Änderung an Kampfablauf/KP-Timing.
   - Fertig, wenn: Einstellung bleibt nach Rejoin erhalten; ohne Szenen ist der Kampf so schnell wie heute.
 
-- [ ] 2. **`UnitAnimator` für fremde Modelle öffnen** – Datei: `src/client/UnitAnimator.luau`
+- [x] 2. **`UnitAnimator` für fremde Modelle öffnen** – Datei: `src/client/UnitAnimator.luau`
   - `Animator.playStrike(strike, weaponKey, onImpact, options)`: optional `options.attacker`, `options.target` (Modelle statt Suche im Einheitenordner) und `options.fxParent` (Ort für Pfeile/Feuer/Partikel, Standard wie bisher). Ohne `options` exakt bisheriges Verhalten.
   - Treffer-Reaktion und Tod (Umfallen/Ausblenden) für übergebene Modelle nutzbar machen (z. B. `Animator.playDeath(model)`), damit die Szene den Tod zeigt.
   - Fertig, wenn: Brett-Kampf unverändert; Szene kann Animationen auf eigenen Klonen abspielen.
