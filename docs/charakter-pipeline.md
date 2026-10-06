@@ -33,7 +33,7 @@ Kurz prüfen: In Studio ein Standard-Animationsskript testweise drauf (oder „P
 3. In `src/shared/Config.luau` `CHARACTER_STYLE = "mesh"` setzen (bzw. lassen). Figuren mit Modell erscheinen im neuen Stil, alle anderen weiter als Chibi.
 4. Kavaliere: Pferd baut das Spiel weiterhin selbst dazu (Reiter wird draufgesetzt). Ein eigenes Pferdemodell kann später als `assets/characters/horse.rbxm` folgen.
 
-## 5. Design-Briefings (nach `docs/stil-guide.md`)
+## 5. Design-Vorschläge (optional – Designs entwirft und generiert der Nutzer selbst)
 Verbindliche Regeln (Proportionen 1 : 7, Cel-Shading 2-Ton, Gesicht wie Leon, 1 Haupt- + 1 Akzentfarbe, Fraktionsformen, Seltenheitsstufen) und die Prompt-Vorlage stehen im **Style-Guide**. Seltenheit = Rang (★1–2 einfache Leute, ★3 Profis, ★4 Anführer, ★5 einzeln geplante Legenden). Farben sind Vorschläge und dürfen sich wiederholen. Die Liste unten sind die **aktuellen** Figuren – weitere kommen nach diesem Schema dazu.
 
 | ID | Klasse / ★ | Hauptfarbe / Akzent | Beschreibung (für `[BESCHREIBUNG]`) |
