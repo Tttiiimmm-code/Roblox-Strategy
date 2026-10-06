@@ -2,7 +2,7 @@
 
 ## Projekt
 - **Zweck:** Rundenbasiertes Taktikspiel im Stil von Fire Emblem für Roblox – Thronsaal-Hub, Missionen mit Schwierigkeitsstufen/Sternen, Helden mit Seltenheiten, Rekrutierung (Gacha) und Kaserne.
-- **Stack:** Luau (Roblox), Projektstruktur mit **Rojo 7.4.4** (`default.project.json`), Roblox Studio zum Testen.
+- **Stack:** Luau (Roblox), Projektstruktur mit **Rojo 7.7.1** (`default.project.json`), Roblox Studio zum Testen.
 - **Stand:** Grundgerüst – nichts ist final, Werte/Layouts/Texte dürfen sich ändern. Historie: `docs/DEVLOG.md`.
 - **Sprache:** Kommentare, UI-Texte, Commits und Doku auf **Deutsch**.
 
