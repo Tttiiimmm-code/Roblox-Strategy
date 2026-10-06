@@ -1,10 +1,14 @@
--- R15-Avatare mit Waffen und Seltenheits-Deko; ausschliesslich auf dem Server bauen.
+-- R15-Modelle mit Waffen und Seltenheits-Deko; Avatar-Netzaufrufe nur auf dem Server.
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Config = require(script.Parent.Config)
 local UnitData = require(script.Parent.UnitData)
+local ChibiBuilder = require(script.Parent.ChibiBuilder)
 local CharacterBuilder = {}
 local bases = {}
+local templates = {}
+local warned = {}
 local SKIN = Color3.fromRGB(236, 196, 164)
 local METAL = Color3.fromRGB(185, 192, 204)
 local DARK_METAL = Color3.fromRGB(105, 110, 124)
@@ -66,12 +70,7 @@ local function avatar(unit)
 	return result:Clone()
 end
 
-function CharacterBuilder.build(unit)
-	if Config.CHARACTER_STYLE == "chibi" then
-		return require(script.Parent.ChibiBuilder).build(unit)
-	end
-	assert(RunService:IsServer(), "Avatar-Vorlagen werden nur auf dem Server gebaut")
-	local model = avatar(unit)
+local function prepareRig(model, unit, mesh)
 	model.Name = unit.id
 	local root = model:FindFirstChild("HumanoidRootPart")
 	model.PrimaryPart = root
@@ -86,10 +85,12 @@ function CharacterBuilder.build(unit)
 		if d:IsA("BasePart") then
 			d.Anchored = d == root
 			d.CanCollide, d.CanTouch, d.Massless = false, false, true
-			if d ~= root and not d:FindFirstAncestorOfClass("Accessory") then
+			if mesh then
+				d:SetAttribute("Tint", nil)
+			elseif d ~= root and not d:FindFirstAncestorOfClass("Accessory") then
 				d:SetAttribute("Tint", d.Name ~= "Head" and not string.find(d.Name, "Leg") and not string.find(d.Name, "Foot") and not string.find(d.Name, "Hand"))
 			end
-		elseif d:IsA("Script") or d:IsA("LocalScript") then d:Destroy() end
+		elseif d:IsA("LuaSourceContainer") then d:Destroy() end
 	end
 	local mounted = unit.class == "Cavalier"
 	local low = math.min(model.LeftFoot.Position.Y - model.LeftFoot.Size.Y / 2, model.RightFoot.Position.Y - model.RightFoot.Size.Y / 2)
@@ -99,7 +100,7 @@ function CharacterBuilder.build(unit)
 	local torso, lower = model.UpperTorso, model.LowerTorso
 	local head = model.Head
 	local rArm, lArm = model.RightHand, model.LeftHand
-	rArm.Color, lArm.Color = SKIN, SKIN
+	if not mesh then rArm.Color, lArm.Color = SKIN, SKIN end
 	local weapon = UnitData.Weapons[unit.weapon]
 	local s = 1
 	local look = { cape = unit.class == "Lord" }
@@ -133,8 +134,11 @@ function CharacterBuilder.build(unit)
 		joint.Parent = torso
 		return cape
 	end
-	extra("Surcoat", torso.Size + Vector3.new(0.1, 0.05, 0.12), torso.CFrame, "team", torso, { Material = Enum.Material.Fabric })
-	if look.cape then
+	-- Importierte Kleidung und Texturen bleiben sichtbar.
+	if not mesh then
+		extra("Surcoat", torso.Size + Vector3.new(0.1, 0.05, 0.12), torso.CFrame, "team", torso, { Material = Enum.Material.Fabric })
+	end
+	if look.cape and not mesh then
 		makeCape(Vector3.new(1.9, 2.4, 0.15), torso.CFrame * CFrame.new(0, -0.6, torso.Size.Z / 2 + 0.2) * CFrame.Angles(math.rad(Config.FEEL.capeAngle), 0, 0), "team")
 	end
 	if mounted then
@@ -158,20 +162,24 @@ function CharacterBuilder.build(unit)
 	-- Waffe: in Ruhepose nach vorne (-Z) aus der Hand -------------------------
 	local metal = { Material = Enum.Material.Metal }
 	local hx, hY = rArm.Position.X, rArm.Position.Y
+	local function weaponAt(x, y, z)
+		if mesh then return rArm.CFrame * CFrame.new(x - hx, y - hY, z) end
+		return at(x, y, z)
+	end
 	local t = weapon.type
 	if t == "Sword" then
-		extra("Grip", Vector3.new(0.2, 0.2, 0.6), at(hx, hY, 0), LEATHER, rArm)
-		extra("Guard", Vector3.new(0.9, 0.18, 0.2), at(hx, hY, -0.35), unit.isLord and GOLD or DARK_METAL, rArm, metal)
-		extra("Blade", Vector3.new(0.14, 0.32, 2.6), at(hx, hY, -1.75), METAL, rArm, metal)
+		extra("Grip", Vector3.new(0.2, 0.2, 0.6), weaponAt(hx, hY, 0), LEATHER, rArm)
+		extra("Guard", Vector3.new(0.9, 0.18, 0.2), weaponAt(hx, hY, -0.35), unit.isLord and GOLD or DARK_METAL, rArm, metal)
+		extra("Blade", Vector3.new(0.14, 0.32, 2.6), weaponAt(hx, hY, -1.75), METAL, rArm, metal)
 	elseif t == "Axe" then
 		local big = weapon.might >= 10
-		extra("Haft", Vector3.new(0.2, 0.2, big and 2.8 or 2.4), at(hx, hY, big and -1.0 or -0.8), WOOD, rArm)
-		extra("AxeHead", Vector3.new(0.15, big and 1.3 or 1.0, big and 1.0 or 0.8), at(hx, hY + 0.45, big and -2.1 or -1.7),
+		extra("Haft", Vector3.new(0.2, 0.2, big and 2.8 or 2.4), weaponAt(hx, hY, big and -1.0 or -0.8), WOOD, rArm)
+		extra("AxeHead", Vector3.new(0.15, big and 1.3 or 1.0, big and 1.0 or 0.8), weaponAt(hx, hY + 0.45, big and -2.1 or -1.7),
 			big and DARK_METAL or METAL, rArm, metal)
 	elseif t == "Lance" then
 		local len = unit.weapon == "Javelin" and 3.4 or 5
-		extra("Shaft", Vector3.new(0.18, 0.18, len), at(hx, hY, -len / 2 + 0.8), WOOD, rArm)
-		extra("Tip", Vector3.new(0.3, 0.3, 0.8), at(hx, hY, -len + 0.4) * CFrame.Angles(0, 0, math.rad(45)), METAL, rArm, metal)
+		extra("Shaft", Vector3.new(0.18, 0.18, len), weaponAt(hx, hY, -len / 2 + 0.8), WOOD, rArm)
+		extra("Tip", Vector3.new(0.3, 0.3, 0.8), weaponAt(hx, hY, -len + 0.4) * CFrame.Angles(0, 0, math.rad(45)), METAL, rArm, metal)
 	elseif t == "Bow" then
 		-- liegt waagerecht in der linken Hand; beim Anheben des Arms steht er senkrecht
 		extra("Bow", Vector3.new(0.15, 0.25, 3.2), lArm.CFrame * CFrame.new(0, 0, -0.3), WOOD, lArm)
@@ -217,7 +225,7 @@ function CharacterBuilder.build(unit)
 			light.Parent = weaponPart
 			sparkles(weaponPart, 4, 0.25 * s, 0.8, 1)
 		end
-		if not look.cape and not mounted then
+		if not mesh and not look.cape and not mounted then
 			makeCape(Vector3.new(1.9, 2.4, 0.15), torso.CFrame * CFrame.new(0, -0.6, torso.Size.Z / 2 + 0.2) * CFrame.Angles(math.rad(Config.FEEL.capeAngle), 0, 0), "team")
 		end
 		local cape = model:FindFirstChild("Cape")
@@ -237,7 +245,65 @@ function CharacterBuilder.build(unit)
 	end
 
 	model:SetAttribute("HeadY", head.Position.Y)
-	model:SetAttribute("TopY", head.Position.Y + head.Size.Y / 2)
+	local topY = head.Position.Y + head.Size.Y / 2
+	if mesh then
+		for _, p in model:GetDescendants() do
+			if p:IsA("BasePart") and p.Transparency < 1 then
+				local cf, size = p.CFrame, p.Size
+				local extent = (math.abs(cf.RightVector.Y) * size.X + math.abs(cf.UpVector.Y) * size.Y + math.abs(cf.LookVector.Y) * size.Z) / 2
+				topY = math.max(topY, p.Position.Y + extent)
+			end
+		end
+	end
+	model:SetAttribute("TopY", topY)
 	return model
+end
+
+local function warnOnce(id, reason)
+	if warned[id] then return end
+	warned[id] = true
+	warn(("Figurenmodell %s: %s; verwende Chibi."):format(id, reason))
+end
+
+local function meshModel(unit)
+	local folder = ReplicatedStorage:FindFirstChild("CharacterModels")
+	local source = folder and unit.heroId and folder:FindFirstChild(unit.heroId)
+	if not source or not source:IsA("Model") then
+		source = folder and folder:FindFirstChild(unit.class)
+	end
+	local id = source and source:IsA("Model") and source.Name or unit.heroId or unit.class
+	if not source or not source:IsA("Model") then
+		warnOnce(id, "kein Modell vorhanden")
+		return ChibiBuilder.build(unit)
+	end
+	local key = table.concat({ id, unit.class, unit.team, unit.weapon,
+		tostring(unit.rarity or 1), tostring(unit.isLord == true) }, "|")
+	local template = templates[key]
+	if not template then
+		for _, name in { "HumanoidRootPart", "Humanoid", "Head", "UpperTorso", "LowerTorso", "RightHand", "LeftHand", "LeftFoot", "RightFoot" } do
+			local child = source:FindFirstChild(name)
+			if not child or not child:IsA(name == "Humanoid" and "Humanoid" or "BasePart") then
+				warnOnce(id, "Pflichtteil fehlt oder hat falschen Typ: " .. name)
+				return ChibiBuilder.build(unit)
+			end
+		end
+		local model = source:Clone()
+		if not model then
+			warnOnce(id, "Vorlage ist nicht klonbar (Archivable)")
+			return ChibiBuilder.build(unit)
+		end
+		template = prepareRig(model, unit, true)
+		templates[key] = template
+	end
+	local model = template:Clone()
+	model.Name = unit.id
+	return model
+end
+
+function CharacterBuilder.build(unit)
+	if Config.CHARACTER_STYLE == "chibi" then return ChibiBuilder.build(unit) end
+	if Config.CHARACTER_STYLE == "mesh" then return meshModel(unit) end
+	assert(RunService:IsServer(), "Avatar-Vorlagen werden nur auf dem Server gebaut")
+	return prepareRig(avatar(unit), unit, false)
 end
 return CharacterBuilder

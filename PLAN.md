@@ -14,7 +14,7 @@ Kontext: Nutzerziel: „alle Figuren den gleichen Artstyle wie in dem Bild" (Leo
   - `ReplicatedStorage.CharacterModels` ← `assets/characters` (`$path`). Der Ordner muss ohne Modelle bauen: eine Platzhalterdatei anlegen, die Rojo akzeptiert bzw. ignoriert (prüfen mit `tools/rojo.exe build`; z. B. `README.md` mit Kurzverweis auf `docs/charakter-pipeline.md` – falls Rojo das als Instanz anlegt, im Code Nicht-Model-Kinder ignorieren).
   - Fertig, wenn: Build ohne Fehler, `ReplicatedStorage.CharacterModels` existiert im Spiel.
 
-- [ ] 2. **Stil `"mesh"` im CharacterBuilder** – Datei: `src/shared/CharacterBuilder.luau`, `src/shared/Config.luau`
+- [x] 2. **Stil `"mesh"` im CharacterBuilder** – Datei: `src/shared/CharacterBuilder.luau`, `src/shared/Config.luau`
   - `Config.CHARACTER_STYLE` erlaubt `"mesh"`; Standard bleibt `"chibi"` (Nutzer schaltet um, sobald Modelle da sind – Kommentar).
   - Bei `"mesh"`: Vorlage suchen in `ReplicatedStorage.CharacterModels` nach `unit.heroId`, sonst nach `unit.class`. **Keine Vorlage → `ChibiBuilder.build(unit)`** (stiller Rückfall, höchstens eine Warnung pro ID im Output).
   - Vorlage gefunden → `Clone()`, dann **dieselbe Nachbearbeitung wie der Avatar-Pfad** (die vorhandene Logik nach `avatar(unit)` in eine Funktion auslagern, z. B. `prepareRig(model, unit)`, und von beiden Pfaden nutzen): Pflichtteile prüfen (`HumanoidRootPart`, `Humanoid`, `Head`, `UpperTorso`, `LowerTorso`, `RightHand`, `LeftHand`, `LeftFoot`, `RightFoot`); fehlt etwas → Warnung + Chibi-Rückfall. Skripte entfernen, Wurzel verankern, `PrimaryPart`, Kollision/Touch aus, `Massless`, Humanoid-Anzeige aus, `GroundOffset` aus der Fußhöhe, Waffen in die Hand, Seltenheits-Effekte, Pferd bei Kavalier, `HeadY`/`TopY`.
@@ -48,3 +48,4 @@ Kontext: Nutzerziel: „alle Figuren den gleichen Artstyle wie in dem Bild" (Leo
 
 ## Notizen (Codex)
 - Schritt 1: `README.md` wird von Rojo ignoriert; der leere Ordner erscheint als `ReplicatedStorage.CharacterModels` im gebauten Spiel. Pflichtcheck und Rojo-Build erfolgreich.
+- Schritt 2: Mesh-Vorlagen werden nach Helden-ID/Klasse gesucht, typgeprüft und nach Modell-ID/Klasse/Team/Waffe/Seltenheit/isLord zwischengespeichert. Gemeinsame R15-Aufbereitung läuft ohne Netzaufrufe auf Client und Server. Keine Färbung importierter Teile; zusätzliche Avatar-Kleidung (Surcoat/Umhang) wird bei Mesh ausgelassen, damit das Nutzerdesign sichtbar bleibt. Waffen folgen beim Mesh der Handposition/-ausrichtung. Fehlende/ungültige Vorlagen fallen mit höchstens einer Warnung je ID auf Chibi zurück. Pflichtcheck grün; lokale Verhaltensprüfung folgt in Schritt 4.

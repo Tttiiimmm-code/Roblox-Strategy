@@ -1,7 +1,7 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
-Config.CHARACTER_STYLE = "chibi" -- "chibi" oder "avatar"
+Config.CHARACTER_STYLE = "chibi" -- "chibi", "avatar" oder "mesh"; auf "mesh" umstellen, sobald R15-Modelle vorliegen.
 
 Config.CHIBI = {
 	legSize = Vector3.new(0.7, 1.0, 0.7), hipY = 1.0, legX = 0.45, bootHeight = 0.35,
