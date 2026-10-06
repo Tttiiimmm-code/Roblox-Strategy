@@ -53,6 +53,8 @@ local targets = {}
 local pendingTargetId = nil
 local inspectedId = nil
 local dangerOn = false
+local loadingMission = nil
+local reopenMissions = false
 
 local overlays = {}
 local dangerOverlays = {}
@@ -67,6 +69,66 @@ end
 -- Eigener Kampf? Andere Spieler bleiben während eines fremden Kampfes im Thronsaal.
 local function isMine()
 	return state ~= nil and state.mode == "Battle" and state.ownerUserId == player.UserId
+end
+
+local function finishLoading(failed)
+	loadingMission.connection:Disconnect()
+	loadingMission = nil
+	MenuUI.setLoading(false)
+	if failed then
+		-- Bei unvollständiger Replikation einen bereits gestarteten eigenen Kampf verlassen.
+		if isMine() then
+			reopenMissions = true
+			send({ type = "ToLobby" })
+		else
+			MenuUI.openLobby("missions")
+		end
+		UI.toast("Mission konnte nicht gestartet werden")
+	end
+	UI.hideLoading()
+end
+
+local function missionReady(request)
+	if not request.receivedState or not isMine() or state.stageId ~= request.stageId
+		or state.difficulty ~= request.difficulty or state.phase ~= "Prep" or state.result then return false end
+	local board = workspace:FindFirstChild("Board")
+	local units = workspace:FindFirstChild("Units")
+	if not board or not units then return false end
+	for y = 1, Grid.height() do
+		for x = 1, Grid.width() do
+			local tile = board:FindFirstChild(("Tile_%d_%d"):format(x, y))
+			if not tile or not tile:IsA("BasePart") then return false end
+		end
+	end
+	local center = Vector3.new(Grid.width() * Config.TILE_SIZE / 2, Config.FEEL.terrainClearTop, Grid.height() * Config.TILE_SIZE / 2)
+	if not workspace:Raycast(center, Vector3.new(0, -Config.FEEL.terrainClearTop - Config.FEEL.terrainDepth, 0), request.terrainParams) then return false end
+	for id in state.units do
+		local model = units:FindFirstChild(id)
+		if not model or not model:IsA("Model") or not model.PrimaryPart then return false end
+	end
+	return true
+end
+
+local function startLoading(stageId, difficulty)
+	if loadingMission then return false end
+	local stage = Stages.get(stageId)
+	local region = Stages.getRegion(stage.region)
+	MenuUI.closeLobby()
+	MenuUI.setLoading(true)
+	UI.showLoading(stage.name, region and region.name or "")
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace.Terrain }
+	loadingMission = { stageId = stageId, difficulty = difficulty, started = os.clock(), terrainParams = params, receivedState = false }
+	loadingMission.connection = RunService.Heartbeat:Connect(function()
+		local request = loadingMission
+		if missionReady(request) then
+			finishLoading(false)
+		elseif (request.receivedState and state.mode == "Lobby") or os.clock() - request.started >= Config.FEEL.loadingTimeout then
+			finishLoading(true)
+		end
+	end)
+	return true
 end
 
 local function inBattle()
@@ -763,6 +825,7 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
+	if loadingMission then loadingMission.receivedState = true end
 
 	if state.stageId and (not previous or previous.stageId ~= state.stageId or previous.mode ~= "Battle") then
 		Grid.setMap(Stages.get(state.stageId).map)
@@ -802,6 +865,10 @@ local function applyState(newState)
 	updateTools()
 	redrawDanger()
 	MenuUI.update(state, profile)
+	if reopenMissions and not isMine() then
+		reopenMissions = false
+		MenuUI.openLobby("missions")
+	end
 end
 
 ProfileUpdate.OnClientEvent:Connect(function(newProfile)
@@ -844,7 +911,9 @@ local root = UI.init({
 
 MenuUI.init(root, {
 	onStart = function(stageId, difficulty)
-		send({ type = "StartStage", stageId = stageId, difficulty = difficulty })
+		if startLoading(stageId, difficulty) then
+			send({ type = "StartStage", stageId = stageId, difficulty = difficulty })
+		end
 	end,
 	onBegin = function(heroIds)
 		send({ type = "BeginBattle", heroes = heroIds })
@@ -853,7 +922,7 @@ MenuUI.init(root, {
 		send({ type = "Recruit", bannerId = bannerId, count = count })
 	end,
 	onRetry = function()
-		send({ type = "Retry" })
+		if state and startLoading(state.stageId, state.difficulty) then send({ type = "Retry" }) end
 	end,
 	onLobby = function()
 		send({ type = "ToLobby" })

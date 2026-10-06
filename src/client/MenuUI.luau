@@ -28,6 +28,7 @@ local resultKey = nil
 local lobbyTab = "missions" -- missions | recruit | barracks
 local lastSquad = nil -- zuletzt gewählte Helden (bleibt für "Nochmal" erhalten)
 local lobbyOpen = false -- Menü wird im Thronsaal über Einrichtungen/Thron geöffnet
+local loadingMission = false
 local throneSeated = false
 local hubHud = {}
 local throne = {}
@@ -785,6 +786,11 @@ function MenuUI.closeLobby()
 	MenuUI.update(lastState, lastProfile)
 end
 
+function MenuUI.setLoading(active)
+	loadingMission = active
+	MenuUI.update(lastState, lastProfile)
+end
+
 function MenuUI.setThrone(seated)
 	throneSeated = seated
 	MenuUI.update(lastState, lastProfile)
@@ -830,7 +836,7 @@ function MenuUI.update(state, profile)
 		CollectionUI.update(profile)
 	end
 
-	local showPrep = mine and state.phase == "Prep" and profile.heroes ~= nil
+	local showPrep = not loadingMission and mine and state.phase == "Prep" and profile.heroes ~= nil
 	UIKit.setVisible(prep.frame, showPrep)
 	if showPrep then
 		updatePrep(state, profile)
@@ -838,7 +844,7 @@ function MenuUI.update(state, profile)
 		prep.key = nil
 	end
 
-	local showResult = mine and state.result ~= nil
+	local showResult = not loadingMission and mine and state.result ~= nil
 	UIKit.setVisible(result.frame, showResult)
 	if showResult then
 		updateResult(state, profile)

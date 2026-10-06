@@ -26,6 +26,7 @@ local tools = {}
 local toastFrame, toastLabel
 local level = {}
 local banner = {}
+local loading = {}
 
 local menuCallbacks, forecastCallbacks = {}, {}
 local toastToken, levelToken, bannerToken = 0, 0, 0
@@ -377,6 +378,62 @@ local function buildPopups()
 end
 
 -- Öffentliche API ----------------------------------------------------------------
+local function buildLoading(playerGui)
+	local gui = make("ScreenGui", {
+		Name = "MissionLoading", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 1000,
+	}, playerGui)
+	loading.frame = make("CanvasGroup", {
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
+		BorderSizePixel = 0, Visible = false, Active = true,
+	}, gui)
+	make("UIGradient", { Color = ColorSequence.new(THEME.bottom, THEME.barBg), Rotation = 90 }, loading.frame)
+	local contentRoot = UIKit.createRoot(loading.frame)
+	loading.content = make("CanvasGroup", {
+		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+	}, contentRoot)
+	local card = panel({
+		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(780, 250),
+	}, loading.content)
+	loading.title = label({
+		Position = UDim2.fromOffset(24, 32), Size = UDim2.new(1, -48, 0, 76),
+		Font = THEME.title, TextSize = 42, TextWrapped = true,
+	}, card)
+	loading.subtitle = label({
+		Position = UDim2.fromOffset(24, 115), Size = UDim2.new(1, -48, 0, 36),
+		TextSize = 23, TextColor3 = THEME.gold,
+	}, card)
+	loading.progress = label({
+		Position = UDim2.fromOffset(24, 185), Size = UDim2.new(1, -48, 0, 34),
+		Text = "Karte wird vorbereitet …", TextSize = 21, TextColor3 = THEME.dim,
+	}, card)
+end
+
+function UI.showLoading(title, subtitle)
+	if loading.fade then loading.fade:Cancel() end
+	if loading.pulse then loading.pulse:Cancel() end
+	loading.title.Text, loading.subtitle.Text = title, subtitle
+	loading.frame.GroupTransparency = 0
+	loading.frame.Visible = true
+	loading.content.GroupTransparency = 1
+	loading.progress.TextTransparency = 0
+	loading.fade = TweenService:Create(loading.content, TweenInfo.new(Config.FEEL.loadingFade), { GroupTransparency = 0 })
+	loading.fade:Play()
+	loading.pulse = TweenService:Create(loading.progress, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { TextTransparency = 0.45 })
+	loading.pulse:Play()
+end
+
+function UI.hideLoading()
+	if loading.fade then loading.fade:Cancel() end
+	if loading.pulse then loading.pulse:Cancel() end
+	local fade = TweenService:Create(loading.frame, TweenInfo.new(Config.FEEL.loadingFade), { GroupTransparency = 1 })
+	loading.fade = fade
+	fade.Completed:Once(function(status)
+		if status == Enum.PlaybackState.Completed then loading.frame.Visible = false end
+	end)
+	fade:Play()
+end
+
 function UI.init(callbacks)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local gui = make("ScreenGui", { Name = "TacticsUI", ResetOnSpawn = false, IgnoreGuiInset = false }, playerGui)
@@ -388,6 +445,7 @@ function UI.init(callbacks)
 	buildForecast()
 	buildTools(callbacks)
 	buildPopups()
+	buildLoading(playerGui)
 	critFlash = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 100, Active = false }, root)
 	return root
 end

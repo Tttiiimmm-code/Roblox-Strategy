@@ -17,7 +17,7 @@ Ursachen (Claude-Analyse):
   - Mit `os.clock()` die Dauer von `BoardBuilder.build` und vom Erstellen der Einheiten messen und einmal pro Start ausgeben: `print(("Missionsaufbau %s: Brett %.0f ms, Figuren %.0f ms"):format(stageId, ...))`. Gleiches für den Aufbau bei `BeginBattle` (Helden), falls dort Figuren entstehen.
   - Fertig, wenn: die Zeile erscheint bei jedem Start im Output.
 
-- [ ] 2. **Ladebildschirm** – Dateien: `src/client/UI.luau` (oder `MenuUI.luau`, wo es besser passt), `src/client/Main.client.luau` (`onStart` ~Zeile 846 und alle Wege, die `StartStage`/`Retry`/nächste Mission senden), `src/shared/Config.luau`
+- [x] 2. **Ladebildschirm** – Dateien: `src/client/UI.luau` (oder `MenuUI.luau`, wo es besser passt), `src/client/Main.client.luau` (`onStart` ~Zeile 846 und alle Wege, die `StartStage`/`Retry`/nächste Mission senden), `src/shared/Config.luau`
   - `UI.showLoading(title, subtitle)` / `UI.hideLoading()`: Vollbild-Panel über allem (UIKit-Theme, dunkler Verlauf), Missionsname in Titel-Schrift, Gebietsname darunter, sanft pulsierender Text „Karte wird vorbereitet …". Ein-/Ausblenden mit `Config.FEEL.loadingFade` (0.25 s).
   - Beim Senden von `StartStage` (Weltkarte, „Nächste Mission" im Ergebnis-Fenster) und `Retry`: **sofort** `MenuUI.closeLobby()` + Ergebnis-Fenster schließen + `UI.showLoading(...)`.
   - Ausblenden erst, wenn alles bereit ist – per `RunService.Heartbeat` prüfen (max. `Config.FEEL.loadingTimeout` = 15 s):
@@ -62,3 +62,5 @@ Ursachen (Claude-Analyse):
 - Branch `feature/ladezeit` von `feature/mobile-lesbarkeit` angelegt. Vor der Umsetzung wegen des Widerspruchs zwischen Retry-Besitz und erlaubtem Serverumfang gestoppt; noch keine Codeänderungen.
 
 - Schritt 1: Aufbauzeiten für Brett/Gegner und BeginBattle-Helden ergänzt; Besitzerfelder in setupStage gemäß Antwort erhalten (Retry-Fehler behoben). Check: OK; Output in Studio ungetestet.
+
+- Schritt 2: Vollbild-Ladeoberfläche mit sofort deckendem Hintergrund und 0,25-s-Inhaltsfade, pulsierendem Text und Heartbeat-Bereitschaftsprüfung. Aufstellung/Ergebnis während des Ladens unterdrückt; Retry verlangt einen neuen State ohne altes Ergebnis. Timeout nach akzeptiertem Start sendet ToLobby, damit die Weltkarte wieder bedienbar ist. Check: OK; Darstellung/Replikation in Studio ungetestet.
