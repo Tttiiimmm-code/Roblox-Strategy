@@ -615,8 +615,8 @@ end)
 
 -- Zweite Absicherung: TouchEnded meldet auch Touches, deren InputEnded verloren geht
 UserInputService.TouchEnded:Connect(function(input)
-	-- verzögert, damit InputEnded (Tippen erkennen) zuerst drankommt
-	task.defer(function()
+	-- mit kurzer Wartezeit, damit InputEnded (Tippen erkennen) sicher zuerst drankommt
+	task.delay(Config.FEEL.touchEndGrace, function()
 		if touches[input] then
 			touches[input] = nil
 			resetTouchBasis()
