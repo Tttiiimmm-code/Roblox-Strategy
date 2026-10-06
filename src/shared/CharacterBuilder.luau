@@ -240,7 +240,7 @@ local function prepareRig(model, unit, mesh, modelId)
 		local length = w:GetAttribute("Laenge") or WEAPON_LENGTH[t] or 2.8
 		local size = w:GetExtentsSize()
 		w:ScaleTo(w:GetScale() * length / math.max(size.X, size.Y, size.Z))
-		local hand = t == "Bow" and lArm or rArm
+		local hand = (t == "Bow" or t == "Anima") and lArm or rArm
 		w:PivotTo(hand.CFrame)
 		for _, p in w:GetDescendants() do
 			if p:IsA("BasePart") then
