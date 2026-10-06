@@ -161,10 +161,10 @@ function UnitVisuals.update(unit)
 		return
 	end
 	local grey = unit.done or unit.deployed == false
-	local color = grey and Config.DONE_COLOR or Config.TEAM_COLORS[unit.team]
 	for _, p in model:GetDescendants() do
 		if p:IsA("BasePart") and p:GetAttribute("Tint") then
-			p.Color = grey and Config.DONE_COLOR or (p:GetAttribute("BaseColor") or color)
+			local base = p:GetAttribute("BaseColor") or Config.TEAM_COLORS[unit.team]
+			p.Color = grey and base:Lerp(Config.DONE_COLOR, Config.FEEL.doneGreyAmount) or base
 		elseif p:IsA("BasePart") and p.Transparency < 1 then
 			-- Kopf, Haare, Hut, Waffe & Co. ebenfalls entsättigen, damit fertige Figuren klar erkennbar sind
 			local original = p:GetAttribute("OrigColor")
