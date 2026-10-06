@@ -19,6 +19,7 @@ local UI = require(script.Parent:WaitForChild("UI"))
 local MenuUI = require(script.Parent:WaitForChild("MenuUI"))
 local CameraController = require(script.Parent:WaitForChild("CameraController"))
 local UnitAnimator = require(script.Parent:WaitForChild("UnitAnimator"))
+local BattleScene = require(script.Parent:WaitForChild("BattleScene"))
 local Hub = require(script.Parent:WaitForChild("Hub"))
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -593,6 +594,7 @@ local function resetTouchBasis()
 end
 
 UserInputService.InputBegan:Connect(function(input, processed)
+	if BattleScene.isPlaying() then return end
 	local t = input.UserInputType
 	if t == Enum.UserInputType.Touch then
 		local pos = touchPosition(input)
@@ -696,9 +698,10 @@ end)
 
 -- Cursor, Info-Panel und Geländeanzeige folgen der Maus (am Handy: Auswahl)
 RunService.RenderStepped:Connect(function()
-	if not isMine() then
+	if not isMine() or BattleScene.isPlaying() then
 		cursor.Transparency = 1
 		UI.hideInfo()
+		UI.hideTerrain()
 		return
 	end
 	local x, y
@@ -795,15 +798,59 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 		local first = payload.strikes[1]
 		local a = first and state.units[first.attackerId]
 		local b = first and state.units[first.targetId]
+		-- Der Snapshot liegt vor der Bewegung; das Ereignis liefert deren Zielfelder.
+		local function beforeCombat(unit)
+			if not unit then return nil end
+			local copy = table.clone(unit)
+			local position = payload.positions and payload.positions[unit.id]
+			if position then copy.x, copy.y = position.x, position.y end
+			return copy
+		end
+		a, b = beforeCombat(a), beforeCombat(b)
 		if a and b then
 			CameraController.focusOn((Grid.toWorld(a.x, a.y) + Grid.toWorld(b.x, b.y)) / 2, Config.FEEL.battleZoom, Config.FEEL.cameraFocusTime / (state.speed or 1))
 		end
-		local speed = state and state.speed or 1
+		local speed = payload.speed or state.speed or 1
+		local scenes = payload.battleScenes
+		if scenes == nil then scenes = state.battleScenes ~= false end
+		local intro = scenes and Config.FEEL.battleSceneIntro or 0
+		local showingScene = false
+		if scenes and a and b then
+			local forecast = Combat.forecast(a, b, a.x, a.y)
+			local function side(unit, stats)
+				local model = unitsFolder:FindFirstChild(unit.id)
+				return { unit = unit, model = model and model:Clone(), forecast = stats, terrain = Grid.terrainAt(unit.x, unit.y) }
+			end
+			local attackerSide, defenderSide = side(a, forecast.attacker), side(b, forecast.defender)
+			local left, right = attackerSide, defenderSide
+			if a.team == "Player" or b.team ~= "Player" then left, right = defenderSide, attackerSide end
+			showingScene = BattleScene.play({
+				left = left, right = right, strikes = payload.strikes, speed = speed, stageId = state.stageId,
+				onImpact = function(strike)
+					if strike.hit then impactHaptic(strike.crit, speed) end
+				end,
+				onDone = function()
+					UI.setHudVisible(inBattle() and not state.result)
+					updateHint()
+					updateTools()
+				end,
+			})
+			if showingScene then
+				press = nil
+				for _, touch in touches do touch.blocked = true end
+				UI.hideInfo()
+				UI.hideTerrain()
+				UI.hideForecast()
+				UI.setHudVisible(false)
+			end
+		end
 		for i, s in payload.strikes do
-			task.delay((i - 1) * Config.STRIKE_TIME / speed, function()
+			task.delay((intro + (i - 1) * Config.STRIKE_TIME) / speed, function()
+				if token ~= cameraEvent or not isMine() or state.result then return end
 				local attacker = state and state.units[s.attackerId]
 				local weaponKey = attacker and attacker.weapon or "IronSword"
 				UnitAnimator.playStrike(s, weaponKey, function()
+					if showingScene or token ~= cameraEvent or not isMine() or state.result then return end
 					SoundPlayer.play(not s.hit and "miss" or s.crit and "crit" or "hit", { varyPitch = true })
 					if s.hpAfter == 0 then SoundPlayer.play("death") end
 					if s.hit then
@@ -823,7 +870,7 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 				end)
 			end)
 		end
-		task.delay(#payload.strikes * Config.STRIKE_TIME / speed, function()
+		task.delay((intro + #payload.strikes * Config.STRIKE_TIME + (scenes and Config.FEEL.battleSceneOutro or 0)) / speed, function()
 			if token == cameraEvent then CameraController.restore(Config.FEEL.cameraRestoreTime / speed) end
 		end)
 	elseif payload.exp and isMine() then
@@ -843,6 +890,11 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
+	if BattleScene.isPlaying() and (not isMine() or state.result or state.phase == "Prep"
+		or (previous and (previous.stageId ~= state.stageId or previous.difficulty ~= state.difficulty))) then
+		cameraEvent += 1
+		BattleScene.stop()
+	end
 	if loadingMission then loadingMission.receivedState = true end
 
 	if state.stageId and (not previous or previous.stageId ~= state.stageId or previous.mode ~= "Battle") then
@@ -875,7 +927,7 @@ local function applyState(newState)
 	Atmosphere.set(atmosphere)
 	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub", { loop = not (isMine() and state.result ~= nil) })
 	resetSelection()
-	UI.setHudVisible(inBattle() and not state.result)
+	UI.setHudVisible(inBattle() and not state.result and not BattleScene.isPlaying())
 	if inBattle() then
 		UI.setPhase(state)
 	end

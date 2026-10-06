@@ -330,7 +330,10 @@ local function battle(attacker, defender)
 	local result = Combat.resolve(attacker, defender, attacker.x, attacker.y, rng)
 	-- Diese Einstellung gilt für die gesamte Schlagfolge, auch beim Umschalten.
 	local scenes = state.battleScenes ~= false
-	BattleEvent:FireAllClients({ strikes = result.strikes, battleScenes = scenes, speed = state.speed })
+	BattleEvent:FireAllClients({
+		strikes = result.strikes, battleScenes = scenes, speed = state.speed,
+		positions = { [attacker.id] = { x = attacker.x, y = attacker.y }, [defender.id] = { x = defender.x, y = defender.y } },
+	})
 	if scenes then pause(Config.FEEL.battleSceneIntro) end
 
 	for _, s in result.strikes do

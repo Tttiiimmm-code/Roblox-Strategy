@@ -36,7 +36,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
   - Alle Zeiten durch `speed` teilen (3× = automatisch kurz). Szene räumt sich vollständig auf (Klone, Tweens, Verbindungen), auch wenn während der Szene der State wechselt (Lobby, Retry, Ergebnis).
   - Fertig, wenn: jede Schlagfolge (inkl. Konter, Doppelschlag, Verfehlen, Krit, Tod) korrekt dargestellt wird.
 
-- [ ] 4. **Einbinden** – Datei: `src/client/Main.client.luau` (`BattleEvent.OnClientEvent`, `payload.strikes`)
+- [x] 4. **Einbinden** – Datei: `src/client/Main.client.luau` (`BattleEvent.OnClientEvent`, `payload.strikes`)
   - Wenn `state.battleScenes` (Rückfall: true): KP vor dem Kampf aus `state.units` lesen, Seiten/Forecast/Terrain bestimmen und `BattleScene.play` starten. Die Brett-Animation läuft parallel weiter (Kamera-Fokus), **Sounds/Schadenstexte nur einmal** – in der Szene, nicht doppelt auf dem Brett. Ohne Szene alles wie bisher.
   - Info-Panel, Kampfvorschau und Hinweise während der Szene ausblenden; danach wiederherstellen.
   - Fertig, wenn: eigene Angriffe **und** Gegnerphase zeigen die Szene; keine doppelten Sounds.
@@ -63,3 +63,6 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+
+- Schritt 4 ergänzt im Server-Kampfereignis die aktuellen Feldkoordinaten: Der letzte State liegt vor der Bewegung; ohne diese Daten wären Gelände und Kontervorschau falsch. Kampfregeln und KP-Timing bleiben unverändert.
+- Intro, Szeneneinstellung und Tempo werden pro Kampfereignis mitgegeben, damit Brett und Szene denselben Start verwenden. Bei fehlenden Klonen greift die bisherige Brettdarstellung.
