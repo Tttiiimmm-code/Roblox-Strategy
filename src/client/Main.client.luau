@@ -344,17 +344,19 @@ local function toggleInspect(enemy)
 	end
 end
 
--- Bestes Angriffsfeld: stehen bleiben, wenn möglich; sonst größte Distanz (Fernkampf ohne Konter),
--- dann bestes Gelände, dann kürzester Weg
+-- Bestes Angriffsfeld: stehen bleiben, wenn möglich; sonst ein Feld ohne Konter des Gegners,
+-- dann größere Distanz, dann bestes Gelände, dann kürzester Weg
 local function bestAttackTile(unit, enemy)
 	local weapon = UnitData.Weapons[unit.weapon]
+	local enemyWeapon = UnitData.Weapons[enemy.weapon]
 	local best, bestScore
 	for _, node in nodes or {} do
 		local d = Grid.dist(node.x, node.y, enemy.x, enemy.y)
 		if node.canStop and d >= weapon.minRange and d <= weapon.maxRange then
 			local terrain = Grid.terrainAt(node.x, node.y)
-			local stay = (node.x == unit.x and node.y == unit.y) and 10000 or 0
-			local score = stay + d * 1000 + terrain.avoid + terrain.def * 5 - node.cost
+			local stay = (node.x == unit.x and node.y == unit.y) and 100000 or 0
+			local safe = not (enemyWeapon and d >= enemyWeapon.minRange and d <= enemyWeapon.maxRange) and 10000 or 0
+			local score = stay + safe + d * 1000 + terrain.avoid + terrain.def * 5 - node.cost
 			if not bestScore or score > bestScore then
 				best, bestScore = node, score
 			end
