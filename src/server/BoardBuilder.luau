@@ -57,6 +57,18 @@ local function decorate(ch, x, y, parent)
 				CFrame = stalk * CFrame.new(0.8, 0, 0), Color = Color3.fromRGB(80, 50, 30), Material = Enum.Material.Wood }, parent)
 		end
 	elseif ch == "D" then
+		-- Trüber Tümpel: Seerosen auf der gemessenen Wasseroberfläche zeigen „hier kann man nicht laufen"
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = { workspace.Terrain }
+		local surface = workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
+		local waterY = surface and surface.Position.Y or center.Y
+		for i = 1, 3 do
+			local off = Vector3.new(((x * 7 + y * 3 + i * 5) % 5 - 2) * 0.9, 0, ((x * 5 + y * 11 + i * 3) % 5 - 2) * 0.9)
+			deco({ Name = "LilyPad", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.08, 1.3, 1.3),
+				CFrame = CFrame.new(center.X + off.X, waterY + 0.04, center.Z + off.Z) * CFrame.Angles(0, 0, math.rad(90)),
+				Color = Color3.fromRGB(70, 120, 55), Material = Enum.Material.SmoothPlastic }, parent)
+		end
 		for i = 1, 1 + (x + y) % 2 do
 			local off = Vector3.new(i == 1 and -c or c, 0.6, ((x * 17 + y * 11) % 3 - 1) * c)
 			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 0.7, 0.7),
@@ -110,6 +122,9 @@ function BoardBuilder.build(regionId)
 	local T = Config.TILE_SIZE
 	local terrain = workspace.Terrain
 	terrain:SetMaterialColor(Enum.Material.Mud, Config.FEEL.mudColor)
+	-- Gras- und Wasserfarbe je Gebiet: nur Morast ist Schlamm, Tümpel im Sumpf sind trüb-grün
+	terrain:SetMaterialColor(Enum.Material.Grass, region and region.grassColor or Config.FEEL.grassColor)
+	terrain.WaterColor = region and region.waterColor or Config.FEEL.waterColor
 	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
 	local w, h = Grid.width() * T, Grid.height() * T
 	if lastTerrainRegion then terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end

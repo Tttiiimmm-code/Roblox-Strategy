@@ -34,7 +34,7 @@ Config.FEEL = {
 	touchRotateThreshold = 18, touchPanScale = 1,
 	mudColor = Color3.fromRGB(70, 58, 38),
 	swampPuddleSize = Vector3.new(3, 0.6, 3), swampPuddleSurfaceOffset = 0.08,
-	costOverlayTransparency = 0.65, blockedOverlayTransparency = 0.55,
+	grassColor = Color3.fromRGB(106, 127, 63), waterColor = Color3.fromRGB(12, 84, 91), -- Roblox-Standard, je Gebiet überschreibbar
 	shakeStrength = 0.28, critShakeStrength = 0.7, shakeDuration = 0.18, critShakeDuration = 0.38,
 	hitStop = 0.06, critFlashTransparency = 0.65, critFlashDuration = 0.2,
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
@@ -142,7 +142,6 @@ Config.DONE_COLOR = Color3.fromRGB(110, 110, 120)
 
 Config.OVERLAY = {
 	Move = Color3.fromRGB(60, 140, 255),
-	Blocked = Color3.fromRGB(115, 120, 130),
 	Attack = Color3.fromRGB(255, 70, 70),
 	EnemyMove = Color3.fromRGB(200, 90, 230),
 	Danger = Color3.fromRGB(255, 40, 40),
