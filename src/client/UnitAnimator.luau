@@ -434,14 +434,22 @@ local function turnRing(model, data, t)
 		local segments, radius = Config.FEEL.selectionRingSegments, Config.FEEL.turnRingRadius
 		for i = 1, segments do
 			local angle = i / segments * math.pi * 2
-			local segment = fxPart({ Size = Vector3.new(0.1, 0.1, radius * math.pi * 2 / segments), Color = color, Material = Enum.Material.Neon })
+			local width = Config.FEEL.turnRingWidth
+			local segment = fxPart({ Size = Vector3.new(width, 0.08, radius * math.pi * 2 / segments + width * 0.5), Color = color, Material = Enum.Material.Neon })
 			segment.CFrame = CFrame.new(math.cos(angle) * radius, 0.1, math.sin(angle) * radius) * CFrame.Angles(0, -angle, 0)
 			segment.Parent = ring
 		end
 		ring.WorldPivot = CFrame.new()
 		ring.Parent = fxFolder
 		data.turnRing, data.turnSegments = ring, ring:GetChildren()
-		model.Destroying:Once(function() ring:Destroy() end)
+		-- Vom Server gelöschte Modelle lösen am Client nicht immer Destroying aus: Ancestry prüfen
+		local connection
+		connection = model.AncestryChanged:Connect(function()
+			if not model:IsDescendantOf(unitsFolder) then
+				connection:Disconnect()
+				ring:Destroy()
+			end
+		end)
 	end
 	local root = model.PrimaryPart
 	local hidden = model:GetAttribute("Done") or not root or not model.Parent or model.Name ~= model:GetAttribute("UnitId") -- gefallen

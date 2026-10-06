@@ -565,6 +565,13 @@ local function pairGeometry(first, second)
 end
 
 local function resetTouchBasis()
+	-- Abgebrochene Touches (z. B. ganze Hand auf dem Display) melden nicht immer InputEnded: aufräumen
+	for input in touches do
+		local s = input.UserInputState
+		if s == Enum.UserInputState.End or s == Enum.UserInputState.Cancel then
+			touches[input] = nil
+		end
+	end
 	activeTouches = 0
 	local pair = {}
 	for input, touch in touches do
@@ -604,6 +611,17 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	elseif t == Enum.UserInputType.MouseButton2 then
 		goBack()
 	end
+end)
+
+-- Zweite Absicherung: TouchEnded meldet auch Touches, deren InputEnded verloren geht
+UserInputService.TouchEnded:Connect(function(input)
+	-- verzögert, damit InputEnded (Tippen erkennen) zuerst drankommt
+	task.defer(function()
+		if touches[input] then
+			touches[input] = nil
+			resetTouchBasis()
+		end
+	end)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
