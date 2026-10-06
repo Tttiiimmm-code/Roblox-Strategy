@@ -41,7 +41,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
   - Info-Panel, Kampfvorschau und Hinweise während der Szene ausblenden; danach wiederherstellen.
   - Fertig, wenn: eigene Angriffe **und** Gegnerphase zeigen die Szene; keine doppelten Sounds.
 
-- [ ] 5. **Schalter „Szenen"** – Dateien: `src/client/UI.luau` (Werkzeugleiste `buildTools`/`setTools`), `src/client/Main.client.luau`
+- [x] 5. **Schalter „Szenen"** – Dateien: `src/client/UI.luau` (Werkzeugleiste `buildTools`/`setTools`), `src/client/Main.client.luau`
   - Neuer Werkzeugknopf „Szenen an" / „Szenen aus" (Stil `active` wenn an) → sendet `SetBattleScenes`; nur für den Besitzer sichtbar.
   - Fertig, wenn: Umschalten wirkt ab dem nächsten Kampf und bleibt gespeichert.
 

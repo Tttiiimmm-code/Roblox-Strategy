@@ -265,7 +265,7 @@ end
 -- Unten rechts: Zurück · [Rückblende][Gefahr][Tempo] · Zug beenden
 local function buildTools(callbacks)
 	local col = make("Frame", {
-		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(210, 160),
+		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(210, 212),
 		BackgroundTransparency = 1,
 	}, hud)
 
@@ -300,6 +300,12 @@ local function buildTools(callbacks)
 	make("UITextSizeConstraint", { MaxTextSize = 13 }, tools.undo)
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
 	tools.speed = toolButton("1×", 3, callbacks.onSpeed)
+	tools.scenes = button("Szenen an", col, "active")
+	tools.scenes.AnchorPoint = Vector2.new(0, 1)
+	tools.scenes.Position = UDim2.new(0, 0, 1, -110)
+	tools.scenes.Size = UDim2.new(1, 0, 0, 44)
+	tools.scenes.TextSize = 18
+	tools.scenes.Activated:Connect(callbacks.onBattleScenes)
 
 	tools.skip = button("Gegnerphase überspringen", col, "primary")
 	tools.skip.AnchorPoint = Vector2.new(0, 1)
@@ -311,7 +317,7 @@ local function buildTools(callbacks)
 
 	tools.back = button("Zurück", col, "muted")
 	tools.back.AnchorPoint = Vector2.new(0, 1)
-	tools.back.Position = UDim2.new(0, 0, 1, -110)
+	tools.back.Position = UDim2.new(0, 0, 1, -162)
 	tools.back.Size = UDim2.new(1, 0, 0, 44)
 	tools.back.Visible = false
 	tools.back.Activated:Connect(callbacks.onBack)
@@ -466,7 +472,7 @@ function UI.setHint(text)
 	hintLabel.Text = text
 end
 
--- flags: { back, undoLeft, canUndo, danger, speed, controllable }
+-- flags: { back, undoLeft, canUndo, danger, speed, controllable, owner, battleScenes }
 function UI.setTools(flags)
 	tools.back.Visible = flags.back
 	tools.endTurn.Visible = flags.controllable
@@ -477,6 +483,9 @@ function UI.setTools(flags)
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
 	tools.speed.Text = flags.speed == 3 and "3×" or flags.speed == 2 and "2×" or "1×"
 	UIKit.setButtonStyle(tools.speed, flags.speed == 2 and "active" or "default")
+	tools.scenes.Visible = flags.owner == true
+	tools.scenes.Text = flags.battleScenes == false and "Szenen aus" or "Szenen an"
+	UIKit.setButtonStyle(tools.scenes, flags.battleScenes == false and "default" or "active")
 end
 
 local function playBanner(text, color)

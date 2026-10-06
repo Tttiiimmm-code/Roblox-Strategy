@@ -308,6 +308,8 @@ local function updateTools()
 		canUndo = state.canUndo,
 		danger = dangerOn,
 		speed = state.speed or 1,
+		owner = isMine(),
+		battleScenes = state.battleScenes ~= false,
 		controllable = canControl(),
 		enemyPhase = state.phase == "Enemy" and not state.result,
 	})
@@ -970,6 +972,9 @@ local root = UI.init({
 	end,
 	onSpeed = function()
 		send({ type = "SetSpeed", speed = (state and state.speed == 2) and 1 or 2 })
+	end,
+	onBattleScenes = function()
+		if isMine() then send({ type = "SetBattleScenes", on = state.battleScenes == false }) end
 	end,
 	onSkipEnemy = function()
 		if isMine() and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
