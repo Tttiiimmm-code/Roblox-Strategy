@@ -226,7 +226,7 @@ local function updateHint()
 	elseif mode == "Idle" then
 		text = ("<b>%s auf eine blaue Einheit</b>, um sie zu bewegen.\nRote Gegner antippen zeigt ihre Reichweite."):format(TAP)
 	elseif mode == "Selected" then
-		text = ("<b>%s auf ein blaues Feld</b> als Ziel.\nRote Felder: dort kannst du angreifen."):format(TAP)
+		text = ("<b>%s auf ein blaues Feld</b> als Ziel.\nOder %s direkt auf einen Gegner zum Angreifen."):format(TAP, string.lower(TAP))
 	elseif mode == "Menu" then
 		text = "<b>Wähle eine Aktion</b> rechts.\nAngriff ist nur möglich, wenn ein Gegner in Reichweite ist."
 	elseif mode == "Target" then
@@ -344,6 +344,25 @@ local function toggleInspect(enemy)
 	end
 end
 
+-- Bestes Angriffsfeld: stehen bleiben, wenn möglich; sonst größte Distanz (Fernkampf ohne Konter),
+-- dann bestes Gelände, dann kürzester Weg
+local function bestAttackTile(unit, enemy)
+	local weapon = UnitData.Weapons[unit.weapon]
+	local best, bestScore
+	for _, node in nodes or {} do
+		local d = Grid.dist(node.x, node.y, enemy.x, enemy.y)
+		if node.canStop and d >= weapon.minRange and d <= weapon.maxRange then
+			local terrain = Grid.terrainAt(node.x, node.y)
+			local stay = (node.x == unit.x and node.y == unit.y) and 10000 or 0
+			local score = stay + d * 1000 + terrain.avoid + terrain.def * 5 - node.cost
+			if not bestScore or score > bestScore then
+				best, bestScore = node, score
+			end
+		end
+	end
+	return best
+end
+
 local function isTarget(unit)
 	for _, t in targets do
 		if t.id == unit.id then
@@ -369,10 +388,21 @@ local function onClick(x, y)
 		end
 	elseif mode == "Selected" then
 		local node = nodes[Grid.key(x, y)]
+		if unit and unit.team ~= "Player" then
+			-- Direktangriff: passendes Feld automatisch wählen und gleich die Kampfvorschau zeigen
+			local tile = bestAttackTile(state.units[selectedId], unit)
+			if tile then
+				openMenu(tile.x, tile.y)
+				startTargeting()
+				previewAttack(unit)
+				return
+			end
+			UI.toast("Gegner außer Reichweite")
+		end
 		if not node or not node.canStop then
 			local selected = state.units[selectedId]
 			if unit and (unit.team ~= "Player" or not unit.done) then
-				-- Eigene Einheit antippen wählt um, Gegner antippen bricht ab: kein Hinweis nötig
+				-- Eigene Einheit antippen wählt um; Gegner wurde oben behandelt
 			elseif unit then
 				UI.toast("Feld besetzt")
 			elseif selected and Grid.moveCost(selected, x, y) == nil then
