@@ -93,7 +93,8 @@ function CameraController.setActive(on)
 		return
 	end
 	active = on
-	setAvatarControls(not on)
+	-- Im Hintergrund: das Warten auf PlayerModule darf applyState nicht blockieren
+	task.spawn(setAvatarControls, not on)
 	if not on then saved, transition = nil, nil; shakeStrength = 0 end
 	if not on then
 		local camera = workspace.CurrentCamera

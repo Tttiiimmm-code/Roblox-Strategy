@@ -30,7 +30,7 @@ local banner = {}
 local menuCallbacks, forecastCallbacks = {}, {}
 local toastToken, levelToken, bannerToken = 0, 0, 0
 local lastPhaseKey = nil
-local portraitId, portraitKey = nil, nil
+local portraitId = nil
 
 -- Aufbau -------------------------------------------------------------------------
 local function buildTop(callbacks)
@@ -475,16 +475,11 @@ function UI.showInfo(unit, terrain)
 	local cls = UnitData.Classes[unit.class]
 	local w = UnitData.Weapons[unit.weapon]
 	local rarity = UnitData.Rarities[unit.rarity or 1]
-	-- Porträt auch neu klonen, wenn die Einheit fertig/wieder aktiv wird (Ausgrauen)
-	local key = unit.id .. (unit.done and ":fertig" or "")
-	if portraitKey ~= key then
-		portraitKey = key
-		local units = workspace:FindFirstChild("Units")
-		UIKit.portrait(info.viewport, info.camera, units and units:FindFirstChild(unit.id))
-	end
 	if portraitId ~= unit.id then
 		UIKit.popIn(info.frame)
 		portraitId = unit.id
+		local units = workspace:FindFirstChild("Units")
+		UIKit.portrait(info.viewport, info.camera, units and units:FindFirstChild(unit.id))
 		local team = unit.team == "Player" and rarity.color:Lerp(Color3.new(0, 0, 0), 0.35) or Color3.fromRGB(180, 60, 60)
 		info.portraitGradient.Color = ColorSequence.new(team, Color3.fromRGB(16, 20, 40))
 		info.portraitStroke.Color = unit.team == "Player" and rarity.color or THEME.gold
