@@ -12,7 +12,7 @@ Ist-Zustand: `Main.server.luau` `battle()` (~Zeile 321): `Combat.resolve` → `B
 
 ## Schritte
 
-- [ ] 1. **Einstellung „Kampfszenen" (Server + Profil)** – Dateien: `src/server/ProfileStore.luau` (`normalize`), `src/server/Main.server.luau`
+- [x] 1. **Einstellung „Kampfszenen" (Server + Profil)** – Dateien: `src/server/ProfileStore.luau` (`normalize`), `src/server/Main.server.luau`
   - Profil-Feld `settings = { battleScenes = true }`; `normalize` ergänzt fehlende Werte (alte Profile bleiben gültig).
   - Neuer Befehl `{ type = "SetBattleScenes", on = bool }` – wie `SetSpeed`: im Kampf nur der Besitzer, sonst der Spieler selbst; Wert prüfen (`typeof(on) == "boolean"`), im Profil speichern und in `state.battleScenes` spiegeln (beim Missionsstart aus dem Profil des Besitzers übernehmen).
   - In `battle()`: wenn `state.battleScenes`, vor den Schlägen `pause(Config.FEEL.battleSceneIntro)` (0.45 s) und danach zusätzlich `pause(Config.FEEL.battleSceneOutro)` (0.5 s). Prüfen, ob `pause` mit dem Tempo skaliert; sonst durch `state.speed` teilen. Sonst keine Änderung an Kampfablauf/KP-Timing.

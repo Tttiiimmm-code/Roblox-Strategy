@@ -67,6 +67,7 @@ local function snapshot()
 		result = state.result,
 		resultInfo = state.resultInfo,
 		speed = state.speed,
+		battleScenes = state.battleScenes,
 		undoLeft = state.undoLeft,
 		canUndo = #undoStack > 0,
 		lost = state.lost,
@@ -93,6 +94,7 @@ local function profilePayload(profile)
 		stars = profile.stars,
 		heroes = profile.heroes,
 		pity = profile.pity,
+		settings = profile.settings,
 		saveOk = profile.saveOk,
 	}
 end
@@ -176,6 +178,7 @@ local function setupStage(stageId, diffId)
 		turn = 1,
 		busy = false,
 		speed = state.speed,
+		battleScenes = state.battleScenes,
 		undoLeft = diff.undo,
 		lost = 0,
 		turnGoal = Stages.turnGoal(stage, diff),
@@ -325,7 +328,10 @@ local function battle(attacker, defender)
 	pause(0.2)
 
 	local result = Combat.resolve(attacker, defender, attacker.x, attacker.y, rng)
-	BattleEvent:FireAllClients({ strikes = result.strikes })
+	-- Diese Einstellung gilt für die gesamte Schlagfolge, auch beim Umschalten.
+	local scenes = state.battleScenes ~= false
+	BattleEvent:FireAllClients({ strikes = result.strikes, battleScenes = scenes, speed = state.speed })
+	if scenes then pause(Config.FEEL.battleSceneIntro) end
 
 	for _, s in result.strikes do
 		pause(Config.IMPACT_TIME)
@@ -333,6 +339,7 @@ local function battle(attacker, defender)
 		UnitVisuals.setHp(s.targetId, s.hpAfter, target.maxHp)
 		pause(Config.STRIKE_TIME - Config.IMPACT_TIME)
 	end
+	if scenes then pause(Config.FEEL.battleSceneOutro) end
 	pause(0.3)
 
 	for _, pair in { { attacker, defender }, { defender, attacker } } do
@@ -520,6 +527,17 @@ end
 -- Befehle ------------------------------------------------------------------
 local function handleCommand(player, cmd)
 	local t = cmd.type
+	if t == "SetBattleScenes" then
+		if state.mode == "Battle" and state.ownerUserId ~= player.UserId then return false end
+		local profile = ProfileStore.get(player)
+		if not profile or typeof(cmd.on) ~= "boolean" then return false end
+		profile.settings.battleScenes = cmd.on
+		state.battleScenes = cmd.on
+		ProfileStore.save(player)
+		sendProfile(player)
+		broadcast()
+		return true
+	end
 
 	if t == "SetSpeed" then
 		if state.mode == "Battle" and state.ownerUserId ~= player.UserId then return false end
@@ -553,6 +571,7 @@ local function handleCommand(player, cmd)
 			setupStage(cmd.stageId, cmd.difficulty)
 			state.ownerUserId = player.UserId -- nur dieser Spieler steuert den Kampf
 			state.ownerName = player.DisplayName
+			state.battleScenes = profile.settings.battleScenes
 			broadcast()
 			return true
 		end

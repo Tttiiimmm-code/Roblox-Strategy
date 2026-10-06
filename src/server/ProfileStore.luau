@@ -26,11 +26,13 @@ function ProfileStore.newHeroEntry()
 end
 
 local function newProfile()
-	return { gold = 0, gems = START_GEMS, stars = {}, heroes = {}, pity = { since4 = 0, since5 = 0 } }
+	return { gold = 0, gems = START_GEMS, stars = {}, heroes = {}, pity = { since4 = 0, since5 = 0 }, settings = { battleScenes = true } }
 end
 
 -- Fehlende Felder ergänzen, Starthelden sicherstellen, unbekannte Helden entfernen
 local function normalize(profile)
+	profile.settings = type(profile.settings) == "table" and profile.settings or {}
+	if type(profile.settings.battleScenes) ~= "boolean" then profile.settings.battleScenes = true end
 	profile.heroes = type(profile.heroes) == "table" and profile.heroes or {}
 	profile.pity = type(profile.pity) == "table" and profile.pity or { since4 = 0, since5 = 0 }
 	for id in profile.heroes do
@@ -61,6 +63,7 @@ function ProfileStore.load(player)
 		profile.stars = type(data.stars) == "table" and data.stars or {}
 		profile.heroes = data.heroes
 		profile.pity = data.pity
+		profile.settings = data.settings
 	end
 	normalize(profile)
 	profile.saveOk = ok
@@ -80,6 +83,7 @@ local function write(player, profile)
 			stars = profile.stars,
 			heroes = profile.heroes,
 			pity = profile.pity,
+			settings = profile.settings,
 		})
 	end)
 	if not ok then
