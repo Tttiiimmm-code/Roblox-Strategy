@@ -440,15 +440,22 @@ local function turnRing(model, data, t)
 		end
 		ring.WorldPivot = CFrame.new()
 		ring.Parent = fxFolder
-		data.turnRing = ring
+		data.turnRing, data.turnSegments = ring, ring:GetChildren()
 		model.Destroying:Once(function() ring:Destroy() end)
 	end
 	local root = model.PrimaryPart
 	local hidden = model:GetAttribute("Done") or not root or not model.Parent or model.Name ~= model:GetAttribute("UnitId") -- gefallen
+	-- Versteckte Ringe nur beim Wechsel anfassen; sichtbare pulsieren und folgen der Figur
+	if hidden and data.turnHidden then return end
+	data.turnHidden = hidden
 	local alpha = hidden and 1 or Config.FEEL.turnRingTransparency + Config.FEEL.turnRingPulse * (0.5 + 0.5 * math.sin(t * Config.FEEL.turnRingPulseRate))
-	for _, segment in data.turnRing:GetChildren() do segment.Transparency = alpha end
-	if root and not hidden then
-		data.turnRing:PivotTo(CFrame.new(root.Position - Vector3.new(0, model:GetAttribute("GroundOffset") or 0, 0)))
+	for _, segment in data.turnSegments do segment.Transparency = alpha end
+	if not hidden then
+		local pivot = CFrame.new(root.Position - Vector3.new(0, model:GetAttribute("GroundOffset") or 0, 0))
+		if data.turnPivot ~= pivot then
+			data.turnPivot = pivot
+			data.turnRing:PivotTo(pivot)
+		end
 	end
 end
 

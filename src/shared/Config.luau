@@ -138,7 +138,6 @@ Config.TEAM_COLORS = {
 
 -- Thronsaal: liegt weit hinter dem Schlachtfeld, damit die Taktik-Kamera ihn nicht sieht
 Config.HUB_ORIGIN = Vector3.new(0, 0, 420)
-Config.DONE_COLOR = Color3.fromRGB(110, 110, 120)
 
 Config.OVERLAY = {
 	Move = Color3.fromRGB(60, 140, 255),
