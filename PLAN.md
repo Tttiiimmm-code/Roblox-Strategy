@@ -17,7 +17,7 @@ Branch: `feature/modell-cleanup` (weiterarbeiten, baut auf dem Aufräum-Werkzeug
 
 ## Schritte
 
-- [ ] 1. **Aufruf-Skript** – Datei: `scripts/paint.ps1`
+- [x] 1. **Aufruf-Skript** – Datei: `scripts/paint.ps1`
   - `-Name <id>` (Pflicht), `-Dir <ordner>` (Standard `assets/raw/<Name>`; Mal-Dateien liegen in `<Dir>/clean`), `-Mode Setup|Export` (Pflicht), `-Force` (Setup: vorhandene Mal-Datei überschreiben), `-Blender` (Suche wie in `cleanup.ps1` – gleiche Logik).
   - `Setup` startet `paint_setup.py`, `Export` startet `paint_export.py`. Fehlende Eingaben (`<Name>_clean.glb`, `<Name>_tex.png`, Referenzbilder) → verständliche Meldung, Exit 1.
   - Kopfkommentar mit beiden Beispielaufrufen.
