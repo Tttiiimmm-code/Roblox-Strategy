@@ -19,7 +19,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
 
 ## Schritte
 
-- [ ] 1. **Aufruf-Skript** – Datei: `scripts/cleanup.ps1`
+- [x] 1. **Aufruf-Skript** – Datei: `scripts/cleanup.ps1`
   - Parameter: `-In <pfad.fbx|.glb>` (Pflicht), `-Out <ordner>` (Standard: `<In-Ordner>/clean`), `-Name <id>` (Standard: Dateiname ohne Endung), `-Front <+X|-X|+Y|-Y>` (Standard `+X`), `-Size <px>` (Standard 1024), `-HeadShare <0..1>` (Standard 0.25), `-MaxTris` (Standard 19000), `-Cel` (Schalter, Standard aus), `-Blender <pfad>` (Standard: neuestes `C:\Program Files\Blender Foundation\Blender *\blender.exe`).
   - Startet Blender headless mit `--factory-startup` und reicht die Parameter an `cleanup_model.py` weiter. Exit-Code von Blender/Skript durchreichen (Python-Fehler → Exit ≠ 0, z. B. per `try/except` + `sys.exit(1)` im Skript).
   - Kopfkommentar mit Beispielaufruf wie in `scripts/check.ps1`.
