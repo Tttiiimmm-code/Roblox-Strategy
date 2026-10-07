@@ -33,7 +33,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - Mehr als `-MaxTris` Dreiecke → Decimate (Collapse) auf `-MaxTris`; danach triangulieren.
   - Fertig, wenn: Leon hat danach ≤ 19 000 Dreiecke, ≤ 21 lose Teile, Blick nach −Y (Prüfrender aus Schritt 5 zeigt Gesicht in der Vorderansicht).
 
-- [ ] 3. **Neue Texturanordnung mit Kopf-Vorrang** – gleiche Datei
+- [x] 3. **Neue Texturanordnung mit Kopf-Vorrang** – gleiche Datei
   - Original-UV-Ebene behalten (Name z. B. `UV_alt`), neue Ebene `UV_neu` anlegen und aktiv setzen.
   - `uv.smart_project` (Winkel 66°, Inselabstand klein, z. B. 0.002) auf `UV_neu`.
   - **Kopf-Flächen** bestimmen: Flächenmittelpunkt Z > `zmax − 0.13 · Höhe` **und** horizontaler Abstand zur Körperachse < 0.12 · Höhe (schließt T-Pose-Hände aus). Anteil `a` der Kopf-Inseln an der UV-Fläche messen; Kopf-Inseln linear um `k = sqrt(t·(1−a) / (a·(1−t)))` skalieren mit `t = -HeadShare`, dann `uv.pack_islands` (Drehen erlaubt, Abstand so, dass bei `-Size` ≥ 4 px zwischen Inseln liegen; relative Größen bleiben erhalten).

@@ -43,12 +43,13 @@ def uv_islands(mesh, layer):
 			ends = []
 			for index in (loop, other):
 				uv = layer.data[index].uv
-				ends.append((mesh.loops[index].vertex_index, round(uv.x, 6), round(uv.y, 6)))
-			key = tuple(sorted(ends))
-			if key in edges:
-				parents[root(face.index)] = root(edges[key])
-			else:
-				edges[key] = face.index
+				ends.append((mesh.loops[index].vertex_index, uv.copy()))
+			ends.sort(key=lambda item: item[0])
+			key = tuple(item[0] for item in ends)
+			for other_face, other_uv in edges.get(key, []):
+				if all((ends[j][1] - other_uv[j]).length < 1e-5 for j in range(2)):
+					parents[root(face.index)] = root(other_face)
+			edges.setdefault(key, []).append((face.index, tuple(item[1] for item in ends)))
 	groups = {}
 	for face in mesh.polygons:
 		groups.setdefault(root(face.index), []).append(face.index)
@@ -168,6 +169,69 @@ def clean_geometry(obj, args, report):
 		f"{report['vertices_before']} -> {report['vertices_after']} Punkte, {parts} Teile, {removed} entfernt", flush=True)
 
 
+def uv_area(mesh, layer, head_faces):
+	mesh.calc_loop_triangles()
+	head = total = 0.0
+	for triangle in mesh.loop_triangles:
+		a, b, c = (layer.data[index].uv for index in triangle.loops)
+		area = abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) / 2
+		total += area
+		if head_faces[triangle.polygon_index]:
+			head += area
+	return head / total if total else 0.0
+
+
+def arrange_uv(obj, args, report):
+	activate(obj)
+	mesh = obj.data
+	low, high = bounds(obj)
+	height = high.z - low.z
+	if height <= 0:
+		raise ValueError('Das Modell hat keine Höhe.')
+	head_faces = [face.center.z > high.z - 0.13 * height and
+		math.hypot(face.center.x, face.center.y) < 0.12 * height for face in mesh.polygons]
+	if not any(head_faces) or all(head_faces):
+		raise ValueError('Kopfbereich nicht eindeutig erkannt; aufrechte Figur und Ausrichtung prüfen.')
+	layer = mesh.uv_layers.new(name='UV_neu')
+	mesh.uv_layers.active = layer
+	layer.active_render = True
+	bpy.context.scene.tool_settings.use_uv_select_sync = True
+	bpy.ops.object.mode_set(mode='EDIT')
+	bpy.ops.mesh.select_all(action='SELECT')
+	bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.002)
+	bpy.ops.object.mode_set(mode='OBJECT')
+	layer = mesh.uv_layers['UV_neu']
+	# Auch eine durchgehende Hals-Insel muss an der Kopfgrenze getrennt werden.
+	for face in mesh.polygons:
+		if head_faces[face.index]:
+			for index in face.loop_indices:
+				layer.data[index].uv.x += 2
+	islands = uv_islands(mesh, layer)
+	share = uv_area(mesh, layer, head_faces)
+	if not 0 < share < 1:
+		raise ValueError('Kopf oder Körper hat keine nutzbare UV-Fläche.')
+	scale = math.sqrt(args.head_share * (1 - share) / (share * (1 - args.head_share)))
+	for island in islands:
+		if not head_faces[island[0]]:
+			continue
+		indices = [index for face in island for index in mesh.polygons[face].loop_indices]
+		center = sum((layer.data[index].uv.copy() for index in indices), Vector((0, 0))) / len(indices)
+		for index in indices:
+			layer.data[index].uv = center + (layer.data[index].uv - center) * scale
+	bpy.ops.object.mode_set(mode='EDIT')
+	bpy.ops.mesh.select_all(action='SELECT')
+	bpy.ops.uv.pack_islands(rotate=True, rotate_method='ANY', scale=True,
+		margin_method='FRACTION', margin=4 / args.size, shape_method='CONCAVE')
+	bpy.ops.object.mode_set(mode='OBJECT')
+	layer = mesh.uv_layers['UV_neu']
+	report['islands_after'] = len(uv_islands(mesh, layer))
+	report['head_target'] = args.head_share
+	report['head_actual'] = uv_area(mesh, layer, head_faces)
+	print(f"UV-Inseln: {report['islands_before']} -> {report['islands_after']}; "
+		f"Kopfanteil: {report['head_actual']:.2%} (Soll {args.head_share:.2%})", flush=True)
+	return head_faces
+
+
 def arguments():
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument('--input', type=Path, required=True)
@@ -197,6 +261,7 @@ def main():
 	report = {}
 	obj, original = import_model(args, report)
 	clean_geometry(obj, args, report)
+	head_faces = arrange_uv(obj, args, report)
 	print(f'Geometrie aufbereitet in {time.monotonic() - started:.1f} s.', flush=True)
 
 
