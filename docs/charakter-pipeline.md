@@ -11,9 +11,42 @@ Pro Figur **zwei Bilder** wie beim Leon-Design:
 
 ## 2. Bild → 3D-Modell
 Werkzeuge mit **Mehransicht-Eingabe** (Vorder- + Rückbild): z. B. Meshy, Tripo, Rodin.
-- Einstellungen: Stil „stylized/anime", **Ziel ≤ 20 000 Dreiecke** (Roblox-Grenze je MeshPart, außerdem wichtig fürs Handy), Textur **1024 × 1024**, möglichst **ein** Material.
-- Ergebnis als **FBX** (oder GLB → in Blender als FBX exportieren) herunterladen.
-- In Blender prüfen/aufräumen: Blickrichtung nach vorne, schwebende Einzelteile entfernen, Löcher schließen. Die Größe stellt man beim Import in Studio ein (Ziel: Körperhöhe ca. 5–6 Studs).
+- Einstellungen: Stil „stylized/anime", **Ziel ≤ 20 000 Dreiecke** (Roblox-Grenze je MeshPart, außerdem wichtig fürs Handy), möglichst **ein** Material. Generator-Textur ruhig in **4K (4096 × 4096)** herunterladen: Das Aufräum-Werkzeug überträgt sie gezielt auf 1024 × 1024 und reserviert mehr Texturfläche für den Kopf.
+- Ergebnis als **FBX oder GLB** herunterladen und unter `assets/raw/<id>/` ablegen. Separate Texturdateien neben die FBX legen und ihre Dateinamen unverändert lassen, damit Blender sie findet. Rohdaten und Ergebnisse in diesem Ordner werden nicht committet.
+
+### Aufbereiten mit einem Befehl
+Voraussetzung: Blender ist unter `C:\Program Files\Blender Foundation\Blender <Version>\` installiert. PowerShell im Projektordner öffnen, zum Beispiel für Leon:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/cleanup.ps1 -In assets/raw/leon/leon_meshy.fbx -Name leon
+```
+
+Das Skript wählt die neueste Blender-Installation und arbeitet ohne geöffnetes Blender-Fenster. Bei anderer Installation `-Blender 'C:\Pfad\blender.exe'` ergänzen. Ohne `-Name` verwendet es den Eingabedateinamen ohne Endung; ohne `-Out` landen alle Ergebnisse im Unterordner `clean` neben der Eingabe.
+
+Es verschweißt doppelte Punkte, entfernt winzige Teile, berechnet Normalen neu und begrenzt die Geometrie standardmäßig auf 19 000 Dreiecke. Es legt neue UVs mit Kopf-Vorrang an und backt die Originalfarben auf die neue Textur. Die Figur steht anschließend mit den Füßen auf Z = 0 und blickt in Blender nach −Y; ihre Größe bleibt erhalten. Ein vorhandenes Rig und Animationen werden verworfen; Avatar Auto Setup folgt erst nach dem Aufräumen.
+
+Vor dem Studio-Import die Dateien unter `assets/raw/leon/clean/` ansehen:
+
+- `leon_vorne.png`, `leon_hinten.png`: ganze Figur, Ausrichtung und Farben des Ergebnisses.
+- `leon_gesicht.png` neben `leon_gesicht_original_1k.png`: Ergebnis mit Kopf-Vorrang gegenüber der unverändert angeordneten Originaltextur auf 1K; Augen/Iris sollten im Ergebnis schärfer bleiben.
+- `leon_vorne_original.png`: zusätzliche Vorderansicht mit der hochauflösenden Originaltextur zum Farbvergleich.
+- `leon_bericht.txt`: Geometrie, UV-Inseln, tatsächlicher Kopfanteil, Farbabweichung, Laufzeit und FBX-Re-Import-Kontrolle. Ohne Cel führt eine mittlere Abweichung über 12/255 in einem RGB-Kanal zu einem Fehler; nur bei Exit-Code 0 ist der Lauf erfolgreich.
+
+Falls die Figur falsch herum steht, erneut mit ihrer **ursprünglichen Blickrichtung nach dem Blender-Import** aufrufen: `-Front '+X'` (Standard), `-Front '-X'`, `-Front '+Y'` oder `-Front '-Y'`. Für Leon passt `+X`. Weitere Optionen: `-Size 1024`, `-HeadShare 0.25`, `-MaxTris 19000` und `-Out <ordner>`.
+
+### Optional: Cel-Farbreduktion
+Für eine zweite Variante einen eigenen Namen verwenden, damit beide Ergebnisse vergleichbar bleiben:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/cleanup.ps1 -In assets/raw/leon/leon_meshy.fbx -Name leon_cel -Cel -CelColors 16
+```
+
+Zusätzlich entsteht `leon_cel_tex_cel.png`; die Exporte verwenden diese Textur. Die Körperfarben werden auf höchstens `-CelColors` Palettenfarben reduziert. Der Kopfbereich (obere 16 % der Höhe nahe der Körperachse), Hintergrund und Randpixel bleiben erhalten. Körperpixel mit mehr als 40 RGB-Einheiten Abstand zur Palettenfarbe behalten ebenfalls ihre Originalfarbe; ihr Anteil steht im Bericht. Daher darf das gesamte PNG mehr als 16 Farben enthalten. Der Kopf-Vorrang bei der UV-Anordnung bleibt bei den oberen 13 % und standardmäßig 25 % der UV-Fläche. Gesicht einschließlich Kinn im Prüfbild mit der normalen Variante vergleichen. Bei Cel wird die Farbabweichung nur berichtet und führt nicht zum Abbruch.
+
+### In Studio importieren
+**Roblox Studio → Avatar → 3D importieren → `assets/raw/leon/clean/leon_clean.fbx`** (für Cel: `leon_cel_clean.fbx`). Die Textur ist eingebettet; `leon_tex.png` bzw. `leon_cel_tex_cel.png` bleibt zusätzlich als separate Datei verfügbar. Auch `<Name>_clean.glb` enthält die Textur für die Weiterbearbeitung. Das Skript kontrolliert die exportierte FBX durch erneuten Import in eine leere Szene auf identische Dreieckszahl, Texturgröße und eingebettete PNG-Daten.
+
+Im Studio Textur, aufrechte Haltung, Blickrichtung und Dreieckszahl prüfen, dann mit Abschnitt 3 fortfahren. Zielhöhe ca. 5–6 Studs; das Spiel normiert die Figur später über `meshTargetHeight`. Das Aufräum-Werkzeug wurde mit Leon in Blender geprüft; der Studio-Import und Avatar Auto Setup müssen noch manuell getestet werden.
 
 ## 3. Rig (Skelett) für Roblox
 Einfachster Weg: **Roblox Studio → Avatar → Avatar Auto Setup** (Mesh importieren, Auto Setup erzeugt R15-Rig, Gelenke und Skinning automatisch). Alternative: Blender-Rig mit R15-Knochennamen.

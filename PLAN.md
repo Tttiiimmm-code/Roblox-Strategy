@@ -62,7 +62,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - Kontrolle: exportierte FBX in leere Szene neu importieren und Dreieckszahl/Texturgröße mit dem Ergebnis vergleichen (Bericht).
   - Fertig, wenn: beide Dateien existieren, Re-Import liefert gleiche Dreieckszahl und eine 1024er-Textur.
 
-- [ ] 8. **Doku** – Dateien: `docs/charakter-pipeline.md`, `assets/characters/README.md`
+- [x] 8. **Doku** – Dateien: `docs/charakter-pipeline.md`, `assets/characters/README.md`
   - Pipeline Abschnitt 2: Ablage `assets/raw/<id>/`, Aufruf von `scripts/cleanup.ps1` mit Beispiel, was die Prüfbilder zeigen, `-Front` falls die Figur falsch herum steht, `-Cel` optional. Hinweis: Generator-Textur ruhig in 4K herunterladen – das Werkzeug verkleinert gezielt. Satz „Textur 1024 × 1024" im Generator-Abschnitt entsprechend anpassen.
   - Fertig, wenn: Nutzer kann ohne Rückfrage von „FBX heruntergeladen" bis „FBX in Studio importieren" folgen.
 
@@ -90,4 +90,5 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
 - Leon: 16 862 Dreiecke, 8 556 Punkte, alle 21 Teile erhalten; UV-Inseln 4 674 → 2 605 (44 % weniger), Kopfanteil 25,00 %. Vorder-/Rückansicht geprüft: Blick nach −Y. Gesicht: Iris, Pupillen und obere Augenränder klarer als beim Original auf 1K; Farbabweichung 2,77/255 (RGB 3,16 / 2,69 / 2,48). Zusätzliches Vorderbild mit Originaltextur ermöglicht den Farbvergleich.
 - Schritt 6 nach Claudes Freigabe abgeschlossen: Cel-Schutz obere 16 % mit Radius < 12 %, UV-Gewichtung weiterhin obere 13 %/25 % Texturfläche. Genau 16 Farben auf 122 620 Körperpixeln; 172 Pixel (0,1401 % der Körperpixel) wegen RGB-Abstand > 40 erhalten. Kopf, seltene Farben, Hintergrund und Randpixel bytegleich zum PNG ohne Cel. Prüfbilder verglichen: Gesicht einschließlich Kinn sichtbar unverändert, Kragen/Kleidung reduziert. Farbabweichung 5,42/255 (nur informativ). Pflichtcheck OK (26 Dateien, Exit 0).
 - Schritt 7: FBX nur Mesh, Forward −Z / Up Y, FBX Units Scale und eingebettete Textur; GLB mit eingebetteter Textur. Re-Import in eigene leere Szene liefert genau ein Mesh, 16 862 Dreiecke und 1024×1024; gepackte FBX-PNG-Daten stimmen bytegleich mit der gewählten Ausgabe überein. Normaler Lauf Exit 0, Pflichtcheck OK (26 Dateien, Exit 0).
-- Schritte 1–5 jeweils separat committet; Schritt 6 mit eigenem Implementierungscommit und Nacharbeitscommit. Schritte 8–9 folgen. Rohdaten/Prüfbilder ausschließlich im ignorierten `assets/raw/`; Studio ungetestet.
+- Schritt 8: Pipeline und Figuren-README beschreiben 4K-Rohtextur, Ablage, PowerShell-Aufruf, Parameter/Blickrichtung, Prüfbilder/Bericht, Cel-Ausnahmen sowie FBX-Import → Avatar Auto Setup → R15-Datei. Standard-/Cel-Varianten verwenden verschiedene Namen im selben ignorierten Ausgabeordner.
+- Schritte 1–5 jeweils separat committet; Schritt 6 mit eigenem Implementierungscommit und Nacharbeitscommit. Schritt 9 folgt. Rohdaten/Prüfbilder ausschließlich im ignorierten `assets/raw/`; Studio ungetestet.
