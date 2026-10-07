@@ -464,7 +464,7 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 ## Nächste Schritte (Plan)
-1. Claude prüft `feature/mesh-figuren`, insbesondere Vorlagenprüfung, R15-Aufbereitung, Cache und Porträtkamera. Nutzer testet zunächst `mesh` ohne Modelle und danach importierte R15-Modelle gemäß `docs/charakter-pipeline.md` und der Prüfliste in `PLAN.md` auf PC und Handy. Review/Test von Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfaden, Handy-Kamera und Weltkarte/Terrain/Chibis bleiben offen.
+1. **Offene Tests:** eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle auf PC und Handy testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Weltkarte/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
 2. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
 3. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
 4. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
