@@ -33,7 +33,7 @@ Branch: `feature/modell-cleanup` (weiterarbeiten, baut auf dem Aufräum-Werkzeug
   - Datei als `<Name>_malen.blend` speichern (relative Pfade, `bpy.ops.file.make_paths_relative()`).
   - Fertig, wenn: für Leon `leon_malen.blend`, `leon_tex_bemalt.png`, beide Zuschnitte und `leon_uv_raster.png` existieren; erneuter Aufruf ohne `-Force` bricht ab und verändert nichts; Datei headless erneut öffnen → Objekt, Material mit externem Bild und Referenztexturen vorhanden (in Notizen festhalten, ob die Pinsel gespeichert sind).
 
-- [ ] 3. **Export der bemalten Textur** – Datei: `scripts/cleanup/paint_export.py`
+- [x] 3. **Export der bemalten Textur** – Datei: `scripts/cleanup/paint_export.py`
   - Liest `<Name>_tex_bemalt.png` **von der Festplatte** (nicht aus der .blend – ungespeicherte Malerei wäre sonst still verloren) und `<Name>_clean.glb`. Bildgröße ≠ Größe von `<Name>_tex.png` → Fehler mit Hinweis.
   - Warnung (kein Abbruch), wenn `<Name>_malen.blend` um > 60 s neuer ist als `<Name>_tex_bemalt.png`: „Bild in Blender gespeichert? (Image → Save)“.
   - Material wie `final_material` mit dem bemalten Bild; Export über die gemeinsame Funktion → `<Name>_bemalt.fbx` / `<Name>_bemalt.glb` inkl. Re-Import-Prüfung.
@@ -72,4 +72,6 @@ Branch: `feature/modell-cleanup` (weiterarbeiten, baut auf dem Aufräum-Werkzeug
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
+- Schritte 1/2: Fehlende Eingaben liefern Exit 1. Leon-Setup erzeugt alle fünf Dateien; beide Pinsel sind lokale Assets und nach Neuöffnung aktivierbar. Canvas/Referenzen externe relative PNG-Dateien; UV-Raster mit Linien-Alpha 128 (gpu.init nötig im Hintergrundbetrieb). Erneutes Setup ohne Force lässt alle Hashes/Zeitstempel unverändert. Force sichert und behält die vorhandene Textur. paint_common.py teilt Eingabeprüfung und GLB-Import. Blender lädt externe Bilder bei Bedarf; Größen-/Pixelzugriff nach Neuöffnung geprüft.
+- Schritt 3: export_files, proof_camera und render_views werden mit cleanup_model geteilt. Unveränderte Kopie: 0 % geänderte Pixel. Magenta-Testrechteck: 25 % / 262144 Pixel, Änderung im Gesichtsbild sichtbar; Originalkopie wiederhergestellt. Falsche Bildgröße (512 statt 1024) liefert Exit 1; Zeitwarnung (>60 s) beobachtet. FBX-Re-Import jeweils 16862 Dreiecke, 1024², eingebettetes PNG bytegleich. Erster Cleanup-Regressionslauf erfolgreich; Pflichtcheck OK. paint.ps1 mit UTF-8-BOM für deutsche Meldungen unter Windows PowerShell.
 -

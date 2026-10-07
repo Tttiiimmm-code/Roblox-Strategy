@@ -1,4 +1,4 @@
-# Erstellt eine Mal-Datei oder exportiert die auf der Festplatte gespeicherte Textur.
+﻿# Erstellt eine Mal-Datei oder exportiert die auf der Festplatte gespeicherte Textur.
 # Setup: powershell -ExecutionPolicy Bypass -File scripts/paint.ps1 -Name leon -Mode Setup
 # Export: powershell -ExecutionPolicy Bypass -File scripts/paint.ps1 -Name leon -Mode Export
 # Exit-Code 0 = erfolgreich, 1 = ungültiger Aufruf; Blender-Fehler werden durchgereicht.

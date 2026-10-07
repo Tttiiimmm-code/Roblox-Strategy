@@ -499,8 +499,12 @@ def render_model(obj, other, camera, path, center, scale, back=False):
 	obj.hide_render = True
 
 
-def proof_images(obj, original, args, report):
+def proof_camera(obj):
 	scene = bpy.context.scene
+	scene.view_settings.view_transform = 'Standard'
+	scene.view_settings.look = 'None'
+	scene.view_settings.exposure = 0
+	scene.view_settings.gamma = 1
 	scene.render.engine = 'BLENDER_WORKBENCH'
 	scene.render.resolution_x = 900
 	scene.render.resolution_y = 900
@@ -519,17 +523,28 @@ def proof_images(obj, original, args, report):
 	camera.data.type = 'ORTHO'
 	bpy.context.collection.objects.link(camera)
 	scene.camera = camera
-	low, high = bounds(original)
+	low, high = bounds(obj)
 	height = high.z - low.z
 	center = (low + high) / 2
 	full_scale = max(height, high.x - low.x) * 1.08
 	face_center = Vector((center.x, center.y, high.z - height * 0.08))
+	return camera, center, full_scale, face_center, height
+
+
+def render_views(obj, other, camera, output, name, center, full_scale, face_center, height):
+	render_model(obj, other, camera, output / f'{name}_vorne.png', center, full_scale)
+	render_model(obj, other, camera, output / f'{name}_hinten.png', center, full_scale, back=True)
+	render_model(obj, other, camera, output / f'{name}_gesicht.png', face_center, height * 0.16)
+	obj.hide_render = False
+	activate(obj)
+
+
+def proof_images(obj, original, args, report):
+	camera, center, full_scale, face_center, height = proof_camera(original)
 	front_path = args.output / f'{args.name}_vorne.png'
 	before_path = args.output / f'{args.name}_vorne_original.png'
 	render_model(original, obj, camera, before_path, center, full_scale)
-	render_model(obj, original, camera, front_path, center, full_scale)
-	render_model(obj, original, camera, args.output / f'{args.name}_hinten.png', center, full_scale, back=True)
-	render_model(obj, original, camera, args.output / f'{args.name}_gesicht.png', face_center, height * 0.16)
+	render_views(obj, original, camera, args.output, args.name, center, full_scale, face_center, height)
 	before = png_pixels(before_path)
 	after = png_pixels(front_path)
 	mask = (before[:, :, 3] >= 250) & (after[:, :, 3] >= 250)
@@ -557,9 +572,14 @@ def proof_images(obj, original, args, report):
 
 
 def export_model(obj, args, report):
-	activate(obj)
 	fbx_path = args.output / f'{args.name}_clean.fbx'
 	glb_path = args.output / f'{args.name}_clean.glb'
+	texture_path = args.output / f"{args.name}_tex{'_cel' if args.cel else ''}.png"
+	export_files(obj, fbx_path, glb_path, texture_path, (args.size, args.size), report)
+
+
+def export_files(obj, fbx_path, glb_path, texture_path, size, report):
+	activate(obj)
 	bpy.ops.export_scene.fbx(filepath=str(fbx_path.resolve()), use_selection=True,
 		object_types={'MESH'}, use_mesh_modifiers=True, bake_anim=False,
 		path_mode='COPY', embed_textures=True, axis_forward='-Z', axis_up='Y',
@@ -582,11 +602,10 @@ def export_model(obj, args, report):
 		triangles = triangle_count(imported.data)
 		textures = [base_image(slot.material) for slot in imported.material_slots]
 		sizes = [tuple(texture.size) for texture in textures]
-		texture_path = args.output / f"{args.name}_tex{'_cel' if args.cel else ''}.png"
 		embedded = bool(textures) and all(texture.packed_file and
 			bytes(texture.packed_file.data) == texture_path.read_bytes() for texture in textures)
 		report.update(export_triangles=triangles, export_texture_sizes=sizes, export_embedded=embedded)
-		if triangles != report['triangles_after'] or not sizes or any(size != (args.size, args.size) for size in sizes):
+		if triangles != report['triangles_after'] or not sizes or any(texture_size != tuple(size) for texture_size in sizes):
 			raise ValueError(f'FBX-Re-Import weicht ab: {triangles} Dreiecke, Texturgrößen {sizes}')
 		if not embedded:
 			raise ValueError('FBX enthält nicht die vollständige gewählte PNG-Textur als eingebettete Daten.')
