@@ -556,6 +556,50 @@ def proof_images(obj, original, args, report):
 	return bool(np.all(deviation <= 12))
 
 
+def export_model(obj, args, report):
+	activate(obj)
+	fbx_path = args.output / f'{args.name}_clean.fbx'
+	glb_path = args.output / f'{args.name}_clean.glb'
+	bpy.ops.export_scene.fbx(filepath=str(fbx_path.resolve()), use_selection=True,
+		object_types={'MESH'}, use_mesh_modifiers=True, bake_anim=False,
+		path_mode='COPY', embed_textures=True, axis_forward='-Z', axis_up='Y',
+		apply_unit_scale=True, apply_scale_options='FBX_SCALE_UNITS', global_scale=1.0)
+	bpy.ops.export_scene.gltf(filepath=str(glb_path.resolve()), export_format='GLB',
+		use_selection=True, export_animations=False, export_image_format='AUTO')
+	for path in (fbx_path, glb_path):
+		if not path.is_file() or path.stat().st_size == 0:
+			raise ValueError(f'Export fehlt oder ist leer: {path}')
+	# Eine leere Szene und gepackte Bilddaten prüfen den tatsächlichen Export.
+	source_scene = bpy.context.window.scene
+	verification = bpy.data.scenes.new('Exportprüfung')
+	bpy.context.window.scene = verification
+	try:
+		bpy.ops.import_scene.fbx(filepath=str(fbx_path.resolve()), use_anim=False, use_image_search=False)
+		meshes = [other for other in verification.objects if other.type == 'MESH']
+		if len(meshes) != 1 or len(verification.objects) != 1:
+			raise ValueError('FBX-Re-Import enthält nicht genau ein Mesh ohne Zusatzobjekte.')
+		imported = meshes[0]
+		triangles = triangle_count(imported.data)
+		textures = [base_image(slot.material) for slot in imported.material_slots]
+		sizes = [tuple(texture.size) for texture in textures]
+		texture_path = args.output / f"{args.name}_tex{'_cel' if args.cel else ''}.png"
+		embedded = bool(textures) and all(texture.packed_file and
+			bytes(texture.packed_file.data) == texture_path.read_bytes() for texture in textures)
+		report.update(export_triangles=triangles, export_texture_sizes=sizes, export_embedded=embedded)
+		if triangles != report['triangles_after'] or not sizes or any(size != (args.size, args.size) for size in sizes):
+			raise ValueError(f'FBX-Re-Import weicht ab: {triangles} Dreiecke, Texturgrößen {sizes}')
+		if not embedded:
+			raise ValueError('FBX enthält nicht die vollständige gewählte PNG-Textur als eingebettete Daten.')
+		print(f'Export geprüft: FBX und GLB; FBX-Re-Import {triangles} Dreiecke, '
+			f'Textur {sizes}, eingebettetes PNG identisch.', flush=True)
+	finally:
+		bpy.context.window.scene = source_scene
+		for other in list(verification.objects):
+			bpy.data.objects.remove(other, do_unlink=True)
+		bpy.data.scenes.remove(verification)
+		activate(obj)
+
+
 def write_report(args, report, started):
 	lines = [f'Modell: {args.name}', f'Eingabe: {args.input.resolve()}',
 		f"Dreiecke vorher/nachher: {report['triangles_before']} / {report['triangles_after']}",
@@ -576,6 +620,11 @@ def write_report(args, report, started):
 			f"Erhaltene Körperfarben (RGB-Abstand > 40): {report['cel_preserved_pixels']} Pixel "
 			f"({report['cel_preserved_share']:.4%} der Körperpixel)",
 			f"Kopf (obere 16 %), seltene Farben, Hintergrund und Randpixel unverändert: {report['cel_protected_unchanged']}"])
+	if 'export_triangles' in report:
+		lines.extend([f"FBX-Re-Import Dreiecke: {report['export_triangles']}",
+			f"FBX-Re-Import Texturgrößen: {report['export_texture_sizes']}",
+			f"FBX-Textur eingebettet und PNG identisch: {report['export_embedded']}",
+			f"Exportdateien: {args.name}_clean.fbx, {args.name}_clean.glb"])
 	(args.output / f'{args.name}_bericht.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
@@ -619,6 +668,8 @@ def main():
 	write_report(args, report, started)
 	if not args.cel and not color_ok:
 		raise ValueError('Farbtreue-Check fehlgeschlagen: mindestens ein Kanal liegt über 12/255.')
+	export_model(obj, args, report)
+	write_report(args, report, started)
 
 
 if __name__ == '__main__':
