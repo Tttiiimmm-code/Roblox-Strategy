@@ -46,7 +46,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - Danach Material aufs neue Bild mit `UV_neu` umstellen (Principled, nur Base Color, Roughness 1, Metallic 0), alte UV-Ebene entfernen.
   - Fertig, wenn: Farbtreue-Check aus Schritt 5 bestanden.
 
-- [ ] 5. **Bericht und Prüfbilder** – gleiche Datei
+- [x] 5. **Bericht und Prüfbilder** – gleiche Datei
   - In `-Out` ablegen: `<Name>_vorne.png`, `<Name>_hinten.png`, `<Name>_gesicht.png` (Workbench, Licht `FLAT`, Farbe `TEXTURE`, orthografisch, 900 px; Gesicht = obere 16 % der Höhe) – jeweils **vom Ergebnis** und zum Vergleich `<Name>_gesicht_original_1k.png` (Originalmodell mit auf `-Size` verkleinerter Originaltextur, gleiche Kamera).
   - **Farbtreue-Check:** Vorderansicht Original (4K-Textur) vs. Ergebnis, mittlere absolute Abweichung pro Kanal über Figurpixel (Hintergrund maskieren). Grenze: ≤ 12 von 255; sonst Fehler (Exit 1). Wert in den Bericht.
   - `<Name>_bericht.txt`: Dreiecke vorher/nachher, Punkte vorher/nachher, gelöschte Kleinteile, UV-Inseln vorher/nachher, Kopfanteil Soll/Ist, Farbabweichung, Laufzeit.

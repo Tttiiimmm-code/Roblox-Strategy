@@ -6,9 +6,12 @@ from pathlib import Path
 import sys
 import time
 import traceback
+import struct
+import zlib
 
 import bmesh
 import bpy
+import numpy as np
 from mathutils import Vector
 
 
@@ -330,6 +333,141 @@ def bake_texture(obj, args, report):
 	return image
 
 
+def png_pixels(path):
+	# Die Grenze von 12/255 bezieht sich auf gespeicherte sRGB-Werte, nicht lineare Renderwerte.
+	data = path.read_bytes()
+	if data[:8] != b'\x89PNG\r\n\x1a\n':
+		raise ValueError(f'Kein PNG: {path}')
+	compressed = bytearray()
+	position = 8
+	while position < len(data):
+		length = struct.unpack_from('>I', data, position)[0]
+		kind = data[position + 4:position + 8]
+		chunk = data[position + 8:position + 8 + length]
+		if kind == b'IHDR':
+			width, height, depth, color, _, _, interlace = struct.unpack('>IIBBBBB', chunk)
+		elif kind == b'IDAT':
+			compressed.extend(chunk)
+		position += 12 + length
+	if depth != 8 or color not in (2, 6) or interlace:
+		raise ValueError('Prüfrender muss ein nicht verschachteltes RGB/RGBA-PNG mit 8 Bit sein.')
+	channels = 4 if color == 6 else 3
+	stride = width * channels
+	raw = zlib.decompress(compressed)
+	rows = np.empty((height, stride), dtype=np.uint8)
+	previous = np.zeros(stride, dtype=np.uint8)
+	for y in range(height):
+		start = y * (stride + 1)
+		filter_type = raw[start]
+		row = np.frombuffer(raw[start + 1:start + 1 + stride], dtype=np.uint8).copy()
+		if filter_type == 2:
+			row = ((row.astype(np.uint16) + previous) % 256).astype(np.uint8)
+		elif filter_type in (1, 3, 4):
+			for x in range(stride):
+				left = int(row[x - channels]) if x >= channels else 0
+				above = int(previous[x])
+				upper_left = int(previous[x - channels]) if x >= channels else 0
+				if filter_type == 1:
+					predictor = left
+				elif filter_type == 3:
+					predictor = (left + above) // 2
+				else:
+					p = left + above - upper_left
+					distances = [abs(p - left), abs(p - above), abs(p - upper_left)]
+					predictor = (left, above, upper_left)[distances.index(min(distances))]
+				row[x] = (int(row[x]) + predictor) % 256
+		elif filter_type != 0:
+			raise ValueError(f'Unbekannter PNG-Filter: {filter_type}')
+		rows[y] = row
+		previous = row
+	return rows.reshape(height, width, channels)
+
+
+def render_model(obj, other, camera, path, center, scale, back=False):
+	obj.hide_render = False
+	other.hide_render = True
+	scene = bpy.context.scene
+	camera.data.ortho_scale = scale
+	camera.location = center + Vector((0, 4 * scale if back else -4 * scale, 0))
+	camera.rotation_euler = (center - camera.location).to_track_quat('-Z', 'Y').to_euler()
+	scene.render.filepath = str(path.resolve())
+	bpy.ops.render.render(write_still=True)
+	obj.hide_render = True
+
+
+def proof_images(obj, original, args, report):
+	scene = bpy.context.scene
+	scene.render.engine = 'BLENDER_WORKBENCH'
+	scene.render.resolution_x = 900
+	scene.render.resolution_y = 900
+	scene.render.resolution_percentage = 100
+	scene.render.image_settings.file_format = 'PNG'
+	scene.render.image_settings.color_mode = 'RGBA'
+	scene.render.image_settings.color_depth = '8'
+	scene.render.film_transparent = True
+	scene.display.shading.light = 'FLAT'
+	scene.display.shading.color_type = 'TEXTURE'
+	scene.display.shading.show_shadows = False
+	scene.display.shading.show_cavity = False
+	scene.display.shading.show_specular_highlight = False
+	scene.display.render_aa = '16'
+	camera = bpy.data.objects.new('Prüfkamera', bpy.data.cameras.new('Prüfkamera'))
+	camera.data.type = 'ORTHO'
+	bpy.context.collection.objects.link(camera)
+	scene.camera = camera
+	low, high = bounds(original)
+	height = high.z - low.z
+	center = (low + high) / 2
+	full_scale = max(height, high.x - low.x) * 1.08
+	face_center = Vector((center.x, center.y, high.z - height * 0.08))
+	front_path = args.output / f'{args.name}_vorne.png'
+	before_path = args.output / f'{args.name}_vorne_original.png'
+	render_model(original, obj, camera, before_path, center, full_scale)
+	render_model(obj, original, camera, front_path, center, full_scale)
+	render_model(obj, original, camera, args.output / f'{args.name}_hinten.png', center, full_scale, back=True)
+	render_model(obj, original, camera, args.output / f'{args.name}_gesicht.png', face_center, height * 0.16)
+	before = png_pixels(before_path)
+	after = png_pixels(front_path)
+	mask = (before[:, :, 3] >= 250) & (after[:, :, 3] >= 250)
+	if not np.any(mask):
+		raise ValueError('Keine Figurpixel im Farbtreue-Check; Prüfrender fehlgeschlagen.')
+	deviation = np.abs(before[:, :, :3].astype(float) - after[:, :, :3].astype(float))[mask].mean(axis=0)
+	report['color_deviation_channels'] = deviation.tolist()
+	report['color_deviation'] = float(deviation.mean())
+	report['color_pixels'] = int(mask.sum())
+	# Kopien verhindern, dass das 1K-Vergleichsbild die 4K-Quelldaten verändert.
+	for slot in original.material_slots:
+		material = slot.material.copy()
+		slot.material = material
+		image = base_image(material).copy()
+		image.scale(args.size, args.size)
+		for node in material.node_tree.nodes:
+			if node.type == 'TEX_IMAGE':
+				node.image = image
+				material.node_tree.nodes.active = node
+	render_model(original, obj, camera, args.output / f'{args.name}_gesicht_original_1k.png', face_center, height * 0.16)
+	obj.hide_render = False
+	activate(obj)
+	print(f"Farbabweichung: {report['color_deviation']:.2f}/255; RGB {deviation.round(2).tolist()}", flush=True)
+	return bool(np.all(deviation <= 12))
+
+
+def write_report(args, report, started):
+	lines = [f'Modell: {args.name}', f'Eingabe: {args.input.resolve()}',
+		f"Dreiecke vorher/nachher: {report['triangles_before']} / {report['triangles_after']}",
+		f"Punkte vorher/nachher: {report['vertices_before']} / {report['vertices_after']}",
+		f"Gelöschte Kleinteile: {report['removed_parts']}; erhaltene Teile: {report['parts_after']}",
+		f"UV-Inseln vorher/nachher: {report['islands_before']} / {report['islands_after']}",
+		f"Kopfanteil Soll/Ist (UV-Fläche): {report['head_target']:.4f} / {report['head_actual']:.4f}",
+		f"Texturgröße: {report['texture_size']}",
+		f"Mittlere Farbabweichung: {report['color_deviation']:.4f} / 255",
+		f"Farbabweichung RGB: {report['color_deviation_channels']}; Figurpixel: {report['color_pixels']}",
+		f'Farbtreue-Grenze: 12 / 255 pro Kanal; bei Cel nur informativ',
+		f'Laufzeit: {time.monotonic() - started:.2f} s',
+		'Studio-Test: ungetestet']
+	(args.output / f'{args.name}_bericht.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
 def arguments():
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument('--input', type=Path, required=True)
@@ -361,7 +499,10 @@ def main():
 	clean_geometry(obj, args, report)
 	head_faces = arrange_uv(obj, args, report)
 	image = bake_texture(obj, args, report)
-	print(f'Geometrie aufbereitet in {time.monotonic() - started:.1f} s.', flush=True)
+	color_ok = proof_images(obj, original, args, report)
+	write_report(args, report, started)
+	if not args.cel and not color_ok:
+		raise ValueError('Farbtreue-Check fehlgeschlagen: mindestens ein Kanal liegt über 12/255.')
 
 
 if __name__ == '__main__':
