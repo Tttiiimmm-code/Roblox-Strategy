@@ -374,8 +374,13 @@ def nearest_colors(pixels, centers):
 	return labels
 
 
-def cel_texture(obj, image, head_faces, args, report):
-	head, body = texture_masks(obj.data, head_faces, args.size)
+def cel_texture(obj, image, args, report):
+	low, high = bounds(obj)
+	height = high.z - low.z
+	# Der Cel-Schutz umfasst auch den Unterkiefer; die UV-Gewichtung bleibt bei 13 %.
+	protected_faces = [face.center.z > high.z - 0.16 * height and
+		math.hypot(face.center.x, face.center.y) < 0.12 * height for face in obj.data.polygons]
+	head, body = texture_masks(obj.data, protected_faces, args.size)
 	if not np.any(body):
 		raise ValueError('Keine Körperpixel für die Cel-Farbreduktion gefunden.')
 	buffer = np.empty(args.size * args.size * 4, dtype=np.float32)
@@ -404,7 +409,13 @@ def cel_texture(obj, image, head_faces, args, report):
 			centers = updated
 			break
 		centers = updated
-	pixels[body, :3] = centers[nearest_colors(colors, centers)]
+	palette = centers[nearest_colors(colors, centers)]
+	# Seltene Farben bleiben erhalten, wenn die Palette sie zu stark verfälscht.
+	preserved = np.linalg.norm((colors - palette) * 255, axis=1) > 40
+	colors[~preserved] = palette[~preserved]
+	pixels[body, :3] = colors
+	reduced = body.copy()
+	reduced[body] = ~preserved
 	cel = bpy.data.images.new(args.name + '_tex_cel', width=args.size, height=args.size, alpha=False)
 	cel.colorspace_settings.name = 'sRGB'
 	cel.pixels.foreach_set(buffer)
@@ -413,14 +424,16 @@ def cel_texture(obj, image, head_faces, args, report):
 	save_png(cel, path)
 	before = np.flipud(png_pixels(args.output / f'{args.name}_tex.png'))[:, :, :3]
 	after = np.flipud(png_pixels(path))[:, :, :3]
-	count = len(np.unique(after[body], axis=0))
-	unchanged = bool(np.array_equal(before[~body], after[~body]))
+	count = len(np.unique(after[reduced], axis=0))
+	unchanged = bool(np.array_equal(before[~reduced], after[~reduced]))
 	if count > args.cel_colors or not unchanged:
 		raise ValueError(f'Cel-Prüfung fehlgeschlagen: {count} Farben, Kopf/Rand unverändert: {unchanged}')
 	report.update(cel_colors=count, cel_body_pixels=int(body.sum()), cel_head_pixels=int(head.sum()),
-		cel_protected_unchanged=unchanged)
+		cel_protected_unchanged=unchanged, cel_preserved_pixels=int(preserved.sum()),
+		cel_preserved_share=float(preserved.mean()), cel_reduced_pixels=int(reduced.sum()))
 	final_material(obj, cel)
-	print(f'Cel: {count} Farben auf {body.sum()} Körperpixeln; Kopf, Hintergrund und Ränder unverändert.', flush=True)
+	print(f'Cel: {count} Farben auf {reduced.sum()} Körperpixeln; '
+		f'{preserved.mean():.2%} seltene Körperfarben erhalten; Kopf, Hintergrund und Ränder unverändert.', flush=True)
 	return cel
 
 
@@ -559,7 +572,10 @@ def write_report(args, report, started):
 	if args.cel:
 		lines.extend([f"Cel-Farben Soll/Ist: {args.cel_colors} / {report['cel_colors']}",
 			f"Cel-Körperpixel: {report['cel_body_pixels']}; geschützte Kopf-Pixel: {report['cel_head_pixels']}",
-			f"Kopf, Hintergrund und Randpixel unverändert: {report['cel_protected_unchanged']}"])
+			f"Cel-reduzierte Körperpixel: {report['cel_reduced_pixels']}",
+			f"Erhaltene Körperfarben (RGB-Abstand > 40): {report['cel_preserved_pixels']} Pixel "
+			f"({report['cel_preserved_share']:.4%} der Körperpixel)",
+			f"Kopf (obere 16 %), seltene Farben, Hintergrund und Randpixel unverändert: {report['cel_protected_unchanged']}"])
 	(args.output / f'{args.name}_bericht.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
@@ -595,10 +611,10 @@ def main():
 	report = {}
 	obj, original = import_model(args, report)
 	clean_geometry(obj, args, report)
-	head_faces = arrange_uv(obj, args, report)
+	arrange_uv(obj, args, report)
 	image = bake_texture(obj, args, report)
 	if args.cel:
-		image = cel_texture(obj, image, head_faces, args, report)
+		image = cel_texture(obj, image, args, report)
 	color_ok = proof_images(obj, original, args, report)
 	write_report(args, report, started)
 	if not args.cel and not color_ok:

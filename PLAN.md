@@ -52,7 +52,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - `<Name>_bericht.txt`: Dreiecke vorher/nachher, Punkte vorher/nachher, gelöschte Kleinteile, UV-Inseln vorher/nachher, Kopfanteil Soll/Ist, Farbabweichung, Laufzeit.
   - Fertig, wenn: Für Leon existieren alle Dateien, `_gesicht.png` zeigt Augen/Iris sichtbar schärfer als `_gesicht_original_1k.png` (in Notizen kurz beschreiben).
 
-- [ ] 6. **Optional `-Cel`: Farbreduktion** – gleiche Datei
+- [x] 6. **Optional `-Cel`: Farbreduktion** – gleiche Datei
   - Nur mit Schalter. K-Means (numpy) auf die Texturpixel, Farbanzahl Parameter `-CelColors` (Standard 16; in `cleanup.ps1` ergänzen). **Kopf-Inseln ausnehmen** (Maske: Kopf-Flächen in `UV_neu` als Polygone in ein Maskenbild rasterisieren, z. B. per zweitem Emission-Bake mit Flächenattribut 1/0). Hintergrund/Randpixel unverändert lassen.
   - Ergebnis zusätzlich als `<Name>_tex_cel.png`; Export (Schritt 7) nutzt dann diese Textur. Farbtreue-Grenze gilt für `-Cel` **nicht** (nur Bericht).
   - Fertig, wenn: Lauf mit `-Cel` erzeugt Textur mit ≤ `-CelColors` Farben außerhalb der Kopfmaske; Gesicht im Prüfbild unverändert.
@@ -88,5 +88,5 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
 ## Notizen (Codex)
 - Blender 5.2.2 startet innerhalb der Sandbox. Glättung über `bpy.ops.object.shade_smooth_by_angle` (40°). Kopfgrenze trennt gegebenenfalls eine Hals-Insel vor dem Skalieren; Pack-Abstand über FRACTION = 4 / Size.
 - Leon: 16 862 Dreiecke, 8 556 Punkte, alle 21 Teile erhalten; UV-Inseln 4 674 → 2 605 (44 % weniger), Kopfanteil 25,00 %. Vorder-/Rückansicht geprüft: Blick nach −Y. Gesicht: Iris, Pupillen und obere Augenränder klarer als beim Original auf 1K; Farbabweichung 2,77/255 (RGB 3,16 / 2,69 / 2,48). Zusätzliches Vorderbild mit Originaltextur ermöglicht den Farbvergleich.
-- Schritt 6 implementiert, aber wegen des sichtbaren Unterkiefer-Problems wieder offen markiert. Cel-Lauf: genau 16 Farben auf 124 708 Körperpixeln; definierte Kopfmaske, Hintergrund und Randpixel bytegleich zum PNG ohne Cel; Farbabweichung 5,40/255 (nur informativ). Diese technische Maskenprüfung ersetzt nicht das noch unerfüllte visuelle Gesichts-Kriterium.
-- Schritte 1–5 jeweils separat committet; Schritt 6 hat einen eigenen Implementierungscommit, benötigt aber die obige Entscheidung und Nacharbeit. Schritte 7–9 nicht begonnen. Rohdaten/Prüfbilder ausschließlich im ignorierten `assets/raw/`; Studio ungetestet. Pflichtcheck bisher nach jedem Schritt OK (26 Dateien, Exit 0).
+- Schritt 6 nach Claudes Freigabe abgeschlossen: Cel-Schutz obere 16 % mit Radius < 12 %, UV-Gewichtung weiterhin obere 13 %/25 % Texturfläche. Genau 16 Farben auf 122 620 Körperpixeln; 172 Pixel (0,1401 % der Körperpixel) wegen RGB-Abstand > 40 erhalten. Kopf, seltene Farben, Hintergrund und Randpixel bytegleich zum PNG ohne Cel. Prüfbilder verglichen: Gesicht einschließlich Kinn sichtbar unverändert, Kragen/Kleidung reduziert. Farbabweichung 5,42/255 (nur informativ). Pflichtcheck OK (26 Dateien, Exit 0).
+- Schritte 1–5 jeweils separat committet; Schritt 6 mit eigenem Implementierungscommit und Nacharbeitscommit. Schritte 7–9 folgen. Rohdaten/Prüfbilder ausschließlich im ignorierten `assets/raw/`; Studio ungetestet.
