@@ -34,6 +34,16 @@ Vor dem Studio-Import die Dateien unter `assets/raw/leon/clean/` ansehen:
 
 Falls die Figur falsch herum steht, erneut mit ihrer **ursprünglichen Blickrichtung nach dem Blender-Import** aufrufen: `-Front '+X'` (Standard), `-Front '-X'`, `-Front '+Y'` oder `-Front '-Y'`. Für Leon passt `+X`. Weitere Optionen: `-Size 1024`, `-HeadShare 0.25`, `-MaxTris 19000` und `-Out <ordner>`.
 
+### Optional: Textur selbst bemalen
+Augen, Wappen und Goldkanten lassen sich mit den Referenzbildern als Schablone nachmalen; fleckige Flächen mit einer einzigen Farbe glätten. Die [Einsteiger-Anleitung zum Textur-Malen](textur-malen.md) führt durch Mal-Datei, Blender, beide Speicherschritte und Studio-Import.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/paint.ps1 -Name leon -Mode Setup
+powershell -ExecutionPolicy Bypass -File scripts/paint.ps1 -Name leon -Mode Export
+```
+
+Zwischen beiden Befehlen `assets/raw/leon/clean/leon_malen.blend` öffnen und malen; **Image → Save** speichert `leon_tex_bemalt.png`, **Strg + S** die Blender-Datei. Dann die Prüfbilder `leon_bemalt_vorne.png`, `_hinten.png`, `_gesicht.png` kontrollieren und `leon_bemalt.fbx` importieren. Ein vorhandenes Setup wird nur mit `-Force` neu erstellt; dabei wird die bemalte Textur gesichert und beibehalten.
+
 ### Optional: Cel-Farbreduktion
 Für eine zweite Variante einen eigenen Namen verwenden, damit beide Ergebnisse vergleichbar bleiben:
 
