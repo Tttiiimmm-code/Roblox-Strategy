@@ -10,6 +10,7 @@ param(
 	[ValidateRange(0.0, 1.0)][double]$HeadShare = 0.25,
 	[ValidateRange(1, 20000)][int]$MaxTris = 19000,
 	[switch]$Cel,
+	[ValidateRange(2, 256)][int]$CelColors = 16,
 	[string]$Blender
 )
 
@@ -47,7 +48,7 @@ try {
 	$blenderArgs = @('-b', '--factory-startup', '--python-exit-code', '1', '--python', $scriptPath,
 		'--', '--input', $inputPath, '--output', $outputPath, '--name', $Name,
 		"--front=$Front", '--size', "$Size", '--head-share', $HeadShare.ToString([Globalization.CultureInfo]::InvariantCulture),
-		'--max-tris', "$MaxTris")
+		'--max-tris', "$MaxTris", '--cel-colors', "$CelColors")
 	if ($Cel) { $blenderArgs += '--cel' }
 	& $Blender @blenderArgs
 	exit $LASTEXITCODE

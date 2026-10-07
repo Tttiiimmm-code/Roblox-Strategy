@@ -52,7 +52,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - `<Name>_bericht.txt`: Dreiecke vorher/nachher, Punkte vorher/nachher, gelöschte Kleinteile, UV-Inseln vorher/nachher, Kopfanteil Soll/Ist, Farbabweichung, Laufzeit.
   - Fertig, wenn: Für Leon existieren alle Dateien, `_gesicht.png` zeigt Augen/Iris sichtbar schärfer als `_gesicht_original_1k.png` (in Notizen kurz beschreiben).
 
-- [ ] 6. **Optional `-Cel`: Farbreduktion** – gleiche Datei
+- [x] 6. **Optional `-Cel`: Farbreduktion** – gleiche Datei
   - Nur mit Schalter. K-Means (numpy) auf die Texturpixel, Farbanzahl Parameter `-CelColors` (Standard 16; in `cleanup.ps1` ergänzen). **Kopf-Inseln ausnehmen** (Maske: Kopf-Flächen in `UV_neu` als Polygone in ein Maskenbild rasterisieren, z. B. per zweitem Emission-Bake mit Flächenattribut 1/0). Hintergrund/Randpixel unverändert lassen.
   - Ergebnis zusätzlich als `<Name>_tex_cel.png`; Export (Schritt 7) nutzt dann diese Textur. Farbtreue-Grenze gilt für `-Cel` **nicht** (nur Bericht).
   - Fertig, wenn: Lauf mit `-Cel` erzeugt Textur mit ≤ `-CelColors` Farben außerhalb der Kopfmaske; Gesicht im Prüfbild unverändert.
@@ -84,4 +84,5 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
 
 ## Notizen (Codex)
--
+- Blender 5.2.2 startet innerhalb der Sandbox. Glättung über `bpy.ops.object.shade_smooth_by_angle` (40°). Kopfgrenze trennt gegebenenfalls eine Hals-Insel vor dem Skalieren; Pack-Abstand über FRACTION = 4 / Size.
+- Leon: 16 862 Dreiecke, 8 556 Punkte, alle 21 Teile erhalten; UV-Inseln 4 674 → 2 605 (44 % weniger), Kopfanteil 25,00 %. Vorder-/Rückansicht geprüft: Blick nach −Y. Gesicht: Iris, Pupillen und obere Augenränder klarer als beim Original auf 1K; Farbabweichung 2,77/255 (RGB 3,16 / 2,69 / 2,48). Zusätzliches Vorderbild mit Originaltextur ermöglicht den Farbvergleich.

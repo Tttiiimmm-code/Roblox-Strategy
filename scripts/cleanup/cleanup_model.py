@@ -333,6 +333,97 @@ def bake_texture(obj, args, report):
 	return image
 
 
+def texture_masks(mesh, head_faces, size):
+	resolution = 2 * size
+	head = np.zeros((resolution, resolution), dtype=bool)
+	body = np.zeros_like(head)
+	layer = mesh.uv_layers['UV_neu']
+	mesh.calc_loop_triangles()
+	for triangle in mesh.loop_triangles:
+		uv = np.array([tuple(layer.data[index].uv) for index in triangle.loops]) * resolution
+		minimum = np.maximum(np.floor(uv.min(axis=0)).astype(int), 0)
+		maximum = np.minimum(np.ceil(uv.max(axis=0)).astype(int), resolution - 1)
+		if np.any(maximum < minimum):
+			continue
+		x0, y0 = minimum
+		x1, y1 = maximum
+		y, x = np.mgrid[y0:y1 + 1, x0:x1 + 1]
+		x = x + 0.5
+		y = y + 0.5
+		a, b, c = uv
+		denominator = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+		if abs(denominator) < 1e-12:
+			continue
+		weight_a = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / denominator
+		weight_b = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / denominator
+		inside = (weight_a >= -1e-7) & (weight_b >= -1e-7) & (weight_a + weight_b <= 1 + 1e-7)
+		mask = head if head_faces[triangle.polygon_index] else body
+		mask[y0:y1 + 1, x0:x1 + 1] |= inside
+	# Gemischte Randpixel bleiben erhalten; schon ein Kopf-Subpixel schützt das ganze Pixel.
+	head = head.reshape(size, 2, size, 2).any(axis=(1, 3))
+	body = body.reshape(size, 2, size, 2).all(axis=(1, 3)) & ~head
+	return head, body
+
+
+def nearest_colors(pixels, centers):
+	labels = np.empty(len(pixels), dtype=np.int32)
+	for start in range(0, len(pixels), 16384):
+		chunk = pixels[start:start + 16384]
+		distance = ((chunk[:, None, :] - centers[None, :, :]) ** 2).sum(axis=2)
+		labels[start:start + len(chunk)] = distance.argmin(axis=1)
+	return labels
+
+
+def cel_texture(obj, image, head_faces, args, report):
+	head, body = texture_masks(obj.data, head_faces, args.size)
+	if not np.any(body):
+		raise ValueError('Keine Körperpixel für die Cel-Farbreduktion gefunden.')
+	buffer = np.empty(args.size * args.size * 4, dtype=np.float32)
+	image.pixels.foreach_get(buffer)
+	pixels = buffer.reshape(args.size, args.size, 4)
+	colors = pixels[body, :3].copy()
+	rng = np.random.default_rng(0)
+	sample = colors[rng.choice(len(colors), min(len(colors), 32768), replace=False)]
+	# K-Means++ erhält auch kleine Gold-/Silberbereiche in der Palette.
+	centers = [sample[rng.integers(len(sample))]]
+	distance = np.full(len(sample), np.inf)
+	for _ in range(1, args.cel_colors):
+		distance = np.minimum(distance, ((sample - centers[-1]) ** 2).sum(axis=1))
+		if distance.sum() <= 1e-12:
+			break
+		centers.append(sample[rng.choice(len(sample), p=distance / distance.sum())])
+	centers = np.array(centers, dtype=np.float32)
+	for _ in range(24):
+		labels = nearest_colors(sample, centers)
+		updated = centers.copy()
+		for index in range(len(centers)):
+			selected = sample[labels == index]
+			if len(selected):
+				updated[index] = selected.mean(axis=0)
+		if np.max(np.abs(updated - centers)) < 1e-5:
+			centers = updated
+			break
+		centers = updated
+	pixels[body, :3] = centers[nearest_colors(colors, centers)]
+	cel = bpy.data.images.new(args.name + '_tex_cel', width=args.size, height=args.size, alpha=False)
+	cel.colorspace_settings.name = 'sRGB'
+	cel.pixels.foreach_set(buffer)
+	cel.update()
+	path = args.output / f'{args.name}_tex_cel.png'
+	save_png(cel, path)
+	before = np.flipud(png_pixels(args.output / f'{args.name}_tex.png'))[:, :, :3]
+	after = np.flipud(png_pixels(path))[:, :, :3]
+	count = len(np.unique(after[body], axis=0))
+	unchanged = bool(np.array_equal(before[~body], after[~body]))
+	if count > args.cel_colors or not unchanged:
+		raise ValueError(f'Cel-Prüfung fehlgeschlagen: {count} Farben, Kopf/Rand unverändert: {unchanged}')
+	report.update(cel_colors=count, cel_body_pixels=int(body.sum()), cel_head_pixels=int(head.sum()),
+		cel_protected_unchanged=unchanged)
+	final_material(obj, cel)
+	print(f'Cel: {count} Farben auf {body.sum()} Körperpixeln; Kopf, Hintergrund und Ränder unverändert.', flush=True)
+	return cel
+
+
 def png_pixels(path):
 	# Die Grenze von 12/255 bezieht sich auf gespeicherte sRGB-Werte, nicht lineare Renderwerte.
 	data = path.read_bytes()
@@ -465,6 +556,10 @@ def write_report(args, report, started):
 		f'Farbtreue-Grenze: 12 / 255 pro Kanal; bei Cel nur informativ',
 		f'Laufzeit: {time.monotonic() - started:.2f} s',
 		'Studio-Test: ungetestet']
+	if args.cel:
+		lines.extend([f"Cel-Farben Soll/Ist: {args.cel_colors} / {report['cel_colors']}",
+			f"Cel-Körperpixel: {report['cel_body_pixels']}; geschützte Kopf-Pixel: {report['cel_head_pixels']}",
+			f"Kopf, Hintergrund und Randpixel unverändert: {report['cel_protected_unchanged']}"])
 	(args.output / f'{args.name}_bericht.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
@@ -478,6 +573,7 @@ def arguments():
 	parser.add_argument('--head-share', type=float, default=0.25)
 	parser.add_argument('--max-tris', type=int, default=19000)
 	parser.add_argument('--cel', action='store_true')
+	parser.add_argument('--cel-colors', type=int, default=16)
 	args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 	if not args.input.is_file():
 		parser.error(f'Eingabedatei fehlt: {args.input}')
@@ -487,6 +583,8 @@ def arguments():
 		parser.error('Ungültige Werte für Kopfanteil, Texturgröße oder Dreieckslimit.')
 	if not args.name.strip() or any(c in args.name for c in '<>:"/\\|?*') or args.name in ('.', '..'):
 		parser.error('Name muss ein einfacher Dateiname sein.')
+	if not 2 <= args.cel_colors <= 256:
+		parser.error('CelColors muss zwischen 2 und 256 liegen.')
 	args.output.mkdir(parents=True, exist_ok=True)
 	return args
 
@@ -499,6 +597,8 @@ def main():
 	clean_geometry(obj, args, report)
 	head_faces = arrange_uv(obj, args, report)
 	image = bake_texture(obj, args, report)
+	if args.cel:
+		image = cel_texture(obj, image, head_faces, args, report)
 	color_ok = proof_images(obj, original, args, report)
 	write_report(args, report, started)
 	if not args.cel and not color_ok:
