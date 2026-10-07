@@ -463,8 +463,26 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 **Teststatus:** Vom Nutzer in Studio bestätigt: Leon steht auf dem Boden, Arme hängen, Angriff hebt den Arm (noch etwas steif), Hub sofort richtig beleuchtet. Eigene Waffenmodelle noch ungetestet (keine Datei vorhanden). Pflichtcheck OK.
 
 ---
+## #21 – Aufräum-Werkzeug für KI-Modelle
+**Datum:** 07.10.2026
+
+**Ziel:** KI-Figurenmodelle mit einem Befehl für Roblox aufbereiten und das Gesicht trotz 1024er-Textur scharf erhalten.
+
+**Umsetzung**
+- `scripts/cleanup.ps1` startet Blender headless für FBX/GLB; Parameter für Ausgabe, Blickrichtung, Texturgröße, Kopfanteil, Dreieckslimit und optionale Cel-Palette.
+- `scripts/cleanup/cleanup_model.py` verbindet Meshes, entfernt Rig/Animationen, richtet die Figur aus, verschweißt Punkte, entfernt winzige Teile, glättet nach Kantenwinkel und trianguliert. Neue UV-Anordnung reserviert standardmäßig 25 % UV-Fläche für den Kopf; Emission-Bake mit doppelter Auflösung überträgt die Originaltextur auf 1024 px.
+- Vorder-/Rückansicht, Gesicht und Originalvergleich mit 1K sowie Bericht mit Farbtreue-Check. Optionales K-Means-Cel mit Gesichtsschutz und Erhalt selten abweichender Körperfarben.
+- FBX (nur Mesh, FBX Units Scale, Forward −Z / Up Y) und GLB mit eingebetteter Textur; FBX-Re-Import in eine leere Szene prüft Dreieckszahl, Texturgröße und bytegleiche eingebettete PNG-Daten. Pipeline und Figuren-README erklären Download → Aufbereitung → Studio-Import → Avatar Auto Setup.
+
+**Entscheidungen:** Generator-Texturen in 4K herunterladen; neue UVs geben dem Kopf mehr Fläche. Kopfgewichtung obere 13 %/Radius < 12 % der Höhe; nach Claudes Freigabe schützt Cel die oberen 16 % einschließlich Kinn. Körperpixel mit euklidischem RGB-Abstand > 40 zur Palette behalten ihre Originalfarbe. Cel-Farbtreue wird nur berichtet. Rohdaten, Prüfbilder und Exporte bleiben unter ignoriertem `assets/raw/`; Spielcode und bestehendes `leon.rbxm` unverändert. Separate Commits pro Schritt auf `feature/modell-cleanup`.
+
+**Probleme:** Die ursprüngliche 13-%-Cel-Maske ließ Leons Kinn grau werden; mit freigegebener 16-%-Maske behoben. Blender 5.2 verwendet `shade_smooth_by_angle` für die 40°-Glättung. Blender meldet nur Deprecation-Warnungen zu `Material.use_nodes` für eine künftige Version; beide abschließenden Aufrufe erfolgreich (Exit 0). Git-Index für den Doku-Commit nur mit bereits freigegebenem Aufruf außerhalb der Sandbox schreibbar.
+
+**Teststatus:** **In Roblox Studio und auf dem Handy ungetestet; unabhängiger Claude-Review ausstehend.** Leon mit und ohne Cel unter `assets/raw/leon/clean/` erfolgreich erzeugt: jeweils 16 862 Dreiecke, 25 574 → 8 556 Punkte, alle 21 Teile erhalten, UV-Inseln 4 674 → 2 605, Kopfanteil 25,00 %, Textur 1024×1024. FBX-Re-Import beider Varianten identisch, PNG eingebettet und bytegleich; beide FBX/GLB-Dateien vorhanden. Mittlere Farbabweichung normal 2,77/255 (RGB 3,16 / 2,69 / 2,48), Cel 5,42/255 (informativ). Cel: 16 Farben auf 122 620 Körperpixeln; 172 Pixel (0,1401 %) wegen Farbabweichung erhalten; Kopf, seltene Farben, Hintergrund und Randpixel bytegleich. Prüfbilder angesehen: Vorder-/Rückausrichtung passt, Iris/Pupillen/Augenränder schärfer als im Original auf 1K; Cel-Gesicht einschließlich Kinn sichtbar unverändert. Pflichtcheck **OK, 26 Dateien, Exit 0**.
+
+---
 ## Nächste Schritte (Plan)
-1. **Offene Tests:** eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle auf PC und Handy testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Weltkarte/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
+1. **Offene Tests:** neue Leon-FBX normal/Cel in Studio importieren, Textur, Haltung, Blickrichtung und Dreieckszahl prüfen, Avatar Auto Setup ausführen und Gesicht aus Brett-Entfernung auf PC/Handy vergleichen. Bevorzugte Variante erst danach als `assets/characters/leon.rbxm` speichern. Eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Weltkarte/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
 2. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
 3. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
 4. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
