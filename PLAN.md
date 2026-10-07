@@ -52,7 +52,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - `<Name>_bericht.txt`: Dreiecke vorher/nachher, Punkte vorher/nachher, gelöschte Kleinteile, UV-Inseln vorher/nachher, Kopfanteil Soll/Ist, Farbabweichung, Laufzeit.
   - Fertig, wenn: Für Leon existieren alle Dateien, `_gesicht.png` zeigt Augen/Iris sichtbar schärfer als `_gesicht_original_1k.png` (in Notizen kurz beschreiben).
 
-- [x] 6. **Optional `-Cel`: Farbreduktion** – gleiche Datei
+- [ ] 6. **Optional `-Cel`: Farbreduktion** – gleiche Datei
   - Nur mit Schalter. K-Means (numpy) auf die Texturpixel, Farbanzahl Parameter `-CelColors` (Standard 16; in `cleanup.ps1` ergänzen). **Kopf-Inseln ausnehmen** (Maske: Kopf-Flächen in `UV_neu` als Polygone in ein Maskenbild rasterisieren, z. B. per zweitem Emission-Bake mit Flächenattribut 1/0). Hintergrund/Randpixel unverändert lassen.
   - Ergebnis zusätzlich als `<Name>_tex_cel.png`; Export (Schritt 7) nutzt dann diese Textur. Farbtreue-Grenze gilt für `-Cel` **nicht** (nur Bericht).
   - Fertig, wenn: Lauf mit `-Cel` erzeugt Textur mit ≤ `-CelColors` Farben außerhalb der Kopfmaske; Gesicht im Prüfbild unverändert.
@@ -81,8 +81,11 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
 - Rohdaten in `assets/raw/` nicht committen
 
 ## Offene Fragen
-- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist)
+- **An Claude – Schritt 6, Schutz des vollständigen Gesichts:** Die vorgeschriebene Kopfklassifikation (oberste 13 % der Höhe, Radius < 12 % der Höhe) schließt bei Leon den Unterkiefer aus. Die Cel-Umsetzung schützt diese Kopfmaske und alle Hintergrund-/Randpixel nachweislich unverändert und reduziert die Körperpixel auf genau 16 Farben; trotzdem wird Leons Kinn grau. Sichtbarer Beleg: `assets/raw/leon/clean/leon_cel_gesicht.png`, Vergleich ohne Cel: `assets/raw/leon/clean/leon_gesicht.png`. Das Akzeptanzkriterium „Gesicht im Prüfbild unverändert“ ist damit nicht erfüllt.
+  - **Vorschlag zur Freigabe:** Nur für den Cel-Schutz den Höhenbereich auf die oberen **16 %** erweitern (wie der Gesichtsausschnitt), weiterhin Radius < 12 % der Höhe. UV-Gewichtung und Kopfanteil aus Schritt 3 bleiben bei der vorgeschriebenen 13-%-Klassifikation und 25 % Texturfläche. Darf Schritt 6 diese zusätzliche Schutzmaske verwenden? Danach Cel-Prüfbild erneut vergleichen und Schritte 7–9 abschließen.
 
 ## Notizen (Codex)
 - Blender 5.2.2 startet innerhalb der Sandbox. Glättung über `bpy.ops.object.shade_smooth_by_angle` (40°). Kopfgrenze trennt gegebenenfalls eine Hals-Insel vor dem Skalieren; Pack-Abstand über FRACTION = 4 / Size.
 - Leon: 16 862 Dreiecke, 8 556 Punkte, alle 21 Teile erhalten; UV-Inseln 4 674 → 2 605 (44 % weniger), Kopfanteil 25,00 %. Vorder-/Rückansicht geprüft: Blick nach −Y. Gesicht: Iris, Pupillen und obere Augenränder klarer als beim Original auf 1K; Farbabweichung 2,77/255 (RGB 3,16 / 2,69 / 2,48). Zusätzliches Vorderbild mit Originaltextur ermöglicht den Farbvergleich.
+- Schritt 6 implementiert, aber wegen des sichtbaren Unterkiefer-Problems wieder offen markiert. Cel-Lauf: genau 16 Farben auf 124 708 Körperpixeln; definierte Kopfmaske, Hintergrund und Randpixel bytegleich zum PNG ohne Cel; Farbabweichung 5,40/255 (nur informativ). Diese technische Maskenprüfung ersetzt nicht das noch unerfüllte visuelle Gesichts-Kriterium.
+- Schritte 1–5 jeweils separat committet; Schritt 6 hat einen eigenen Implementierungscommit, benötigt aber die obige Entscheidung und Nacharbeit. Schritte 7–9 nicht begonnen. Rohdaten/Prüfbilder ausschließlich im ignorierten `assets/raw/`; Studio ungetestet. Pflichtcheck bisher nach jedem Schritt OK (26 Dateien, Exit 0).
