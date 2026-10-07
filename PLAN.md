@@ -23,7 +23,7 @@ Branch: `feature/modell-cleanup` (weiterarbeiten, baut auf dem Aufräum-Werkzeug
   - Kopfkommentar mit beiden Beispielaufrufen.
   - Fertig, wenn: beide Modi starten Blender bzw. melden fehlende Dateien sauber.
 
-- [ ] 2. **Mal-Datei erzeugen** – Datei: `scripts/cleanup/paint_setup.py`
+- [x] 2. **Mal-Datei erzeugen** – Datei: `scripts/cleanup/paint_setup.py`
   - Existiert `<Name>_malen.blend` schon und kein `-Force` → abbrechen mit Hinweis (bemalte Arbeit nie überschreiben). `<Name>_tex_bemalt.png` nur anlegen, wenn nicht vorhanden (Kopie von `<Name>_tex.png`); bei `-Force` vorher Sicherung `<Name>_tex_bemalt_<zeitstempel>.png`.
   - `<Name>_clean.glb` importieren; Material: Principled mit Bildtextur `<Name>_tex_bemalt.png` (externe Datei, **nicht** packen, relativer Pfad) über `UV_neu`. Objekt aktiv/ausgewählt.
   - **Referenzen zuschneiden:** `ref_vorne.png` / `ref_hinten.png` auf die Figur zuschneiden (Hintergrund = Pixel nahe der Eckfarbe, Toleranz z. B. 30; Rand 2 %), als `<Name>_ref_vorne_zuschnitt.png` / `_hinten_zuschnitt.png` in `clean/` speichern. Erleichtert das Ausrichten der Schablone.
