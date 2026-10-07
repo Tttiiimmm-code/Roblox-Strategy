@@ -40,7 +40,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - Nach dem Packen den tatsächlichen Kopfanteil messen und im Bericht ausgeben.
   - Fertig, wenn: tatsächlicher Kopfanteil bei Leon 0.20–0.30; Inselzahl deutlich kleiner als vorher (im Bericht beide Zahlen).
 
-- [ ] 4. **Textur übertragen (Bake)** – gleiche Datei
+- [x] 4. **Textur übertragen (Bake)** – gleiche Datei
   - Material umbauen: Originalbild über `UV Map`-Knoten mit `UV_alt` → Emission. Neues Bild `<Name>_tex` mit **2 × `-Size`** anlegen, als aktiver, nicht verbundener Image-Texture-Knoten; Cycles, Bake-Typ `EMIT`, Rand (margin) 16 px, wenige Samples reichen. Danach auf `-Size` verkleinern (Supersampling gegen Treppen).
   - Bild als sRGB-PNG speichern. Farbverwaltung so einstellen, dass keine Ansichtstransformation (AgX/Filmic) die Farben verändert (View Transform `Standard`).
   - Danach Material aufs neue Bild mit `UV_neu` umstellen (Principled, nur Base Color, Roughness 1, Metallic 0), alte UV-Ebene entfernen.

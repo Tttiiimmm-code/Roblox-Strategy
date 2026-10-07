@@ -232,6 +232,104 @@ def arrange_uv(obj, args, report):
 	return head_faces
 
 
+def base_image(material):
+	if not material or not material.use_nodes:
+		raise ValueError('Originalmaterial ohne Bildtextur gefunden.')
+	principled = next((node for node in material.node_tree.nodes if node.type == 'BSDF_PRINCIPLED'), None)
+	if not principled:
+		raise ValueError(f'Material {material.name}: Principled-Shader für Originalfarbe fehlt.')
+	stack = [link.from_node for link in principled.inputs['Base Color'].links]
+	seen = set()
+	while stack:
+		node = stack.pop()
+		if node in seen:
+			continue
+		seen.add(node)
+		if node.type == 'TEX_IMAGE' and node.image:
+			if not node.image.has_data:
+				node.image.reload()
+			if not node.image.has_data:
+				raise ValueError(f'Texturdatei fehlt: {node.image.filepath}')
+			return node.image
+		stack.extend(link.from_node for socket in node.inputs for link in socket.links)
+	raise ValueError(f'Material {material.name}: kein Bild an Base Color gefunden.')
+
+
+def save_png(image, path):
+	image.filepath_raw = str(path.resolve())
+	image.file_format = 'PNG'
+	image.save()
+
+
+def final_material(obj, image):
+	material = bpy.data.materials.new(obj.name + '_Material')
+	material.use_nodes = True
+	nodes = material.node_tree.nodes
+	shader = next(node for node in nodes if node.type == 'BSDF_PRINCIPLED')
+	shader.inputs['Roughness'].default_value = 1
+	shader.inputs['Metallic'].default_value = 0
+	uv = nodes.new('ShaderNodeUVMap')
+	uv.uv_map = 'UV_neu'
+	texture = nodes.new('ShaderNodeTexImage')
+	texture.image = image
+	material.node_tree.links.new(uv.outputs['UV'], texture.inputs['Vector'])
+	material.node_tree.links.new(texture.outputs['Color'], shader.inputs['Base Color'])
+	nodes.active = texture
+	obj.data.materials.clear()
+	obj.data.materials.append(material)
+	for face in obj.data.polygons:
+		face.material_index = 0
+	return material
+
+
+def bake_texture(obj, args, report):
+	activate(obj)
+	scene = bpy.context.scene
+	scene.view_settings.view_transform = 'Standard'
+	scene.view_settings.look = 'None'
+	scene.view_settings.exposure = 0
+	scene.view_settings.gamma = 1
+	scene.render.engine = 'CYCLES'
+	scene.cycles.device = 'CPU'
+	scene.cycles.samples = 1
+	scene.render.bake.margin = 16
+	scene.render.bake.margin_type = 'EXTEND'
+	scene.render.bake.use_clear = True
+	scene.render.bake.use_selected_to_active = False
+	image = bpy.data.images.new(args.name + '_tex', width=2 * args.size, height=2 * args.size, alpha=False)
+	image.colorspace_settings.name = 'sRGB'
+	for index, slot in enumerate(obj.material_slots):
+		source_image = base_image(slot.material)
+		material = bpy.data.materials.new(f'{args.name}_Bake_{index}')
+		material.use_nodes = True
+		slot.material = material
+		nodes = material.node_tree.nodes
+		nodes.clear()
+		uv = nodes.new('ShaderNodeUVMap')
+		uv.uv_map = 'UV_alt'
+		source = nodes.new('ShaderNodeTexImage')
+		source.image = source_image
+		material.node_tree.links.new(uv.outputs['UV'], source.inputs['Vector'])
+		emission = nodes.new('ShaderNodeEmission')
+		material.node_tree.links.new(source.outputs['Color'], emission.inputs['Color'])
+		output = nodes.new('ShaderNodeOutputMaterial')
+		material.node_tree.links.new(emission.outputs['Emission'], output.inputs['Surface'])
+		target = nodes.new('ShaderNodeTexImage')
+		target.image = image
+		nodes.active = target
+	if not obj.material_slots:
+		raise ValueError('Das Modell hat kein Material.')
+	bpy.ops.object.bake(type='EMIT')
+	image.scale(args.size, args.size)
+	save_png(image, args.output / f'{args.name}_tex.png')
+	final_material(obj, image)
+	obj.data.uv_layers.remove(obj.data.uv_layers['UV_alt'])
+	obj.data.uv_layers['UV_neu'].active_render = True
+	report['texture_size'] = tuple(image.size)
+	print(f'Textur gebacken und gespeichert: {args.size} × {args.size}', flush=True)
+	return image
+
+
 def arguments():
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument('--input', type=Path, required=True)
@@ -262,6 +360,7 @@ def main():
 	obj, original = import_model(args, report)
 	clean_geometry(obj, args, report)
 	head_faces = arrange_uv(obj, args, report)
+	image = bake_texture(obj, args, report)
 	print(f'Geometrie aufbereitet in {time.monotonic() - started:.1f} s.', flush=True)
 
 
