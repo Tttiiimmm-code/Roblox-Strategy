@@ -25,7 +25,7 @@ Branch: `feature/modell-cleanup` (existiert schon, von `main`)
   - Kopfkommentar mit Beispielaufruf wie in `scripts/check.ps1`.
   - Fertig, wenn: `powershell -ExecutionPolicy Bypass -File scripts/cleanup.ps1 -In assets/raw/leon/leon_meshy.fbx` Blender startet und bei fehlender Datei mit verständlicher Meldung und Exit 1 endet.
 
-- [ ] 2. **Import, Ausrichtung, Geometrie** – Datei: `scripts/cleanup/cleanup_model.py`
+- [x] 2. **Import, Ausrichtung, Geometrie** – Datei: `scripts/cleanup/cleanup_model.py`
   - Leere Szene, Import je nach Endung (`import_scene.fbx` / `import_scene.gltf`). Alle Meshes zu einem Objekt zusammenfügen, Transformationen anwenden. Armaturen/Animationen verwerfen (Rig macht später Roblox Avatar Setup).
   - Drehen, sodass der Blick (`-Front`) nach **Blender −Y** zeigt (= Blenders Vorderansicht). Füße auf Z = 0, Mitte auf X/Y = 0. Größe **nicht** ändern (Spiel normiert über `meshTargetHeight`).
   - Punkte verschweißen (`remove_doubles`, Abstand 1e-5 – UVs liegen an den Loops und bleiben erhalten). Lose Teile mit < 8 Punkten **oder** Fläche < 1e-6 löschen; alles andere behalten.
