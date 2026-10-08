@@ -29,7 +29,7 @@ local function heading(title, subtitle)
 	label({ Position = UDim2.fromOffset(24, 16), Size = UDim2.new(1, -48, 0, 48), Text = title,
 		Font = THEME.title, TextSize = 36, TextColor3 = THEME.gold }, content)
 	label({ Position = UDim2.fromOffset(24, 70), Size = UDim2.new(1, -48, 0, 44), Text = subtitle,
-		TextSize = 20, TextWrapped = true, TextColor3 = THEME.dim }, content)
+		TextSize = 20, TextWrapped = true, TextScaled = false, TextColor3 = THEME.dim }, content)
 end
 
 local function footer(text, style, callback, right)
@@ -194,7 +194,7 @@ function RunUI.init(root, cbs)
 		Size = UDim2.fromOffset(680, 290), ZIndex = 51 }, confirmation)
 	label({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 125), ZIndex = 52,
 		Text = "Lauf wirklich aufgeben?\nVerdientes Gold, Edelsteine und Helden-Erfahrung bleiben erhalten.",
-		TextWrapped = true, TextSize = 25 }, dialog)
+		TextWrapped = true, TextScaled = false, TextSize = 25 }, dialog)
 	local cancel = button("Weiter spielen", dialog, "muted")
 	cancel.Position, cancel.Size, cancel.ZIndex = UDim2.fromOffset(24, 180), UDim2.fromOffset(292, 72), 52
 	cancel.TextSize = 22

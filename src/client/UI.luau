@@ -48,11 +48,9 @@ local function buildTop(callbacks)
 	}, pill)
 	stageLabel = label({
 		Position = UDim2.fromOffset(8, 58), Size = UDim2.new(1, -16, 0, 20),
-		TextSize = 14, TextColor3 = THEME.dim, TextStrokeTransparency = 0.6, TextWrapped = false,
+		TextSize = 14, TextColor3 = THEME.dim, TextStrokeTransparency = 0.6, TextScaled = false,
 	}, pill)
 	UIKit.fitText(stageLabel, 9)
-	-- TextScaled aktiviert beim Setzen den Umbruch wieder.
-	stageLabel.TextWrapped = false
 
 	-- Kontext-Hinweis oben links
 	local hints = make("Frame", {
@@ -162,7 +160,7 @@ local function buildInfo()
 		info.stats[stat] = label({ LayoutOrder = i, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left }, grid)
 	end
 	info.weapon = label({
-		Position = UDim2.fromOffset(x, 146), Size = UDim2.new(1, w, 0, 44), TextSize = 13, TextWrapped = true,
+		Position = UDim2.fromOffset(x, 146), Size = UDim2.new(1, w, 0, 44), TextSize = 13, TextWrapped = true, TextScaled = false,
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, f)
 end
@@ -411,7 +409,7 @@ local function buildLoading(playerGui)
 	}, loading.content)
 	loading.title = label({
 		Position = UDim2.fromOffset(24, 32), Size = UDim2.new(1, -48, 0, 76),
-		Font = THEME.title, TextSize = 42, TextWrapped = true,
+		Font = THEME.title, TextSize = 42, TextWrapped = true, TextScaled = false,
 	}, card)
 	loading.subtitle = label({
 		Position = UDim2.fromOffset(24, 115), Size = UDim2.new(1, -48, 0, 36),

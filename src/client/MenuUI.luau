@@ -192,7 +192,7 @@ local function buildLobby(root)
 		MenuUI.closeLobby()
 	end)
 	lobby.saveWarning = label({
-		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 32), TextSize = 13, TextColor3 = THEME.warn, TextWrapped = true,
+		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 32), TextSize = 13, TextColor3 = THEME.warn, TextWrapped = true, TextScaled = false,
 		TextXAlignment = Enum.TextXAlignment.Left, Visible = false,
 		Text = "⚠ Speichern nicht verfügbar – Fortschritt gilt nur für diese Sitzung (Studio: Game Settings → Security → API-Zugriff aktivieren).",
 	}, f)
@@ -273,7 +273,6 @@ local function buildLobby(root)
 	lobby.start.Position = UDim2.fromScale(0, 1)
 	lobby.start.Size = UDim2.new(1, 0, 0, 56)
 	lobby.start.TextSize = 22
-	lobby.start.TextWrapped = true
 	lobby.start.Activated:Connect(function()
 		if lobby.start:GetAttribute("Style") ~= "disabled" then
 			callbacks.onStart(Stages.List[selectedIndex].id, selectedDiff)

@@ -79,8 +79,17 @@ function UIKit.padding(parent, px)
 end
 
 -- Feste Textfelder passen sich an; nachträgliche TextSize-Werte bleiben die Obergrenze.
-function UIKit.fitText(text, minimum)
+function UIKit.fitText(text, minimum, wrap)
 	text.TextScaled = true
+	local function updateWrapping()
+		if text.TextScaled and text.TextWrapped ~= (wrap == true) then
+			text.TextWrapped = wrap == true
+		end
+	end
+	-- TextScaled und spätere Zuweisungen dürfen Kurztexte nicht umbrechen.
+	text:GetPropertyChangedSignal("TextScaled"):Connect(updateWrapping)
+	text:GetPropertyChangedSignal("TextWrapped"):Connect(updateWrapping)
+	updateWrapping()
 	local constraint = text:FindFirstChildOfClass("UITextSizeConstraint") or make("UITextSizeConstraint", {}, text)
 	local function update()
 		constraint.MinTextSize = math.min(minimum or 12, text.TextSize)
@@ -92,13 +101,15 @@ function UIKit.fitText(text, minimum)
 end
 
 function UIKit.label(props, parent)
+	local wrap = props.wrap == true
+	props.wrap = nil
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or THEME.text
 	props.Font = props.Font or THEME.body
 	props.TextSize = props.TextSize or 16
 	props.RichText = true
 	local text = make("TextLabel", props, parent)
-	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text) end
+	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text, nil, wrap) end
 	return text
 end
 
@@ -148,14 +159,13 @@ function UIKit.setButtonStyle(b, style)
 	b.TextTransparency = style == "disabled" and 0.55 or 0
 end
 
-function UIKit.button(text, parent, style, order)
+function UIKit.button(text, parent, style, order, wrap)
 	local b = make("TextButton", {
 		Text = text, Size = UDim2.new(1, 0, 0, 40), AutoButtonColor = false,
 		TextColor3 = THEME.text, Font = THEME.bold, TextSize = 18,
 		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true,
 	}, parent)
-	b.TextWrapped = true
-	UIKit.fitText(b)
+	UIKit.fitText(b, nil, wrap)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
 	UIKit.corner(b, 6)
 	local s = UIKit.stroke(b, THEME.goldDark, 1.5)

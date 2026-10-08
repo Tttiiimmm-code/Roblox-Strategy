@@ -9,7 +9,7 @@ Branch: `feature/level-optik` (weiter)
 
 ## Schritte
 
-- [ ] 1. **Kurze Texte einzeilig** – `src/client/UIKit.luau` (`fitText`/`label`/Buttons): Bei Fit-Texten nach `TextScaled = true` immer `TextWrapped = false` erzwingen (auch wenn später gesetzt), außer der Aufrufer verlangt ausdrücklich Umbruch (z. B. Option `wrap = true` bzw. `flowLabel`). Alle Stellen prüfen, die bisher bewusst `TextWrapped = true` mit festem Kasten nutzen (Waffenzeile im Infofenster, Beschreibungen) – dort entweder `flowLabel` oder Umbruch ohne TextScaled. Infofenster-Raster: jede Zelle einzeilig „Str 2“, „Mag 8“ …; nichts überlappt.
+- [x] 1. **Kurze Texte einzeilig** – `src/client/UIKit.luau` (`fitText`/`label`/Buttons): Bei Fit-Texten nach `TextScaled = true` immer `TextWrapped = false` erzwingen (auch wenn später gesetzt), außer der Aufrufer verlangt ausdrücklich Umbruch (z. B. Option `wrap = true` bzw. `flowLabel`). Alle Stellen prüfen, die bisher bewusst `TextWrapped = true` mit festem Kasten nutzen (Waffenzeile im Infofenster, Beschreibungen) – dort entweder `flowLabel` oder Umbruch ohne TextScaled. Infofenster-Raster: jede Zelle einzeilig „Str 2“, „Mag 8“ …; nichts überlappt.
 
 - [ ] 2. **Oben nicht abschneiden – deterministischer Aufbau** – `src/client/UIKit.luau` (`createRoot`), `src/client/UI.luau`, `src/client/BattleScene.luau`, Ladebildschirm:
   - ScreenGuis: `IgnoreGuiInset = true`, `ScreenInsets = None`, `ClipToDeviceSafeArea = false` → Layoutfläche beginnt bei Bildschirmpixel 0, **nichts wird von Roblox geclippt**.
