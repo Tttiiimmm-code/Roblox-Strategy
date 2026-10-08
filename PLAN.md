@@ -41,7 +41,7 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
   - `profilePayload` (Main) liefert eine Kopie des Laufs an den Client.
   - Fertig, wenn: alte Profile ohne `run` laden unverändert; manipulierter `run` wird verworfen (geprüft, Ergebnis in Notizen).
 
-- [ ] 5. **Server-Ablauf** – `src/server/Main.server.luau` (ggf. neues Modul `src/server/RunService.luau`, wenn `Main` sonst zu groß wird)
+- [x] 5. **Server-Ablauf** – `src/server/Main.server.luau` (ggf. neues Modul `src/server/RunService.luau`, wenn `Main` sonst zu groß wird)
   - `StartRun { heroes }`: nur ohne laufenden Lauf und außerhalb eines Kampfes; genau `START_TEAM` eigene, verschiedene Helden (Leon frei wählbar, keine Pflicht). Seed serverseitig, `depth = 1`, HP = volle Max-KP des Helden (inkl. Verschmelzungs-KP wie `spawnHero`), Optionen erzeugen, speichern.
   - `ChooseLevel { index }`: gültige Option → `current` setzen und speichern (**Wahl ist ab jetzt fest**), Level per `LevelGen.generate` bauen, lebende Lauf-Helden mit ihren gespeicherten HP automatisch auf die Startfelder stellen (kein Prep-Bildschirm), Phase `Player`.
   - `ResumeLevel`: Lauf mit gesetztem `current` → dasselbe Level von vorne (gleicher Seed, HP-Stand vor dem Level).
@@ -85,5 +85,6 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist – **Designfragen nicht selbst entscheiden**, der Nutzer will gefragt werden)
 
 ## Notizen (Codex)
+- Schritt 5: Befehlsgrenzen statisch nachvollzogen: Start nur in Lobby, exakte eigene Teams ohne Doppelungen, endliche Optionsindizes, feste Wahl, Resume nur außerhalb aktiver Kämpfe; StartStage/Retry/Recruit und Undo während des Laufs gesperrt. Aufgeben wartet laufende Aktionen ab; Besitzerprüfung bleibt aktiv. RunService mit echten Shared-Modulen geprüft (Start/Fehleingaben, Verschmelzungs-KP, Wiederaufnahme, Heilung/Tote, fünf Siege, Niederlage/Aufgeben) – OK. Laufwahl/Abschluss speichern geordnet und vor dem nächsten Übergang; Speicherung bleibt bei fehlendem Studio-API-Zugriff wie bisher nur im Speicher. Review durch Claude und Studio-Tests stehen aus.
 - Schritt 3: 15.000 Level- und 5.000 Optionsprüfungen grün; Rückfallquote 0 %. Teamgrößen 1–6 und erzwungener Rückfall geprüft.
 - Schritt 4: Echter ProfileStore.load mit DataStore-Stubs geprüft: altes Profil ohne Lauf, gültiger und gewählter Lauf sowie 16 defekte/manipulierte Stände (Seed, Tiefe, Gebiet, Team/Besitz, KP, Optionen/Belohnung, Index einschließlich NaN, Ertrag) – OK; ungültige Läufe werden verworfen.

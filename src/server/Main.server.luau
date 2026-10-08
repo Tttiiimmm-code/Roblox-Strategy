@@ -10,6 +10,8 @@ local Grid = require(Shared.Grid)
 local Combat = require(Shared.Combat)
 local Stages = require(Shared.Stages)
 local Recruit = require(Shared.Recruit)
+local RunConfig = require(Shared.RunConfig)
+local RunService = require(script.Parent.RunService)
 
 local BoardBuilder = require(script.Parent.BoardBuilder)
 local UnitVisuals = require(script.Parent.UnitVisuals)
@@ -48,6 +50,7 @@ local rng = Random.new()
 local nextUnitId = 0
 local undoStack = {}
 local enemySpeedBefore
+local pendingAbandon = {}
 
 local function lobbyState(speed)
 	return { mode = "Lobby", units = {}, phase = "Prep", turn = 1, busy = false, speed = speed or 1, undoLeft = 0, lost = 0 }
@@ -75,6 +78,8 @@ local function snapshot()
 		maxUnits = state.maxUnits,
 		ownerUserId = state.ownerUserId,
 		ownerName = state.ownerName,
+		run = state.run,
+		map = state.map,
 	}
 end
 
@@ -163,10 +168,9 @@ local function makeUnit(def, x, y, team, level, bonus)
 	return unit
 end
 
-local function setupStage(stageId, diffId)
+local function setupBattle(stage, opts)
 	enemySpeedBefore = nil
-	local stage = Stages.get(stageId)
-	local diff = Stages.getDifficulty(diffId)
+	local diff = opts.difficulty and Stages.getDifficulty(opts.difficulty)
 	clearUnits()
 	Grid.setMap(stage.map)
 	local boardStart = os.clock()
@@ -178,40 +182,48 @@ local function setupStage(stageId, diffId)
 		mode = "Battle",
 		ownerUserId = state.ownerUserId,
 		ownerName = state.ownerName,
-		stageId = stageId,
-		difficulty = diffId,
+		ownerPlayer = state.ownerPlayer,
+		stageId = opts.stageId,
+		difficulty = opts.difficulty,
+		run = opts.run,
+		map = stage.map,
 		units = {},
 		heroUnits = {}, -- heroId -> Einheit (auch gefallene), für das Zurückschreiben des Fortschritts
 		phase = "Prep",
 		turn = 1,
-		busy = false,
+		busy = true, -- Aufbau sperren, bis Gegner und Helden bereit sind
 		speed = state.speed,
 		battleScenes = state.battleScenes,
-		undoLeft = diff.undo,
+		undoLeft = diff and diff.undo or 0,
 		lost = 0,
-		turnGoal = Stages.turnGoal(stage, diff),
-		maxUnits = Stages.unitLimit(stage, diff),
+		turnGoal = diff and Stages.turnGoal(stage, diff) or nil,
+		maxUnits = diff and Stages.unitLimit(stage, diff) or #stage.slots,
 	}
 
 	local unitsStart = os.clock()
 	local enemies = table.clone(stage.enemies)
-	if diff.extraEnemies then
+	if diff and diff.extraEnemies then
 		for _, e in stage.hardEnemies do
 			table.insert(enemies, e)
 		end
 	end
 	for _, e in enemies do
-		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level, diff.enemyBonus)
+		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level, diff and diff.enemyBonus)
 		state.units[unit.id] = unit
 		UnitVisuals.create(unit)
 	end
-	print(("Missionsaufbau %s: Brett %.0f ms, Figuren %.0f ms"):format(stageId, boardDuration * 1000, (os.clock() - unitsStart) * 1000))
+	print(("Missionsaufbau %s: Brett %.0f ms, Figuren %.0f ms"):format(opts.stageId or "Lauf", boardDuration * 1000, (os.clock() - unitsStart) * 1000))
 
+end
+
+local function setupStage(stageId, diffId)
+	setupBattle(Stages.get(stageId), { stageId = stageId, difficulty = diffId })
+	state.busy = false
 	broadcast()
 end
 
 -- Held aus dem Profil auf ein Startfeld stellen (gespeicherte Werte, Level, Verschmelzungen)
-local function spawnHero(heroId, entry, x, y)
+local function spawnHero(heroId, entry, x, y, hp)
 	local def = UnitData.Heroes[heroId]
 	local unitDef = {
 		name = def.name,
@@ -226,7 +238,7 @@ local function spawnHero(heroId, entry, x, y)
 	unit.xp = entry.xp or 0
 	unit.mergeHp = (entry.merges or 0) * Recruit.MERGE_HP
 	unit.maxHp += unit.mergeHp
-	unit.hp = unit.maxHp
+	unit.hp = hp and math.clamp(hp, 1, unit.maxHp) or unit.maxHp
 	state.units[unit.id] = unit
 	state.heroUnits[heroId] = unit
 	UnitVisuals.create(unit)
@@ -248,8 +260,46 @@ local function writeBackHeroes(profile)
 	end
 end
 
+local function beginRunLevel(player, profile)
+	local run = profile.run
+	local stage, living = RunService.stage(run)
+	local option = run.options[run.current]
+	state.ownerUserId = player.UserId
+	state.ownerName = player.DisplayName
+	state.ownerPlayer = player
+	state.battleScenes = profile.settings.battleScenes
+	setupBattle(stage, { run = {
+		depth = run.depth, region = run.region, themeId = option.themeId,
+		totalLevels = RunConfig.totalLevels(), seed = option.seed,
+	} })
+	for i, id in ipairs(living) do
+		local slot = stage.slots[i]
+		spawnHero(id, profile.heroes[id], slot.x, slot.y, run.team[id].hp)
+	end
+	state.phase = "Player"
+	state.busy = false
+	broadcast()
+end
+
+local function finishRunBattle()
+	local player = state.ownerPlayer
+	local profile = player and ProfileStore.get(player)
+	if not profile or not profile.run then return end
+	writeBackHeroes(profile)
+	state.resultInfo = RunService.finish(profile, state.heroUnits, state.result == "Victory")
+	local wasBusy = state.busy
+	state.busy = true
+	ProfileStore.save(player, true)
+	state.busy = wasBusy
+	sendProfile(player)
+end
+
 -- Ergebnis: Sterne zählen, Gold + Edelsteine für neue Sterne vergeben, speichern
 local function finishBattle()
+	if state.run then
+		finishRunBattle()
+		return
+	end
 	local stage = Stages.get(state.stageId)
 	local diff = Stages.getDifficulty(state.difficulty)
 	local victory = state.result == "Victory"
@@ -298,16 +348,17 @@ local function checkResult()
 	if state.result then
 		return true
 	end
-	local enemies, lordAlive = 0, false
+	local enemies, players, lordAlive = 0, 0, false
 	for _, u in state.units do
 		if u.team == "Enemy" then
 			enemies += 1
 		end
-		if u.isLord then
+		if u.team == "Player" then players += 1 end
+		if u.team == "Player" and u.isLord then
 			lordAlive = true
 		end
 	end
-	if not lordAlive then
+	if (state.run and players == 0) or (not state.run and not lordAlive) then
 		state.result = "Defeat"
 	elseif enemies == 0 then
 		state.result = "Victory"
@@ -535,9 +586,41 @@ local function afterAct()
 	runEnemyPhase()
 end
 
+local function abandonRun(player)
+	local profile = ProfileStore.get(player)
+	if not profile or not profile.run or pendingAbandon[player]
+		or (state.mode == "Battle" and state.ownerUserId ~= player.UserId) then return false end
+	pendingAbandon[player] = true
+	task.spawn(function()
+		while state.busy do task.wait(0.2) end
+		if ProfileStore.get(player) == profile and profile.run then
+			if state.mode == "Battle" and state.ownerUserId == player.UserId and not state.result then
+				writeBackHeroes(profile)
+			end
+			local info = RunService.abandon(profile)
+			clearUnits()
+			enemySpeedBefore = nil
+			state = lobbyState(state.speed)
+			state.result = "Abandoned"
+			state.resultInfo = info
+			state.ownerUserId = player.UserId
+			state.ownerName = player.DisplayName
+			state.busy = true
+			ProfileStore.save(player, true)
+			state.busy = false
+			sendProfile(player)
+			broadcast()
+		end
+		pendingAbandon[player] = nil
+	end)
+	return true
+end
+
 -- Befehle ------------------------------------------------------------------
 local function handleCommand(player, cmd)
 	local t = cmd.type
+	if t == "AbandonRun" then return abandonRun(player) end
+	if pendingAbandon[player] then return false end
 	if t == "SetBattleScenes" then
 		if state.mode == "Battle" and state.ownerUserId ~= player.UserId then return false end
 		local profile = ProfileStore.get(player)
@@ -574,11 +657,41 @@ local function handleCommand(player, cmd)
 		return false
 	end
 
-	if t == "StartStage" then
+	local profile = ProfileStore.get(player)
+	local free = state.mode == "Lobby" or (state.result and state.ownerUserId == player.UserId)
+	if t == "StartRun" then
+		if state.mode ~= "Lobby" or not profile or not RunService.start(profile, cmd.heroes, rng:NextInteger(1, 2147483646)) then return false end
+		state = lobbyState(state.speed)
+		state.ownerUserId = player.UserId
+		state.ownerPlayer = player
+		state.busy = true
+		ProfileStore.save(player, true)
+		state.busy = false
+		sendProfile(player)
+		broadcast()
+		return true
+	elseif t == "ChooseLevel" then
+		if not free or not profile or not RunService.choose(profile.run, cmd.index) then return false end
+		state.ownerUserId = player.UserId
+		state.ownerPlayer = player
+		state.busy = true
+		ProfileStore.save(player, true) -- Wahl festhalten, bevor das Brett entsteht
+		sendProfile(player)
+		beginRunLevel(player, profile)
+		return true
+	elseif t == "ResumeLevel" then
+		if not free or not profile or not profile.run or not profile.run.current then return false end
+		state.busy = true
+		beginRunLevel(player, profile)
+		return true
+	elseif t == "StartStage" then
+		if profile and profile.run then return false end
 		local index = Stages.indexOf(cmd.stageId)
 		local profile = ProfileStore.get(player)
 		local free = state.mode == "Lobby" or (state.result and state.ownerUserId == player.UserId)
 		if free and index and profile and Stages.isUnlocked(profile, index, cmd.difficulty) then
+			state.ownerPlayer = player
+			state.busy = true
 			setupStage(cmd.stageId, cmd.difficulty)
 			state.ownerUserId = player.UserId -- nur dieser Spieler steuert den Kampf
 			state.ownerName = player.DisplayName
@@ -587,12 +700,14 @@ local function handleCommand(player, cmd)
 			return true
 		end
 	elseif t == "Retry" then
-		if state.result then
+		if not state.run and not (profile and profile.run) and state.result and state.stageId then
+			state.busy = true
 			setupStage(state.stageId, state.difficulty)
 			return true
 		end
 	elseif t == "ToLobby" then
-		if state.mode == "Battle" then
+		if state.run and not state.result then return false end
+		if state.mode == "Battle" or state.result then
 			clearUnits()
 			enemySpeedBefore = nil
 			state = lobbyState(state.speed)
@@ -604,7 +719,7 @@ local function handleCommand(player, cmd)
 		local banner = Recruit.getBanner(cmd.bannerId)
 		local count = cmd.count
 		local inOwnBattle = state.mode == "Battle" and state.ownerUserId == player.UserId
-		if inOwnBattle or not profile or not banner or (count ~= 1 and count ~= 10) then
+		if inOwnBattle or not profile or profile.run or not banner or (count ~= 1 and count ~= 10) then
 			return false
 		end
 		local cost = count == 10 and banner.costMulti or banner.costSingle
@@ -656,7 +771,7 @@ local function handleCommand(player, cmd)
 		end
 	elseif state.mode == "Battle" and state.phase == "Player" and not state.result then
 		if t == "Undo" then
-			if state.undoLeft > 0 and #undoStack > 0 then
+			if not state.run and state.undoLeft > 0 and #undoStack > 0 then
 				undo()
 				broadcast()
 				return true
@@ -707,17 +822,13 @@ for _, player in Players:GetPlayers() do
 	task.spawn(onPlayerAdded, player)
 end
 Players.PlayerRemoving:Connect(function(player)
-	-- Kampf-Besitzer geht: Kampf beenden, damit andere wieder Missionen starten können
-	if state.mode == "Battle" and state.ownerUserId == player.UserId then
-		task.spawn(function()
-			while state.busy do
-				task.wait(0.2)
-			end
-			clearUnits()
-			enemySpeedBefore = nil
-			state = lobbyState(state.speed)
-			broadcast()
-		end)
+	-- Erst die laufende Aktion abwarten; Lauf-KP bleiben beim Stand vor dem Level.
+	if state.ownerUserId == player.UserId then
+		while state.busy or pendingAbandon[player] do task.wait(0.2) end
+		clearUnits()
+		enemySpeedBefore = nil
+		state = lobbyState(state.speed)
+		broadcast()
 	end
 	ProfileStore.release(player)
 end)

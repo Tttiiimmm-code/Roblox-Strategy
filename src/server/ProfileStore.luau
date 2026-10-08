@@ -20,6 +20,7 @@ pcall(function()
 end)
 
 local profiles = {}
+local writing = {}
 
 local function key(player)
 	return "p_" .. player.UserId
@@ -142,6 +143,10 @@ function ProfileStore.get(player)
 end
 
 local function write(player, profile)
+	-- Laufwahl und Abschluss müssen in derselben Reihenfolge im DataStore ankommen.
+	while writing[player] do task.wait() end
+	if profiles[player] ~= profile then return end
+	writing[player] = true
 	local ok, err = pcall(function()
 		store:SetAsync(key(player), {
 			gold = profile.gold,
@@ -153,16 +158,17 @@ local function write(player, profile)
 			run = profile.run,
 		})
 	end)
+	writing[player] = nil
 	if not ok then
 		warn("[ProfileStore] Speichern fehlgeschlagen:", err)
 	end
 end
 
--- Speichert im Hintergrund (blockiert den Aufrufer nicht)
-function ProfileStore.save(player)
+-- Lauf-Übergänge warten auf das Speichern; sonst im Hintergrund.
+function ProfileStore.save(player, waitForSave)
 	local profile = profiles[player]
 	if profile and store and profile.saveOk then
-		task.spawn(write, player, profile)
+		if waitForSave then write(player, profile) else task.spawn(write, player, profile) end
 	end
 end
 
