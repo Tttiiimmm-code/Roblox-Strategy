@@ -21,7 +21,7 @@ Branch: `feature/lauf-phase2` (weiter)
 
 - [x] 4. **Level-Up wegtippen** – Level-Up-Fenster schließt sofort bei Tippen/Klick irgendwo auf das Fenster oder den Bildschirm (und Leertaste/Enter am PC); automatisches Schließen nach Zeit bleibt als Rückfall. Wartet der Kampfablauf auf das Ende des Fensters, muss er beim Wegtippen sofort weiterlaufen; der Tipp darf keine Spielaktion auslösen (kein Feld/keine Figur anwählen).
 
-- [ ] 5. Abschluss: `scripts/check.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` = OK, Rojo-Build. Devlog-Nachtrag zu #30 (oder #31). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
+- [x] 5. Abschluss: `scripts/check.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` = OK, Rojo-Build. Devlog-Nachtrag zu #30 (oder #31). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Tutorial: Hinweise größer und gut lesbar; Zielfeld komplett gelb
@@ -45,3 +45,5 @@ Branch: `feature/lauf-phase2` (weiter)
 - Die Schritt-3-Checkbox/Notiz wird mit Schritt 4 nachgetragen; UTF-8-Übertragung der neuen deutschen Kommentare und Notizen korrigiert.
 
 - Lokale Prüfung: 180 bestehende UI-Anschlüsse, 99 Feinschliff-Prüfungen und 14 bestehende Eingabeprüfungen mit aktuellen Main.client-Callbacks bestanden. Prüfhilfe unter ignoriertem tools/; prüft sichere Flächen/HUD-Abstände/Timer/Schließgesten, ersetzt keine Roblox-Schriftmessung, den Eingaberouter oder Studio-/Handytests.
+
+- Abschluss: Pflichtcheck OK (35 Dateien), Tutorialprüfung OK (168), Generatorprüfung OK (90.000 Level- und 5.000 Optionsprüfungen, 0 Rückfälle, erzwungener Rückfall OK), Rojo-Build erfolgreich. Devlog #31 ergänzt, nächste Schritte aktualisiert. Manuelle Tests und unabhängiger Claude-Review bleiben offen. Abschluss-Commit und Push auf feature/lauf-phase2; danach Handoff-Signal fertig.
