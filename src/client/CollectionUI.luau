@@ -53,9 +53,10 @@ end
 
 -- Rekrutierung --------------------------------------------------------------------------
 local function buildRecruit(frame)
-	local art = make("Frame", {
+	local art = UIKit.textList({
 		Size = UDim2.new(1, -320, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
 	}, frame)
+	art.BackgroundTransparency = 0
 	corner(art, 8)
 	UIKit.stroke(art, THEME.gold, 2)
 	make("UIGradient", {
@@ -63,20 +64,20 @@ local function buildRecruit(frame)
 	}, art)
 	padding(art, 16)
 	label({
-		Size = UDim2.new(1, 0, 0, 44), Font = THEME.title, TextSize = 44, TextColor3 = THEME.gold,
+		Size = UDim2.new(1, -12, 0, 44), Font = THEME.title, TextSize = 44, TextColor3 = THEME.gold, LayoutOrder = 1,
 		Text = BANNER.name, TextXAlignment = Enum.TextXAlignment.Left,
 	}, art)
-	label({
-		Position = UDim2.fromOffset(0, 46), Size = UDim2.new(1, 0, 0, 20), TextSize = 15, TextColor3 = THEME.dim,
+	UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 15, TextColor3 = THEME.dim, LayoutOrder = 2,
 		Text = BANNER.description, TextXAlignment = Enum.TextXAlignment.Left,
 	}, art)
-	label({
-		Position = UDim2.fromOffset(0, 74), Size = UDim2.new(1, 0, 0, 18), Font = THEME.bold, TextSize = 14,
+	UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), Font = THEME.bold, TextSize = 14, LayoutOrder = 3,
 		Text = ("<font color='%s'>Im Fokus</font>  (gleiche Chance wie alle Helden ihrer Seltenheit)"):format(UIKit.GOLD_HEX),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, art)
 	local row = make("Frame", {
-		Position = UDim2.fromOffset(0, 100), Size = UDim2.new(1, 0, 1, -100), BackgroundTransparency = 1,
+		Size = UDim2.new(1, -12, 0, 320), BackgroundTransparency = 1, LayoutOrder = 4,
 	}, art)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 16), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -98,15 +99,16 @@ local function buildRecruit(frame)
 		table.insert(rateLines, ("%s  %s  <b>%s</b>"):format(UIKit.rarityStars(rarity), UnitData.Rarities[rarity].name,
 			pct(Recruit.RATES[rarity])))
 	end
-	label({
-		Position = UDim2.fromOffset(0, 38), Size = UDim2.new(1, 0, 0, 130), TextSize = 15,
+	local rateDetails = UIKit.textList({ Position = UDim2.fromOffset(0, 38), Size = UDim2.new(1, 0, 1, -216) }, side)
+	UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 15, LayoutOrder = 1,
 		Text = table.concat(rateLines, "\n"), TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Top,
-	}, side)
-	recruit.pity = label({
-		Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 0, 44), TextSize = 14, TextColor3 = THEME.dim,
+	}, rateDetails)
+	recruit.pity = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 14, TextColor3 = THEME.dim, LayoutOrder = 2,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextWrapped = true,
-	}, side)
+	}, rateDetails)
 
 	local buttons = make("Frame", {
 		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 170),
@@ -154,7 +156,7 @@ local function buildOdds(root)
 		Text = "Wahrscheinlichkeiten", ZIndex = 22,
 	}, box)
 	local list = make("ScrollingFrame", {
-		Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 1, -150), BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 1, -94), BackgroundTransparency = 1,
 		BorderSizePixel = 0, ScrollBarThickness = 6, AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		CanvasSize = UDim2.new(), ZIndex = 22,
 	}, box)
@@ -162,7 +164,7 @@ local function buildOdds(root)
 	local order = 0
 	local function row(text, size, bold)
 		order += 1
-		label({
+		UIKit.flowLabel({
 			Size = UDim2.new(1, -10, 0, size), Text = text, TextSize = bold and 17 or 15, LayoutOrder = order,
 			Font = bold and THEME.bold or THEME.body, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 22,
 		}, list)
@@ -176,13 +178,13 @@ local function buildOdds(root)
 				UnitData.Classes[def.class].name, pct(h.percent)), 20, false)
 		end
 	end
-	label({
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -52), Size = UDim2.new(1, 0, 0, 52),
+	UIKit.flowLabel({
+		Size = UDim2.new(1, -10, 0, 0), LayoutOrder = order + 1,
 		TextSize = 13, TextColor3 = THEME.dim, TextWrapped = true, ZIndex = 22,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
 		Text = ("Garantie: Spätestens der %d. Ruf ohne ★4 oder besser bringt ★4 oder besser, spätestens der %d. Ruf ohne ★5 bringt ★5. Doppelte Helden werden verschmolzen (+%d KP, max. %d×)."):format(
 			Recruit.PITY_4, Recruit.PITY_5, Recruit.MERGE_HP, Recruit.MAX_MERGES),
-	}, box)
+	}, list)
 	local close = button("Schließen", box, "muted")
 	close.AnchorPoint = Vector2.new(0, 1)
 	close.Position = UDim2.fromScale(0, 1)
@@ -211,8 +213,10 @@ local function buildResults(root)
 		Size = UDim2.new(1, 0, 0, 40), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold,
 		Text = "Neue Verbündete", ZIndex = 32,
 	}, box)
-	results.grid = make("Frame", {
+	results.grid = make("ScrollingFrame", {
 		Position = UDim2.fromOffset(0, 50), Size = UDim2.new(1, 0, 1, -110), BackgroundTransparency = 1, ZIndex = 32,
+		BorderSizePixel = 0, ScrollBarThickness = 6, ScrollingDirection = Enum.ScrollingDirection.Y,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
 	}, box)
 	make("UIGridLayout", {
 		CellSize = UDim2.fromOffset(170, 210), CellPadding = UDim2.fromOffset(10, 10),
@@ -281,18 +285,20 @@ local function buildBarracks(frame)
 	barracks.name = label({
 		Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 0, 30), Font = THEME.title, TextSize = 28,
 	}, d)
-	barracks.sub = label({
-		Position = UDim2.fromOffset(0, 202), Size = UDim2.new(1, 0, 0, 36), TextSize = 14, TextColor3 = THEME.dim,
-	}, d)
-	barracks.exp = UIKit.bar(d, UDim2.fromOffset(0, 242), UDim2.new(1, 0, 0, 14), THEME.gold)
-	barracks.stats = label({
-		Position = UDim2.fromOffset(0, 264), Size = UDim2.new(1, 0, 0, 100), TextSize = 15, TextWrapped = true,
+	local heroDetails = UIKit.textList({ Position = UDim2.fromOffset(0, 206), Size = UDim2.new(1, 0, 1, -206) }, d)
+	barracks.sub = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 14, TextColor3 = THEME.dim, LayoutOrder = 1,
+	}, heroDetails)
+	barracks.exp = UIKit.bar(heroDetails, UDim2.new(), UDim2.new(1, -12, 0, 18), THEME.gold)
+	barracks.exp.bg.LayoutOrder = 2
+	barracks.stats = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 15, LayoutOrder = 3,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, d)
-	barracks.extra = label({
-		Position = UDim2.fromOffset(0, 368), Size = UDim2.new(1, 0, 1, -368), TextSize = 13, TextColor3 = THEME.dim,
+	}, heroDetails)
+	barracks.extra = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 13, TextColor3 = THEME.dim, LayoutOrder = 4,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, d)
+	}, heroDetails)
 end
 
 local function showHeroDetail(heroId)

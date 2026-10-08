@@ -77,13 +77,49 @@ function UIKit.padding(parent, px)
 	}, parent)
 end
 
+-- Feste Textfelder passen sich an; nachträgliche TextSize-Werte bleiben die Obergrenze.
+function UIKit.fitText(text, minimum)
+	text.TextScaled = true
+	local constraint = text:FindFirstChildOfClass("UITextSizeConstraint") or make("UITextSizeConstraint", {}, text)
+	local function update()
+		constraint.MinTextSize = math.min(minimum or 12, text.TextSize)
+		constraint.MaxTextSize = text.TextSize
+	end
+	text:GetPropertyChangedSignal("TextSize"):Connect(update)
+	update()
+	return text
+end
+
 function UIKit.label(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or THEME.text
 	props.Font = props.Font or THEME.body
 	props.TextSize = props.TextSize or 16
 	props.RichText = true
-	return make("TextLabel", props, parent)
+	local text = make("TextLabel", props, parent)
+	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text) end
+	return text
+end
+
+-- Fließtext behält seine Schriftgröße und erweitert den Kasten nach unten.
+function UIKit.flowLabel(props, parent)
+	props.TextWrapped = true
+	props.TextScaled = false
+	props.AutomaticSize = Enum.AutomaticSize.Y
+	props.TextYAlignment = Enum.TextYAlignment.Top
+	return UIKit.label(props, parent)
+end
+
+function UIKit.textList(props, parent, gap)
+	props.BackgroundTransparency = 1
+	props.BorderSizePixel = 0
+	props.ScrollBarThickness = 6
+	props.ScrollingDirection = Enum.ScrollingDirection.Y
+	props.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	props.CanvasSize = UDim2.new()
+	local list = make("ScrollingFrame", props, parent)
+	make("UIListLayout", { Padding = UDim.new(0, gap or 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	return list
 end
 
 -- Blaues Fenster mit Verlauf und Goldrand
@@ -117,6 +153,9 @@ function UIKit.button(text, parent, style, order)
 		TextColor3 = THEME.text, Font = THEME.bold, TextSize = 18,
 		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true,
 	}, parent)
+	b.TextWrapped = true
+	UIKit.fitText(b)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
 	UIKit.corner(b, 6)
 	local s = UIKit.stroke(b, THEME.goldDark, 1.5)
 	UIKit.setButtonStyle(b, style or "default")

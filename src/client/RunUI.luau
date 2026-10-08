@@ -177,8 +177,8 @@ local function buildResult(info, profile)
 			or (UnitData.Heroes[id].name .. ": gefallen"))
 	end
 	table.insert(lines, ("Sammlung: %d Gold · %d Edelsteine"):format(profile.gold or 0, profile.gems or 0))
-	label({ Position = UDim2.fromOffset(40, 150), Size = UDim2.new(1, -80, 1, -270), Text = table.concat(lines, "\n\n"),
-		TextSize = 26, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, content)
+	local resultDetails = UIKit.textList({ Position = UDim2.fromOffset(40, 150), Size = UDim2.new(1, -80, 1, -270) }, content)
+	UIKit.flowLabel({ Size = UDim2.new(1, -12, 0, 0), Text = table.concat(lines, "\n\n"), TextSize = 26 }, resultDetails)
 	resultButton = footer(info.ended and "Zum Thronsaal" or "Weiter", "primary", function()
 		if not lastState.busy then callbacks.onLobby() end
 	end, true)
