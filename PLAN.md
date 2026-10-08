@@ -17,7 +17,7 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
 
 ## Schritte
 
-- [ ] 1. **Konfiguration** – neue Datei `src/shared/RunConfig.luau`
+- [x] 1. **Konfiguration** – neue Datei `src/shared/RunConfig.luau`
   - Platzhalter (Kommentar „Werte WIP“): `START_TEAM = 3`, `LEVELS_PER_REGION = 5`, `REGIONS = { "greenland" }` (weitere folgen), `PARTIAL_HEAL = 0.3`, `OPTIONS_MIN = 2`, `OPTIONS_MAX = 3`, Gegnerbudget/-level je Tiefe (z. B. Anzahl 4 + Tiefe, Level 1 + Tiefe), Belohnung je Tiefe (Gold und Edelsteine steigen mit der Tiefe – **kein** Prozentabzug beim Scheitern), Mindestabstand Gegner ↔ Startfelder.
   - **Themen** (Gegnerschwerpunkt) als Daten: z. B. `axe` → `brigand`, `lance` → `soldier`/`javelin`, `bow` → `archer`; je Thema Name, Symbol (Emoji/Text, später Bild), Gegnerarten, Anteil Schwerpunkt (z. B. 0.6). Belohnungsarten in Phase 1: `gold`, `gems`.
   - Fertig, wenn: Modul lädt, keine Lauf-Zahl steht verstreut in anderer Logik.
