@@ -23,7 +23,7 @@ Config.FEEL = {
 	boardUnitScale = 1.35, turnRingRadius = 2.3, turnRingWidth = 0.3, turnRingTransparency = 0.2, turnRingPulse = 0.45, turnRingPulseRate = 3, -- Zug-Ring (blau/rot)
 	-- WIP: drei weiche Schichten, über Raster/Flecken und unter Overlays/Zug-Ring.
 	unitShadowWidth = 1.8, unitShadowHorseWidth = 1.15, unitShadowColor = Color3.fromRGB(15, 18, 24),
-	unitShadowSurfaceOffset = 0.006, unitShadowThickness = 0.001,
+	unitShadowSurfaceOffset = 0.022, unitShadowThickness = 0.003, -- über den Bodenflecken (bis 0,015), Schichten mit Abstand gegen Flackern
 	unitShadowLayers = { { size = 0.65, transparency = 0.70 }, { size = 0.82, transparency = 0.84 }, { size = 1, transparency = 0.93 } },
 	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.045, gridTransparency = 0.5,
 	gridSurfaceOffset = 0.005, gridShade = 0.3, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
