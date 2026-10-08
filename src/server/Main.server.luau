@@ -423,6 +423,15 @@ local function battle(attacker, defender)
 		if u.hp <= 0 then
 			if u.team == "Player" then
 				state.lost += 1
+				-- Im Lauf sofort festhalten: Abbrechen und Neustarten belebt Gefallene nicht wieder.
+				local owner = state.run and u.heroId and state.ownerPlayer
+				local profile = owner and ProfileStore.get(owner)
+				local member = profile and profile.run and profile.run.team[u.heroId]
+				if member then
+					member.alive = false
+					member.hp = 0
+					ProfileStore.save(owner)
+				end
 			end
 			state.units[u.id] = nil
 			UnitVisuals.remove(u.id)

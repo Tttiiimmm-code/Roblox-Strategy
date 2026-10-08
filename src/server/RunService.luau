@@ -46,7 +46,8 @@ function RunService.stage(run)
 	local option = run.options[run.current]
 	local living = {}
 	for _, id in ipairs(run.order) do if run.team[id].alive then table.insert(living, id) end end
-	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, #living), living
+	-- Immer mit voller Startfeldzahl erzeugen, damit ein Neustart nach Todesfällen dasselbe Level ergibt.
+	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, RunConfig.MAX_TEAM), living
 end
 
 local function summary(run, outcome)
@@ -71,7 +72,8 @@ function RunService.finish(profile, heroUnits, victory)
 	if victory then
 		for _, id in ipairs(run.order) do
 			local member, unit = run.team[id], heroUnits[id]
-			if member.alive then
+			-- Auch im gerade beendeten Level Gefallene (schon beim Tod als tot gespeichert) ins Ergebnis aufnehmen.
+			if member.alive or (unit and unit.hp <= 0) then
 				member.alive = unit ~= nil and unit.hp > 0
 				local before = member.alive and unit.hp or 0
 				member.hp = member.alive and math.min(unit.maxHp, before + math.ceil(unit.maxHp * RunConfig.PARTIAL_HEAL)) or 0
