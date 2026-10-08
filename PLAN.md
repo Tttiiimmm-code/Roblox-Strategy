@@ -64,6 +64,8 @@ Nutzerentscheidungen (08.10.2026): Boden stilisiert passend zu Cel; Raster dezen
 - Rohdaten in `assets/raw/`
 
 ## Offene Fragen
+- Codex (08.10.2026): Die normale Befehlsausführung scheitert bereits beim Prozessstart mit `helper_unknown_error: setup refresh had errors`; auch der Pflichtaufruf `powershell -ExecutionPolicy Bypass -File scripts/check.ps1` startet nicht. Ein freigegebener Git-Leseaufruf außerhalb der Sandbox funktioniert: Branch `feature/level-optik`, Arbeitsverzeichnis sauber. Darf die Umsetzung einschließlich Prüfungen und Rojo-Builds außerhalb der Sandbox erfolgen, oder soll zuerst die Sandbox repariert werden? Gemäß AGENTS.md gestoppt; keine Umsetzungsschritte begonnen, keine Checks bestanden.
+  - **Antwort (Nutzer, 08.10.2026):** Ja – Befehle für diesen Plan (Prüfungen, Rojo-Build, Blender, Luau-Prüfhilfen, Git) dürfen außerhalb der Sandbox laufen, **jeweils mit Freigabe des Nutzers im Terminal** (normale Freigabeabfrage nutzen, nichts dauerhaft freigeben, was nicht schon freigegeben ist). Keine destruktiven Befehle. Bitte mit Schritt 1 beginnen.
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden)
 
 ## Notizen (Codex)
