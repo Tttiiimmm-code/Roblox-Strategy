@@ -18,7 +18,7 @@ Nutzerentscheidungen (08.10.2026): Boden stilisiert passend zu Cel; Raster dezen
 
 ## Schritte
 
-- [ ] 1. **Asset-Ordner + Lader** – `default.project.json`, neuer Ordner `assets/environment/` (mit `README.md`), neues Modul `src/server/EnvironmentAssets.luau`
+- [x] 1. **Asset-Ordner + Lader** – `default.project.json`, neuer Ordner `assets/environment/` (mit `README.md`), neues Modul `src/server/EnvironmentAssets.luau`
   - `ServerStorage.EnvironmentModels` ← `assets/environment` (nur der Server baut das Brett). Ohne Dateien muss alles bauen.
   - Namensschema `<kategorie>_<nr>.rbxm` (z. B. `tree_1`, `bush_2`, `rock_1`, `fortress_1`, `bridge_1`, `deco_flower_1`). `EnvironmentAssets.variants(kategorie)` liefert alle gültigen Vorlagen (Model/BasePart), `EnvironmentAssets.place(kategorie, cframe, opts)` klont eine deterministisch gewählte Variante (Schlüssel aus Feldposition + Kartenkennung), setzt sie mit Pivot unten Mitte auf den Boden, optional Drehung (beliebig oder 90°-Schritte) und Größenstreuung ±10 %, skaliert auf eine Zielhöhe/-breite in Feldern (Werte zentral in `Config.ENVIRONMENT`).
   - **Sicherheit (Pakete aus dem Creator Store):** Beim Laden alle Skripte (`BaseScript`, `ModuleScript`), Sounds, `ClickDetector`/`ProximityPrompt` und Partikel entfernen; alle Teile `Anchored`, `CanCollide`/`CanQuery`/`CanTouch` = false (Klicks treffen das Feld). Warnung einmal je Datei.
@@ -69,4 +69,5 @@ Nutzerentscheidungen (08.10.2026): Boden stilisiert passend zu Cel; Raster dezen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden)
 
 ## Notizen (Codex)
+- Schritt 1: ServerStorage-Ladeweg und Größenkonfiguration angelegt. Lokale Luau-Stubs mit Model/MeshPart und zwölf unerwünschten Skript-/Effekt-/Interaktionsklassen: leerer Ordner, ungültige Vorlage, Bereinigung, Warnung einmal, deterministische Größe, Maximalmaße, Pivot unten Mitte und Klickdurchlass OK. Originalvorlage unverändert; Testvorlagen/Runner nur unter ignoriertem tools/. Pflichtcheck: OK, 32 Dateien, Exit 0.
 -

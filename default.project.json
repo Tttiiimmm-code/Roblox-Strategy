@@ -19,6 +19,9 @@
       "Shared": { "$path": "src/shared" },
       "CharacterModels": { "$path": "assets/characters" }
     },
+    "ServerStorage": {
+      "EnvironmentModels": { "$path": "assets/environment" }
+    },
     "ServerScriptService": {
       "Server": { "$path": "src/server" }
     },

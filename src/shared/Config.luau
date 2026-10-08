@@ -77,6 +77,31 @@ Config.FEEL = {
 }
 
 Config.TILE_SIZE = 8
+
+-- Maximalmaße in Feldern; auf dem Brett bleibt die Figurenmitte frei.
+Config.ENVIRONMENT = {
+	sizeVariation = 0.1, shadowHeight = 0.6,
+	decoChance = 0.08, bushChance = 0.25, edgeInset = 0.8,
+	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
+	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
+	categories = {
+		tree = { height = 0.55, width = 0.22, rotation = "free" },
+		bush = { height = 0.16, width = 0.2, rotation = "free" },
+		rock = { height = 0.28, width = 0.22, rotation = "quarter" },
+		fortress = { height = 0.38, width = 0.2, rotation = "quarter" },
+		bridge = { height = 0.16, width = 1, rotation = "none" },
+		ruins = { height = 0.38, width = 0.2, rotation = "quarter" },
+		deco_flower = { height = 0.08, width = 0.14, rotation = "free" },
+		deco_stone = { height = 0.08, width = 0.14, rotation = "free" },
+		deco_grass = { height = 0.12, width = 0.14, rotation = "free" },
+		deco_fence = { height = 0.12, width = 0.24, rotation = "quarter" },
+	},
+	outer = {
+		tree = { height = 2.25, width = 1.4 },
+		rock = { height = 0.75, width = 0.9 },
+		bush = { height = 0.45, width = 0.7 },
+	},
+}
 Config.TILE_THICKNESS = 1
 Config.MOVE_STEP_TIME = 0.16
 Config.STRIKE_TIME = 0.85 -- Dauer eines Schlags inkl. Animation
