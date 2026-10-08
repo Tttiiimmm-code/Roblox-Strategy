@@ -41,6 +41,7 @@ Regel: Wer den Code geschrieben hat, reviewt ihn nicht selbst.
 - **Signal an Claude (Pflicht für Codex):** Als allerletzte Aktion eines Durchgangs die Datei `.handoff/status` schreiben (Ordner ggf. anlegen, nicht committen):
   - `fertig` – alle Schritte abgehakt, Check grün, committet und gepusht (`git add/commit/push/switch` hat der Nutzer in Codex dauerhaft freigegeben).
 - **Keine Rückfragen im Terminal:** Claude sieht das Codex-Fenster nicht. Unklarheiten/Entscheidungen immer unter „Offene Fragen" in `PLAN.md` eintragen, `.handoff/status` = `frage` schreiben und stoppen. Andere Befehle, die eine Freigabe außerhalb der Sandbox bräuchten (Netzwerk, Dateien außerhalb des Projekts, destruktive Git-Befehle wie `reset`/`rebase`/Force-Push), nicht ausführen, sondern ebenfalls als Frage eintragen.
+- **Sandbox defekt (Dauerregel, Nutzer 08.10.2026):** Startet die Codex-Sandbox keine Befehle (z. B. `helper_unknown_error: setup refresh had errors`), dürfen nicht-destruktive Befehle im Projekt (Dateien lesen/schreiben, `rg`, Luau/Blender-Prüfhilfen, `scripts/*.ps1`, Rojo-Build, `git add/commit/push/switch`) außerhalb der Sandbox laufen – **jeweils mit Freigabe des Nutzers im Terminal**, nichts dauerhaft freigeben. Nicht deswegen stoppen. Destruktive Befehle und Zugriffe außerhalb des Projekts bleiben verboten.
   - `frage` – Frage unter „Offene Fragen" eingetragen, Arbeit gestoppt.
   Claude wartet auf diese Datei und startet danach automatisch Review bzw. Antwort.
 
