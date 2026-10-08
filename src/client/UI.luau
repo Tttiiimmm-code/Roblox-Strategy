@@ -515,10 +515,11 @@ function UI.setTutorialMark(mark)
 	cancelButton.Visible = mark == nil
 	waitButton.Visible = mark == nil or mark == "wait"
 	attackButton.Visible = mark == nil or mark == "attack"
-	hintLabel.TextSize = mark and 22 or 15
 end
 
-function UI.setHint(text)
+function UI.setHint(text, tutorial)
+	hintLabel.TextSize = tutorial and Config.TUTORIAL.hintTextSize or 15
+	hintLabel.Size = UDim2.new(1, 0, 0, tutorial and Config.TUTORIAL.hintMinHeight or 66)
 	hintLabel.Text = text
 end
 

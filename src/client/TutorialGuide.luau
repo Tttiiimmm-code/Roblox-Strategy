@@ -67,7 +67,7 @@ function TutorialGuide.render()
 	if not TutorialGuide.active() then ui.setTutorialMark(nil); clearMarker(); return end
 	local step = Tutorial.step(state.tutorial)
 	ui.setTutorialMark(step.mark)
-	ui.setHint(("<b>Tutorial %d</b> · %s"):format(state.tutorial.mission, step.text))
+	ui.setHint(("<b>Tutorial %d</b> · %s"):format(state.tutorial.mission, step.text), true)
 	local unit, pos
 	if step.mark == "hero" then unit = Tutorial.hero(state, step.hero) end
 	if step.mark == "target" then unit = Tutorial.target(state, step.target) end

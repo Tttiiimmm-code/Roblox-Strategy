@@ -13,7 +13,7 @@ Branch: `feature/lauf-phase2` (weiter)
 
 ## Schritte
 
-- [ ] 1. **Tutorial-Texte größer** – Tutorial-Hinweis deutlich größer (Richtwert Schrift ~1,4× der bisherigen Hinweisgröße, Kasten wächst mit, Umbruch erlaubt), gut lesbar auf Handy und PC; kein Überdecken der Spielfläche über das Nötige hinaus (Position so, dass Ziel-Feld/Figur sichtbar bleibt). Werte in Config (WIP).
+- [x] 1. **Tutorial-Texte größer** – Tutorial-Hinweis deutlich größer (Richtwert Schrift ~1,4× der bisherigen Hinweisgröße, Kasten wächst mit, Umbruch erlaubt), gut lesbar auf Handy und PC; kein Überdecken der Spielfläche über das Nötige hinaus (Position so, dass Ziel-Feld/Figur sichtbar bleibt). Werte in Config (WIP).
 
 - [ ] 2. **Ziel-Felder komplett gelb** – Bewegungsziel im Tutorial als **vollflächig gelb gefülltes Feld** (deckend bzw. kaum transparent, kräftiges Gelb, leichtes Pulsieren erlaubt) statt nur Rahmen/Pfeil; liegt über Bewegungs-Overlays, unter Figuren; Klicks treffen weiterhin das Feld (`CanQuery = false`, `CanCollide = false`). Ziel-Figuren/Gegner weiterhin klar markiert (bestehende Markierung oder gelber Ring). Farbe/Transparenz in Config.
 
@@ -35,4 +35,4 @@ Branch: `feature/lauf-phase2` (weiter)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden.)
 
 ## Notizen (Codex)
--
+- Schritt 1: Tutorial-Hinweise mit 31 Designpunkten (vorher gef?hrte Schritte 22), Mindesth?he 92 und automatischem Umbruch/H?henwachstum. Gilt auch f?r freie Tutorial-Schritte; links oben bleibt die bisherige schmale Spalte erhalten. Darstellung in Studio/auf Handy noch ungetestet.
