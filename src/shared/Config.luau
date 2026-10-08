@@ -113,54 +113,55 @@ Config.MAX_LEVEL = 20
 -- Karten liegen in Stages.luau. Zeichen: .  Ebene  F Wald  M Berg  W Wasser  H Festung  B Brücke
 -- cost: Bewegungskosten je Bewegungstyp (fehlt = unpassierbar)
 -- avoid: Ausweich-Bonus, def: Verteidigungs-Bonus, heal: Heilung pro Runde (Anteil der Max-KP)
+-- Werte WIP: Bodenfarben in HSV um etwa 30 % entsättigt und 25 % abgedunkelt.
 Config.TERRAIN = {
 	["."] = {
 		height = 0, terrainMaterial = Enum.Material.Grass,
 		name = "Ebene", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(126, 184, 92), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(108, 138, 90), material = Enum.Material.SmoothPlastic,
 	},
 	F = {
 		height = 0.4, terrainMaterial = Enum.Material.LeafyGrass,
 		name = "Wald", avoid = 20, def = 1,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(72, 132, 62), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(68, 99, 62), material = Enum.Material.SmoothPlastic,
 	},
 	M = {
 		height = 4, terrainMaterial = Enum.Material.Rock,
 		name = "Berg", avoid = 30, def = 2,
 		cost = { foot = 4 },
-		color = Color3.fromRGB(140, 122, 98), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.SmoothPlastic,
 	},
 	W = {
 		height = -1.2, terrainMaterial = Enum.Material.Water,
 		name = "Wasser", avoid = 0, def = 0,
 		cost = {},
-		color = Color3.fromRGB(60, 120, 200), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(77, 108, 150), material = Enum.Material.SmoothPlastic,
 	},
 	S = {
 		height = -0.2, terrainMaterial = Enum.Material.Mud,
 		name = "Morast", avoid = -15, def = 0,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(95, 85, 60), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(71, 66, 53), material = Enum.Material.SmoothPlastic,
 	},
 	D = {
 		height = -0.8, terrainMaterial = Enum.Material.Mud,
 		name = "Tiefer Morast", avoid = 0, def = 0,
 		cost = {}, -- Später fly = 1 für Flieger.
-		color = Color3.fromRGB(55, 95, 110), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(54, 75, 83), material = Enum.Material.SmoothPlastic,
 	},
 	H = {
 		height = 1, terrainMaterial = Enum.Material.Cobblestone,
 		name = "Festung", avoid = 20, def = 3, heal = 0.2,
 		cost = { foot = 2, horse = 2 },
-		color = Color3.fromRGB(170, 160, 150), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(128, 122, 117), material = Enum.Material.SmoothPlastic,
 	},
 	B = {
 		height = 0.2, terrainMaterial = Enum.Material.WoodPlanks,
 		name = "Brücke", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(150, 110, 70), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(113, 92, 71), material = Enum.Material.SmoothPlastic,
 	},
 }
 

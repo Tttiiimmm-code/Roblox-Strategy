@@ -12,7 +12,7 @@ Branch: `feature/level-optik`
   - Prüfen: keine anderen Brett-Teile mit `CanCollide = true` und fehlenden X/Y-Attributen im Raycast-Bereich (auch Fallback-Deko, Wasser, Pfützen, Rand); nichts im Spiel braucht kollidierende Bodenplatten (Figuren sind verankert, Spieler-Avatar steht im Thronsaal). Ergebnis in Notizen, dann committen.
   - Fertig, wenn: Raycast-Stub (wie frühere Prüfhilfen) trifft für jeden Feldmittelpunkt von oben und schräg aus Kamerawinkel die richtige `Tile_x_y`.
 
-- [ ] 2. **Gedämpfte Farben** – `src/shared/Config.luau` (`TERRAIN.color`), `src/shared/Stages.luau` (Regionsfarben)
+- [x] 2. **Gedämpfte Farben** – `src/shared/Config.luau` (`TERRAIN.color`), `src/shared/Stages.luau` (Regionsfarben)
   - Alle Boden- und Randfarben deutlich dunkler und weniger gesättigt (Richtwert: Sättigung −25 bis −35 %, Helligkeit −20 bis −30 %), Geländearten weiterhin klar unterscheidbar (Ebene/Wald/Berg/Festung/Wasser/Morast); Seitenflächen bleiben eine Stufe dunkler. Werte zentral, Kommentar „Werte WIP“.
   - Fertig, wenn: Farbtabelle vorher/nachher in den Notizen.
 
@@ -41,6 +41,25 @@ Branch: `feature/level-optik`
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden. Befehle außerhalb der Sandbox wie zuvor nur mit Freigabe des Nutzers.)
 
 ## Notizen (Codex)
+- Schritt 2: HSV-Sättigung × 0,70 und Helligkeit × 0,75, auf ganze RGB-Werte gerundet. Seiten bleiben zusätzlich 22 % dunkler. Weltkarten-/Schwierigkeitsfarben und Objektfarben außerhalb der Bodenpalette bleiben unverändert; Grünland übernimmt Config, Sumpf überschreibt wie bisher.
+
+| Boden/Rand | RGB vorher | RGB nachher |
+|---|---|---|
+| Ebene | 126/184/92 | 108/138/90 |
+| Wald | 72/132/62 | 68/99/62 |
+| Berg | 140/122/98 | 105/96/83 |
+| Wasser | 60/120/200 | 77/108/150 |
+| Morast | 95/85/60 | 71/66/53 |
+| Tiefer Morast (auch Sumpf) | 55/95/110 | 54/75/83 |
+| Festung | 170/160/150 | 128/122/117 |
+| Brücke | 150/110/70 | 113/92/71 |
+| Sumpf Grasmaterial | 78/92/52 | 62/69/48 |
+| Sumpf Wassermaterial | 52/62/38 | 41/47/34 |
+| Sumpf Rand | 92/122/70 | 76/92/64 |
+| Sumpf Ebene | 102/142/78 | 86/107/73 |
+| Sumpf Wald | 64/104/57 | 57/78/53 |
+| Sumpf Wasser | 65/112/130 | 63/88/98 |
+
 - Schritt 1: Claudes vorbereiteten Klickfix geprüft. Sämtliche Brett-Deko einschließlich Boden, Seiten, Rand, Fallbacks, Wasser und Pfützen hat CanCollide/CanQuery/CanTouch = false; importierte Modelle werden ebenfalls bereinigt. Nur Tile_x_y bleibt abfragbar. Figurenwurzeln sind verankert, der Avatar steht im separaten Thronsaal: keine Boden-Kollision erforderlich.
 - Raycast-Stub mit Strahl/Quader-Schnitt und Roblox-Kollisionsregel: alle fünf Storykarten, Lauf Seed 12345 und alle acht Geländearten; 5.616 Strahlen senkrecht sowie im echten Kamerawinkel (Offset 0/1/0,75) und 70°, jeweils vier Drehrichtungen, treffen die richtige Kachel. Pflichtcheck OK (32 Dateien). Studio-/Handytest ausstehend.
 - Aufbauzeit vor Texturflecken (30 Aufbauten/Karte, lokaler Stub): s1 4,49 ms / 449 Parts; s2 7,50 / 776; s3 6,88 / 681; s4 8,27 / 874; s5 9,81 / 985; Lauf 4,87 / 479. Keine Aussage über Roblox-Rendering/Replikation; tools-Prüfhilfen bleiben ignoriert.
