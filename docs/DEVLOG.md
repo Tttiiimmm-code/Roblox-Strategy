@@ -500,18 +500,39 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 **Teststatus:** **Vom Nutzer in Blender, Roblox Studio und auf dem Handy ungetestet; unabhängiger Claude-Review ausstehend.** Leon-Setup erzeugt alle geforderten Dateien; nach headless Neuöffnung aktives Mesh, `UV_neu`, Material, externes Canvas, Referenztexturen und beide aktivierbaren Pinsel geprüft. Zuschnitte vorne 1173×1051, hinten 1165×1046; UV-Raster 1024×1024, maximale Linien-Deckkraft 128/255. Wiederholtes Setup ohne Force: Exit 1 und alle Dateihashes/Zeitstempel unverändert; Force-Sicherung und Erhalt der Textur geprüft. Export unveränderter Kopie: **0 %**; magentafarbenes Testrechteck: **25 % / 262144 Pixel**, im Gesichts-Prüfbild sichtbar. Originalkopie wiederhergestellt. Falsche Bildgröße 512×512 wird mit Exit 1 abgelehnt; Zeitwarnung beobachtet. Cleanup-Regression: weiterhin **16862 Dreiecke**, Re-Import bestanden, ursprüngliche Textur bytegleich und Vorder-Prüfbild pixelgleich. Bemalte FBX-Re-Importe: 1024×1024, genau ein Mesh, eingebettetes PNG bytegleich. Abschließende Setup-/Export-Läufe erfolgreich, unveränderte `leon_tex_bemalt.png` hinterlassen. Python-Syntax der vier Module geprüft; Pflichtcheck **OK, 26 Dateien, Exit 0**. UI-/Keymap-Dateien abgeglichen; tatsächliche Bedienung und Studio-Import durch den Nutzer bleiben offen.
 
 ---
+## #23 – Roguelike Phase 1
+**Datum:** 08.10.2026
+
+**Ziel:** Einen gespeicherten Lauf über fünf erzeugte Grasland-Level mit frei gewähltem Dreierteam, fester Levelwahl, Teilheilung und dauerhaftem Heldenfortschritt spielbar machen.
+
+**Umsetzung**
+- RunConfig bündelt alle Lauf-Platzhalterwerte, Gegnerthemen (Axt/Lanze/Bogen), Gold-/Edelsteinbelohnungen und Generatorgrenzen. MapChunks enthält zwölf handgemachte 5×4-Stücke. LevelGen kombiniert/spiegelt sie mit eigenem deterministischem PRNG zu 10×8-Karten; prüft Fußwege von allen Startfeldern, Passierbarkeit, Mindestabstand, Hindernisanteil und Gegnerplätze. Nach maximal 50 Versuchen offene Rückfallkarte.
+- Committiertes Luau-CLI-Prüfskript ohne Roblox: 1.000 Seeds × fünf Tiefen × drei Themen, Teamgrößen 1–6, Determinismus, Schwerpunkt, unabhängige Erreichbarkeitsprüfung, Optionen und erzwungener Rückfall. Pflichtcheck unverändert; Testaufruf in AGENTS.md ergänzt.
+- Profil ergänzt Seed, Gebiet/Tiefe, Reihenfolge, KP/Alive-Team, Optionen/feste Wahl, verdiente Währungen und geschaffte Level. Normalisierung verwirft defekte/unbekannte Läufe, übernimmt alte Profile; Client erhält eine unabhängige Kopie. DataStore-Schreibaufrufe sind geordnet; Laufübergänge warten auf Speicherung.
+- Gemeinsamer setupBattle-Aufbau für Story und erzeugte Stages. RunService kapselt Laufdaten; Kampfablauf bleibt gemeinsam. StartRun prüft exakt drei verschiedene eigene Helden, Leon optional. ChooseLevel speichert die feste Wahl vor Aufbau und stellt Überlebende automatisch mit gespeicherten KP auf. ResumeLevel verwendet identischen Seed und den Stand vor dem Level.
+- Lauf-Niederlage erst ohne eigene Einheiten; Story-Lordregel bleibt bestehen. Kein Undo/Retry/StartStage oder Rekrutieren während des Laufs. Siege übernehmen EP/Level auch Gefallener, heilen Überlebende teilweise und buchen die gewählte Belohnung sofort. Nach fünf Siegen, Niederlage oder Aufgeben endet der Lauf; verdiente Währungen bleiben vollständig erhalten. Aufgeben wartet laufende Aktionen ab; Verlassen erhält die feste Wahl/KP vor dem Level.
+- RunUI nutzt UIKit für Teamwahl, KP/Gefallene, große Themen-/Belohnungskarten, Resume, Aufgabebestätigung und Ergebnisse. Gespeicherter Lauf öffnet direkt die Wahl. Thronknopf, HUD-Tiefe/Thema und Ladeoverlay angebunden; Ladebereitschaft verlangt passende Brett-Seed-Kennung, Felder, Terrain und Modelle. Bisherige Missionsbildschirme bleiben bestehen.
+
+**Entscheidungen:** Alle Werte WIP in RunConfig; Teilheilung auf ganze KP aufgerundet. Gegnerlevel nutzen die bestehende Einheitenkonstruktion. Weitere Gebiete, Bosse, Lager, Waffen und Ränge bleiben spätere Phasen. ToLobby dient bei Lauf-Ladefehlern zur internen Rückkehr zur Wahl mit unverändertem current/KP; Lauf-UI verhindert Hub-Zugang. Servergröße **1** muss der Nutzer in Roblox-Spieleinstellungen setzen, nicht per Code. Ein Commit je Planschritt auf feature/lauf-phase1. Nummer #23 laut PLAN.md, da #21/#22 auf anderem Branch liegen.
+
+**Probleme:** Normaler Terminal-Start scheiterte am Prozess-Setup; alternative lokale Prozessaufrufe funktionierten. Git-Schreibzugriffe nutzten dauerhaft freigegebene Git-Aufrufe. Ohne DataStore-API-Zugriff gelten Profile wie bisher nur für die Sitzung. Keine blockierenden Syntax-/Generatorprobleme; unabhängiger Claude-Review steht aus.
+
+**Teststatus:** **Ungetestet in Roblox Studio und auf dem Handy.** Pflichtcheck nach jedem Schritt grün, Abschluss **31 Dateien, Exit 0**. Generator **OK: 15.000 Level, 5.000 Optionen, 0 % Rückfall**, erzwungener Rückfall geprüft. Profil-Migration mit echtem ProfileStore.load und Stubs: altes Profil, gültiger/gewählter Lauf und 16 defekte Stände OK. RunService-Übergänge einschließlich fünf Siegen, Heilung/Gefallenen, Niederlage/Aufgabe OK. Echte Main-Befehle mit Roblox-Stubs: Fehleingaben/Besitz, feste Wahl/Resume, Profilkopie, Sieg ohne Lord, Belohnungen ohne Sterne, Aufgabe/Niederlage und Story-Lordregel OK. RunUI-Bildschirmwechsel mit UI-Stubs OK. Rojo-Abschlussbuild erfolgreich. Stubs simulieren weder Rendering noch Replikation oder echten DataStore; manuelle Prüfliste in PLAN.md bleibt offen. Temporäre Prüfhilfen unter tools werden nicht committet.
+
+---
 ## Nächste Schritte (Plan)
 1. **Textur-Malen ausprobieren:** `docs/textur-malen.md` durchgehen; Mal-Datei öffnen, beide lokalen Pinsel auswählen, Vorder-/Rückschablone ausrichten, Pipette/Rückgängig prüfen, Bild und Datei speichern. Änderung im bemalten Gesichts-Prüfbild und nach Import von `leon_bemalt.fbx` in Studio bestätigen. Unklare Klickwege, Laptop-Navigation und Verständlichkeit der Anleitung melden.
-2. **Offene Tests:** neue Leon-FBX normal/Cel in Studio importieren, Textur, Haltung, Blickrichtung und Dreieckszahl prüfen, Avatar Auto Setup ausführen und Gesicht aus Brett-Entfernung auf PC/Handy vergleichen. Bevorzugte Variante erst danach als `assets/characters/leon.rbxm` speichern. Eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Weltkarte/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
-3. **Phase 2 – Zufall:** je Versuch ein Server-Seed für Story-Varianten (Gegnerpositionen aus Pools, Geländeflecken, Wetter); zufällige Erkundungskarten je Gebiet zum Grinden von Gold/EP/Edelsteinen als eigene Weltkarten-Knotenart.
-4. **Phase 3 – Flieger + Frostgipfel:** Bewegungstyp fly ignoriert Gelände einschließlich tiefem Morast/Lava, ist aber anfällig für Bögen. Pegasus-Heldin als gratis Story-Grundversion plus seltenere Rekrutierungsvarianten; Eis (Ausweichen −10, Pferde langsam) und Schneewehen.
-5. **Phase 4 – Teleport + Glutberg:** Magier-Teleport (z. B. einmal je Kampf), Lava (außer für Flieger unpassierbar, Schaden am Rand) und Asche. Spezialfähigkeiten bieten Abkürzungen, Bonusziele und bessere Sterne, sind niemals Pflicht für Weltkarten-Fortschritt.
-6. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
-7. Ausrüstung/Items als reine Werte (Aussehen bleibt die eigene Waffe der Figur).
-8. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
-9. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
-10. Eigene Angriffs-Effekte für ★4/★5.
-11. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
-12. Anime-R15-Modelle schrittweise gemäß `docs/charakter-pipeline.md` erstellen/importieren; der Figurenstil `mesh` ist vorbereitet, fehlende Modelle bleiben Chibi.
-13. Belohnungen & Klassenwechsel.
-14. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
+2. **Claude-Review und manueller Lauf-Test:** Servergröße 1 setzen; komplette Prüfliste in PLAN.md auf PC und Handy prüfen, besonders Wiederbeitritt, Speicherung, Tote/Heilung, Gegnerphase-Aufgabe, fünf Level und bestehende Missionen.
+3. **Offene Tests:** neue Leon-FBX normal/Cel in Studio importieren, Textur, Haltung, Blickrichtung und Dreieckszahl prüfen, Avatar Auto Setup ausführen und Gesicht aus Brett-Entfernung auf PC/Handy vergleichen. Bevorzugte Variante erst danach als `assets/characters/leon.rbxm` speichern. Eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Weltkarte/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
+4. **Roguelike Phase 2 – Tutorial:** Missionen 1+2 mit Überspringen-Abfrage; übrige Missionen, Sterne und Schwierigkeiten gemäß roguelike-design.md umbauen.
+5. **Roguelike Phase 3/4:** Bosse/Lager, Wiederbelebung/Teamwechsel/Teamplätze, danach Waffenbeute, Händler, Rückblenden und Notfall-Beschwörung.
+6. **Roguelike Phase 5–7:** Sumpf/Gefahren/Leveltypen, Eis/Vulkan, danach Punktzahl/Ränge/Bestenlisten. Detailentscheidungen vorher klären.
+7. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
+8. Ausrüstung/Items als reine Werte (Aussehen bleibt die eigene Waffe der Figur).
+9. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
+10. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
+11. Eigene Angriffs-Effekte für ★4/★5.
+12. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
+13. Anime-R15-Modelle schrittweise gemäß `docs/charakter-pipeline.md` erstellen/importieren; der Figurenstil `mesh` ist vorbereitet, fehlende Modelle bleiben Chibi.
+14. Belohnungen & Klassenwechsel.
+15. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.

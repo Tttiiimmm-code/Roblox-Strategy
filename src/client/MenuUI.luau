@@ -11,6 +11,7 @@ local Stages = require(Shared:WaitForChild("Stages"))
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local CollectionUI = require(script.Parent:WaitForChild("CollectionUI"))
+local RunUI = require(script.Parent:WaitForChild("RunUI"))
 local THEME = UIKit.THEME
 local make, label, panel, button, corner, padding =
 	UIKit.make, UIKit.label, UIKit.panel, UIKit.button, UIKit.corner, UIKit.padding
@@ -731,7 +732,7 @@ end
 local function buildThroneMenu(root)
 	local f = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(280, 330),
+		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(280, 392),
 		Visible = false,
 	}, root)
 	throne.frame = f
@@ -743,6 +744,7 @@ local function buildThroneMenu(root)
 		Text = "★  Thron", LayoutOrder = 0,
 	}, content)
 	local entries = {
+		{ "run", "Lauf starten", "primary" },
 		{ "missions", "⚔  Weltkarte", "primary" },
 		{ "recruit", "Rekrutieren", "default" },
 		{ "barracks", "Kaserne", "default" },
@@ -752,7 +754,7 @@ local function buildThroneMenu(root)
 		b.Size = UDim2.new(1, 0, 0, 52)
 		b.TextSize = 20
 		b.Activated:Connect(function()
-			MenuUI.openLobby(e[1])
+			if e[1] == "run" then RunUI.openTeam() else MenuUI.openLobby(e[1]) end
 		end)
 	end
 	local stand = button("Aufstehen", content, "muted", 10)
@@ -771,6 +773,9 @@ function MenuUI.init(root, cbs)
 	buildResult(root)
 	buildThroneMenu(root)
 	CollectionUI.build(lobby.pages.recruit, lobby.pages.barracks, root, { onRecruit = cbs.onRecruit })
+	local runCallbacks = table.clone(cbs)
+	runCallbacks.onChanged = function() MenuUI.update(lastState, lastProfile) end
+	RunUI.init(root, runCallbacks)
 end
 
 function MenuUI.openLobby(tab)
@@ -809,11 +814,12 @@ function MenuUI.update(state, profile)
 	profile = profile or EMPTY_PROFILE
 	lastState, lastProfile = state, profile
 
+	local runActive = RunUI.update(state, profile, loadingMission)
 	local mine = isMine(state)
-	if mine then
+	if mine or runActive then
 		lobbyOpen = false -- eigener Kampf läuft: Thronsaal-Menüs zu
 	end
-	local inHall = not mine
+	local inHall = not mine and not runActive
 
 	-- Thronsaal-Anzeige
 	hubHud.frame.Visible = inHall and not lobbyOpen
@@ -836,7 +842,7 @@ function MenuUI.update(state, profile)
 		CollectionUI.update(profile)
 	end
 
-	local showPrep = not loadingMission and mine and state.phase == "Prep" and profile.heroes ~= nil
+	local showPrep = not loadingMission and not runActive and mine and state.phase == "Prep" and profile.heroes ~= nil
 	UIKit.setVisible(prep.frame, showPrep)
 	if showPrep then
 		updatePrep(state, profile)
@@ -844,7 +850,7 @@ function MenuUI.update(state, profile)
 		prep.key = nil
 	end
 
-	local showResult = not loadingMission and mine and state.result ~= nil
+	local showResult = not loadingMission and not runActive and mine and state.result ~= nil
 	UIKit.setVisible(result.frame, showResult)
 	if showResult then
 		updateResult(state, profile)

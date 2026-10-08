@@ -3,11 +3,15 @@
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local UnitData = require(ReplicatedStorage:WaitForChild("Shared").UnitData)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local UnitData = require(Shared.UnitData)
+local RunConfig = require(Shared.RunConfig)
+local LevelGen = require(Shared.LevelGen)
+local Recruit = require(Shared.Recruit)
 
 local ProfileStore = {}
 
--- Profil v2: { gold, gems, stars, heroes = { [heroId] = { level, xp, merges, stats? } }, pity = { since4, since5 } }
+-- Profil v3 (zusätzlich run): { gold, gems, stars, heroes = { [heroId] = { level, xp, merges, stats? } }, pity = { since4, since5 } }
 local STORE_NAME = "TacticsProfiles_v1"
 local START_GEMS = 300 -- GRUNDGERÜST: Startguthaben zum Ausprobieren der Rekrutierung
 local store = nil
@@ -16,6 +20,7 @@ pcall(function()
 end)
 
 local profiles = {}
+local writing = {}
 
 local function key(player)
 	return "p_" .. player.UserId
@@ -27,6 +32,66 @@ end
 
 local function newProfile()
 	return { gold = 0, gems = START_GEMS, stars = {}, heroes = {}, pity = { since4 = 0, since5 = 0 }, settings = { battleScenes = true } }
+end
+
+local function integer(value, low, high)
+	return type(value) == "number" and value == value and value % 1 == 0 and value >= low and value <= high
+end
+
+local function arraySize(list)
+	if type(list) ~= "table" then return nil end
+	local count = 0
+	for index in pairs(list) do
+		if not integer(index, 1, #list) then return nil end
+		count += 1
+	end
+	return count == #list and count or nil
+end
+
+-- Unbekannte/kaputte Läufe verwerfen; nur geprüfte Felder weiterführen.
+local function normalizeRun(run, heroes)
+	if type(run) ~= "table" or not integer(run.seed, 1, 2147483646)
+		or not integer(run.depth, 1, RunConfig.totalLevels()) or run.region ~= RunConfig.regionAt(run.depth)
+		or not integer(run.cleared, 0, RunConfig.totalLevels() - 1) or run.cleared ~= run.depth - 1
+		or arraySize(run.order) ~= RunConfig.START_TEAM or type(run.team) ~= "table"
+		or type(run.earned) ~= "table" then return nil end
+	local earned = {}
+	for _, kind in ipairs(RunConfig.REWARD_ORDER) do
+		local maximum = 0
+		for depth = 1, run.cleared do maximum += RunConfig.rewardAmount(kind, depth) end
+		if not integer(run.earned[kind], 0, maximum) then return nil end
+		earned[kind] = run.earned[kind]
+	end
+	local order, team, alive = {}, {}, 0
+	for _, id in ipairs(run.order) do
+		local entry, def, member = heroes[id], UnitData.Heroes[id], run.team[id]
+		if type(id) ~= "string" or not def or type(entry) ~= "table" or team[id]
+			or type(member) ~= "table" or type(member.alive) ~= "boolean" then return nil end
+		local stats = type(entry.stats) == "table" and entry.stats or def.stats
+		local hp = stats.hp
+		local merges = entry.merges or 0
+		if not integer(hp, 1, math.huge) or not integer(merges, 0, Recruit.MAX_MERGES) then return nil end
+		local maximum = hp + merges * Recruit.MERGE_HP
+		if not integer(member.hp, 0, maximum) or member.alive ~= (member.hp > 0) then return nil end
+		team[id] = { hp = member.hp, alive = member.alive }
+		table.insert(order, id)
+		if member.alive then alive += 1 end
+	end
+	if alive == 0 then return nil end
+	for id in pairs(run.team) do if not team[id] then return nil end end
+	local expected = LevelGen.makeOptions(run.seed, run.depth, run.region)
+	if arraySize(run.options) ~= #expected then return nil end
+	for i, option in ipairs(expected) do
+		local saved = run.options[i]
+		if type(saved) ~= "table" or saved.themeId ~= option.themeId or saved.seed ~= option.seed
+			or type(saved.reward) ~= "table" or saved.reward.kind ~= option.reward.kind
+			or saved.reward.amount ~= option.reward.amount then return nil end
+	end
+	if run.current ~= nil and not integer(run.current, 1, #expected) then return nil end
+	return {
+		seed = run.seed, region = run.region, depth = run.depth, cleared = run.cleared,
+		order = order, team = team, options = expected, current = run.current, earned = earned,
+	}
 end
 
 -- Fehlende Felder ergänzen, Starthelden sicherstellen, unbekannte Helden entfernen
@@ -43,6 +108,7 @@ local function normalize(profile)
 	for _, id in UnitData.STARTER_HEROES do
 		profile.heroes[id] = profile.heroes[id] or ProfileStore.newHeroEntry()
 	end
+	profile.run = normalizeRun(profile.run, profile.heroes)
 end
 
 function ProfileStore.load(player)
@@ -64,6 +130,7 @@ function ProfileStore.load(player)
 		profile.heroes = data.heroes
 		profile.pity = data.pity
 		profile.settings = data.settings
+		profile.run = data.run
 	end
 	normalize(profile)
 	profile.saveOk = ok
@@ -76,6 +143,10 @@ function ProfileStore.get(player)
 end
 
 local function write(player, profile)
+	-- Laufwahl und Abschluss müssen in derselben Reihenfolge im DataStore ankommen.
+	while writing[player] do task.wait() end
+	if profiles[player] ~= profile then return end
+	writing[player] = true
 	local ok, err = pcall(function()
 		store:SetAsync(key(player), {
 			gold = profile.gold,
@@ -84,18 +155,20 @@ local function write(player, profile)
 			heroes = profile.heroes,
 			pity = profile.pity,
 			settings = profile.settings,
+			run = profile.run,
 		})
 	end)
+	writing[player] = nil
 	if not ok then
 		warn("[ProfileStore] Speichern fehlgeschlagen:", err)
 	end
 end
 
--- Speichert im Hintergrund (blockiert den Aufrufer nicht)
-function ProfileStore.save(player)
+-- Lauf-Übergänge warten auf das Speichern; sonst im Hintergrund.
+function ProfileStore.save(player, waitForSave)
 	local profile = profiles[player]
 	if profile and store and profile.saveOk then
-		task.spawn(write, player, profile)
+		if waitForSave then write(player, profile) else task.spawn(write, player, profile) end
 	end
 end
 
