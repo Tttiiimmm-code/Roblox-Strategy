@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
@@ -583,9 +584,28 @@ local function tileFromRay(ray)
 	local model = unitModelOf(result.Instance)
 	if model and state and state.units[model.Name] then
 		local u = state.units[model.Name]
-		return u.x, u.y
+		return u.x, u.y, result.Instance
 	end
-	return result.Instance:GetAttribute("X"), result.Instance:GetAttribute("Y")
+	return result.Instance:GetAttribute("X"), result.Instance:GetAttribute("Y"), result.Instance
+end
+
+local function diagnoseInput(eventName, position, processed, viewport, detail)
+	if not Config.INPUT_DIAGNOSTICS then return end
+	local ray = viewport and camera:ViewportPointToRay(position.X, position.Y)
+		or camera:ScreenPointToRay(position.X, position.Y)
+	local x, y, hit = tileFromRay(ray)
+	local guiPosition = viewport and position or position + GuiService:GetGuiInset()
+	local guiNames = {}
+	for _, object in player.PlayerGui:GetGuiObjectsAtPosition(guiPosition.X, guiPosition.Y) do
+		if object.Active then
+			table.insert(guiNames, object:GetFullName())
+			if #guiNames == 3 then break end
+		end
+	end
+	print(("[Eingabe] %s processed=%s pos=(%.1f,%.1f) hit=%s feld=%s/%s canControl=%s mode=%s kamera=%s laden=%s gui=%s %s"):format(
+		eventName, tostring(processed), position.X, position.Y, hit and hit:GetFullName() or "kein Treffer",
+		tostring(x), tostring(y), tostring(canControl()), mode, tostring(CameraController.isActive()),
+		tostring(loadingMission ~= nil), table.concat(guiNames, ";"), detail or ""))
 end
 
 local DRAG_THRESHOLD = 12
@@ -594,6 +614,7 @@ local touches = {} -- InputObject -> eigene Start-/Letzte-Position
 local activeTouches = 0
 local touchOrder = 0
 local gesture = nil
+local tapGestureBlocked = false
 
 local function touchPosition(input)
 	return Vector2.new(input.Position.X, input.Position.Y)
@@ -622,6 +643,7 @@ local function resetTouchBasis()
 	end
 	gesture = nil
 	if activeTouches > 1 then
+		tapGestureBlocked = true
 		for _, touch in touches do touch.dragged = true end
 	end
 	if activeTouches == 2 then
@@ -634,10 +656,15 @@ local function resetTouchBasis()
 end
 
 UserInputService.InputBegan:Connect(function(input, processed)
-	if BattleScene.isPlaying() then return end
 	local t = input.UserInputType
+	if t == Enum.UserInputType.Touch or t == Enum.UserInputType.MouseButton1 then
+		diagnoseInput("Beginn " .. tostring(t), Vector2.new(input.Position.X, input.Position.Y), processed, false)
+	end
+	if BattleScene.isPlaying() then return end
 	if t == Enum.UserInputType.Touch then
 		local pos = touchPosition(input)
+		resetTouchBasis()
+		if activeTouches == 0 then tapGestureBlocked = not canControl() or not CameraController.isActive() end
 		touchOrder += 1
 		touches[input] = { start = pos, last = pos, dragged = false, order = touchOrder,
 			blocked = processed or not CameraController.isActive() }
@@ -676,6 +703,7 @@ UserInputService.InputChanged:Connect(function(input)
 			if activeTouches == 1 then
 				if not touch.dragged and (pos - touch.start).Magnitude > DRAG_THRESHOLD then
 					touch.dragged = true
+					tapGestureBlocked = true
 				end
 				if touch.dragged then CameraController.panBy((pos - touch.last) * Config.FEEL.touchPanScale) end
 			elseif activeTouches == 2 and gesture then
@@ -716,17 +744,14 @@ UserInputService.InputEnded:Connect(function(input)
 	if t == Enum.UserInputType.Touch then
 		local touch = touches[input]
 		if not touch then return end
+		if touch.dragged or input.UserInputState == Enum.UserInputState.Cancel then tapGestureBlocked = true end
 		touches[input] = nil
 		resetTouchBasis()
-		if not touch.blocked and not touch.dragged and CameraController.isActive()
-			and input.UserInputState ~= Enum.UserInputState.Cancel then
-			local x, y = tileFromRay(camera:ScreenPointToRay(input.Position.X, input.Position.Y))
-			if x then onClick(x, y) end
-		end
 		return
 	end
 	if t == Enum.UserInputType.MouseButton1 and press then
 		if not press.dragged then
+			diagnoseInput("Maus Ende", Vector2.new(input.Position.X, input.Position.Y), false, false)
 			local x, y = tileFromRay(camera:ScreenPointToRay(input.Position.X, input.Position.Y))
 			if x then
 				onClick(x, y)
@@ -734,6 +759,14 @@ UserInputService.InputEnded:Connect(function(input)
 		end
 		press = nil
 	end
+end)
+
+-- Welt-Taps haben Geräte-/Viewport-Koordinaten und eine eigene GUI-Prüfung von Roblox.
+UserInputService.TouchTapInWorld:Connect(function(position, processedByUI)
+	diagnoseInput("Welt-Tap", position, processedByUI, true, "geste=" .. tostring(tapGestureBlocked))
+	if processedByUI or tapGestureBlocked or BattleScene.isPlaying() or not CameraController.isActive() or not canControl() then return end
+	local x, y = tileFromRay(camera:ViewportPointToRay(position.X, position.Y))
+	if x then onClick(x, y) end
 end)
 
 -- Cursor, Info-Panel und Geländeanzeige folgen der Maus (am Handy: Auswahl)

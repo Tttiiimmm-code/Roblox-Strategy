@@ -393,8 +393,9 @@ end
 local function buildLoading(playerGui)
 	local gui = make("ScreenGui", {
 		Name = "MissionLoading", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets, DisplayOrder = 1000,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true, Enabled = false,
 	}, playerGui)
+	loading.gui = gui
 	loading.frame = make("CanvasGroup", {
 		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
 		BorderSizePixel = 0, Visible = false, Active = true,
@@ -402,7 +403,7 @@ local function buildLoading(playerGui)
 	make("UIGradient", { Color = ColorSequence.new(THEME.bottom, THEME.barBg), Rotation = 90 }, loading.frame)
 	local contentRoot = UIKit.createRoot(loading.frame)
 	loading.content = make("CanvasGroup", {
-		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Active = false,
 	}, contentRoot)
 	local card = panel({
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
@@ -427,6 +428,8 @@ function UI.showLoading(title, subtitle)
 	if loading.pulse then loading.pulse:Cancel() end
 	loading.title.Text, loading.subtitle.Text = title, subtitle
 	loading.frame.GroupTransparency = 0
+	loading.gui.Enabled = true
+	loading.frame.Active = true
 	loading.frame.Visible = true
 	loading.content.GroupTransparency = 1
 	loading.progress.TextTransparency = 0
@@ -439,10 +442,15 @@ end
 function UI.hideLoading()
 	if loading.fade then loading.fade:Cancel() end
 	if loading.pulse then loading.pulse:Cancel() end
+	-- Die dekorative Ausblendung darf die bereits freigegebene Eingabe nicht schlucken.
+	loading.frame.Active = false
 	local fade = TweenService:Create(loading.frame, TweenInfo.new(Config.FEEL.loadingFade), { GroupTransparency = 1 })
 	loading.fade = fade
 	fade.Completed:Once(function(status)
-		if status == Enum.PlaybackState.Completed then loading.frame.Visible = false end
+		if status == Enum.PlaybackState.Completed then
+			loading.frame.Visible = false
+			loading.gui.Enabled = false
+		end
 	end)
 	fade:Play()
 end

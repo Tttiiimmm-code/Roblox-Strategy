@@ -1,6 +1,8 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
+Config.INPUT_DIAGNOSTICS = false -- Vorübergehend für Handy-/Mausfehler einschalten; Ausgabe im Client-Output.
+
 Config.CHARACTER_STYLE = "mesh" -- "chibi", "avatar" oder "mesh"; auf "mesh" umstellen, sobald R15-Modelle vorliegen.
 
 Config.CHIBI = {
