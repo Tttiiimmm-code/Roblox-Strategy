@@ -17,9 +17,9 @@ Branch: `feature/lauf-phase2` (weiter)
 
 - [x] 2. **Ziel-Felder komplett gelb** – Bewegungsziel im Tutorial als **vollflächig gelb gefülltes Feld** (deckend bzw. kaum transparent, kräftiges Gelb, leichtes Pulsieren erlaubt) statt nur Rahmen/Pfeil; liegt über Bewegungs-Overlays, unter Figuren; Klicks treffen weiterhin das Feld (`CanQuery = false`, `CanCollide = false`). Ziel-Figuren/Gegner weiterhin klar markiert (bestehende Markierung oder gelber Ring). Farbe/Transparenz in Config.
 
-- [ ] 3. **Größere Oberfläche nur auf PC** – in `UIKit.createRoot` zusätzlicher Faktor für Maus-/Tastatur-Geräte ohne Touch (z. B. `UserInputService.TouchEnabled == false` bzw. `MouseEnabled and not TouchEnabled`), Wert in Config (Richtwert 1,25, WIP); Obergrenze so, dass auf typischen PC-Fenstern (1280×720 bis 1920×1080, auch kleine Studio-Fenster) nichts aus dem Bildschirm läuft oder sich überlappt. Gilt für Thronsaal-HUD, Menüs und Kampf-HUD gleichermaßen (nicht nur Thronsaal-Text). Handy/Tablet unverändert.
+- [x] 3. **Größere Oberfläche nur auf PC** – in `UIKit.createRoot` zusätzlicher Faktor für Maus-/Tastatur-Geräte ohne Touch (z. B. `UserInputService.TouchEnabled == false` bzw. `MouseEnabled and not TouchEnabled`), Wert in Config (Richtwert 1,25, WIP); Obergrenze so, dass auf typischen PC-Fenstern (1280×720 bis 1920×1080, auch kleine Studio-Fenster) nichts aus dem Bildschirm läuft oder sich überlappt. Gilt für Thronsaal-HUD, Menüs und Kampf-HUD gleichermaßen (nicht nur Thronsaal-Text). Handy/Tablet unverändert.
 
-- [ ] 4. **Level-Up wegtippen** – Level-Up-Fenster schließt sofort bei Tippen/Klick irgendwo auf das Fenster oder den Bildschirm (und Leertaste/Enter am PC); automatisches Schließen nach Zeit bleibt als Rückfall. Wartet der Kampfablauf auf das Ende des Fensters, muss er beim Wegtippen sofort weiterlaufen; der Tipp darf keine Spielaktion auslösen (kein Feld/keine Figur anwählen).
+- [x] 4. **Level-Up wegtippen** – Level-Up-Fenster schließt sofort bei Tippen/Klick irgendwo auf das Fenster oder den Bildschirm (und Leertaste/Enter am PC); automatisches Schließen nach Zeit bleibt als Rückfall. Wartet der Kampfablauf auf das Ende des Fensters, muss er beim Wegtippen sofort weiterlaufen; der Tipp darf keine Spielaktion auslösen (kein Feld/keine Figur anwählen).
 
 - [ ] 5. Abschluss: `scripts/check.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` = OK, Rojo-Build. Devlog-Nachtrag zu #30 (oder #31). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
 
@@ -35,6 +35,13 @@ Branch: `feature/lauf-phase2` (weiter)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden.)
 
 ## Notizen (Codex)
-- Schritt 1: Tutorial-Hinweise mit 31 Designpunkten (vorher gef?hrte Schritte 22), Mindesth?he 92 und automatischem Umbruch/H?henwachstum. Gilt auch f?r freie Tutorial-Schritte; links oben bleibt die bisherige schmale Spalte erhalten. Darstellung in Studio/auf Handy noch ungetestet.
+- Schritt 1: Tutorial-Hinweise mit 31 Designpunkten (vorher geführte Schritte 22), Mindesthöhe 92 und automatischem Umbruch/Höhenwachstum. Gilt auch für freie Tutorial-Schritte; links oben bleibt die bisherige schmale Spalte erhalten. Darstellung in Studio/auf Handy noch ungetestet.
 
-- Schritt 2: Bewegungsziel mit voller Feldgr??e, kr?ftigem Gelb und 3 % Transparenz. D?nne Fl?che oberhalb von Bewegungsfl?chen/Cursor; keine Kollision, Touch- oder Raycast-Abfrage. Figuren-/Gegnermarkierungen bleiben erhalten.
+- Schritt 2: Bewegungsziel mit voller Feldgröße, kräftigem Gelb und 3 % Transparenz. Dünne Fläche oberhalb von Bewegungsflächen/Cursor; keine Kollision, Touch- oder Raycast-Abfrage. Figuren-/Gegnermarkierungen bleiben erhalten.
+
+- Schritt 3: PC-Faktor 1,25 nur bei MouseEnabled ohne TouchEnabled. Mindestfläche 1184 × 664 Designpunkte schützt die drei oberen HUD-Spalten und das 1000 × 640 große Kasernenfenster mit Randabstand. Deshalb in kleinen/höhenbegrenzten Fenstern weniger als 25 % Vergrößerung (z. B. etwa 8 % bei 1590 × 660); bei 1920 × 1080 bis zu 25 %. Touch-Geräte behalten die bisherige Skalierung.
+
+- Schritt 4: Eigenes Level-Up-ScreenGui mit vollflächiger transparenter Schließtaste über Fenster und Bildschirm. Klick/Tipp schließt sofort; Leertaste/Enter/Nummernblock-Enter im Client ebenfalls. Weltsteuerung während der Meldung gesperrt, begonnene Maus-/Touchgesten verworfen. Alte 3,2-Sekunden-Timer können neue Meldungen nicht schließen. Kein Kampf-Wartepfad im bestehenden Client vorhanden.
+- Die Schritt-3-Checkbox/Notiz wird mit Schritt 4 nachgetragen; UTF-8-Übertragung der neuen deutschen Kommentare und Notizen korrigiert.
+
+- Lokale Prüfung: 180 bestehende UI-Anschlüsse, 99 Feinschliff-Prüfungen und 14 bestehende Eingabeprüfungen mit aktuellen Main.client-Callbacks bestanden. Prüfhilfe unter ignoriertem tools/; prüft sichere Flächen/HUD-Abstände/Timer/Schließgesten, ersetzt keine Roblox-Schriftmessung, den Eingaberouter oder Studio-/Handytests.

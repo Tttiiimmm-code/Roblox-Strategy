@@ -339,6 +339,17 @@ local function buildTools(callbacks)
 	tools.back.Activated:Connect(callbacks.onBack)
 end
 
+function UI.isLevelUpActive()
+	return level.gui ~= nil and level.gui.Enabled
+end
+
+function UI.dismissLevelUp()
+	if not UI.isLevelUpActive() then return end
+	levelToken += 1
+	level.gui.Enabled = false
+	level.frame.Visible = false
+end
+
 local function buildPopups()
 	toastFrame = panel({
 		Animated = true,
@@ -347,11 +358,24 @@ local function buildPopups()
 	}, root)
 	toastLabel = label({ Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 17, ZIndex = 5 }, toastFrame)
 
+	level.gui = make("ScreenGui", {
+		Name = "LevelUp", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false,
+		DisplayOrder = 1100, Enabled = false,
+	}, Players.LocalPlayer:WaitForChild("PlayerGui"))
+	local levelRoot = UIKit.createRoot(level.gui)
+	-- Liegt auch über dem Fenster: jeder Klick gehört allein zum Schließen.
+	local dismiss = make("TextButton", {
+		Name = "LevelUpSchliessen", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+		Text = "", AutoButtonColor = false, Active = true, Selectable = false, ZIndex = 100,
+	}, level.gui)
+	dismiss.Activated:Connect(UI.dismissLevelUp)
+
 	local lf = panel({
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.fromOffset(320, 250),
 		Visible = false, ZIndex = 6,
-	}, root)
+	}, levelRoot)
 	padding(lf, 14)
 	level.frame = lf
 	label({
@@ -716,10 +740,11 @@ function UI.showLevelUp(e)
 			UIKit.DIM_HEX, UnitData.STAT_NAMES[stat], e.stats[stat],
 			gained and ("<font color='%s'><b>+1</b></font>"):format(UIKit.GOOD_HEX) or "")
 	end
+	level.gui.Enabled = true
 	UIKit.popIn(level.frame)
 	task.delay(3.2, function()
 		if token == levelToken then
-			UIKit.popOut(level.frame)
+			UI.dismissLevelUp()
 		end
 	end)
 end

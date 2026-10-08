@@ -86,7 +86,7 @@ function TutorialGuide.render()
 	marker.Transparency = 1
 	marker.CastShadow = false
 	if step.mark == "tile" then
-		-- ?ber Bewegungsfl?chen und Cursor, ohne den Feld-Ray zu blockieren.
+		-- Über Bewegungsflächen und Cursor, ohne den Feld-Ray zu blockieren.
 		marker.Size = Vector3.new(Config.TILE_SIZE, 0.04, Config.TILE_SIZE)
 		marker.Position = Grid.toWorld(pos.x, pos.y) + Vector3.new(0, 0.2, 0)
 		marker.Color = Config.TUTORIAL.targetColor

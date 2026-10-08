@@ -172,7 +172,7 @@ local function inBattle()
 end
 
 local function canControl()
-	return not loadingMission and inBattle() and state.phase == "Player" and not state.busy and not state.result
+	return not loadingMission and not UI.isLevelUpActive() and inBattle() and state.phase == "Player" and not state.busy and not state.result
 end
 
 local function makeFxPart(size, color, transparency)
@@ -706,6 +706,13 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	if t == Enum.UserInputType.Touch or t == Enum.UserInputType.MouseButton1 then
 		diagnoseInput("Beginn " .. tostring(t), Vector2.new(input.Position.X, input.Position.Y), processed, false)
 	end
+	if UI.isLevelUpActive() then
+		press = nil
+		tapGestureBlocked = true
+		if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.Return
+			or input.KeyCode == Enum.KeyCode.KeypadEnter then UI.dismissLevelUp() end
+		return
+	end
 	if BattleScene.isPlaying() then return end
 	if t == Enum.UserInputType.Touch then
 		local pos = touchPosition(input)
@@ -995,6 +1002,9 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 	elseif payload.exp and isMine() then
 		local e = payload.exp
 		if e.level then
+			press = nil
+			tapGestureBlocked = true
+			for _, touch in touches do touch.blocked = true end
 			UI.showLevelUp(e)
 		elseif e.exp > 0 then
 			UI.toast(("%s erhält <b>%d EP</b>"):format(e.unitName, e.exp), 2)
