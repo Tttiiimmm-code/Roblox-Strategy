@@ -69,6 +69,10 @@ function UnitVisuals.create(unit)
 			return nil
 		end
 	end
+	-- Nur Brett-Figuren: alle Baustile samt Ausrüstung, Aura und Pferd gemeinsam behandeln.
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then part.CastShadow = false end
+	end
 	model:SetAttribute("UnitId", unit.id)
 	model:SetAttribute("Team", unit.team)
 	-- Auf dem Brett größer als in Porträts, damit Gesichter aus der Taktik-Kamera lesbar bleiben.
