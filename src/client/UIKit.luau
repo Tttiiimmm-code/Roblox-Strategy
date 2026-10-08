@@ -540,7 +540,13 @@ function UIKit.createRoot(gui, maximumScale)
 		surface.Position = UDim2.fromOffset(left, top)
 		surface.Size = UDim2.fromOffset(available.X, available.Y)
 		-- Unter 360 sicheren Punkten Höhe darf die Oberfläche kleiner als 0,5 werden.
-		local s = math.min(available.X / 1280, available.Y / 720, maximumScale or 1.15)
+		local cap = maximumScale or 1.15
+		local s = math.min(available.X / 1280, available.Y / 720, cap)
+		if UserInputService.MouseEnabled and not UserInputService.TouchEnabled then
+			local settings = Config.UI_SCALE
+			s = math.min(s * settings.desktopFactor, available.X / settings.desktopMinWidth,
+				available.Y / settings.desktopMinHeight, cap * settings.desktopFactor)
+		end
 		scale.Scale = s
 		root.Size = UDim2.fromOffset(available.X / s, available.Y / s)
 		diagnose()

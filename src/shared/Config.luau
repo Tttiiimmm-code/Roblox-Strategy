@@ -208,6 +208,9 @@ Config.OVERLAY = {
 	Cursor = Color3.fromRGB(255, 220, 80),
 }
 
+-- UI-Werte WIP: HUD-Spalten und das 640 Punkte hohe Kasernenfenster m?ssen Platz behalten.
+Config.UI_SCALE = { desktopFactor = 1.25, desktopMinWidth = 1184, desktopMinHeight = 664 }
+
 -- Tutorial-Werte WIP: feste Übungswerte verhindern, dass alte Profile die Führung überspringen.
 Config.TUTORIAL = {
 	hintTextSize = 31, hintMinHeight = 92, -- WIP: etwa 1,4-mal gr??er als bisher.
