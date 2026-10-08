@@ -7,7 +7,7 @@ Branch: `feature/level-optik` (weiter)
 
 ## Schritte
 
-- [ ] 1. **Review + Commit Seltenheits-Effekte (Claude, uncommittet)** – `src/shared/Config.luau` (`FEEL.rarityEffects = false`), `src/shared/CharacterBuilder.luau`, `src/shared/ChibiBuilder.luau`: PointLight + Funken an der Waffe (★4+) sowie Bodenaura-Ring + Aura-Partikel (★5) nur noch bei `rarityEffects = true`. Schnalle/Kragen/Wappen/Umhangsaum bleiben. Prüfen: Chibi-/Mesh-/Avatar-Pfad, Thronsaal-NPCs, Kampfszene, Porträts, Cache-Schlüssel; nichts sucht die entfernten Teile zwingend. Ergebnis in Notizen, committen.
+- [x] 1. **Review + Commit Seltenheits-Effekte (Claude, uncommittet)** – `src/shared/Config.luau` (`FEEL.rarityEffects = false`), `src/shared/CharacterBuilder.luau`, `src/shared/ChibiBuilder.luau`: PointLight + Funken an der Waffe (★4+) sowie Bodenaura-Ring + Aura-Partikel (★5) nur noch bei `rarityEffects = true`. Schnalle/Kragen/Wappen/Umhangsaum bleiben. Prüfen: Chibi-/Mesh-/Avatar-Pfad, Thronsaal-NPCs, Kampfszene, Porträts, Cache-Schlüssel; nichts sucht die entfernten Teile zwingend. Ergebnis in Notizen, committen.
 
 - [ ] 2. **Bestandsaufnahme Texte** – alle UI-Module (`UI.luau`, `MenuUI.luau`, `RunUI.luau`, `CollectionUI.luau`, `UIKit.luau`): jede Textstelle mit fester Kastengröße auflisten, bei der der Text bei Handy-Skalierung (UIScale in `UIKit`, Designgröße 1280×720, Untergrenze 0,5) überlaufen kann. Typische Handy-Auflösungen im Querformat prüfen (z. B. 844×390, 915×412, 1280×720 und Tablet 1024×768 in Roblox-Punkten). Liste in Notizen.
 
@@ -33,4 +33,4 @@ Branch: `feature/level-optik` (weiter)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden. Bei defekter Sandbox gilt die Dauerregel in AGENTS.md.)
 
 ## Notizen (Codex)
--
+- Schritt 1: Claude-Änderung geprüft: Chibi, Mesh und Avatar erzeugen Waffenlicht/Funken ab ★4 sowie Bodenaura ab ★5 nur bei aktivem Schalter. Hub-NPCs und Server-HeroTemplates verwenden CharacterBuilder; Kampfszene und Porträts klonen deren Modelle. Keine externe Pflichtsuche nach AuraRing/AuraEmitter. Schnalle, Kragen, Wappen und Umhangsaum bleiben. Mesh-/Chibi-Cache-Schlüssel um den Schalter ergänzt, damit Umschalten keine alte Effektvorlage wiederverwendet. Avatar-Basiscache liegt vor der Seltenheitsdekoration. Eigene Ergänzung wird von Claude unabhängig geprüft; Studio-/Handytest offen.

@@ -51,6 +51,7 @@ Config.FEEL = {
 	hitStop = 0.06, critFlashTransparency = 0.65, critFlashDuration = 0.2,
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
 	atmosphereFade = 0.8,
+	rarityEffects = false, -- Nutzer 08.10.2026: Seltenheits-Leuchten/-Partikel (Waffe ★4, Bodenaura ★5) vorerst aus
 	flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
 	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
