@@ -270,7 +270,7 @@ end
 -- Unten rechts: Zurück · [Rückblende][Gefahr][Tempo] · Zug beenden
 local function buildTools(callbacks)
 	local col = make("Frame", {
-		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(210, 212),
+		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(300, 212),
 		BackgroundTransparency = 1,
 	}, hud)
 
@@ -389,7 +389,8 @@ end
 -- Öffentliche API ----------------------------------------------------------------
 local function buildLoading(playerGui)
 	local gui = make("ScreenGui", {
-		Name = "MissionLoading", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 1000,
+		Name = "MissionLoading", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets, DisplayOrder = 1000,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None,
 	}, playerGui)
 	loading.frame = make("CanvasGroup", {
 		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
@@ -445,7 +446,10 @@ end
 
 function UI.init(callbacks)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-	local gui = make("ScreenGui", { Name = "TacticsUI", ResetOnSpawn = false, IgnoreGuiInset = false }, playerGui)
+	local gui = make("ScreenGui", {
+		Name = "TacticsUI", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None,
+	}, playerGui)
 	root = UIKit.createRoot(gui)
 	hud = make("Frame", { Name = "Hud", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, root)
 	buildTop(callbacks)

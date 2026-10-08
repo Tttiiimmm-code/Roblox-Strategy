@@ -475,16 +475,19 @@ end
 
 -- Ganze Oberfläche skaliert mit der Bildschirmgröße (Designgröße 1280×720)
 function UIKit.createRoot(gui)
-	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
+	-- Die unskalierte Fläche enthält bereits Roblox-Leiste und Geräte-Aussparungen.
+	local surface = make("Frame", { Name = "SafeArea", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
+	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, surface)
 	local scale = make("UIScale", {}, root)
-	local camera = workspace.CurrentCamera
 	local function update()
-		local vp = camera.ViewportSize
-		local s = math.clamp(math.min(vp.X / 1280, vp.Y / 720), 0.5, 1.15)
+		local available = surface.AbsoluteSize
+		if available.X <= 0 or available.Y <= 0 then return end
+		-- Unter 360 sicheren Punkten Höhe darf die Oberfläche kleiner als 0,5 werden.
+		local s = math.min(available.X / 1280, available.Y / 720, 1.15)
 		scale.Scale = s
 		root.Size = UDim2.fromScale(1 / s, 1 / s)
 	end
-	camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+	surface:GetPropertyChangedSignal("AbsoluteSize"):Connect(update)
 	update()
 	return root
 end
