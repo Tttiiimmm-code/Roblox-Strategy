@@ -1,4 +1,4 @@
-"""KI-Figurenmodelle für Roblox aufbereiten; Aufruf über scripts/cleanup.ps1."""
+"""KI-Figurenmodelle und Umgebungsobjekte für Roblox aufbereiten; Aufruf über scripts/cleanup.ps1."""
 
 import argparse
 import math
@@ -189,11 +189,11 @@ def arrange_uv(obj, args, report):
 	mesh = obj.data
 	low, high = bounds(obj)
 	height = high.z - low.z
-	if height <= 0:
+	if height <= 0 and not args.prop:
 		raise ValueError('Das Modell hat keine Höhe.')
 	head_faces = [face.center.z > high.z - 0.13 * height and
-		math.hypot(face.center.x, face.center.y) < 0.12 * height for face in mesh.polygons]
-	if not any(head_faces) or all(head_faces):
+		math.hypot(face.center.x, face.center.y) < 0.12 * height for face in mesh.polygons] if not args.prop else [False] * len(mesh.polygons)
+	if not args.prop and (not any(head_faces) or all(head_faces)):
 		raise ValueError('Kopfbereich nicht eindeutig erkannt; aufrechte Figur und Ausrichtung prüfen.')
 	layer = mesh.uv_layers.new(name='UV_neu')
 	mesh.uv_layers.active = layer
@@ -204,6 +204,17 @@ def arrange_uv(obj, args, report):
 	bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.002)
 	bpy.ops.object.mode_set(mode='OBJECT')
 	layer = mesh.uv_layers['UV_neu']
+	if args.prop:
+		# Gleiche Texeldichte auf allen Inseln; kein reservierter Kopfbereich.
+		bpy.ops.object.mode_set(mode='EDIT')
+		bpy.ops.mesh.select_all(action='SELECT')
+		bpy.ops.uv.average_islands_scale()
+		bpy.ops.uv.pack_islands(rotate=True, rotate_method='ANY', scale=True,
+			margin_method='FRACTION', margin=4 / args.size, shape_method='CONCAVE')
+		bpy.ops.object.mode_set(mode='OBJECT')
+		report['islands_after'] = len(uv_islands(mesh, mesh.uv_layers['UV_neu']))
+		print(f"UV-Inseln: {report['islands_before']} -> {report['islands_after']}; gleichmäßige Objekt-UVs", flush=True)
+		return head_faces
 	# Auch eine durchgehende Hals-Insel muss an der Kopfgrenze getrennt werden.
 	for face in mesh.polygons:
 		if head_faces[face.index]:
@@ -379,7 +390,7 @@ def cel_texture(obj, image, args, report):
 	height = high.z - low.z
 	# Der Cel-Schutz umfasst auch den Unterkiefer; die UV-Gewichtung bleibt bei 13 %.
 	protected_faces = [face.center.z > high.z - 0.16 * height and
-		math.hypot(face.center.x, face.center.y) < 0.12 * height for face in obj.data.polygons]
+		math.hypot(face.center.x, face.center.y) < 0.12 * height for face in obj.data.polygons] if not args.prop else [False] * len(obj.data.polygons)
 	head, body = texture_masks(obj.data, protected_faces, args.size)
 	if not np.any(body):
 		raise ValueError('Keine Körperpixel für die Cel-Farbreduktion gefunden.')
@@ -487,12 +498,13 @@ def png_pixels(path):
 	return rows.reshape(height, width, channels)
 
 
-def render_model(obj, other, camera, path, center, scale, back=False):
+def render_model(obj, other, camera, path, center, scale, back=False, direction=None):
 	obj.hide_render = False
 	other.hide_render = True
 	scene = bpy.context.scene
 	camera.data.ortho_scale = scale
-	camera.location = center + Vector((0, 4 * scale if back else -4 * scale, 0))
+	camera.location = center + (direction * (4 * scale) if direction is not None else
+		Vector((0, 4 * scale if back else -4 * scale, 0)))
 	camera.rotation_euler = (center - camera.location).to_track_quat('-Z', 'Y').to_euler()
 	scene.render.filepath = str(path.resolve())
 	bpy.ops.render.render(write_still=True)
@@ -539,12 +551,26 @@ def render_views(obj, other, camera, output, name, center, full_scale, face_cent
 	activate(obj)
 
 
+def render_prop_views(obj, other, camera, output, name, center, scale):
+	render_model(obj, other, camera, output / f'{name}_vorne.png', center, scale)
+	render_model(obj, other, camera, output / f'{name}_seite.png', center, scale, direction=Vector((1, 0, 0)))
+	render_model(obj, other, camera, output / f'{name}_oben.png', center, scale, direction=Vector((0, 0, 1)))
+	obj.hide_render = False
+	activate(obj)
+
+
 def proof_images(obj, original, args, report):
 	camera, center, full_scale, face_center, height = proof_camera(original)
+	if args.prop:
+		low, high = bounds(original)
+		full_scale = max(high - low) * 1.08
 	front_path = args.output / f'{args.name}_vorne.png'
 	before_path = args.output / f'{args.name}_vorne_original.png'
 	render_model(original, obj, camera, before_path, center, full_scale)
-	render_views(obj, original, camera, args.output, args.name, center, full_scale, face_center, height)
+	if args.prop:
+		render_prop_views(obj, original, camera, args.output, args.name, center, full_scale)
+	else:
+		render_views(obj, original, camera, args.output, args.name, center, full_scale, face_center, height)
 	before = png_pixels(before_path)
 	after = png_pixels(front_path)
 	mask = (before[:, :, 3] >= 250) & (after[:, :, 3] >= 250)
@@ -554,6 +580,9 @@ def proof_images(obj, original, args, report):
 	report['color_deviation_channels'] = deviation.tolist()
 	report['color_deviation'] = float(deviation.mean())
 	report['color_pixels'] = int(mask.sum())
+	if args.prop:
+		print(f"Farbabweichung: {report['color_deviation']:.2f}/255; RGB {deviation.round(2).tolist()}", flush=True)
+		return bool(np.all(deviation <= 12))
 	# Kopien verhindern, dass das 1K-Vergleichsbild die 4K-Quelldaten verändert.
 	for slot in original.material_slots:
 		material = slot.material.copy()
@@ -625,10 +654,11 @@ def write_report(args, report, started):
 		f"Punkte vorher/nachher: {report['vertices_before']} / {report['vertices_after']}",
 		f"Gelöschte Kleinteile: {report['removed_parts']}; erhaltene Teile: {report['parts_after']}",
 		f"UV-Inseln vorher/nachher: {report['islands_before']} / {report['islands_after']}",
-		f"Kopfanteil Soll/Ist (UV-Fläche): {report['head_target']:.4f} / {report['head_actual']:.4f}",
+		('Objekt-Modus: gleichmäßige UV-Verteilung ohne Kopferkennung' if args.prop else
+			f"Kopfanteil Soll/Ist (UV-Fläche): {report['head_target']:.4f} / {report['head_actual']:.4f}"),
 		f"Texturgröße: {report['texture_size']}",
 		f"Mittlere Farbabweichung: {report['color_deviation']:.4f} / 255",
-		f"Farbabweichung RGB: {report['color_deviation_channels']}; Figurpixel: {report['color_pixels']}",
+		f"Farbabweichung RGB: {report['color_deviation_channels']}; {'Objektpixel' if args.prop else 'Figurpixel'}: {report['color_pixels']}",
 		f'Farbtreue-Grenze: 12 / 255 pro Kanal; bei Cel nur informativ',
 		f'Laufzeit: {time.monotonic() - started:.2f} s',
 		'Studio-Test: ungetestet']
@@ -653,17 +683,22 @@ def arguments():
 	parser.add_argument('--output', type=Path, required=True)
 	parser.add_argument('--name', required=True)
 	parser.add_argument('--front', choices=('+X', '-X', '+Y', '-Y'), default='+X')
-	parser.add_argument('--size', type=int, default=1024)
+	parser.add_argument('--prop', action='store_true')
+	parser.add_argument('--size', type=int)
 	parser.add_argument('--head-share', type=float, default=0.25)
-	parser.add_argument('--max-tris', type=int, default=19000)
+	parser.add_argument('--max-tris', type=int)
 	parser.add_argument('--cel', action='store_true')
 	parser.add_argument('--cel-colors', type=int, default=16)
 	args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+	if args.size is None:
+		args.size = 512 if args.prop else 1024
+	if args.max_tris is None:
+		args.max_tris = 3000 if args.prop else 19000
 	if not args.input.is_file():
 		parser.error(f'Eingabedatei fehlt: {args.input}')
 	if args.input.suffix.lower() not in ('.fbx', '.glb'):
 		parser.error('Eingabe muss FBX oder GLB sein.')
-	if not 0 < args.head_share < 1 or not 16 <= args.size <= 1024 or not 1 <= args.max_tris <= 20000:
+	if (not args.prop and not 0 < args.head_share < 1) or not 16 <= args.size <= 1024 or not 1 <= args.max_tris <= 20000:
 		parser.error('Ungültige Werte für Kopfanteil, Texturgröße oder Dreieckslimit.')
 	if not args.name.strip() or any(c in args.name for c in '<>:"/\\|?*') or args.name in ('.', '..'):
 		parser.error('Name muss ein einfacher Dateiname sein.')
