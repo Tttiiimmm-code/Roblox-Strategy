@@ -7,6 +7,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
 local Config = require(Shared:WaitForChild("Config"))
 local Stages = require(Shared:WaitForChild("Stages"))
+local RunConfig = require(Shared:WaitForChild("RunConfig"))
 
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
@@ -63,8 +64,8 @@ local function buildTop(callbacks)
 	-- Aufgeben mit Bestätigung
 	local forfeit = button("Aufgeben", hud, "muted")
 	forfeit.Position = UDim2.fromOffset(12, 86)
-	forfeit.Size = UDim2.fromOffset(150, 34)
-	forfeit.TextSize = 15
+	forfeit.Size = UDim2.fromOffset(220, 52)
+	forfeit.TextSize = 18
 	local armed = false
 	forfeit.Activated:Connect(function()
 		if armed then
@@ -478,6 +479,7 @@ function UI.setTools(flags)
 	tools.endTurn.Visible = flags.controllable
 	tools.skip.Visible = flags.enemyPhase
 	UIKit.setButtonStyle(tools.skip, flags.speed == 3 and "disabled" or "primary")
+	tools.undo.Visible = not flags.run
 	tools.undo.Text = ("Rückblende %d"):format(flags.undoLeft)
 	UIKit.setButtonStyle(tools.undo, (flags.controllable and flags.canUndo and flags.undoLeft > 0) and "default" or "disabled")
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
@@ -520,13 +522,16 @@ end
 
 function UI.setPhase(state)
 	local isPlayer = state.phase == "Player"
-	turnLabel.Text = ("RUNDE %d  ·  ZIEL ≤ %d"):format(state.turn, state.turnGoal or 0)
+	turnLabel.Text = state.run and ("RUNDE %d"):format(state.turn) or ("RUNDE %d  ·  ZIEL ≤ %d"):format(state.turn, state.turnGoal or 0)
 	phaseLabel.Text = isPlayer and "Spielerphase" or "Gegnerphase"
 	phaseLabel.TextColor3 = isPlayer and THEME.player or THEME.enemy
 
 	local stage = Stages.get(state.stageId)
 	local diff = Stages.getDifficulty(state.difficulty)
-	if stage and diff then
+	if state.run then
+		local theme = RunConfig.THEMES[state.run.themeId]
+		stageLabel.Text = ("%s · Level %d / %d · %s %s"):format(RunConfig.REGION_NAMES[state.run.region], state.run.depth, state.run.totalLevels, theme.symbol, theme.name)
+	elseif stage and diff then
 		stageLabel.Text = ("%s  ·  <font color='#%s'>%s</font>"):format(stage.name, diff.color:ToHex(), diff.name)
 	end
 

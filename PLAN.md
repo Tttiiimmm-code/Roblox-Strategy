@@ -53,7 +53,7 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
   - `snapshot()` um Laufinfos fürs HUD ergänzen (z. B. `run = { depth, region, themeId, totalLevels }` während eines Lauf-Kampfs).
   - Fertig, wenn: statische Durchsicht aller Befehle inkl. Ablehnung ungültiger Wünsche; Ergebnis in Notizen.
 
-- [ ] 6. **Client-Oberfläche** – neues Modul `src/client/RunUI.luau` (über `UIKit`), Anbindung in `MenuUI.luau`/`Main.client.luau`
+- [x] 6. **Client-Oberfläche** – neues Modul `src/client/RunUI.luau` (über `UIKit`), Anbindung in `MenuUI.luau`/`Main.client.luau`
   - Thronsaal-Menü: Knopf **„Lauf starten“** → Teamwahl (3 aus der Sammlung; Karten wie im Prep-Bildschirm wiederverwenden, wo sinnvoll) → `StartRun`.
   - **Wahl-Bildschirm:** „Grasland – Level x / 5“, Team-Leiste (Name, KP-Balken, Gefallene ausgegraut), 2–3 Options-Karten (Themen-Symbol + Name, Belohnungs-Symbol + Menge), Knopf **„Aufgeben“** mit Bestätigung. Große Touch-Ziele (Handy).
   - Ist `current` gesetzt: statt Wahl ein Knopf **„Level erneut starten“** (`ResumeLevel`) mit kurzem Hinweis, dass das abgebrochene Level von vorne beginnt.
@@ -85,6 +85,8 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist – **Designfragen nicht selbst entscheiden**, der Nutzer will gefragt werden)
 
 ## Notizen (Codex)
+- Schritt 6: Bildschirmwechsel statisch nachvollzogen und mit RunUI-Stubs ausgeführt: Hub → Teamwahl → Wahl/Resume → Ladeoverlay → Kampf → Zwischen-/Endergebnis → Wahl bzw. Hub. Laufbildschirme zeigen keine Missionssterne/Schwierigkeit; Touch-Ziele vergrößert, tote Teammitglieder grau, Leon ohne Pflichtplatz. Die echten Main-Befehle zusätzlich mit Roblox-Stubs ausgeführt: ungültige Wünsche/Besitz, feste Wahl/Resume, Profilkopie, Sieg ohne Lord, Belohnungen ohne Sterne, Aufgeben/Niederlage sowie unveränderte Story-Lordregel – OK.
+- Ladefehler: ToLobby führt bei einem Lauf intern zurück zur Laufwahl mit festgehaltener Wahl/KP, nicht zum Hub-Zugang. Das Ladeoverlay prüft zusätzlich den RunSeed des Bretts; Kamera und Grid nutzen die serverseitige Karte. Studio-/Handy-Darstellung ist noch ungetestet.
 - Schritt 5: Befehlsgrenzen statisch nachvollzogen: Start nur in Lobby, exakte eigene Teams ohne Doppelungen, endliche Optionsindizes, feste Wahl, Resume nur außerhalb aktiver Kämpfe; StartStage/Retry/Recruit und Undo während des Laufs gesperrt. Aufgeben wartet laufende Aktionen ab; Besitzerprüfung bleibt aktiv. RunService mit echten Shared-Modulen geprüft (Start/Fehleingaben, Verschmelzungs-KP, Wiederaufnahme, Heilung/Tote, fünf Siege, Niederlage/Aufgeben) – OK. Laufwahl/Abschluss speichern geordnet und vor dem nächsten Übergang; Speicherung bleibt bei fehlendem Studio-API-Zugriff wie bisher nur im Speicher. Review durch Claude und Studio-Tests stehen aus.
 - Schritt 3: 15.000 Level- und 5.000 Optionsprüfungen grün; Rückfallquote 0 %. Teamgrößen 1–6 und erzwungener Rückfall geprüft.
 - Schritt 4: Echter ProfileStore.load mit DataStore-Stubs geprüft: altes Profil ohne Lauf, gültiger und gewählter Lauf sowie 16 defekte/manipulierte Stände (Seed, Tiefe, Gebiet, Team/Besitz, KP, Optionen/Belohnung, Index einschließlich NaN, Ertrag) – OK; ungültige Läufe werden verworfen.

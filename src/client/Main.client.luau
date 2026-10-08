@@ -12,6 +12,7 @@ local Grid = require(Shared:WaitForChild("Grid"))
 local UnitData = require(Shared:WaitForChild("UnitData"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Stages = require(Shared:WaitForChild("Stages"))
+local RunConfig = require(Shared:WaitForChild("RunConfig"))
 
 local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
 Atmosphere.set("hall") -- sofort, nicht erst wenn der erste Spielstand vom Server kommt
@@ -74,28 +75,34 @@ local function isMine()
 end
 
 local function finishLoading(failed)
-	loadingMission.connection:Disconnect()
+	local request = loadingMission
+	request.connection:Disconnect()
 	loadingMission = nil
 	MenuUI.setLoading(false)
 	if failed then
-		-- Bei unvollständiger Replikation einen bereits gestarteten eigenen Kampf verlassen.
 		if isMine() then
-			reopenMissions = true
+			reopenMissions = request.run == nil
 			send({ type = "ToLobby" })
-		else
+		elseif not request.run then
 			MenuUI.openLobby("missions")
 		end
-		UI.toast("Mission konnte nicht gestartet werden")
+		UI.toast(request.run and "Level konnte nicht geladen werden. Bitte erneut versuchen." or "Mission konnte nicht gestartet werden")
 	end
+	UI.setHudVisible(isMine() and state.phase ~= "Prep" and not state.result and not BattleScene.isPlaying())
 	UI.hideLoading()
 end
 
 local function missionReady(request)
-	if not request.receivedState or not isMine() or state.stageId ~= request.stageId
-		or state.difficulty ~= request.difficulty or state.phase ~= "Prep" or state.result then return false end
+	if not request.receivedState or not isMine() or state.busy or state.result then return false end
+	if request.run then
+		if not state.run or state.run.seed ~= request.run.seed or state.run.depth ~= request.run.depth or state.phase ~= "Player" then return false end
+	elseif state.stageId ~= request.stageId or state.difficulty ~= request.difficulty or state.phase ~= "Prep" then
+		return false
+	end
 	local board = workspace:FindFirstChild("Board")
 	local units = workspace:FindFirstChild("Units")
 	if not board or not units then return false end
+	if request.run and board:GetAttribute("RunSeed") ~= request.run.seed then return false end
 	for y = 1, Grid.height() do
 		for x = 1, Grid.width() do
 			local tile = board:FindFirstChild(("Tile_%d_%d"):format(x, y))
@@ -111,17 +118,26 @@ local function missionReady(request)
 	return true
 end
 
-local function startLoading(stageId, difficulty)
+local function startLoading(stageId, difficulty, runLevel)
 	if loadingMission then return false end
-	local stage = Stages.get(stageId)
-	local region = Stages.getRegion(stage.region)
+	local title, subtitle
+	if runLevel then
+		title = ("%s – Level %d / %d"):format(RunConfig.REGION_NAMES[runLevel.region], runLevel.depth, RunConfig.totalLevels())
+		local theme = RunConfig.THEMES[runLevel.themeId]
+		subtitle = theme.symbol .. "  " .. theme.name
+	else
+		local stage = Stages.get(stageId)
+		if not stage then return false end
+		local region = Stages.getRegion(stage.region)
+		title, subtitle = stage.name, region and region.name or ""
+	end
 	MenuUI.closeLobby()
 	MenuUI.setLoading(true)
-	UI.showLoading(stage.name, region and region.name or "")
+	UI.showLoading(title, subtitle)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { workspace.Terrain }
-	loadingMission = { stageId = stageId, difficulty = difficulty, started = os.clock(), terrainParams = params, receivedState = false }
+	loadingMission = { stageId = stageId, difficulty = difficulty, run = runLevel, started = os.clock(), terrainParams = params, receivedState = false }
 	loadingMission.connection = RunService.Heartbeat:Connect(function()
 		local request = loadingMission
 		if missionReady(request) then
@@ -133,12 +149,22 @@ local function startLoading(stageId, difficulty)
 	return true
 end
 
+local function requestRunLevel(index, resume)
+	local run = profile and profile.run
+	local option = run and run.options[index]
+	if not option then return end
+	local level = { seed = option.seed, depth = run.depth, region = run.region, themeId = option.themeId }
+	if startLoading(nil, nil, level) then
+		send(resume and { type = "ResumeLevel" } or { type = "ChooseLevel", index = index })
+	end
+end
+
 local function inBattle()
 	return isMine() and state.phase ~= "Prep"
 end
 
 local function canControl()
-	return inBattle() and state.phase == "Player" and not state.busy and not state.result
+	return not loadingMission and inBattle() and state.phase == "Player" and not state.busy and not state.result
 end
 
 local function makeFxPart(size, color, transparency)
@@ -305,6 +331,7 @@ local function updateTools()
 	end
 	UI.setTools({
 		back = mode == "Selected" or mode == "Menu" or mode == "Target" or inspectedId ~= nil,
+		run = state.run ~= nil,
 		undoLeft = state.undoLeft or 0,
 		canUndo = state.canUndo,
 		danger = dangerOn,
@@ -833,7 +860,7 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 					if strike.hit then impactHaptic(strike.crit, speed) end
 				end,
 				onDone = function()
-					UI.setHudVisible(inBattle() and not state.result)
+					UI.setHudVisible(not loadingMission and inBattle() and not state.result)
 					updateHint()
 					updateTools()
 				end,
@@ -893,15 +920,22 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
+	local changedBattle = state.mode == "Battle" and (not previous or previous.mode ~= "Battle"
+		or previous.stageId ~= state.stageId or previous.difficulty ~= state.difficulty
+		or (state.run and (not previous.run or previous.run.seed ~= state.run.seed or previous.run.depth ~= state.run.depth)))
+	if changedBattle and isMine() and state.run and not state.result and not loadingMission then
+		startLoading(nil, nil, state.run)
+	end
 	if BattleScene.isPlaying() and (not isMine() or state.result or state.phase == "Prep"
-		or (previous and (previous.stageId ~= state.stageId or previous.difficulty ~= state.difficulty))) then
+		or changedBattle) then
 		cameraEvent += 1
 		BattleScene.stop()
 	end
 	if loadingMission then loadingMission.receivedState = true end
 
-	if state.stageId and (not previous or previous.stageId ~= state.stageId or previous.mode ~= "Battle") then
-		Grid.setMap(Stages.get(state.stageId).map)
+	if changedBattle then
+		Grid.setMap(state.map or Stages.get(state.stageId).map)
+		UI.resetPhaseBanner()
 		local T = Config.TILE_SIZE
 		local size = Vector3.new(Grid.width() * T, 0, Grid.height() * T)
 		CameraController.setBounds(size / 2, size)
@@ -924,13 +958,13 @@ local function applyState(newState)
 	local atmosphere = "hall"
 	if isMine() then
 		local stage = Stages.get(state.stageId)
-		local region = stage and Stages.getRegion(stage.region)
+		local region = Stages.getRegion(state.run and state.run.region or (stage and stage.region))
 		atmosphere = region and region.atmosphere or "battle"
 	end
 	Atmosphere.set(atmosphere)
 	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub", { loop = not (isMine() and state.result ~= nil) })
 	resetSelection()
-	UI.setHudVisible(inBattle() and not state.result and not BattleScene.isPlaying())
+	UI.setHudVisible(not loadingMission and inBattle() and not state.result and not BattleScene.isPlaying())
 	if inBattle() then
 		UI.setPhase(state)
 	end
@@ -981,11 +1015,17 @@ local root = UI.init({
 		if isMine() and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
 	end,
 	onForfeit = function()
-		send({ type = "ToLobby" })
+		send({ type = state and state.run and "AbandonRun" or "ToLobby" })
 	end,
 })
 
 MenuUI.init(root, {
+	onStartRun = function(heroes) send({ type = "StartRun", heroes = heroes }) end,
+	onChooseLevel = function(index) requestRunLevel(index, false) end,
+	onResumeLevel = function()
+		if profile and profile.run then requestRunLevel(profile.run.current, true) end
+	end,
+	onAbandonRun = function() send({ type = "AbandonRun" }) end,
 	onStart = function(stageId, difficulty)
 		if startLoading(stageId, difficulty) then
 			send({ type = "StartStage", stageId = stageId, difficulty = difficulty })

@@ -175,6 +175,8 @@ local function setupBattle(stage, opts)
 	Grid.setMap(stage.map)
 	local boardStart = os.clock()
 	BoardBuilder.build(stage.region)
+	local board = workspace:FindFirstChild("Board")
+	if board then board:SetAttribute("RunSeed", opts.run and opts.run.seed) end
 	local boardDuration = os.clock() - boardStart
 
 	-- Eigene Helden werden erst bei "BeginBattle" aus dem Profil des Spielers aufgestellt
@@ -706,7 +708,7 @@ local function handleCommand(player, cmd)
 			return true
 		end
 	elseif t == "ToLobby" then
-		if state.run and not state.result then return false end
+		-- Bei Ladefehlern zurück zur Laufwahl; current und die KP vor dem Level bleiben erhalten.
 		if state.mode == "Battle" or state.result then
 			clearUnits()
 			enemySpeedBefore = nil
