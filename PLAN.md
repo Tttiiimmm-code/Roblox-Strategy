@@ -17,7 +17,7 @@ Branch: `feature/level-optik` (weiter)
   - **Diagnose:** Bei `Config.INPUT_DIAGNOSTICS = true` (oder eigenem `UI_DIAGNOSTICS`) einmalig und bei Änderung ausgeben: Viewport, TopbarInset, GuiInset, InsetArea, AbsolutePosition/Size von SafeArea, Root, Phasen-Banner, Hinweis-Kasten, UIScale-Wert – damit der Nutzer bei Bedarf Zahlen liefern kann.
   - Banner: Untertitel einzeilig im Banner (Fit), „Runde x“ sichtbar; Gelände-Kasten und Hinweis-Kasten vollständig.
 
-- [ ] 3. Abschluss: `scripts/check.ps1` = OK, `scripts/test-levelgen.ps1` = OK, Rojo-Build ok. Devlog-Nachtrag (#29). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
+- [x] 3. Abschluss: `scripts/check.ps1` = OK, `scripts/test-levelgen.ps1` = OK, Rojo-Build ok. Devlog-Nachtrag (#29). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Handy: Banner (Runde, Phase, Untertitel einzeilig), Hinweis-Kasten und Gelände-Kasten vollständig, knapp unter der Roblox-Leiste, nichts abgeschnitten
@@ -37,3 +37,4 @@ Branch: `feature/level-optik` (weiter)
 - INPUT_DIAGNOSTICS = true protokolliert [UI-Diagnose] einmal und bei Layoutänderungen inklusive Viewport, beider InsetArea-Rechtecke, Topbar-/GuiInset, SafeArea/Root, oberem Phasenbanner, Hinweis, Gelände und UIScale. Standard bleibt false.
 - 128 lokale Anschlussprüfungen mit aktuellen Modulen erfolgreich: 16 sichere Flächen einschließlich seitlicher/unterer Aussparungen und negativer InsetArea-Ursprünge, TextScaled-Umbruch-Nebenwirkung, spätere Property-Zuweisungen, expliziter Fit-Umbruch, Leisten-Fallback, Kamerawechsel, Bereinigung und Diagnose. Prüfhilfen in ignoriertem tools/. Kein Roblox-Renderer; manueller Studio-/Handytest und Claude-Review offen.
 - Sandbox-Prozessstart defekt; Projektbefehle gemäß Dauerfreigabe über automatische Prüfung außerhalb ausgeführt.
+- Abschluss: check.ps1 OK (33 Dateien), test-levelgen.ps1 OK (90.000 Level- und 5.000 Optionsprüfungen, 0 Rückfälle), Rojo-Build erfolgreich. Devlog #29 ergänzt; manuelle Tests bleiben offen.
