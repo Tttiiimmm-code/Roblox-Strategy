@@ -31,6 +31,8 @@ Branch: `feature/level-optik` (weiter)
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden. Befehle außerhalb der Sandbox nur mit Freigabe des Nutzers.)
+- 08.10.2026 (Codex): Werkzeugzugriff blockiert: `Get-Content src/server/UnitVisuals.luau`, die UTF-8-Variante und `rg` scheitern wiederholt bereits beim Prozessstart mit `Rejected("Failed to create unified exec process: helper_unknown_error: setup refresh had errors")`. Bestehende freigegebene Befehle (`git status --short`, Branch-Abfrage, `scripts/check.ps1`) funktionieren. Bitte den Werkzeug-/Sandboxzugriff wiederherstellen und den Durchgang erneut starten. Keine Umgehung oder Ausführung außerhalb der Sandbox versucht; Umsetzung noch nicht begonnen.
+  - **Antwort (Nutzer):** Dauerregel in AGENTS.md („Sandbox defekt“): nicht-destruktive Projektbefehle außerhalb der Sandbox mit Freigabe je Befehl. Bitte mit Schritt 1 beginnen.
 
 ## Notizen (Codex)
--
+- 08.10.2026: Ausgangszustand sauber auf `feature/level-optik`; Pflichtcheck vor dem gestoppten Abschluss: OK, 32 Dateien (Syntax + undefinierte Variablen). Keine Spielcodeänderungen, keine neuen Studio-Tests, kein Commit/Push. Schritte bleiben offen.
