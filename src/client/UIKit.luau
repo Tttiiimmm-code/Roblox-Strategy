@@ -2,6 +2,7 @@
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
@@ -474,20 +475,31 @@ function UIKit.heroCard(parent, heroId, props)
 end
 
 -- Ganze Oberfläche skaliert mit der Bildschirmgröße (Designgröße 1280×720)
-function UIKit.createRoot(gui)
-	-- Die unskalierte Fläche enthält bereits Roblox-Leiste und Geräte-Aussparungen.
-	local surface = make("Frame", { Name = "SafeArea", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
-	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, surface)
+function UIKit.createRoot(gui, maximumScale)
+	-- Der ScreenGui respektiert Geräte-Aussparungen; die Leiste wird vor dem Skalieren ausgespart.
+	local surface = make("Frame", { Name = "SafeArea", BackgroundTransparency = 1, Active = false }, gui)
+	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Active = false }, surface)
 	local scale = make("UIScale", {}, root)
 	local function update()
-		local available = surface.AbsoluteSize
+		local device = GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)
+		local core = GuiService:GetInsetArea(Enum.ScreenInsets.CoreUISafeInsets)
+		local available = Vector2.new(core.Width, core.Height)
 		if available.X <= 0 or available.Y <= 0 then return end
+		surface.Position = UDim2.fromOffset(core.Min.X - device.Min.X, core.Min.Y - device.Min.Y)
+		surface.Size = UDim2.fromOffset(available.X, available.Y)
 		-- Unter 360 sicheren Punkten Höhe darf die Oberfläche kleiner als 0,5 werden.
-		local s = math.min(available.X / 1280, available.Y / 720, 1.15)
+		local s = math.min(available.X / 1280, available.Y / 720, maximumScale or 1.15)
 		scale.Scale = s
-		root.Size = UDim2.fromScale(1 / s, 1 / s)
+		root.Size = UDim2.fromOffset(available.X / s, available.Y / s)
 	end
-	surface:GetPropertyChangedSignal("AbsoluteSize"):Connect(update)
+	local connections = {
+		gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(update),
+		GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(update),
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update),
+	}
+	surface.Destroying:Connect(function()
+		for _, connection in connections do connection:Disconnect() end
+	end)
 	update()
 	return root
 end

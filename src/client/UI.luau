@@ -48,8 +48,11 @@ local function buildTop(callbacks)
 	}, pill)
 	stageLabel = label({
 		Position = UDim2.fromOffset(8, 58), Size = UDim2.new(1, -16, 0, 20),
-		TextSize = 14, TextColor3 = THEME.dim, TextStrokeTransparency = 0.6,
+		TextSize = 14, TextColor3 = THEME.dim, TextStrokeTransparency = 0.6, TextWrapped = false,
 	}, pill)
+	UIKit.fitText(stageLabel, 9)
+	-- TextScaled aktiviert beim Setzen den Umbruch wieder.
+	stageLabel.TextWrapped = false
 
 	-- Kontext-Hinweis oben links
 	local hints = make("Frame", {
@@ -389,8 +392,8 @@ end
 -- Öffentliche API ----------------------------------------------------------------
 local function buildLoading(playerGui)
 	local gui = make("ScreenGui", {
-		Name = "MissionLoading", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets, DisplayOrder = 1000,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None,
+		Name = "MissionLoading", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets, DisplayOrder = 1000,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true,
 	}, playerGui)
 	loading.frame = make("CanvasGroup", {
 		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
@@ -447,8 +450,8 @@ end
 function UI.init(callbacks)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local gui = make("ScreenGui", {
-		Name = "TacticsUI", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None,
+		Name = "TacticsUI", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true,
 	}, playerGui)
 	root = UIKit.createRoot(gui)
 	hud = make("Frame", { Name = "Hud", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, root)

@@ -70,22 +70,16 @@ function BattleScene.play(info)
 	active = scene
 	-- Das HUD wird währenddessen versteckt; Meldungen im HUD-Gui bleiben darüber.
 	local gui = make("ScreenGui", {
-		Name = "BattleScene", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, DisplayOrder = -1, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		Name = "BattleScene", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true,
+		DisplayOrder = -1, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	}, Players.LocalPlayer:WaitForChild("PlayerGui"))
 	local group = make("CanvasGroup", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, GroupTransparency = 1 }, gui)
-	local surface = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, group)
-	local root = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ClipsDescendants = true }, surface)
-	local scale = make("UIScale", {}, root)
-	local function resize()
-		local size = surface.AbsoluteSize
-		if size.X <= 0 or size.Y <= 0 then return end
-		local value = math.min(size.X / 1280, size.Y / 720)
-		scale.Scale = value
-		root.Size = UDim2.fromScale(1 / value, 1 / value)
-	end
-	table.insert(scene.connections, surface:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize))
-	resize()
+	local root = UIKit.createRoot(group, 1)
+	root.BackgroundTransparency = 0
+	root.BackgroundColor3 = Color3.new(1, 1, 1)
+	root.BorderSizePixel = 0
+	root.ClipsDescendants = true
 	local function tween(object, time, props)
 		local animation = TweenService:Create(object, TweenInfo.new(time / speed), props)
 		table.insert(scene.tweens, animation)
