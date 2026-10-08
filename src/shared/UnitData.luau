@@ -85,6 +85,11 @@ UnitData.Heroes = {
 		stats = { hp = 21, str = 6, mag = 0, skl = 5, spd = 6, lck = 4, def = 6, res = 2 } },
 	selina = { name = "Selina", class = "Mage", weapon = "Fire", rarity = 4,
 		stats = { hp = 16, str = 1, mag = 7, skl = 5, spd = 6, lck = 5, def = 2, res = 6 } },
+	-- Platzhalter – Design/Name vom Nutzer
+	starter_mage = { name = "Magierin", class = "Mage", weapon = "Fire", rarity = 3, recruitable = false,
+		stats = { hp = 16, str = 0, mag = 6, skl = 6, spd = 5, lck = 4, def = 2, res = 5 } },
+	starter_knight = { name = "Ritter", class = "Cavalier", weapon = "IronLance", rarity = 3, recruitable = false,
+		stats = { hp = 21, str = 6, mag = 0, skl = 5, spd = 6, lck = 4, def = 6, res = 2 } },
 	-- ★3
 	tobi = { name = "Tobi", class = "Archer", weapon = "IronBow", rarity = 3,
 		stats = { hp = 17, str = 5, mag = 0, skl = 6, spd = 6, lck = 4, def = 4, res = 2 } },
@@ -160,8 +165,8 @@ UnitData.Heroes.aurelia.hairAccessory = 398673196
 UnitData.Heroes.ida.hairAccessory = 398673196
 UnitData.Heroes.greta.hairAccessory = 1708329071
 
--- Startaufstellung neuer Profile; weitere Helden über Story (Stages.unlockHero) und Rekrutierung
-UnitData.STARTER_HEROES = { "leon", "bruno", "tobi" }
+-- Startaufstellung neuer Profile; weitere Helden über Rekrutierung
+UnitData.STARTER_HEROES = { "leon", "starter_mage", "starter_knight" }
 
 -- Gegnertypen. ai: "aggressive" (rückt vor) oder "stationary" (greift nur in Reichweite an)
 UnitData.Enemies = {

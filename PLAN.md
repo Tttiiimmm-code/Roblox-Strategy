@@ -10,7 +10,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
 
 ## Schritte
 
-- [ ] 1. **Starthelden** – `src/shared/UnitData.luau`
+- [x] 1. **Starthelden** – `src/shared/UnitData.luau`
   - Zwei neue Helden als **Platzhalter**: `starter_mage` (Klasse `Mage`, Waffe `Fire`) und `starter_knight` (Klasse `Cavalier`, Waffe `IronLance`), Anzeigenamen vorläufig „Magierin“ und „Ritter“, Seltenheit vorläufig ★3, `recruitable = false`, Werte im Rahmen der vorhandenen ★3-Helden, Kommentar „Platzhalter – Design/Name vom Nutzer“. Optik über die vorhandenen Chibi-/Mesh-Wege (fehlendes Modell → Chibi).
   - `STARTER_HEROES = { "leon", "starter_mage", "starter_knight" }`. Bruno/Tobi bleiben im Spiel und im Gacha-Pool; bestehende Profile behalten sie (normalize entfernt nichts).
   - Fertig, wenn: neues Profil hat genau diese drei; altes Profil bekommt die zwei neuen dazu.
