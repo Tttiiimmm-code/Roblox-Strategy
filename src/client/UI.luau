@@ -540,17 +540,16 @@ end
 
 function UI.setPhase(state)
 	local isPlayer = state.phase == "Player"
-	turnLabel.Text = state.run and ("RUNDE %d"):format(state.turn) or ("RUNDE %d  ·  ZIEL ≤ %d"):format(state.turn, state.turnGoal or 0)
+	turnLabel.Text = ("RUNDE %d"):format(state.turn)
 	phaseLabel.Text = isPlayer and "Spielerphase" or "Gegnerphase"
 	phaseLabel.TextColor3 = isPlayer and THEME.player or THEME.enemy
 
 	local stage = Stages.get(state.stageId)
-	local diff = Stages.getDifficulty(state.difficulty)
 	if state.run then
 		local theme = RunConfig.THEMES[state.run.themeId]
 		stageLabel.Text = ("%s · Level %d / %d · %s %s"):format(RunConfig.REGION_NAMES[state.run.region], state.run.depth, state.run.totalLevels, theme.symbol, theme.name)
-	elseif stage and diff then
-		stageLabel.Text = ("%s  ·  <font color='#%s'>%s</font>"):format(stage.name, diff.color:ToHex(), diff.name)
+	elseif stage then
+		stageLabel.Text = stage.name
 	end
 
 	local key = state.phase .. state.turn

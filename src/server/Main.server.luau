@@ -1,4 +1,4 @@
--- Server: Kartenauswahl, Aufstellung, Kampfablauf, Gegnerphase, Sterne & Belohnungen
+-- Server: Tutorial, Läufe, Kampfablauf und Gegnerphase
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -41,7 +41,7 @@ local GetProfile = remote("RemoteFunction", "GetProfile")
 -- Zustand ------------------------------------------------------------------
 local unitsFolder = BoardBuilder.ensureUnitsFolder()
 UnitVisuals.init(unitsFolder)
-Grid.setMap(Stages.List[1].map) -- Kulisse für die Kartenauswahl
+Grid.setMap(Stages.List[1].map) -- Kulisse vor dem ersten Kampf
 BoardBuilder.build()
 HubBuilder.build()
 task.spawn(UnitVisuals.buildHeroTemplates)
@@ -62,7 +62,6 @@ local function snapshot()
 	return {
 		mode = state.mode,
 		stageId = state.stageId,
-		difficulty = state.difficulty,
 		units = state.units,
 		phase = state.phase,
 		turn = state.turn,
@@ -74,7 +73,6 @@ local function snapshot()
 		undoLeft = state.undoLeft,
 		canUndo = #undoStack > 0,
 		lost = state.lost,
-		turnGoal = state.turnGoal,
 		maxUnits = state.maxUnits,
 		ownerUserId = state.ownerUserId,
 		ownerName = state.ownerName,
@@ -103,7 +101,6 @@ local function profilePayload(profile)
 	return {
 		gold = profile.gold,
 		gems = profile.gems,
-		stars = profile.stars,
 		heroes = profile.heroes,
 		pity = profile.pity,
 		settings = profile.settings,
@@ -170,7 +167,6 @@ end
 
 local function setupBattle(stage, opts)
 	enemySpeedBefore = nil
-	local diff = opts.difficulty and Stages.getDifficulty(opts.difficulty)
 	clearUnits()
 	Grid.setMap(stage.map)
 	local boardStart = os.clock()
@@ -179,14 +175,13 @@ local function setupBattle(stage, opts)
 	if board then board:SetAttribute("RunSeed", opts.run and opts.run.seed) end
 	local boardDuration = os.clock() - boardStart
 
-	-- Eigene Helden werden erst bei "BeginBattle" aus dem Profil des Spielers aufgestellt
+	-- Eigene Helden werden nach dem Brettaufbau aufgestellt
 	state = {
 		mode = "Battle",
 		ownerUserId = state.ownerUserId,
 		ownerName = state.ownerName,
 		ownerPlayer = state.ownerPlayer,
 		stageId = opts.stageId,
-		difficulty = opts.difficulty,
 		run = opts.run,
 		map = stage.map,
 		units = {},
@@ -196,32 +191,20 @@ local function setupBattle(stage, opts)
 		busy = true, -- Aufbau sperren, bis Gegner und Helden bereit sind
 		speed = state.speed,
 		battleScenes = state.battleScenes,
-		undoLeft = diff and diff.undo or 0,
+		undoLeft = 0,
 		lost = 0,
-		turnGoal = diff and Stages.turnGoal(stage, diff) or nil,
-		maxUnits = diff and Stages.unitLimit(stage, diff) or #stage.slots,
+		maxUnits = #stage.slots,
 	}
 
 	local unitsStart = os.clock()
 	local enemies = table.clone(stage.enemies)
-	if diff and diff.extraEnemies then
-		for _, e in stage.hardEnemies do
-			table.insert(enemies, e)
-		end
-	end
 	for _, e in enemies do
-		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level, diff and diff.enemyBonus)
+		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level)
 		state.units[unit.id] = unit
 		UnitVisuals.create(unit)
 	end
 	print(("Missionsaufbau %s: Brett %.0f ms, Figuren %.0f ms"):format(opts.stageId or "Lauf", boardDuration * 1000, (os.clock() - unitsStart) * 1000))
 
-end
-
-local function setupStage(stageId, diffId)
-	setupBattle(Stages.get(stageId), { stageId = stageId, difficulty = diffId })
-	state.busy = false
-	broadcast()
 end
 
 -- Held aus dem Profil auf ein Startfeld stellen (gespeicherte Werte, Level, Verschmelzungen)
@@ -296,54 +279,10 @@ local function finishRunBattle()
 	sendProfile(player)
 end
 
--- Ergebnis: Sterne zählen, Gold + Edelsteine für neue Sterne vergeben, speichern
+-- Tutorial-Abschluss wird im nächsten Planschritt an das Profil angebunden.
 local function finishBattle()
-	if state.run then
-		finishRunBattle()
-		return
-	end
-	local stage = Stages.get(state.stageId)
-	local diff = Stages.getDifficulty(state.difficulty)
-	local victory = state.result == "Victory"
-	local done = { victory, victory and state.lost == 0, victory and state.turn <= state.turnGoal }
-	local stars = 0
-	for _, d in done do
-		if d then
-			stars += 1
-		end
-	end
-	state.resultInfo = { victory = victory, done = done, stars = stars }
-
-	local gold = victory and math.floor(stage.baseGold * diff.rewardMul * (1 + 0.25 * (stars - 1)))
-		or math.floor(stage.baseGold * 0.1)
-	for _, player in Players:GetPlayers() do
-		local profile = ProfileStore.get(player)
-		if profile then
-			local previous = Stages.bestStars(profile, stage.id, diff.id)
-			local newStars = math.max(0, stars - previous)
-			local gems = newStars * diff.gemsPerStar
-			profile.gold += gold
-			profile.gems += gems
-			if stars > previous then
-				profile.stars[stage.id] = profile.stars[stage.id] or {}
-				profile.stars[stage.id][diff.id] = stars
-			end
-
-			-- Helden-Fortschritt gehört dem Spieler, der den Trupp aufgestellt hat
-			if player.UserId == state.ownerUserId then
-				writeBackHeroes(profile)
-			end
-			-- Story: neuer Held beim ersten Sieg
-			local newHero
-			if victory and stage.unlockHero and not profile.heroes[stage.unlockHero] then
-				profile.heroes[stage.unlockHero] = ProfileStore.newHeroEntry()
-				newHero = stage.unlockHero
-			end
-
-			ProfileStore.save(player)
-			sendProfile(player, { reward = { gold = gold, gems = gems, newStars = newStars, newHero = newHero } })
-		end
-	end
+	if state.run then finishRunBattle(); return end
+	state.resultInfo = { victory = state.result == "Victory" }
 end
 
 local function checkResult()
@@ -663,7 +602,7 @@ local function handleCommand(player, cmd)
 	end
 
 	-- Während eines Kampfes darf nur dessen Besitzer Kampfbefehle senden
-	local battleCommand = t ~= "StartStage" and t ~= "Recruit"
+	local battleCommand = t ~= "Recruit"
 	if state.mode == "Battle" and battleCommand and state.ownerUserId ~= player.UserId then
 		return false
 	end
@@ -695,27 +634,6 @@ local function handleCommand(player, cmd)
 		state.busy = true
 		beginRunLevel(player, profile)
 		return true
-	elseif t == "StartStage" then
-		if profile and profile.run then return false end
-		local index = Stages.indexOf(cmd.stageId)
-		local profile = ProfileStore.get(player)
-		local free = state.mode == "Lobby" or (state.result and state.ownerUserId == player.UserId)
-		if free and index and profile and Stages.isUnlocked(profile, index, cmd.difficulty) then
-			state.ownerPlayer = player
-			state.busy = true
-			setupStage(cmd.stageId, cmd.difficulty)
-			state.ownerUserId = player.UserId -- nur dieser Spieler steuert den Kampf
-			state.ownerName = player.DisplayName
-			state.battleScenes = profile.settings.battleScenes
-			broadcast()
-			return true
-		end
-	elseif t == "Retry" then
-		if not state.run and not (profile and profile.run) and state.result and state.stageId then
-			state.busy = true
-			setupStage(state.stageId, state.difficulty)
-			return true
-		end
 	elseif t == "ToLobby" then
 		-- Bei Ladefehlern zurück zur Laufwahl; current und die KP vor dem Level bleiben erhalten.
 		if state.mode == "Battle" or state.result then
@@ -753,33 +671,6 @@ local function handleCommand(player, cmd)
 		ProfileStore.save(player)
 		sendProfile(player, { recruitResult = results })
 		return true
-	elseif state.mode == "Battle" and state.phase == "Prep" then
-		if t == "BeginBattle" then
-			local profile = ProfileStore.get(player)
-			if not profile or type(cmd.heroes) ~= "table" then
-				return false
-			end
-			-- Gewählte Helden prüfen: im Besitz, keine Doppelten, Leon immer dabei und vorne
-			local chosen, seen = { "leon" }, { leon = true }
-			for _, id in cmd.heroes do
-				if type(id) == "string" and not seen[id] and profile.heroes[id] and UnitData.Heroes[id]
-					and #chosen < state.maxUnits then
-					seen[id] = true
-					table.insert(chosen, id)
-				end
-			end
-			local stage = Stages.get(state.stageId)
-			local unitsStart = os.clock()
-			for i, heroId in chosen do
-				local slot = stage.slots[i]
-				spawnHero(heroId, profile.heroes[heroId], slot.x, slot.y)
-			end
-			print(("Missionsaufbau %s (Helden): Brett 0 ms, Figuren %.0f ms"):format(state.stageId, (os.clock() - unitsStart) * 1000))
-			state.ownerUserId = player.UserId
-			state.phase = "Player"
-			broadcast()
-			return true
-		end
 	elseif state.mode == "Battle" and state.phase == "Player" and not state.result then
 		if t == "Undo" then
 			if not state.run and state.undoLeft > 0 and #undoStack > 0 then

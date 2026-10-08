@@ -59,7 +59,7 @@ local inspectedId = nil
 local dangerOn = false
 local loadingMission = nil
 local resetSelection -- weiter unten definiert; finishLoading braucht es
-local reopenMissions = false
+
 
 local overlays = {}
 local dangerOverlays = {}
@@ -83,10 +83,7 @@ local function finishLoading(failed)
 	MenuUI.setLoading(false)
 	if failed then
 		if isMine() then
-			reopenMissions = request.run == nil
 			send({ type = "ToLobby" })
-		elseif not request.run then
-			MenuUI.openLobby("missions")
 		end
 		UI.toast(request.run and "Level konnte nicht geladen werden. Bitte erneut versuchen." or "Mission konnte nicht gestartet werden")
 	end
@@ -101,7 +98,7 @@ local function missionReady(request)
 	if not request.receivedState or not isMine() or state.busy or state.result then return false end
 	if request.run then
 		if not state.run or state.run.seed ~= request.run.seed or state.run.depth ~= request.run.depth or state.phase ~= "Player" then return false end
-	elseif state.stageId ~= request.stageId or state.difficulty ~= request.difficulty or state.phase ~= "Prep" then
+	elseif state.stageId ~= request.stageId or state.phase ~= "Player" then
 		return false
 	end
 	local board = workspace:FindFirstChild("Board")
@@ -130,7 +127,7 @@ local function missionReady(request)
 	return true
 end
 
-local function startLoading(stageId, difficulty, runLevel)
+local function startLoading(stageId, runLevel)
 	if loadingMission then return false end
 	local title, subtitle
 	if runLevel then
@@ -146,7 +143,7 @@ local function startLoading(stageId, difficulty, runLevel)
 	MenuUI.closeLobby()
 	MenuUI.setLoading(true)
 	UI.showLoading(title, subtitle)
-	loadingMission = { stageId = stageId, difficulty = difficulty, run = runLevel, started = os.clock(), receivedState = false }
+	loadingMission = { stageId = stageId, run = runLevel, started = os.clock(), receivedState = false }
 	loadingMission.connection = RunService.Heartbeat:Connect(function()
 		local request = loadingMission
 		if missionReady(request) then
@@ -163,7 +160,7 @@ local function requestRunLevel(index, resume)
 	local option = run and run.options[index]
 	if not option then return end
 	local level = { seed = option.seed, depth = run.depth, region = run.region, themeId = option.themeId }
-	if startLoading(nil, nil, level) then
+	if startLoading(nil, level) then
 		send(resume and { type = "ResumeLevel" } or { type = "ChooseLevel", index = index })
 	end
 end
@@ -964,10 +961,10 @@ local function applyState(newState)
 	local previous = state
 	state = newState
 	local changedBattle = state.mode == "Battle" and (not previous or previous.mode ~= "Battle"
-		or previous.stageId ~= state.stageId or previous.difficulty ~= state.difficulty
+		or previous.stageId ~= state.stageId
 		or (state.run and (not previous.run or previous.run.seed ~= state.run.seed or previous.run.depth ~= state.run.depth)))
 	if changedBattle and isMine() and state.run and not state.result and not loadingMission then
-		startLoading(nil, nil, state.run)
+		startLoading(nil, state.run)
 	end
 	if BattleScene.isPlaying() and (not isMine() or state.result or state.phase == "Prep"
 		or changedBattle) then
@@ -1015,10 +1012,7 @@ local function applyState(newState)
 	updateTools()
 	redrawDanger()
 	MenuUI.update(state, profile)
-	if reopenMissions and not isMine() then
-		reopenMissions = false
-		MenuUI.openLobby("missions")
-	end
+
 end
 
 ProfileUpdate.OnClientEvent:Connect(function(newProfile)
@@ -1069,19 +1063,8 @@ MenuUI.init(root, {
 		if profile and profile.run then requestRunLevel(profile.run.current, true) end
 	end,
 	onAbandonRun = function() send({ type = "AbandonRun" }) end,
-	onStart = function(stageId, difficulty)
-		if startLoading(stageId, difficulty) then
-			send({ type = "StartStage", stageId = stageId, difficulty = difficulty })
-		end
-	end,
-	onBegin = function(heroIds)
-		send({ type = "BeginBattle", heroes = heroIds })
-	end,
 	onRecruit = function(bannerId, count)
 		send({ type = "Recruit", bannerId = bannerId, count = count })
-	end,
-	onRetry = function()
-		if state and startLoading(state.stageId, state.difficulty) then send({ type = "Retry" }) end
 	end,
 	onLobby = function()
 		send({ type = "ToLobby" })

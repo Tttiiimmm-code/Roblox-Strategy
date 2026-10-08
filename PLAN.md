@@ -15,7 +15,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
   - `STARTER_HEROES = { "leon", "starter_mage", "starter_knight" }`. Bruno/Tobi bleiben im Spiel und im Gacha-Pool; bestehende Profile behalten sie (normalize entfernt nichts).
   - Fertig, wenn: neues Profil hat genau diese drei; altes Profil bekommt die zwei neuen dazu.
 
-- [ ] 2. **Missionen auf Tutorial reduzieren** – `src/shared/Stages.luau`
+- [x] 2. **Missionen auf Tutorial reduzieren** – `src/shared/Stages.luau`
   - `s1`/`s2` werden `tutorial1`/`tutorial2` (eigene IDs, eigene kleine Karten; `unlockHero` entfällt). **Tutorial 1:** kleine Karte, nur Leon (1 Startfeld), 1–2 schwache Banditen, so gebaut, dass die geführte Abfolge sicher klappt. **Tutorial 2:** Leon + Magierin + Ritter (3 Startfelder), Gegner so gestellt, dass (a) die Magierin aus 2 Feldern angreifen kann, ohne Gegenangriff eines Nahkämpfers, (b) der Ritter mit großer Bewegung einen weit entfernten Gegner (z. B. Bogenschütze) erreicht, den Fußtruppen nicht erreichen.
   - `s3`–`s5` entfernen. `Difficulties` und Sterne-Helfer entfernen bzw. auf das reduzieren, was Tutorial braucht (feste Werte, kein Rundenziel, keine Sterne). Alle Verwendungen anpassen (MenuUI, Main.server, Main.client).
   - Fertig, wenn: keine Referenz mehr auf Schwierigkeit/Sterne außer ggf. toleriertem altem Profilfeld `stars` (bleibt unberührt gespeichert oder wird in normalize verworfen – in Notizen begründen).
@@ -58,4 +58,6 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+- Schritt 2 entfernt auch die alten Start-/Prep-Pfade und Missionsmenüs, damit keine Aufrufe entfernter Sterne-/Schwierigkeits-Helfer verbleiben. Tutorial-Profilablauf und neue Oberfläche folgen in Schritten 3–5.
+- Das alte Profilfeld `stars` bleibt unverändert gespeichert, wird aber nicht mehr an den Client gesendet oder im Spiel ausgewertet.
 -

@@ -367,13 +367,6 @@ function UIKit.rarityStars(rarity)
 		r.hex, string.rep("★", rarity), string.rep("★", 5 - rarity))
 end
 
--- Sterne einer Mission: gefüllt gold, leer dunkel
-function UIKit.goalStars(count, max)
-	max = max or 3
-	return ("<font color='%s'>%s</font><font color='#4a5068'>%s</font>"):format(
-		UIKit.GOLD_HEX, string.rep("★", count), string.rep("★", max - count))
-end
-
 -- 3D-Kopie einer Figur in einem ViewportFrame (Porträt)
 function UIKit.portrait(viewport, camera, source, zoomOut)
 	for _, child in viewport:GetChildren() do
