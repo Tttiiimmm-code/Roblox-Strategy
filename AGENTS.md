@@ -22,7 +22,7 @@
 - **Generator prüfen:** `powershell -ExecutionPolicy Bypass -File scripts/test-levelgen.ps1` (15.000 Levelprüfungen ohne Roblox).
 - **Spieldatei bauen:** `tools/rojo.exe build default.project.json -o TacticsGame.rbxlx`
 - **Live-Sync für Studio:** `tools/rojo.exe serve default.project.json` (Port 34872; in Studio als Adresse **`127.0.0.1`** eintragen, nicht `localhost`)
-- **Automatische Tests:** gibt es noch keine. Spielverhalten wird **manuell in Roblox Studio** vom Nutzer getestet (siehe unten).
+- **Automatische Tests:** Generatorprüfung über scripts/test-levelgen.ps1; Spielverhalten und Darstellung werden **manuell in Roblox Studio** vom Nutzer getestet (siehe unten).
 
 ## Arbeitsteilung
 | Rolle | Wer | Aufgabe |

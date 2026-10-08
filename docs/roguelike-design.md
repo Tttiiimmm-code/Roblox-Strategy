@@ -1,6 +1,6 @@
 # Design: Roguelike-Läufe
 
-Stand: 08.10.2026 – Entscheidungen des Nutzers, **noch nicht umgesetzt**. Grundlage für spätere Pläne in Etappen. Offene Punkte stehen am Ende und werden vor der jeweiligen Etappe mit dem Nutzer geklärt.
+Stand: 08.10.2026 – Entscheidungen des Nutzers. **Phase 1 umgesetzt**, Studio-/Handy-Test und Claude-Review noch offen; Phasen 2–7 folgen. Grundlage für spätere Pläne in Etappen. Offene Punkte stehen am Ende und werden vor der jeweiligen Etappe mit dem Nutzer geklärt.
 
 ## Kernidee
 Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vor jedem Level wählt man aus 2–3 zufällig erzeugten Optionen. Die **Helden- und Waffensammlung wächst dauerhaft** (Metaprogression): Jeder Lauf macht stärker, auch ein gescheiterter.
@@ -79,13 +79,22 @@ Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vo
 
 ## Phasen der Umsetzung
 Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein zentrales Konfigurationsmodul.
-1. **Lauf-Grundgerüst (Grasland):** Lauf starten/aufgeben/fortsetzen, Lauf-Speicherstand im Profil, Team aus 3 Helden, Seed-Generator mit Bausteinen und Lösbarkeitsprüfung, Levelwahl mit 2–3 Optionen (Gegnerschwerpunkt + Belohnung), Teilheilung, Tote bleiben tot, Niederlage wenn alle tot, Belohnung pro Level.
+1. **Lauf-Grundgerüst (Grasland) – umgesetzt:** Lauf starten/aufgeben/fortsetzen, Lauf-Speicherstand im Profil, Team aus 3 Helden, Seed-Generator mit Bausteinen und Lösbarkeitsprüfung, Levelwahl mit 2–3 Optionen (Gegnerschwerpunkt + Belohnung), Teilheilung, Tote bleiben tot, Niederlage wenn alle tot, Belohnung pro Level.
 2. **Tutorial-Umbau:** Mission 1 + 2 als Pflicht-Tutorial mit Überspringen-Abfrage, übrige Missionen, Sterne und Schwierigkeitsstufen entfernen, Lauf-Knopf im Hub.
 3. **Bosse + Lager:** Miniboss (Level 3) und Gebietsboss (Level 5), Lager als Option (garantiert vor Bossen), volle Heilung, Teamwechsel über Kaserne, Wiederbeleben, Teamplatz +1 nach Boss.
 4. **Beute + Händler:** Waffensammlung, Waffen als Level-/Boss-Belohnung, Händler, Rückblende als Item, Notfall-Beschwörung (Wahrscheinlichkeiten sichtbar).
 5. **Sumpf + Gefahren-System:** Matsch/Gift, KI meidet Gefahren, weitere Leveltypen (Überleben, Ziel erreichen/verteidigen, Boss besiegen), Gefahren-Symbole in der Wahl.
 6. **Eis + Vulkan:** Schneesturm-Nebel (serverseitig verdeckt), Lava, angekündigter Steinschlag, wachsende Bretter.
 7. **Punktzahl + Ränge:** Punktzahl, Bestenliste (global, Freunde, Rekord), Ränge nach Sieg, Weiterspielen nach Level 20.
+
+## Stand Phase 1
+- Fünf Grasland-Level aus zwölf spiegelbaren 5×4-Bausteinen, Brett 10×8; jeder Lauf hat einen Server-Seed. Wahl und Karten sind deterministisch.
+- Drei frei gewählte eigene Helden; Leon ist optional. Nach einem Sieg 30 % der Max-KP als Teilheilung (auf ganze KP aufgerundet, höchstens volle KP); Gefallene bleiben tot. Kein Belohnungsabzug bei Niederlage/Aufgabe, Heldenfortschritt wird beim Kampfabschluss/Aufgeben übernommen.
+- Lauf und feste Levelwahl werden im Profil gespeichert. Wiederbeitritt zeigt direkt die Wahl; ein abgebrochenes Level startet mit demselben Seed und den KP vor dem Level neu. Fehlerhafte/unbekannte Speicherstände werden verworfen.
+- Bestehende Weltkarte, Missionen, Sterne und Schwierigkeiten bleiben in Phase 1 spielbar. Bosse, Lager, zusätzliche Gebiete, Waffenbeute und Punktzahl folgen in späteren Phasen.
+- **Alle Laufwerte WIP in src/shared/RunConfig.luau:** 3 Starthelden (Startfelder bis 6 vorbereitet), 5 Level je Gebiet, 2–3 Optionen, 60 % Gegnerschwerpunkt (auf ganze Gegner aufgerundet), Gegnerzahl 4 + Tiefe, Gegnerlevel 1 + Tiefe. Goldoption: 80 + 40 × Tiefe (120–280); Edelsteinoption: 4 + 2 × Tiefe (6–14). Mindestabstand 4 Felder, höchstens 25 % unpassierbare Felder, 50 Erzeugungsversuche vor offener Rückfallkarte.
+- Generatorprüfung: powershell -ExecutionPolicy Bypass -File scripts/test-levelgen.ps1; 15.000 Level- und 5.000 Optionsprüfungen, Rückfallquote 0 %. Stubs prüfen zusätzlich Profil- und Laufübergänge; echte Darstellung/Replikation bleibt manuell zu testen.
+- **Vor dem Studio-/Handy-Test Servergröße auf 1 setzen** (Roblox-Spieleinstellungen). Diese Einstellung ist nicht per Spielcode setzbar; das Spiel verwendet weiterhin ein gemeinsames Brett pro Server.
 
 ## Offene Punkte (vor der jeweiligen Etappe klären)
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
