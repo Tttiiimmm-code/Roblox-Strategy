@@ -39,7 +39,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
   - Thronsaal: „Lauf starten“ (erst nach `done`/`skipped`), **„Tutorial wiederholen“**; Kaserne/Rekrutierung unverändert. Lauf-Teamwahl zeigt die neuen Starter.
   - Fertig, wenn: keine Sterne/Schwierigkeit mehr sichtbar; Texte handytauglich (UIKit-Fit-Regeln aus #29).
 
-- [ ] 6. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 2 umgesetzt, Platzhalter nennen), Charakter-Pipeline: Starter-Magierin/-Ritter als neue Figuren mit IDs `starter_mage`/`starter_knight` in der Figurenliste. `scripts/check.ps1`, `scripts/test-levelgen.ps1`, Rojo-Build. Devlog **#30** „Roguelike Phase 2 – Tutorial“. Committen, pushen, `.handoff/status` = `fertig`.
+- [x] 6. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 2 umgesetzt, Platzhalter nennen), Charakter-Pipeline: Starter-Magierin/-Ritter als neue Figuren mit IDs `starter_mage`/`starter_knight` in der Figurenliste. `scripts/check.ps1`, `scripts/test-levelgen.ps1`, Rojo-Build. Devlog **#30** „Roguelike Phase 2 – Tutorial“. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Neues Profil (Studio, DataStore leer bzw. ohne API-Zugriff): Willkommensfenster → „Tutorial spielen“
@@ -58,9 +58,9 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+- Abschluss: Pflichtcheck OK (35 Dateien), Tutorial-Stubs OK (168 Prüfungen), lokale UI-Stubs OK (179 Anschlussprüfungen), Generator OK (90.000 Level-/5.000 Optionsprüfungen, 0 Rückfälle), Rojo-Build erfolgreich. Devlog #30 und beide Design-Dokumente aktualisiert. Studio/Handy ungetestet; manuelle Liste bleibt offen.
 - Schritt 5: Willkommensfenster, Skip-Bestätigung, Tutorial-Ergebnis/Weiter/Neustart, Lauf-Sperre und Wiederholung im Thronmenü ergänzt. Der alte Missionszugang am Kriegstisch öffnet jetzt die Lauf-Teamwahl; Kaserne/Rekrutierung unverändert. Texte über UIKit-Fit bzw. umbrochene Fließtexte.
 - Schritt 4: `scripts/test-tutorial.ps1` prüft echte Server-/Profil-/Kampfmodule und den Client-Eingabefilter mit Roblox-Stubs (168 Prüfungen). Beide Missionen, Fehltipps, veraltete Wünsche und Neustarts nach Niederlage bestanden. Ziele anhand echter Grid-Wege korrigiert. Keine Studio-/Handy-Bestätigung; Review bleibt bei Claude.
 - Gemeinsames Modul `src/shared/Tutorial.luau`: Schrittdaten und Prüfungen werden von Server und Client verwendet. Übungskämpfe nutzen feste Level-1-Werte und geben keine EP; damit funktioniert die Führung auch bei Wiederholungen mit hochgelevelten Profilen. M1 bietet M2 im Ergebnisfenster an. Belohnung: einmalig 150 Gold (Config, WIP).
 - Schritt 2 entfernt auch die alten Start-/Prep-Pfade und Missionsmenüs, damit keine Aufrufe entfernter Sterne-/Schwierigkeits-Helfer verbleiben. Tutorial-Profilablauf und neue Oberfläche folgen in Schritten 3–5.
 - Das alte Profilfeld `stars` bleibt unverändert gespeichert, wird aber nicht mehr an den Client gesendet oder im Spiel ausgewertet.
--

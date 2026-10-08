@@ -104,10 +104,18 @@ Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein ze
 - **Wiederholen:** jederzeit im Menü, ohne erneute Belohnung.
 - **Weltkarte:** wird in einer späteren Phase zur Lauf-Karte (Gebiete, Fortschritt); bis dahin **ausgeblendet**. Übrige handgemachte Missionen (3–5), Sterne und Schwierigkeitsstufen entfallen.
 
+### Phase 2 umgesetzt (08.10.2026)
+- Zwei kleine Tutorialkarten (`tutorial1`, `tutorial2`) mit festen Starter-Teams, Übungswerten auf Level 1 und servergeprüften Schritten. Client zeigt goldene Figuren-/Feld-/Knopfmarkierungen und sperrt andere Aktionen; Kampfvorschau wird vor dem Bestätigen erklärt. Nach M1 wird M2 angeboten, bei Niederlage startet die jeweilige Mission neu.
+- Profilfeld `tutorial.state`: `new`, `done`, `skipped`. Alte gespeicherte Helden-Level (auch Level 1) oder Sterne markieren Bestandsspieler als `done`; alte Helden und Sterne bleiben gespeichert. Neue Profile erhalten Leon, Magierin und Ritter.
+- Willkommenswahl mit Skip-Bestätigung; Läufe werden erst nach Abschluss/Überspringen freigegeben. Wiederholung im Thronmenü ohne Gold oder EP. Erster Abschluss beider Missionen: einmalig 150 Gold (`Config.TUTORIAL`, WIP). Tutorial verändert keine gespeicherten Heldenwerte und kann während eines laufenden Runs nicht gestartet werden.
+- `starter_mage` (Magierin, Mage/Fire, ★3) und `starter_knight` (Ritter, Cavalier/IronLance, ★3) sind **Platzhalter – Design/Name vom Nutzer**; nicht rekrutierbar, fehlende Meshes verwenden den Klassen-Chibi. Bruno/Tobi bleiben in Altprofilen und im Gacha.
+- Missionen 3–5, Sterneziele und Schwierigkeitspfade entfernt. Weltkarten-Reiter verborgen/entfernt; Kriegstisch öffnet die Lauf-Teamwahl. Die spätere Lauf-Karte bleibt offen.
+- Prüfungen: `scripts/check.ps1`, `scripts/test-tutorial.ps1` (168 Stub-Prüfungen), `scripts/test-levelgen.ps1` und Rojo-Build. Zusätzlich 179 lokale UI-Anschlussprüfungen mit den vorhandenen Stubs. Darstellung, Replikation und Bedienung in Studio/auf dem Handy noch ungetestet; unabhängiger Review durch Claude ausstehend.
+
 ## Offene Punkte (vor der jeweiligen Etappe klären)
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
 - Konkrete Bosse und Minibosse je Gebiet (Namen, Fähigkeiten).
 - Zahlen: Teilheilung in %, Preise (Wiederbeleben, Händler, Notfall-Beschwörung, Rückblende), Belohnungskurve, Punktzahl-Formel, Weiterspielen nach Level 20.
 - Ränge: wie viele, was ändert sich pro Rang.
-- Welche Missionen bilden das Tutorial; Weltkarte als Lauf-Ansicht?
+- Gestaltung der späteren Lauf-Karte (Gebiete und Fortschritt); Weltkarte bis dahin ausgeblendet.
 - Waffensystem im Detail (Werte, Seltenheit, wer welche Waffe tragen darf).
