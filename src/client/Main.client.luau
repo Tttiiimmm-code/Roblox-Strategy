@@ -1028,6 +1028,7 @@ local function applyState(newState)
 	if changedBattle then
 		Grid.setMap(state.map or Stages.get(state.stageId).map)
 		UI.resetPhaseBanner()
+		if state.tutorial then dangerOn = false end
 		local T = Config.TILE_SIZE
 		local size = Vector3.new(Grid.width() * T, 0, Grid.height() * T)
 		CameraController.setBounds(size / 2, size)
@@ -1122,6 +1123,14 @@ local root = UI.init({
 TutorialGuide.init(UI, send, fxFolder)
 
 MenuUI.init(root, {
+	onTutorialChoice = function(play)
+		if play and not startLoading("tutorial1") then return end
+		send({ type = "TutorialChoice", play = play })
+	end,
+	onStartTutorial = function(mission, replay)
+		local stage = Stages.List[mission]
+		if stage and startLoading(stage.id) then send({ type = "StartTutorial", mission = mission, replay = replay }) end
+	end,
 	onStartRun = function(heroes) send({ type = "StartRun", heroes = heroes }) end,
 	onChooseLevel = function(index) requestRunLevel(index, false) end,
 	onResumeLevel = function()

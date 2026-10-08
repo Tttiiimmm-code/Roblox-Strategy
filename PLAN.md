@@ -33,7 +33,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
   - Server prüft Schritt-Fortschritt mit (keine Aktion außerhalb des aktuellen Schritts annehmen).
   - Fertig, wenn: Ablauf statisch und mit Stubs durchgespielt (beide Missionen, Fehltipps, Neustart nach Niederlage).
 
-- [ ] 5. **Oberfläche** – `src/client/MenuUI.luau`, `RunUI.luau`
+- [x] 5. **Oberfläche** – `src/client/MenuUI.luau`, `RunUI.luau`
   - Erster Start (`tutorial.state = "new"`): Fenster „Willkommen …“ mit **„Tutorial spielen“** / **„Überspringen“** (Bestätigung beim Überspringen).
   - Weltkarten-/Missionsreiter **ausblenden** (Lauf-Karte folgt in späterer Phase), Missionsdetails/Schwierigkeit/Sterne-Anzeigen entfernen; Ergebnisbildschirm für Tutorial ohne Sterne.
   - Thronsaal: „Lauf starten“ (erst nach `done`/`skipped`), **„Tutorial wiederholen“**; Kaserne/Rekrutierung unverändert. Lauf-Teamwahl zeigt die neuen Starter.
@@ -58,6 +58,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+- Schritt 5: Willkommensfenster, Skip-Bestätigung, Tutorial-Ergebnis/Weiter/Neustart, Lauf-Sperre und Wiederholung im Thronmenü ergänzt. Der alte Missionszugang am Kriegstisch öffnet jetzt die Lauf-Teamwahl; Kaserne/Rekrutierung unverändert. Texte über UIKit-Fit bzw. umbrochene Fließtexte.
 - Schritt 4: `scripts/test-tutorial.ps1` prüft echte Server-/Profil-/Kampfmodule und den Client-Eingabefilter mit Roblox-Stubs (168 Prüfungen). Beide Missionen, Fehltipps, veraltete Wünsche und Neustarts nach Niederlage bestanden. Ziele anhand echter Grid-Wege korrigiert. Keine Studio-/Handy-Bestätigung; Review bleibt bei Claude.
 - Gemeinsames Modul `src/shared/Tutorial.luau`: Schrittdaten und Prüfungen werden von Server und Client verwendet. Übungskämpfe nutzen feste Level-1-Werte und geben keine EP; damit funktioniert die Führung auch bei Wiederholungen mit hochgelevelten Profilen. M1 bietet M2 im Ergebnisfenster an. Belohnung: einmalig 150 Gold (Config, WIP).
 - Schritt 2 entfernt auch die alten Start-/Prep-Pfade und Missionsmenüs, damit keine Aufrufe entfernter Sterne-/Schwierigkeits-Helfer verbleiben. Tutorial-Profilablauf und neue Oberfläche folgen in Schritten 3–5.

@@ -1,12 +1,11 @@
 -- Thronsaal, Sammlung und Tutorial-Ergebnis
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local UnitData = require(Shared:WaitForChild("UnitData"))
 local Stages = require(Shared:WaitForChild("Stages"))
+local Tutorial = require(Shared.Tutorial)
 
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
@@ -30,6 +29,8 @@ local loadingMission = false
 local throneSeated = false
 local hubHud = {}
 local throne = {}
+local welcome = {}
+local skipConfirmation = false
 
 -- Kampf dieses Spielers? (Andere Spieler bleiben während eines fremden Kampfes im Thronsaal)
 local function isMine(state)
@@ -163,7 +164,12 @@ local function buildResult(root)
 		b.ZIndex = 12
 	end
 	result.retry.Activated:Connect(function()
-		callbacks.onRetry()
+		if lastState and lastState.tutorial then
+			callbacks.onStartTutorial(lastState.tutorial.mission, lastState.tutorial.replay)
+		end
+	end)
+	result.next.Activated:Connect(function()
+		if lastState and lastState.tutorial then callbacks.onStartTutorial(2, lastState.tutorial.replay) end
 	end)
 	result.lobby.Activated:Connect(function()
 		lobbyOpen = false
@@ -179,9 +185,14 @@ local function updateResult(state, _profile)
 	result.title.Text = info.victory and "Sieg!" or "Niederlage"
 	result.title.TextColor3 = info.victory and THEME.gold or THEME.enemy
 	result.sub.Text = Stages.get(state.stageId).name
-	result.goals.Text = info.victory and "Gut gemacht!" or "Leon ist gefallen. Versuche die Mission erneut."
-	result.rewards.Text = ""
-	result.next.Visible = false
+	result.goals.Text = not info.victory and "Leon ist gefallen. Versuche die Mission erneut."
+		or state.tutorial.mission == 1 and "Gut gemacht! In Mission 2 lernst du Magierin und Ritter kennen."
+		or "Tutorial geschafft! Im Thronsaal kannst du jetzt einen Lauf starten."
+	result.rewards.Text = info.gold and info.gold > 0 and ("◆ +%d Gold"):format(info.gold)
+		or state.tutorial.replay and "Wiederholung – ohne Belohnung" or ""
+	result.next.Visible = info.victory and state.tutorial.mission == 1
+	result.next.Text = "Weiter zu Mission 2"
+	result.retry.Visible = not info.victory
 end
 
 -- Thronsaal: kleine Anzeige oben + Hinweis unten ---------------------------------------
@@ -218,7 +229,7 @@ end
 local function buildThroneMenu(root)
 	local f = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(280, 392),
+		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(300, 410),
 		Visible = false,
 	}, root)
 	throne.frame = f
@@ -231,6 +242,7 @@ local function buildThroneMenu(root)
 	}, content)
 	local entries = {
 		{ "run", "Lauf starten", "primary" },
+		{ "tutorial", "Tutorial wiederholen", "default" },
 		{ "recruit", "Rekrutieren", "default" },
 		{ "barracks", "Kaserne", "default" },
 	}
@@ -238,14 +250,49 @@ local function buildThroneMenu(root)
 		local b = button(e[2], content, e[3], i)
 		b.Size = UDim2.new(1, 0, 0, 52)
 		b.TextSize = 20
+		throne[e[1]] = b
 		b.Activated:Connect(function()
-			if e[1] == "run" then RunUI.openTeam() else MenuUI.openLobby(e[1]) end
+			if b:GetAttribute("Style") == "disabled" then return end
+			if e[1] == "run" then RunUI.openTeam()
+			elseif e[1] == "tutorial" then callbacks.onStartTutorial(1, true)
+			else MenuUI.openLobby(e[1]) end
 		end)
 	end
 	local stand = button("Aufstehen", content, "muted", 10)
 	stand.Size = UDim2.new(1, 0, 0, 44)
 	stand.Activated:Connect(function()
 		callbacks.onStandUp()
+	end)
+end
+
+-- Erste Wahl mit ausdrücklicher Bestätigung beim Überspringen.
+local function buildWelcome(root)
+	welcome.frame = make("Frame", {
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.35, Active = true, Visible = false, ZIndex = 60,
+	}, root)
+	local box = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(760, 400), ZIndex = 61 }, welcome.frame)
+	welcome.title = label({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 60),
+		Text = "Willkommen im Thronsaal!", Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold, ZIndex = 62 }, box)
+	welcome.text = label({ Position = UDim2.fromOffset(24, 100), Size = UDim2.new(1, -48, 0, 164),
+		Text = "Lerne in zwei kurzen Missionen, wie du dein Team bewegst und angreifst. Danach kannst du deinen ersten Lauf starten.",
+		TextSize = 25, TextWrapped = true, TextScaled = false, ZIndex = 62 }, box)
+	welcome.play = button("Tutorial spielen", box, "primary")
+	welcome.play.Position, welcome.play.Size, welcome.play.ZIndex = UDim2.fromOffset(24, 302), UDim2.fromOffset(344, 68), 62
+	welcome.play.TextSize = 24
+	welcome.play.Activated:Connect(function()
+		if welcome.play:GetAttribute("Style") == "disabled" then return end
+		if skipConfirmation then skipConfirmation = false; MenuUI.update(lastState, lastProfile)
+		else callbacks.onTutorialChoice(true) end
+	end)
+	welcome.skip = button("Überspringen", box, "muted")
+	welcome.skip.Position, welcome.skip.Size, welcome.skip.ZIndex = UDim2.fromOffset(392, 302), UDim2.fromOffset(344, 68), 62
+	welcome.skip.TextSize = 24
+	welcome.skip.Activated:Connect(function()
+		if welcome.skip:GetAttribute("Style") == "disabled" then return end
+		if skipConfirmation then callbacks.onTutorialChoice(false)
+		else skipConfirmation = true; MenuUI.update(lastState, lastProfile) end
 	end)
 end
 
@@ -256,6 +303,7 @@ function MenuUI.init(root, cbs)
 	buildLobby(root)
 	buildResult(root)
 	buildThroneMenu(root)
+	buildWelcome(root)
 	CollectionUI.build(lobby.pages.recruit, lobby.pages.barracks, root, { onRecruit = cbs.onRecruit })
 	local runCallbacks = table.clone(cbs)
 	runCallbacks.onChanged = function() MenuUI.update(lastState, lastProfile) end
@@ -263,6 +311,8 @@ function MenuUI.init(root, cbs)
 end
 
 function MenuUI.openLobby(tab)
+	if tab == "run" then RunUI.openTeam(); return end
+	if lastProfile and lastProfile.tutorial and lastProfile.tutorial.state == "new" then return end
 	if not lobbyOpen then SoundPlayer.play("open") end
 	lobbyTab = (tab == "recruit" or tab == "barracks") and tab or lobbyTab
 	lobbyOpen = true
@@ -303,7 +353,25 @@ function MenuUI.update(state, profile)
 	if mine or runActive then
 		lobbyOpen = false -- eigener Kampf läuft: Thronsaal-Menüs zu
 	end
-	local inHall = not mine and not runActive
+	local needsChoice = profile.tutorial and profile.tutorial.state == "new"
+	local showWelcome = needsChoice and not mine and not loadingMission
+	welcome.frame.Visible = showWelcome == true
+	if not needsChoice then skipConfirmation = false end
+	if showWelcome then
+		lobbyOpen = false
+		welcome.title.Text = skipConfirmation and "Tutorial überspringen?" or "Willkommen im Thronsaal!"
+		welcome.text.Text = skipConfirmation and "Du kannst das Tutorial später im Thronmenü ohne Belohnung wiederholen. Möchtest du es jetzt überspringen?"
+			or "Lerne in zwei kurzen Missionen, wie du dein Team bewegst und angreifst. Danach kannst du deinen ersten Lauf starten."
+		welcome.play.Text = skipConfirmation and "Zurück" or "Tutorial spielen"
+		welcome.skip.Text = skipConfirmation and "Ja, überspringen" or "Überspringen"
+		local blocked = state.busy or otherBattle(state)
+		UIKit.setButtonStyle(welcome.play, blocked and "disabled" or "primary")
+		UIKit.setButtonStyle(welcome.skip, blocked and "disabled" or "muted")
+	end
+	local inHall = not mine and not runActive and not showWelcome and not loadingMission
+	local available = Tutorial.unlocked(profile) and not profile.run and not otherBattle(state) and not state.busy
+	UIKit.setButtonStyle(throne.run, available and "primary" or "disabled")
+	UIKit.setButtonStyle(throne.tutorial, available and "default" or "disabled")
 
 	-- Thronsaal-Anzeige
 	hubHud.frame.Visible = inHall and not lobbyOpen
