@@ -1,40 +1,61 @@
-# PLAN: Handy-Fix 2 – Oberfläche oben nicht mehr abgeschnitten, kurze Texte einzeilig
+# PLAN: Roguelike Phase 2 – Tutorial-Umbau
 
-Ziel: Zwei verbleibende Darstellungsfehler auf dem Handy endgültig beheben.
-Branch: `feature/level-optik` (weiter)
+Ziel: Neue Spieler werden beim ersten Start gefragt, ob sie das Tutorial spielen oder überspringen. Das Tutorial besteht aus zwei **Schritt-für-Schritt geführten** Missionen: Mission 1 nur mit Leon (bewegen, angreifen), Mission 2 mit Leon + Starter-Magierin + Starter-Ritter (verschiedene Eigenschaften: Reichweite der Magierin, Bewegungsweite des Ritters). Danach (oder nach Überspringen) Thronsaal mit „Lauf starten“. Tutorial jederzeit wiederholbar ohne Belohnung. Übrige Missionen, Sterne, Schwierigkeitsstufen und der Weltkarten-Reiter entfallen.
+Branch: `feature/lauf-phase2` (existiert, von `main`)
+Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase 2 – Tutorial“. Werte/Texte sind WIP.
 
-**Nutzer (08.10.2026, Handy, Querformat, Screenshot 2000×923 px):** Antippen der Helden funktioniert wieder (Devlog #28 ok). Aber:
-1. **Oben weiterhin abgeschnitten – an exakt derselben waagerechten Linie (ca. y = 172 px von 923) für ALLE oberen Elemente:** Hinweis-Kasten links (erste Zeile halb weg), Phasen-Banner Mitte („Runde 1“ unsichtbar, Banner-Oberkante fehlt), Gelände-Kasten rechts („Ebene“-Titel halb weg). Das war schon vor allen Handy-Änderungen so (erster Screenshot mit `IgnoreGuiInset = false`). Die Inset-Varianten aus #27/#28 (CoreUISafeInsets, DeviceSafeInsets + GetInsetArea-Versatz) haben nichts geändert. Untertitel steht noch zweizeilig unter/über dem Bannerrand.
-2. **Neu kaputt durch #27:** Infofenster unten links: Werte-Raster überlappt („Mag“/„Vert“/„Tmp“/„Bew“ in zwei Zeilen über den Zahlen), „KP“/„EP“-Beschriftung über dem Balken. Ursache: `UIKit.label` setzt standardmäßig `TextScaled`, und `TextScaled` schaltet laut Roblox-Doku `TextWrapped` ein → kurze Beschriftungen brechen um statt kleiner zu werden.
+**Bestehender Code:** `src/shared/Stages.luau` (Missionen s1–s5, `Difficulties`, Sterne-Helfer `bestStars/isCleared/isUnlocked/goalTexts/turnGoal/unitLimit`, `Regions` – Regionen bleiben, sie werden von Läufen/Brett genutzt), `src/shared/UnitData.luau` (`Heroes`, `STARTER_HEROES = { "leon", "bruno", "tobi" }`, `recruitable = false`), `src/server/ProfileStore.luau` (`normalize` ergänzt Starter, `stars`), `src/server/Main.server.luau` (`StartStage`, `Retry`, `BeginBattle` mit Leon-Pflicht, `finishBattle` mit Sternen/Gold/`unlockHero`, `checkResult` Lord-Regel für Story), `src/client/MenuUI.luau` (Weltkarte, Missionsdetails/Schwierigkeit, Prep, Ergebnis mit Sternen, Thronmenü), `src/client/Main.client.luau` (Eingabe `onClick`, `selectUnit`, `openMenu`, `startTargeting`, Hinweise `updateHint`), `src/client/UI.luau` (Hinweis-Kasten, Overlays), `RunUI.luau` (Lauf-Start).
+
+**Leitlinien:** Server autoritativ (Tutorial-Schritte prüfen, was erlaubt ist – Client-Sperre allein reicht nicht für Fortschritt/Belohnung). Profil nur ergänzen, alte Profile weiterführen. Ein Commit pro Schritt, `scripts/check.ps1` = OK, `scripts/test-levelgen.ps1` = OK.
 
 ## Schritte
 
-- [x] 1. **Kurze Texte einzeilig** – `src/client/UIKit.luau` (`fitText`/`label`/Buttons): Bei Fit-Texten nach `TextScaled = true` immer `TextWrapped = false` erzwingen (auch wenn später gesetzt), außer der Aufrufer verlangt ausdrücklich Umbruch (z. B. Option `wrap = true` bzw. `flowLabel`). Alle Stellen prüfen, die bisher bewusst `TextWrapped = true` mit festem Kasten nutzen (Waffenzeile im Infofenster, Beschreibungen) – dort entweder `flowLabel` oder Umbruch ohne TextScaled. Infofenster-Raster: jede Zelle einzeilig „Str 2“, „Mag 8“ …; nichts überlappt.
+- [ ] 1. **Starthelden** – `src/shared/UnitData.luau`
+  - Zwei neue Helden als **Platzhalter**: `starter_mage` (Klasse `Mage`, Waffe `Fire`) und `starter_knight` (Klasse `Cavalier`, Waffe `IronLance`), Anzeigenamen vorläufig „Magierin“ und „Ritter“, Seltenheit vorläufig ★3, `recruitable = false`, Werte im Rahmen der vorhandenen ★3-Helden, Kommentar „Platzhalter – Design/Name vom Nutzer“. Optik über die vorhandenen Chibi-/Mesh-Wege (fehlendes Modell → Chibi).
+  - `STARTER_HEROES = { "leon", "starter_mage", "starter_knight" }`. Bruno/Tobi bleiben im Spiel und im Gacha-Pool; bestehende Profile behalten sie (normalize entfernt nichts).
+  - Fertig, wenn: neues Profil hat genau diese drei; altes Profil bekommt die zwei neuen dazu.
 
-- [x] 2. **Oben nicht abschneiden – deterministischer Aufbau** – `src/client/UIKit.luau` (`createRoot`), `src/client/UI.luau`, `src/client/BattleScene.luau`, Ladebildschirm:
-  - ScreenGuis: `IgnoreGuiInset = true`, `ScreenInsets = None`, `ClipToDeviceSafeArea = false` → Layoutfläche beginnt bei Bildschirmpixel 0, **nichts wird von Roblox geclippt**.
-  - Sicheren Bereich selbst berechnen: oben = `GuiService.TopbarInset.Max.Y` (Unterkante der Roblox-Leiste in Bildschirmpunkten; falls 0 → `GuiService:GetGuiInset()` Y), links/rechts/unten aus Geräte-Aussparungen (`GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)` relativ zum vollen Bildschirm). Der `SafeArea`-Frame bekommt genau diese Position/Größe (in Pixeln, außerhalb der UIScale), `Root` mit UIScale liegt darin. Aktualisierung bei Änderung von `TopbarInset`, `ViewportSize`.
-  - **Diagnose:** Bei `Config.INPUT_DIAGNOSTICS = true` (oder eigenem `UI_DIAGNOSTICS`) einmalig und bei Änderung ausgeben: Viewport, TopbarInset, GuiInset, InsetArea, AbsolutePosition/Size von SafeArea, Root, Phasen-Banner, Hinweis-Kasten, UIScale-Wert – damit der Nutzer bei Bedarf Zahlen liefern kann.
-  - Banner: Untertitel einzeilig im Banner (Fit), „Runde x“ sichtbar; Gelände-Kasten und Hinweis-Kasten vollständig.
+- [ ] 2. **Missionen auf Tutorial reduzieren** – `src/shared/Stages.luau`
+  - `s1`/`s2` werden `tutorial1`/`tutorial2` (eigene IDs, eigene kleine Karten; `unlockHero` entfällt). **Tutorial 1:** kleine Karte, nur Leon (1 Startfeld), 1–2 schwache Banditen, so gebaut, dass die geführte Abfolge sicher klappt. **Tutorial 2:** Leon + Magierin + Ritter (3 Startfelder), Gegner so gestellt, dass (a) die Magierin aus 2 Feldern angreifen kann, ohne Gegenangriff eines Nahkämpfers, (b) der Ritter mit großer Bewegung einen weit entfernten Gegner (z. B. Bogenschütze) erreicht, den Fußtruppen nicht erreichen.
+  - `s3`–`s5` entfernen. `Difficulties` und Sterne-Helfer entfernen bzw. auf das reduzieren, was Tutorial braucht (feste Werte, kein Rundenziel, keine Sterne). Alle Verwendungen anpassen (MenuUI, Main.server, Main.client).
+  - Fertig, wenn: keine Referenz mehr auf Schwierigkeit/Sterne außer ggf. toleriertem altem Profilfeld `stars` (bleibt unberührt gespeichert oder wird in normalize verworfen – in Notizen begründen).
 
-- [x] 3. Abschluss: `scripts/check.ps1` = OK, `scripts/test-levelgen.ps1` = OK, Rojo-Build ok. Devlog-Nachtrag (#29). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
+- [ ] 3. **Profil + Server-Ablauf** – `src/server/ProfileStore.luau`, `src/server/Main.server.luau`
+  - `profile.tutorial = { state = "new" | "done" | "skipped" }` (normalize: altes Profil **mit** vorhandenen Helden-Leveln oder Sternen → `done`, damit Bestandsspieler nicht gefragt werden; ganz neues → `new`).
+  - Befehle: `TutorialChoice { play = bool }` (nur bei `new`; skip → `skipped`), `StartTutorial { mission = 1|2, replay = bool }`. Tutorial-Kampf: Helden fest (M1 nur Leon, M2 die drei Starter) ohne Prep-Bildschirm; Niederlage → Mission neu; Lord-Regel nur im Tutorial. Sieg M1 → direkt M2 anbieten/starten; Sieg M2 → `done` (erste Absolvierung: kleine Belohnung WIP, z. B. Gold aus Config; Wiederholung ohne Belohnung). Läufe bleiben bis `done`/`skipped` gesperrt.
+  - Tutorial-Kampfregeln für sicheren Ablauf (WIP, in Config): Angriffe des Spielers treffen im Tutorial immer; Gegner-KI vorhersehbar (z. B. Gegner in M1 greifen erst nach dem gezeigten Schritt an).
+  - Entfernen: `StartStage`/`Retry` für alte Missionen, Sterne-/Schwierigkeits-Belohnungen, `unlockHero`.
+  - Fertig, wenn: statische Durchsicht aller Befehle; ungültige Wünsche abgelehnt.
+
+- [ ] 4. **Geführter Ablauf (Client)** – neues Modul `src/client/TutorialGuide.luau`, Anbindung in `Main.client.luau`/`UI.luau`
+  - Schrittliste je Mission als Daten (Text + Ziel + erlaubte Aktion), z. B. M1: „Tippe auf Leon“ (nur Leon antippbar) → „Tippe auf das markierte Feld“ (nur dieses Feld) → „Warten“/Zug beenden → Gegnerzug → „Tippe auf den Banditen, um anzugreifen“ → Kampfvorschau erklären → bestätigen. M2: Magierin auswählen, Reichweite 1–2 erklären, aus 2 Feldern angreifen (kein Gegenangriff); Ritter auswählen, große Bewegungsweite erklären, fernen Gegner erreichen; Rest frei mit kurzem Hinweis.
+  - Darstellung: gut sichtbare Markierung (pulsierender Rahmen/Pfeil) auf Figur, Feld oder Knopf; Hinweistext im Hinweis-Kasten (groß, handytauglich); alles andere ist bis zum Schritt gesperrt (Eingaben ignorieren + kurzer Hinweis). Gefahr-/Tempo-/Szenen-Knöpfe im Tutorial ausblenden oder sperren.
+  - Server prüft Schritt-Fortschritt mit (keine Aktion außerhalb des aktuellen Schritts annehmen).
+  - Fertig, wenn: Ablauf statisch und mit Stubs durchgespielt (beide Missionen, Fehltipps, Neustart nach Niederlage).
+
+- [ ] 5. **Oberfläche** – `src/client/MenuUI.luau`, `RunUI.luau`
+  - Erster Start (`tutorial.state = "new"`): Fenster „Willkommen …“ mit **„Tutorial spielen“** / **„Überspringen“** (Bestätigung beim Überspringen).
+  - Weltkarten-/Missionsreiter **ausblenden** (Lauf-Karte folgt in späterer Phase), Missionsdetails/Schwierigkeit/Sterne-Anzeigen entfernen; Ergebnisbildschirm für Tutorial ohne Sterne.
+  - Thronsaal: „Lauf starten“ (erst nach `done`/`skipped`), **„Tutorial wiederholen“**; Kaserne/Rekrutierung unverändert. Lauf-Teamwahl zeigt die neuen Starter.
+  - Fertig, wenn: keine Sterne/Schwierigkeit mehr sichtbar; Texte handytauglich (UIKit-Fit-Regeln aus #29).
+
+- [ ] 6. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 2 umgesetzt, Platzhalter nennen), Charakter-Pipeline: Starter-Magierin/-Ritter als neue Figuren mit IDs `starter_mage`/`starter_knight` in der Figurenliste. `scripts/check.ps1`, `scripts/test-levelgen.ps1`, Rojo-Build. Devlog **#30** „Roguelike Phase 2 – Tutorial“. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Handy: Banner (Runde, Phase, Untertitel einzeilig), Hinweis-Kasten und Gelände-Kasten vollständig, knapp unter der Roblox-Leiste, nichts abgeschnitten
-- [ ] Infofenster: Werte sauber in Zeilen, nichts überlappt
-- [ ] Antippen/Bewegen funktioniert weiter
-- [ ] PC/Studio: Oberfläche sieht aus wie vorher
+- [ ] Neues Profil (Studio, DataStore leer bzw. ohne API-Zugriff): Willkommensfenster → „Tutorial spielen“
+- [ ] Mission 1: nur Leon, jeder Schritt markiert, andere Eingaben gesperrt, Angriff trifft, Sieg → Mission 2
+- [ ] Mission 2: Magierin greift aus 2 Feldern ohne Gegenangriff an; Ritter erreicht fernen Gegner; Sieg → Thronsaal
+- [ ] „Lauf starten“ funktioniert, Teamwahl zeigt Leon, Magierin, Ritter
+- [ ] „Tutorial wiederholen“ → keine Belohnung
+- [ ] Neues Profil → „Überspringen“ → direkt Thronsaal, Lauf möglich
+- [ ] Bestehendes Profil wird nicht nach dem Tutorial gefragt
+- [ ] Keine Sterne/Schwierigkeit/Weltkarte mehr sichtbar; Handy-Texte passen
 
 ## Nicht anfassen
-- Eingabe-/Touch-Logik aus #28 (funktioniert), Spielregeln, Generator, Brett
+- Lauf-Logik (Phase 1), Generator, Brettoptik, Eingabe-/Touch-Grundlogik aus #28 (nur um Tutorial-Sperren ergänzen)
 
 ## Offene Fragen
-- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden.)
+- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-- Schritt 1: Fit-Kurztexte und Buttons erzwingen Einzeiligkeit auch nach späteren Zuweisungen; ausdrücklicher Fit-Umbruch über wrap = true. Waffenzeile, Ladetitel, Speicherwarnung und Laufbeschreibungen behalten Umbruch ohne TextScaled. Eingabelogik unverändert.
-- Schritt 2: ScreenGuis ohne automatische Insets/Clipping; SafeArea in Bildschirm-Punkten vor der UIScale. Geräte-Ränder aus DeviceSafeInsets relativ zu ScreenInsets.None, da GetInsetArea laut offizieller GuiService-Doku relativ zur Core-UI liefert. Oben TopbarInset.Max.Y mit GetGuiInset-Fallback, mindestens oberer Geräte-Rand. Kamerawechsel bindet die Viewport-Aktualisierung neu.
-- INPUT_DIAGNOSTICS = true protokolliert [UI-Diagnose] einmal und bei Layoutänderungen inklusive Viewport, beider InsetArea-Rechtecke, Topbar-/GuiInset, SafeArea/Root, oberem Phasenbanner, Hinweis, Gelände und UIScale. Standard bleibt false.
-- 128 lokale Anschlussprüfungen mit aktuellen Modulen erfolgreich: 16 sichere Flächen einschließlich seitlicher/unterer Aussparungen und negativer InsetArea-Ursprünge, TextScaled-Umbruch-Nebenwirkung, spätere Property-Zuweisungen, expliziter Fit-Umbruch, Leisten-Fallback, Kamerawechsel, Bereinigung und Diagnose. Prüfhilfen in ignoriertem tools/. Kein Roblox-Renderer; manueller Studio-/Handytest und Claude-Review offen.
-- Sandbox-Prozessstart defekt; Projektbefehle gemäß Dauerfreigabe über automatische Prüfung außerhalb ausgeführt.
-- Abschluss: check.ps1 OK (33 Dateien), test-levelgen.ps1 OK (90.000 Level- und 5.000 Optionsprüfungen, 0 Rückfälle), Rojo-Build erfolgreich. Devlog #29 ergänzt; manuelle Tests bleiben offen.
+-

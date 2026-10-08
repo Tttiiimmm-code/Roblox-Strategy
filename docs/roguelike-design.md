@@ -96,6 +96,14 @@ Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein ze
 - Generatorprüfung: powershell -ExecutionPolicy Bypass -File scripts/test-levelgen.ps1; 15.000 Level- und 5.000 Optionsprüfungen, Rückfallquote 0 %. Stubs prüfen zusätzlich Profil- und Laufübergänge; echte Darstellung/Replikation bleibt manuell zu testen.
 - **Vor dem Studio-/Handy-Test Servergröße auf 1 setzen** (Roblox-Spieleinstellungen). Diese Einstellung ist nicht per Spielcode setzbar; das Spiel verwendet weiterhin ein gemeinsames Brett pro Server.
 
+## Entscheidungen Phase 2 – Tutorial (08.10.2026)
+- **Starthelden:** Leon + **eine neue Starter-Magierin + ein neuer Starter-Ritter** (vom Nutzer zu entwerfen; bis dahin Platzhalter, nicht im Gacha-Pool). Bruno und Tobi sind keine Starter mehr (bestehende Profile behalten sie, Gacha bleibt).
+- **Tutorial-Mission 1:** nur Leon; erklärt Figuren bewegen und Gegner angreifen. **Tutorial-Mission 2:** erklärt, dass Helden verschiedene Eigenschaften haben – Magierin mit größerer Reichweite, Ritter mit größerer Bewegungsweite.
+- **Führung Schritt für Schritt:** Markierung zeigt genau, was zu tun ist; andere Aktionen sind bis dahin gesperrt.
+- **Überspringen:** Abfrage beim allerersten Start („Tutorial spielen“ / „Überspringen“).
+- **Wiederholen:** jederzeit im Menü, ohne erneute Belohnung.
+- **Weltkarte:** wird in einer späteren Phase zur Lauf-Karte (Gebiete, Fortschritt); bis dahin **ausgeblendet**. Übrige handgemachte Missionen (3–5), Sterne und Schwierigkeitsstufen entfallen.
+
 ## Offene Punkte (vor der jeweiligen Etappe klären)
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
 - Konkrete Bosse und Minibosse je Gebiet (Namen, Fähigkeiten).
