@@ -16,7 +16,7 @@ Branch: `feature/level-optik`
   - Alle Boden- und Randfarben deutlich dunkler und weniger gesättigt (Richtwert: Sättigung −25 bis −35 %, Helligkeit −20 bis −30 %), Geländearten weiterhin klar unterscheidbar (Ebene/Wald/Berg/Festung/Wasser/Morast); Seitenflächen bleiben eine Stufe dunkler. Werte zentral, Kommentar „Werte WIP“.
   - Fertig, wenn: Farbtabelle vorher/nachher in den Notizen.
 
-- [ ] 3. **Textur auf dem Boden** – `src/server/BoardBuilder.luau`, `src/shared/Config.luau`
+- [x] 3. **Textur auf dem Boden** – `src/server/BoardBuilder.luau`, `src/shared/Config.luau`
   - `Config.GROUND_TEXTURES[ch] = { top = "<asset-id>" | nil, side = "<asset-id>" | nil, studsPerTile, transparency }` (leer = keine Bild-ID vorhanden). Ist eine ID gesetzt: `Texture`-Instanzen auf Ober- bzw. Seitenflächen der `Ground_`/`Side_`-Parts (Kachelung über `StudsPerTileU/V`, Farbe/Transparenz so, dass die Geländefarbe sichtbar bleibt).
   - **Ohne Bild-ID (Standard):** prozedurale Auflockerung ohne Assets: je Feld wenige flache, leicht dunklere/hellere unregelmäßige Flecken (deterministisch aus Feld + Kartenkennung, knapp über der Oberfläche, `CanCollide`/`CanQuery`/`CanTouch` = false), Wald-/Gras-Felder zusätzlich vereinzelte kleine Halm-/Steinflecken. Mitte des Feldes nicht überladen (Figur, Zug-Ring, Bewegungsfelder müssen gut lesbar bleiben). Teilezahl im Blick behalten (Handy) – Obergrenze je Feld in Config; Aufbauzeit-Stub vorher/nachher in Notizen.
   - Raster und Overlays bleiben über den Flecken sichtbar (Höhen-Reihenfolge prüfen).
@@ -41,6 +41,9 @@ Branch: `feature/level-optik`
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden. Befehle außerhalb der Sandbox wie zuvor nur mit Freigabe des Nutzers.)
 
 ## Notizen (Codex)
+- Schritt 3: GROUND_TEXTURES für alle acht Geländearten (nil/leer = ohne Bild), reine Zahlen-IDs und rbxassetid:// unterstützt. Oberseitenbild auf Ground_; Seitenbild auf vier Seiten von Side_ sowie auf dem dünnen Ground_-Rand. Tint entspricht der jeweiligen Bodenfarbe, Standardtransparenz 0,65 (W/D 0,70), Kachelung 8 Studs. Ohne Oberseitenbild zwei unterschiedlich große/gedrehte flache Dreiecksflecken je Feld; auf Ebene/Wald zu 35 % zusätzlich ein Halm-/Steinfleck. Maximal drei Teile pro Feld, alle ohne Kollision/Query/Touch/Schatten. Karten-/Gebiets-/Feldhash deterministisch; Mitte mit 2,3 Studs Abstand und Rasterrand frei. Bild ersetzt Oberseitenflecken; nur Seitenbild lässt sie bestehen.
+- Höhenfolge relativ zu Grid.toWorld: Flecken 0,001–0,004 Studs; Raster ab 0,005; Bewegungs-/Angriffsoverlays ab 0,01; Ring bleibt darüber. Stub mit vollständigen WedgePart-Rotationen prüft Fleckhöhe/alle Eckpunkte, Feldrand, Mitte, Teilelimit (auch Limit 1), zwei Flecken je Feld, Determinismus und Gebietsschlüssel; Test-IDs ergeben pro Rechteck eine Oberseiten- und acht Seiten-Textures mit korrekter Farbe/Transparenz/Kachelung. Alle 5.616 bisherigen Klickstrahlen plus Bildtest grün. Pflichtcheck OK (32 Dateien).
+- Vergleich vor/nach Flecken im selben Stub-Lauf (je 30 Aufbauten, kein Roblox-Rendering/Replikation): s1 4,61/11,58 ms, 449/639 Parts; s2 7,83/17,98 ms, 776/1.029; s3 7,32/18,28 ms, 681/953; s4 9,24/19,04 ms, 874/1.115; s5 10,93/22,35 ms, 985/1.254; Lauf Seed 12345 4,82/12,42 ms, 479/669. Höchstens drei zusätzliche Parts je Feld; Handy-Leistung bleibt unbestätigt.
 - Schritt 2: HSV-Sättigung × 0,70 und Helligkeit × 0,75, auf ganze RGB-Werte gerundet. Seiten bleiben zusätzlich 22 % dunkler. Weltkarten-/Schwierigkeitsfarben und Objektfarben außerhalb der Bodenpalette bleiben unverändert; Grünland übernimmt Config, Sumpf überschreibt wie bisher.
 
 | Boden/Rand | RGB vorher | RGB nachher |

@@ -10,8 +10,8 @@ local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
 local BoardBuilder = {}
 local lastTerrainRegion
 
-local function deco(props, parent)
-	local p = Instance.new("Part")
+local function deco(props, parent, className)
+	local p = Instance.new(className or "Part")
 	p.Anchored = true
 	p.CanCollide = false
 	p.CanQuery = false -- Klicks sollen das Feld darunter treffen (wirkt nur zusammen mit CanCollide = false)
@@ -30,6 +30,70 @@ local function hash(key)
 	local value = 0
 	for i = 1, #key do value = (value * 131 + key:byte(i)) % 2147483647 end
 	return value
+end
+
+local function imageId(id)
+	if not id or id == "" then return nil end
+	return tostring(id):match("^%d+$") and "rbxassetid://" .. id or id
+end
+
+local function groundTexture(part, face, id, settings)
+	id = imageId(id)
+	if not id then return end
+	local texture = Instance.new("Texture")
+	texture.Name = "GroundTexture"
+	texture.Face = face
+	texture.Texture = id
+	texture.StudsPerTileU = settings.studsPerTile
+	texture.StudsPerTileV = settings.studsPerTile
+	texture.Color3 = part.Color
+	texture.Transparency = settings.transparency
+	texture.Parent = part
+end
+
+local function groundFlecks(ch, x, y, parent, mapKey, color)
+	local settings = Config.GROUND_TEXTURES[ch]
+	if settings and imageId(settings.top) then return end
+	local feel = Config.GROUND_FLECKS
+	-- Karteninhalt nur einmal hashen, statt für jedes Fleckmerkmal erneut.
+	local key = tostring(hash(mapKey .. ":" .. Grid.key(x, y))) .. ":ground:"
+	local center = Grid.toWorld(x, y)
+	local count = 0
+	local function random(label)
+		return hash(key .. label) % 10000 / 10000
+	end
+	local function patch(label, width, length, detail)
+		if count >= feel.maxPartsPerTile then return end
+		-- Umkreis der gedrehten Flecken hält Mitte und Rasterkanten frei.
+		local radius = math.sqrt(width * width + length * length) / 2
+		local inner = feel.centerClearance + radius
+		local outer = Config.TILE_SIZE / 2 - feel.edgeInset - radius
+		if inner > outer then return end
+		local distance = inner + (outer - inner) * random(label .. ":distance")
+		local along = (random(label .. ":along") * 2 - 1) * outer
+		local edge = hash(key .. label .. ":edge") % 4
+		local offset = edge < 2 and Vector3.new(edge == 0 and -distance or distance, 0, along)
+			or Vector3.new(along, 0, edge == 2 and -distance or distance)
+		local cf = CFrame.new(center + offset + Vector3.new(0, feel.surfaceOffset + feel.thickness / 2, 0))
+			* CFrame.Angles(0, random(label .. ":angle") * math.pi * 2, 0)
+		local shade = random(label .. ":shade") < 0.5
+		local tint = color:Lerp(shade and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255), shade and feel.shade or feel.light)
+		local grass = detail and random(label .. ":kind") < 0.5
+		deco({ Name = grass and "GroundGrassFleck" or (detail and "GroundStoneFleck" or "GroundFleck"),
+			Size = grass and Vector3.new(width, feel.thickness, length) or Vector3.new(feel.thickness, width, length),
+			CFrame = grass and cf or cf * CFrame.Angles(0, 0, math.pi / 2),
+			Color = tint, Transparency = feel.transparency, Material = Enum.Material.SmoothPlastic }, parent, grass and "Part" or "WedgePart")
+		count += 1
+	end
+	for i = 1, math.min(feel.patchCount, feel.maxPartsPerTile) do
+		local label = tostring(i)
+		local width = feel.minSize + (feel.maxSize - feel.minSize) * random(label .. ":width")
+		local length = feel.minSize + (feel.maxSize - feel.minSize) * random(label .. ":length")
+		patch(label, width, length, false)
+	end
+	if (ch == "." or ch == "F") and random("detail") < feel.detailChance then
+		patch("detail", feel.detailWidth, feel.detailLength, true)
+	end
 end
 
 local function bridgeAngle(x, y)
@@ -210,14 +274,22 @@ function BoardBuilder.build(regionId)
 			local color = colorFor(ch)
 			local cx, cz = (x + right - 1) * T / 2, (y + bottom - 1) * T / 2
 			local width, length = (right - x + 1) * T, (bottom - y + 1) * T
-			deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
+			local side = deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
 				Position = Vector3.new(cx, (height - cap - Config.FEEL.groundDepth) / 2, cz),
 				Color = color:Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.groundSideShade),
 				Material = Enum.Material.SmoothPlastic }, ground)
-			deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
+			local surface = deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
 				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
 				Transparency = (ch == "W" or ch == "D") and Config.FEEL.waterTransparency or 0,
 				Material = Enum.Material.SmoothPlastic }, ground)
+			local textures = Config.GROUND_TEXTURES[ch]
+			if textures then
+				groundTexture(surface, Enum.NormalId.Top, textures.top, textures)
+				for _, face in { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right } do
+					groundTexture(side, face, textures.side, textures)
+					groundTexture(surface, face, textures.side, textures)
+				end
+			end
 		end
 	end
 	board:SetAttribute("GroundCount", groundCount)
@@ -243,6 +315,7 @@ function BoardBuilder.build(regionId)
 			tile:SetAttribute("X", x)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
+			groundFlecks(ch, x, y, ground, mapKey, colorFor(ch))
 			decorate(ch, x, y, board, mapKey)
 			local center = Grid.toWorld(x, y)
 			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
