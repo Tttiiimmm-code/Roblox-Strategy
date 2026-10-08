@@ -30,7 +30,7 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
   - `LevelGen.makeOptions(runSeed, depth, regionId)` → 2–3 Optionen `{ themeId, reward = { kind, amount }, seed }` (deterministisch aus Lauf-Seed + Tiefe; Themen in einer Wahl nicht doppelt).
   - Fertig, wenn: Prüfskript aus Schritt 3 grün.
 
-- [ ] 3. **Prüfskript Generator** – neue Dateien `tests/levelgen.test.luau`, `scripts/test-levelgen.ps1`
+- [x] 3. **Prüfskript Generator** – neue Dateien `tests/levelgen.test.luau`, `scripts/test-levelgen.ps1`
   - Läuft mit `tools/luau/luau.exe` ohne Roblox: kleine Stubs für `Color3`, `Enum`, `Vector2` usw. und ein `require`-Ersatz, der `Config`, `RunConfig`, `MapChunks`, `LevelGen` aus `src/shared` lädt (Ansatz frei, aber **committet** und mit einem Befehl startbar).
   - Prüft für 1 000 Seeds × Tiefe 1–5 × alle Themen: Kartengröße 10×8, nur erlaubte Zeichen, Startfelder passierbar und eindeutig, Gegner auf passierbaren Feldern, Mindestabstand eingehalten, alle Gegner erreichbar, Schwerpunkt-Anteil ungefähr eingehalten, Determinismus (zweimal gleicher Seed → gleiches Ergebnis), Optionen 2–3 ohne doppeltes Thema. Ausgabe: Anzahl Prüfungen, Rückfall-Level-Quote (soll ≈ 0 sein).
   - `scripts/check.ps1` bleibt unverändert; in `AGENTS.md` unter „Befehle“ eine Zeile für das Prüfskript ergänzen.
