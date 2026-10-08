@@ -244,6 +244,7 @@ end
 
 -- Tutorial benutzt feste Übungswerte und verändert weder Helden-Level noch Lauf-KP.
 local function beginTutorial(player, mission, replay)
+	state.busy = true
 	nextTutorialId += 1
 	state.ownerUserId, state.ownerName, state.ownerPlayer = player.UserId, player.DisplayName, player
 	state.speed, state.battleScenes = Config.TUTORIAL.speed, Config.TUTORIAL.battleScenes
@@ -453,7 +454,7 @@ local function runEnemyPhase()
 				local step = Tutorial.step(state.tutorial)
 				if step.kind == "Enemy" then
 					local pos = Stages.List[state.tutorial.mission].enemyMove
-					local nodes = Grid.reachable(enemy, state.units)
+					local nodes = Grid.reachable(enemy, state.units, Grid.dist(enemy.x, enemy.y, pos.x, pos.y))
 					plan = { x = pos.x, y = pos.y, path = Grid.pathTo(nodes, pos.x, pos.y) }
 				else
 					-- Im freien Abschnitt stehen Gegner still und wählen das erste erreichbare Ziel.
@@ -534,7 +535,8 @@ end
 
 -- Bewegen + Aktion als ein Befehl; der Client zeigt die Bewegung vorher nur als Vorschau
 local function handleAct(cmd)
-	if state.tutorial and not Tutorial.allowsAct(state, cmd) then return false end
+	if state.tutorial and (cmd.tutorialId ~= state.tutorial.id or cmd.step ~= state.tutorial.step
+		or not Tutorial.allowsAct(state, cmd)) then return false end
 	local unit = state.units[cmd.unitId]
 	if not unit or unit.team ~= "Player" or unit.done then
 		return false
@@ -765,7 +767,8 @@ local function handleCommand(player, cmd)
 				return true
 			end
 		elseif t == "TutorialStep" then
-			if state.tutorial and Tutorial.checkpoint(state, cmd) then broadcast(); return true end
+			if state.tutorial and cmd.tutorialId == state.tutorial.id and cmd.step == state.tutorial.step
+				and Tutorial.checkpoint(state, cmd) then broadcast(); return true end
 		elseif t == "EndTurn" then
 			if state.tutorial and Tutorial.step(state.tutorial).kind ~= "Free" then return false end
 			runEnemyPhase()

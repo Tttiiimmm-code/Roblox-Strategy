@@ -27,7 +27,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
   - Entfernen: `StartStage`/`Retry` für alte Missionen, Sterne-/Schwierigkeits-Belohnungen, `unlockHero`.
   - Fertig, wenn: statische Durchsicht aller Befehle; ungültige Wünsche abgelehnt.
 
-- [ ] 4. **Geführter Ablauf (Client)** – neues Modul `src/client/TutorialGuide.luau`, Anbindung in `Main.client.luau`/`UI.luau`
+- [x] 4. **Geführter Ablauf (Client)** – neues Modul `src/client/TutorialGuide.luau`, Anbindung in `Main.client.luau`/`UI.luau`
   - Schrittliste je Mission als Daten (Text + Ziel + erlaubte Aktion), z. B. M1: „Tippe auf Leon“ (nur Leon antippbar) → „Tippe auf das markierte Feld“ (nur dieses Feld) → „Warten“/Zug beenden → Gegnerzug → „Tippe auf den Banditen, um anzugreifen“ → Kampfvorschau erklären → bestätigen. M2: Magierin auswählen, Reichweite 1–2 erklären, aus 2 Feldern angreifen (kein Gegenangriff); Ritter auswählen, große Bewegungsweite erklären, fernen Gegner erreichen; Rest frei mit kurzem Hinweis.
   - Darstellung: gut sichtbare Markierung (pulsierender Rahmen/Pfeil) auf Figur, Feld oder Knopf; Hinweistext im Hinweis-Kasten (groß, handytauglich); alles andere ist bis zum Schritt gesperrt (Eingaben ignorieren + kurzer Hinweis). Gefahr-/Tempo-/Szenen-Knöpfe im Tutorial ausblenden oder sperren.
   - Server prüft Schritt-Fortschritt mit (keine Aktion außerhalb des aktuellen Schritts annehmen).
@@ -58,6 +58,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+- Schritt 4: `scripts/test-tutorial.ps1` prüft echte Server-/Profil-/Kampfmodule und den Client-Eingabefilter mit Roblox-Stubs (168 Prüfungen). Beide Missionen, Fehltipps, veraltete Wünsche und Neustarts nach Niederlage bestanden. Ziele anhand echter Grid-Wege korrigiert. Keine Studio-/Handy-Bestätigung; Review bleibt bei Claude.
 - Gemeinsames Modul `src/shared/Tutorial.luau`: Schrittdaten und Prüfungen werden von Server und Client verwendet. Übungskämpfe nutzen feste Level-1-Werte und geben keine EP; damit funktioniert die Führung auch bei Wiederholungen mit hochgelevelten Profilen. M1 bietet M2 im Ergebnisfenster an. Belohnung: einmalig 150 Gold (Config, WIP).
 - Schritt 2 entfernt auch die alten Start-/Prep-Pfade und Missionsmenüs, damit keine Aufrufe entfernter Sterne-/Schwierigkeits-Helfer verbleiben. Tutorial-Profilablauf und neue Oberfläche folgen in Schritten 3–5.
 - Das alte Profilfeld `stars` bleibt unverändert gespeichert, wird aber nicht mehr an den Client gesendet oder im Spiel ausgewertet.

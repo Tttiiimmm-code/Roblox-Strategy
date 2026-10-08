@@ -23,11 +23,11 @@ Stages.List = {
 		id = "tutorial2", name = "Tutorial 2 – Dein Team", region = "greenland",
 		map = { "..........", "..........", "..........", "..........", "..........", ".........." },
 		heroes = { "leon", "starter_mage", "starter_knight" },
-		slots = { { x = 1, y = 5 }, { x = 2, y = 4 }, { x = 3, y = 5 } },
+		slots = { { x = 1, y = 5 }, { x = 2, y = 4 }, { x = 3, y = 3 } },
 		enemies = {
 			{ kind = "brigand", x = 4, y = 4, tutorialTarget = "mage" },
 			{ kind = "archer", x = 10, y = 2, tutorialTarget = "knight" },
-			{ kind = "brigand", x = 6, y = 1 },
+			{ kind = "brigand", x = 5, y = 3 },
 		},
 		move = { x = 9, y = 2 },
 	},

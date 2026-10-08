@@ -24,6 +24,8 @@ local CameraController = require(script.Parent:WaitForChild("CameraController"))
 local UnitAnimator = require(script.Parent:WaitForChild("UnitAnimator"))
 local BattleScene = require(script.Parent:WaitForChild("BattleScene"))
 local Hub = require(script.Parent:WaitForChild("Hub"))
+local TutorialGuide = require(script.Parent:WaitForChild("TutorialGuide"))
+local Tutorial = require(Shared.Tutorial)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local StateUpdate = Remotes:WaitForChild("StateUpdate")
@@ -311,6 +313,8 @@ end
 
 -- Kontext-Hinweis für Einsteiger
 local function updateHint()
+	TutorialGuide.render()
+	if TutorialGuide.active() then return end
 	if not inBattle() then
 		return
 	end
@@ -340,6 +344,8 @@ local function updateTools()
 	UI.setTools({
 		back = mode == "Selected" or mode == "Menu" or mode == "Target" or inspectedId ~= nil,
 		run = state.run ~= nil,
+		tutorial = state.tutorial ~= nil,
+		guided = TutorialGuide.guided(),
 		undoLeft = state.undoLeft or 0,
 		canUndo = state.canUndo,
 		danger = dangerOn,
@@ -370,6 +376,8 @@ end
 
 -- Aktionen ------------------------------------------------------------------
 local function sendAct(action, targetId)
+	local data = { unitId = selectedId, x = dest.x, y = dest.y, targetId = targetId }
+	if not TutorialGuide.allow(action == "Wait" and "Wait" or "Confirm", data) then return end
 	send({
 		type = "Act",
 		unitId = selectedId,
@@ -377,17 +385,21 @@ local function sendAct(action, targetId)
 		y = dest.y,
 		action = action,
 		targetId = targetId,
+		tutorialId = state.tutorial and state.tutorial.id,
+		step = state.tutorial and state.tutorial.step,
 	})
 	resetSelection()
 	setMode("Busy")
 end
 
 local function selectUnit(unit)
+	if not TutorialGuide.allow("Select", { unitId = unit.id }) then return end
 	resetSelection()
 	selectedId = unit.id
 	UnitAnimator.select(unit.id)
 	nodes = showRanges(unit, Config.OVERLAY.Move)
 	setMode("Selected")
+	TutorialGuide.checkpoint("Select", { unitId = unit.id })
 end
 
 -- Laufweg + Zielfeld sichtbar lassen, damit vor dem Bestätigen klar ist, wohin die Figur geht
@@ -403,6 +415,11 @@ local function showDestination()
 end
 
 local function startTargeting()
+	if TutorialGuide.guided() then
+		local data = { unitId = selectedId, x = dest.x, y = dest.y }
+		if not TutorialGuide.allow("AttackMenu", data) then return end
+		TutorialGuide.checkpoint("AttackMenu", data)
+	end
 	UI.hideMenu()
 	clearList(overlays)
 	for _, t in targets do
@@ -427,6 +444,7 @@ local function openMenu(x, y)
 			sendAct("Wait")
 		end,
 		onCancel = function()
+			if TutorialGuide.guided() then UI.toast("Folge bitte der goldenen Markierung."); return end
 			selectUnit(unit)
 		end,
 	})
@@ -434,6 +452,8 @@ local function openMenu(x, y)
 end
 
 local function previewAttack(target)
+	local data = { unitId = selectedId, targetId = target.id, x = dest.x, y = dest.y }
+	if not TutorialGuide.allow("Target", data) then return end
 	local unit = state.units[selectedId]
 	pendingTargetId = target.id
 	local forecast = Combat.forecast(unit, target, dest.x, dest.y)
@@ -442,10 +462,12 @@ local function previewAttack(target)
 			sendAct("Attack", target.id)
 		end,
 		onCancel = function()
+			if TutorialGuide.guided() then UI.toast("Folge bitte der goldenen Markierung."); return end
 			pendingTargetId = nil
 			UI.hideForecast()
 		end,
 	})
+	TutorialGuide.checkpoint("Target", data)
 end
 
 local function toggleInspect(enemy)
@@ -493,6 +515,32 @@ local function onClick(x, y)
 		return
 	end
 	local unit = Grid.unitAt(state.units, x, y)
+	if TutorialGuide.guided() then
+		local step = Tutorial.step(state.tutorial)
+		if step.kind == "Select" then
+			if TutorialGuide.allow("Select", { unitId = unit and unit.id }) then selectUnit(unit) end
+		elseif step.kind == "Move" then
+			local data = { unitId = selectedId, x = x, y = y }
+			if TutorialGuide.allow("Move", data) then
+				openMenu(x, y)
+				TutorialGuide.checkpoint("Move", data)
+			end
+		elseif step.kind == "Target" then
+			local pos = Tutorial.position(state, step)
+			local data = { unitId = selectedId, x = pos.x, y = pos.y, targetId = unit and unit.id }
+			if TutorialGuide.allow("Target", data) then
+				dest = { x = pos.x, y = pos.y }
+				UI.hideMenu()
+				setMode("Target")
+				previewAttack(unit)
+			end
+		elseif step.kind == "Confirm" and unit and unit.id == pendingTargetId then
+			sendAct("Attack", unit.id)
+		else
+			UI.toast("Folge bitte der goldenen Markierung.")
+		end
+		return
+	end
 
 	if mode == "Idle" then
 		if unit and unit.team == "Player" and not unit.done then
@@ -551,6 +599,7 @@ local function onClick(x, y)
 end
 
 local function goBack()
+	if TutorialGuide.guided() then UI.toast("Folge bitte der goldenen Markierung."); return end
 	if mode == "Target" then
 		openMenu(dest.x, dest.y)
 	elseif mode == "Menu" then
@@ -960,11 +1009,14 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
+	TutorialGuide.update(isMine() and state or nil)
 	local changedBattle = state.mode == "Battle" and (not previous or previous.mode ~= "Battle"
 		or previous.stageId ~= state.stageId
+		or (state.tutorial and (not previous.tutorial or previous.tutorial.id ~= state.tutorial.id))
 		or (state.run and (not previous.run or previous.run.seed ~= state.run.seed or previous.run.depth ~= state.run.depth)))
-	if changedBattle and isMine() and state.run and not state.result and not loadingMission then
-		startLoading(nil, state.run)
+	if changedBattle and isMine() and not state.result and not loadingMission then
+		if state.run then startLoading(nil, state.run)
+		elseif state.tutorial then startLoading(state.stageId) end
 	end
 	if BattleScene.isPlaying() and (not isMine() or state.result or state.phase == "Prep"
 		or changedBattle) then
@@ -1003,7 +1055,10 @@ local function applyState(newState)
 	end
 	Atmosphere.set(atmosphere)
 	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub", { loop = not (isMine() and state.result ~= nil) })
-	resetSelection()
+	local preserveGuide = previous and previous.tutorial and state.tutorial
+		and previous.tutorial.id == state.tutorial.id and not state.busy and not previous.busy
+		and state.phase == "Player" and previous.phase == "Player" and not state.result
+	if not preserveGuide then resetSelection() end
 	UI.setHudVisible(not loadingMission and inBattle() and not state.result and not BattleScene.isPlaying())
 	if inBattle() then
 		UI.setPhase(state)
@@ -1024,8 +1079,13 @@ ProfileUpdate.OnClientEvent:Connect(function(newProfile)
 end)
 
 local root = UI.init({
+	onTutorialContinue = function()
+		if not canControl() or not dest then return end
+		local data = { unitId = selectedId, x = dest.x, y = dest.y, targetId = pendingTargetId }
+		if TutorialGuide.allow("Forecast", data) then TutorialGuide.checkpoint("Forecast", data) end
+	end,
 	onEndTurn = function()
-		if canControl() then
+		if canControl() and TutorialGuide.allow("EndTurn") then
 			resetSelection()
 			setMode("Busy")
 			send({ type = "EndTurn" })
@@ -1038,23 +1098,28 @@ local root = UI.init({
 		end
 	end,
 	onDanger = function()
+		if state and state.tutorial then return end
 		dangerOn = not dangerOn
 		redrawDanger()
 		updateTools()
 	end,
 	onSpeed = function()
+		if state and state.tutorial then return end
 		send({ type = "SetSpeed", speed = (state and state.speed == 2) and 1 or 2 })
 	end,
 	onBattleScenes = function()
-		if isMine() then send({ type = "SetBattleScenes", on = state.battleScenes == false }) end
+		if isMine() and not state.tutorial then send({ type = "SetBattleScenes", on = state.battleScenes == false }) end
 	end,
 	onSkipEnemy = function()
-		if isMine() and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
+		if isMine() and not state.tutorial and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
 	end,
 	onForfeit = function()
+		if TutorialGuide.guided() then return end
 		send({ type = state and state.run and "AbandonRun" or "ToLobby" })
 	end,
 })
+
+TutorialGuide.init(UI, send, fxFolder)
 
 MenuUI.init(root, {
 	onStartRun = function(heroes) send({ type = "StartRun", heroes = heroes }) end,
