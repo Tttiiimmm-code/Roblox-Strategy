@@ -463,6 +463,43 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 **Teststatus:** Vom Nutzer in Studio bestätigt: Leon steht auf dem Boden, Arme hängen, Angriff hebt den Arm (noch etwas steif), Hub sofort richtig beleuchtet. Eigene Waffenmodelle noch ungetestet (keine Datei vorhanden). Pflichtcheck OK.
 
 ---
+## #21 – Aufräum-Werkzeug für KI-Modelle
+**Datum:** 07.10.2026
+
+**Ziel:** KI-Figurenmodelle mit einem Befehl für Roblox aufbereiten und das Gesicht trotz 1024er-Textur scharf erhalten.
+
+**Umsetzung**
+- `scripts/cleanup.ps1` startet Blender headless für FBX/GLB; Parameter für Ausgabe, Blickrichtung, Texturgröße, Kopfanteil, Dreieckslimit und optionale Cel-Palette.
+- `scripts/cleanup/cleanup_model.py` verbindet Meshes, entfernt Rig/Animationen, richtet die Figur aus, verschweißt Punkte, entfernt winzige Teile, glättet nach Kantenwinkel und trianguliert. Neue UV-Anordnung reserviert standardmäßig 25 % UV-Fläche für den Kopf; Emission-Bake mit doppelter Auflösung überträgt die Originaltextur auf 1024 px.
+- Vorder-/Rückansicht, Gesicht und Originalvergleich mit 1K sowie Bericht mit Farbtreue-Check. Optionales K-Means-Cel mit Gesichtsschutz und Erhalt selten abweichender Körperfarben.
+- FBX (nur Mesh, FBX Units Scale, Forward −Z / Up Y) und GLB mit eingebetteter Textur; FBX-Re-Import in eine leere Szene prüft Dreieckszahl, Texturgröße und bytegleiche eingebettete PNG-Daten. Pipeline und Figuren-README erklären Download → Aufbereitung → Studio-Import → Avatar Auto Setup.
+
+**Entscheidungen:** Generator-Texturen in 4K herunterladen; neue UVs geben dem Kopf mehr Fläche. Kopfgewichtung obere 13 %/Radius < 12 % der Höhe; nach Claudes Freigabe schützt Cel die oberen 16 % einschließlich Kinn. Körperpixel mit euklidischem RGB-Abstand > 40 zur Palette behalten ihre Originalfarbe. Cel-Farbtreue wird nur berichtet. Rohdaten, Prüfbilder und Exporte bleiben unter ignoriertem `assets/raw/`; Spielcode und bestehendes `leon.rbxm` unverändert. Separate Commits pro Schritt auf `feature/modell-cleanup`.
+
+**Probleme:** Die ursprüngliche 13-%-Cel-Maske ließ Leons Kinn grau werden; mit freigegebener 16-%-Maske behoben. Blender 5.2 verwendet `shade_smooth_by_angle` für die 40°-Glättung. Blender meldet nur Deprecation-Warnungen zu `Material.use_nodes` für eine künftige Version; beide abschließenden Aufrufe erfolgreich (Exit 0). Git-Index für den Doku-Commit nur mit bereits freigegebenem Aufruf außerhalb der Sandbox schreibbar.
+
+**Teststatus:** **In Roblox Studio und auf dem Handy ungetestet; unabhängiger Claude-Review ausstehend.** Leon mit und ohne Cel unter `assets/raw/leon/clean/` erfolgreich erzeugt: jeweils 16 862 Dreiecke, 25 574 → 8 556 Punkte, alle 21 Teile erhalten, UV-Inseln 4 674 → 2 605, Kopfanteil 25,00 %, Textur 1024×1024. FBX-Re-Import beider Varianten identisch, PNG eingebettet und bytegleich; beide FBX/GLB-Dateien vorhanden. Mittlere Farbabweichung normal 2,77/255 (RGB 3,16 / 2,69 / 2,48), Cel 5,42/255 (informativ). Cel: 16 Farben auf 122 620 Körperpixeln; 172 Pixel (0,1401 %) wegen Farbabweichung erhalten; Kopf, seltene Farben, Hintergrund und Randpixel bytegleich. Prüfbilder angesehen: Vorder-/Rückausrichtung passt, Iris/Pupillen/Augenränder schärfer als im Original auf 1K; Cel-Gesicht einschließlich Kinn sichtbar unverändert. Pflichtcheck **OK, 26 Dateien, Exit 0**.
+
+---
+## #22 – Textur selbst bemalen
+**Datum:** 07.10.2026
+
+**Ziel:** Aufbereitete Figuren ohne Blender-Vorkenntnisse anhand der eigenen Referenzbilder nachmalen und die gespeicherte 1024er-Textur für Studio exportieren.
+
+**Umsetzung**
+- `scripts/paint.ps1` startet Setup/Export mit Figuren-ID, optionalem Eingabeordner und derselben Blender-Suche wie das Aufräum-Werkzeug. Fehlende Parameter/Dateien ergeben verständliche Meldungen und Exit 1; Blender-Exit-Codes werden durchgereicht.
+- Setup importiert das aufbereitete GLB, verbindet die externe `*_tex_bemalt.png` über `UV_neu` und erzeugt zugeschnittene Vorder-/Rückreferenzen, ein 1024er-UV-Raster mit halbtransparenten Linien sowie `*_malen.blend` mit relativen Bildpfaden. Zwei lokale Pinsel-Assets: „Referenz vorne“ als Schablone und „Flach malen“ mit konstantem Abfall; Rückreferenz als umschaltbare Textur. Canvas, Texturansicht und ausgeschaltete Spiegelung vorbereitet.
+- Bestehende Mal-Dateien sind ohne `-Force` geschützt. Force sichert eine vorhandene bemalte PNG mit Zeitstempel und behält sie bei; neue PNGs sind Kopien der Originaltextur.
+- Export liest ausschließlich die PNG von der Festplatte, prüft deren Größe, warnt bei einer mehr als 60 Sekunden neueren Blender-Datei und erzeugt bemalte FBX/GLB, drei Prüfbilder sowie einen Bericht mit Anteil geänderter Pixel. Exportoptionen und Re-Import-Prüfung in `cleanup_model.export_files`, Kamerarahmen/Prüfbilder in gemeinsame Funktionen ausgelagert. `paint_common.py` teilt Eingabeprüfung und GLB-Import zwischen Setup und Export.
+- `docs/textur-malen.md` erklärt Setup, Navigation inklusive Laptop-Einstellungen, Schablone, Flächen, Rückgängig, beide Speicherschritte, Export und Studio sowie den Alternativweg in Krita/Photopea. Verweise in Charakter-Pipeline und Figuren-README.
+
+**Entscheidungen:** Beide Pinsel bleiben als lokale Assets in der Mal-Datei; keine Installation in eine persönliche Asset-Bibliothek nötig. Maltextur und Referenzen bleiben externe Dateien im Ordner `clean`. In Blender 5.2 gilt für die Pipette **Umschalt + X** statt des im Plan genannten S; die Anleitung verwendet die tatsächlich installierte Standard-Keymap und zusätzlich F3 → Sample Color. Der Texture-Paint-Arbeitsbereich wird vom Nutzer geöffnet. Rohdaten, Prüfskripte und erzeugte Dateien bleiben ignoriert; Spielcode, Rojo-Projekt und `leon.rbxm` unverändert. Ein Commit pro Planschritt auf `feature/modell-cleanup`.
+
+**Probleme:** `ImagePaint.brush` ist in Blender 5.2 schreibgeschützt; Aktivierung über `brush.asset_activate` mit LOCAL und `Brush/<Name>` erfolgreich. UV-PNG-Export braucht headless `gpu.init()`. Blender lädt externe Bilddaten erst bei Bedarf; Größen-/Pixelzugriff nach Neuöffnung geprüft. Sandbox-Meldungen zu persönlichen Asset-Cache-/Thumbnail-Verzeichnissen beeinträchtigten die lokalen Pinsel und Ausgaben nicht; Hauptläufe Exit 0. Gerenderte PNGs besitzen veränderliche Metadaten, daher Regression über Bildpixel statt Dateihash. Windows-PowerShell-Aufruf mit UTF-8-BOM für deutsche Meldungen.
+
+**Teststatus:** **Vom Nutzer in Blender, Roblox Studio und auf dem Handy ungetestet; unabhängiger Claude-Review ausstehend.** Leon-Setup erzeugt alle geforderten Dateien; nach headless Neuöffnung aktives Mesh, `UV_neu`, Material, externes Canvas, Referenztexturen und beide aktivierbaren Pinsel geprüft. Zuschnitte vorne 1173×1051, hinten 1165×1046; UV-Raster 1024×1024, maximale Linien-Deckkraft 128/255. Wiederholtes Setup ohne Force: Exit 1 und alle Dateihashes/Zeitstempel unverändert; Force-Sicherung und Erhalt der Textur geprüft. Export unveränderter Kopie: **0 %**; magentafarbenes Testrechteck: **25 % / 262144 Pixel**, im Gesichts-Prüfbild sichtbar. Originalkopie wiederhergestellt. Falsche Bildgröße 512×512 wird mit Exit 1 abgelehnt; Zeitwarnung beobachtet. Cleanup-Regression: weiterhin **16862 Dreiecke**, Re-Import bestanden, ursprüngliche Textur bytegleich und Vorder-Prüfbild pixelgleich. Bemalte FBX-Re-Importe: 1024×1024, genau ein Mesh, eingebettetes PNG bytegleich. Abschließende Setup-/Export-Läufe erfolgreich, unveränderte `leon_tex_bemalt.png` hinterlassen. Python-Syntax der vier Module geprüft; Pflichtcheck **OK, 26 Dateien, Exit 0**. UI-/Keymap-Dateien abgeglichen; tatsächliche Bedienung und Studio-Import durch den Nutzer bleiben offen.
+
+---
 ## #23 – Roguelike Phase 1
 **Datum:** 08.10.2026
 
@@ -484,17 +521,18 @@ Nachtrag zu #6: ✅ Etappe 2 in Studio getestet – „Funktioniert“.
 
 ---
 ## Nächste Schritte (Plan)
-1. **Claude-Review und manueller Lauf-Test:** Servergröße 1 setzen; komplette Prüfliste in PLAN.md auf PC und Handy prüfen, besonders Wiederbeitritt, Speicherung, Tote/Heilung, Gegnerphase-Aufgabe, fünf Level und bestehende Missionen.
-2. **Offene Figuren-/Darstellungstests:** eigenes Waffenmodell (leon_waffe), weitere Mesh-Modelle, Kampfszenen, Erstaufbau/Ladepfade, Handy-Kamera und Weltkarte/Terrain prüfen.
-3. **Roguelike Phase 2 – Tutorial:** Missionen 1+2 mit Überspringen-Abfrage; übrige Missionen, Sterne und Schwierigkeiten gemäß roguelike-design.md umbauen.
-4. **Roguelike Phase 3/4:** Bosse/Lager, Wiederbelebung/Teamwechsel/Teamplätze, danach Waffenbeute, Händler, Rückblenden und Notfall-Beschwörung.
-5. **Roguelike Phase 5–7:** Sumpf/Gefahren/Leveltypen, Eis/Vulkan, danach Punktzahl/Ränge/Bestenlisten. Detailentscheidungen vorher klären.
-6. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
-7. Ausrüstung/Items als reine Werte (Aussehen bleibt die eigene Waffe der Figur).
-8. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
-9. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
-10. Eigene Angriffs-Effekte für ★4/★5.
-11. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
-12. Anime-R15-Modelle schrittweise gemäß `docs/charakter-pipeline.md` erstellen/importieren; der Figurenstil `mesh` ist vorbereitet, fehlende Modelle bleiben Chibi.
-13. Belohnungen & Klassenwechsel.
-14. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
+1. **Textur-Malen ausprobieren:** `docs/textur-malen.md` durchgehen; Mal-Datei öffnen, beide lokalen Pinsel auswählen, Vorder-/Rückschablone ausrichten, Pipette/Rückgängig prüfen, Bild und Datei speichern. Änderung im bemalten Gesichts-Prüfbild und nach Import von `leon_bemalt.fbx` in Studio bestätigen. Unklare Klickwege, Laptop-Navigation und Verständlichkeit der Anleitung melden.
+2. **Claude-Review und manueller Lauf-Test:** Servergröße 1 setzen; komplette Prüfliste in PLAN.md auf PC und Handy prüfen, besonders Wiederbeitritt, Speicherung, Tote/Heilung, Gegnerphase-Aufgabe, fünf Level und bestehende Missionen.
+3. **Offene Tests:** neue Leon-FBX normal/Cel in Studio importieren, Textur, Haltung, Blickrichtung und Dreieckszahl prüfen, Avatar Auto Setup ausführen und Gesicht aus Brett-Entfernung auf PC/Handy vergleichen. Bevorzugte Variante erst danach als `assets/characters/leon.rbxm` speichern. Eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Weltkarte/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
+4. **Roguelike Phase 2 – Tutorial:** Missionen 1+2 mit Überspringen-Abfrage; übrige Missionen, Sterne und Schwierigkeiten gemäß roguelike-design.md umbauen.
+5. **Roguelike Phase 3/4:** Bosse/Lager, Wiederbelebung/Teamwechsel/Teamplätze, danach Waffenbeute, Händler, Rückblenden und Notfall-Beschwörung.
+6. **Roguelike Phase 5–7:** Sumpf/Gefahren/Leveltypen, Eis/Vulkan, danach Punktzahl/Ränge/Bestenlisten. Detailentscheidungen vorher klären.
+7. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
+8. Ausrüstung/Items als reine Werte (Aussehen bleibt die eigene Waffe der Figur).
+9. Beschwörungs-Show mit animierter Rekrutierung, Lichtsäule in Seltenheitsfarbe, Kamerafahrt und Pose.
+10. Helden-Showcase mit großem drehbarem Modell in der Kaserne.
+11. Eigene Angriffs-Effekte für ★4/★5.
+12. Skins und Ausrüstungs-Stufen: Aussehen wächst mit Verschmelzen/Level, dazu kaufbare Skins.
+13. Anime-R15-Modelle schrittweise gemäß `docs/charakter-pipeline.md` erstellen/importieren; der Figurenstil `mesh` ist vorbereitet, fehlende Modelle bleiben Chibi.
+14. Belohnungen & Klassenwechsel.
+15. Tägliche Belohnungen / Quests, Co-op-Raid, Saison-Pass und Rewarded Ads.
