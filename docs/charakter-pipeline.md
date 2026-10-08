@@ -2,6 +2,8 @@
 
 Ziel: Alle Figuren im Anime-Stil des Leon-Designs (realistische Anime-Proportionen, Cel-Look, Silber/Gold-Rüstung, kräftige Stofffarben). Im Spiel als echte 3D-Modelle (Figurenstil `"mesh"`). Fehlt ein Modell, zeigt das Spiel automatisch die Chibi-Figur – man kann also Figur für Figur austauschen.
 
+Für Bäume, Büsche, Felsen, Gebäude und Paket-Deko gilt die separate [Umgebungs-Pipeline mit Asset-Liste](umgebung-assets.md). Sie nutzt `cleanup.ps1 -Prop` (512 px, standardmäßig 3.000 Dreiecke, gleichmäßige UVs ohne Kopferkennung) und `assets/environment/`; Figuren weiterhin ohne `-Prop` aufbereiten.
+
 ## 1. Design-Blatt (Bild)
 Pro Figur **zwei Bilder** wie beim Leon-Design:
 - **Vorderansicht + Rückansicht in T-Pose**, ganzer Körper, neutraler grauer Hintergrund, keine Schatten am Boden, kein Text.

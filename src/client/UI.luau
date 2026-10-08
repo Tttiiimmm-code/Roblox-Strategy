@@ -37,7 +37,8 @@ local portraitId = nil
 -- Aufbau -------------------------------------------------------------------------
 local function buildTop(callbacks)
 	local pill = panel({
-		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(320, 52),
+		Name = "PhasenBanner",
+		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(460, 82),
 	}, hud)
 	turnLabel = label({
 		Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 14),
@@ -47,23 +48,29 @@ local function buildTop(callbacks)
 		Position = UDim2.fromOffset(0, 17), Size = UDim2.new(1, 0, 0, 30), Font = THEME.title, TextSize = 26,
 	}, pill)
 	stageLabel = label({
-		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 66), Size = UDim2.fromOffset(420, 20),
-		TextSize = 14, TextColor3 = THEME.dim, TextStrokeTransparency = 0.6,
-	}, hud)
+		Position = UDim2.fromOffset(8, 58), Size = UDim2.new(1, -16, 0, 20),
+		TextSize = 14, TextColor3 = THEME.dim, TextStrokeTransparency = 0.6, TextScaled = false,
+	}, pill)
+	UIKit.fitText(stageLabel, 9)
 
 	-- Kontext-Hinweis oben links
-	hintLabel = label({
-		Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(330, 66),
+	local hints = make("Frame", {
+		Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(330, 0),
+		AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1,
+	}, hud)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, hints)
+	hintLabel = UIKit.flowLabel({
+		Name = "HinweisKasten",
+		Size = UDim2.new(1, 0, 0, 66), LayoutOrder = 1,
 		BackgroundColor3 = Color3.fromRGB(10, 14, 32), BackgroundTransparency = 0.3,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
 		TextSize = 15, TextWrapped = true,
-	}, hud)
+	}, hints)
 	corner(hintLabel, 6)
 	padding(hintLabel, 8)
 
 	-- Aufgeben mit Bestätigung
-	local forfeit = button("Aufgeben", hud, "muted")
-	forfeit.Position = UDim2.fromOffset(12, 86)
+	local forfeit = button("Aufgeben", hints, "muted", 2)
 	forfeit.Size = UDim2.fromOffset(220, 52)
 	forfeit.TextSize = 18
 	local armed = false
@@ -85,18 +92,19 @@ local function buildTop(callbacks)
 	end)
 
 	terrainFrame = panel({
+		Name = "GelaendeKasten",
 		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.fromOffset(340, 78),
-		Visible = false,
+		Visible = false, AutomaticSize = Enum.AutomaticSize.Y,
 	}, hud)
 	padding(terrainFrame, 8)
-	terrainLabel = label({
-		Size = UDim2.fromScale(1, 1), TextXAlignment = Enum.TextXAlignment.Left, TextSize = 14, TextWrapped = true,
+	terrainLabel = UIKit.flowLabel({
+		Size = UDim2.new(1, 0, 0, 62), TextXAlignment = Enum.TextXAlignment.Left, TextSize = 14,
 	}, terrainFrame)
 end
 
 local function buildInfo()
 	local f = panel({
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -12), Size = UDim2.fromOffset(400, 176),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -12), Size = UDim2.fromOffset(400, 198),
 		Visible = false,
 	}, root)
 	info.frame = f
@@ -155,7 +163,7 @@ local function buildInfo()
 		info.stats[stat] = label({ LayoutOrder = i, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left }, grid)
 	end
 	info.weapon = label({
-		Position = UDim2.fromOffset(x, 146), Size = UDim2.new(1, w, 0, 20), TextSize = 13,
+		Position = UDim2.fromOffset(x, 146), Size = UDim2.new(1, w, 0, 44), TextSize = 13, TextWrapped = true, TextScaled = false,
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, f)
 end
@@ -266,7 +274,7 @@ end
 -- Unten rechts: Zurück · [Rückblende][Gefahr][Tempo] · Zug beenden
 local function buildTools(callbacks)
 	local col = make("Frame", {
-		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(210, 212),
+		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(300, 212),
 		BackgroundTransparency = 1,
 	}, hud)
 
@@ -297,8 +305,6 @@ local function buildTools(callbacks)
 	end
 	tools.undo = toolButton("Rückblende 0", 1, callbacks.onUndo)
 	tools.undo.TextSize = 13
-	tools.undo.TextScaled = true
-	make("UITextSizeConstraint", { MaxTextSize = 13 }, tools.undo)
 	tools.danger = toolButton("⚠ Gefahr", 2, callbacks.onDanger)
 	tools.speed = toolButton("1×", 3, callbacks.onSpeed)
 	tools.scenes = button("Szenen an", col, "active")
@@ -327,7 +333,7 @@ end
 local function buildPopups()
 	toastFrame = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.fromOffset(460, 44),
+		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.fromOffset(440, 44),
 		Visible = false, ZIndex = 5,
 	}, root)
 	toastLabel = label({ Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 17, ZIndex = 5 }, toastFrame)
@@ -387,8 +393,10 @@ end
 -- Öffentliche API ----------------------------------------------------------------
 local function buildLoading(playerGui)
 	local gui = make("ScreenGui", {
-		Name = "MissionLoading", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 1000,
+		Name = "MissionLoading", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None, DisplayOrder = 1000,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false, Enabled = false,
 	}, playerGui)
+	loading.gui = gui
 	loading.frame = make("CanvasGroup", {
 		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
 		BorderSizePixel = 0, Visible = false, Active = true,
@@ -396,7 +404,7 @@ local function buildLoading(playerGui)
 	make("UIGradient", { Color = ColorSequence.new(THEME.bottom, THEME.barBg), Rotation = 90 }, loading.frame)
 	local contentRoot = UIKit.createRoot(loading.frame)
 	loading.content = make("CanvasGroup", {
-		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Active = false,
 	}, contentRoot)
 	local card = panel({
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
@@ -404,7 +412,7 @@ local function buildLoading(playerGui)
 	}, loading.content)
 	loading.title = label({
 		Position = UDim2.fromOffset(24, 32), Size = UDim2.new(1, -48, 0, 76),
-		Font = THEME.title, TextSize = 42, TextWrapped = true,
+		Font = THEME.title, TextSize = 42, TextWrapped = true, TextScaled = false,
 	}, card)
 	loading.subtitle = label({
 		Position = UDim2.fromOffset(24, 115), Size = UDim2.new(1, -48, 0, 36),
@@ -421,6 +429,8 @@ function UI.showLoading(title, subtitle)
 	if loading.pulse then loading.pulse:Cancel() end
 	loading.title.Text, loading.subtitle.Text = title, subtitle
 	loading.frame.GroupTransparency = 0
+	loading.gui.Enabled = true
+	loading.frame.Active = true
 	loading.frame.Visible = true
 	loading.content.GroupTransparency = 1
 	loading.progress.TextTransparency = 0
@@ -433,17 +443,25 @@ end
 function UI.hideLoading()
 	if loading.fade then loading.fade:Cancel() end
 	if loading.pulse then loading.pulse:Cancel() end
+	-- Die dekorative Ausblendung darf die bereits freigegebene Eingabe nicht schlucken.
+	loading.frame.Active = false
 	local fade = TweenService:Create(loading.frame, TweenInfo.new(Config.FEEL.loadingFade), { GroupTransparency = 1 })
 	loading.fade = fade
 	fade.Completed:Once(function(status)
-		if status == Enum.PlaybackState.Completed then loading.frame.Visible = false end
+		if status == Enum.PlaybackState.Completed then
+			loading.frame.Visible = false
+			loading.gui.Enabled = false
+		end
 	end)
 	fade:Play()
 end
 
 function UI.init(callbacks)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-	local gui = make("ScreenGui", { Name = "TacticsUI", ResetOnSpawn = false, IgnoreGuiInset = false }, playerGui)
+	local gui = make("ScreenGui", {
+		Name = "TacticsUI", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false,
+	}, playerGui)
 	root = UIKit.createRoot(gui)
 	hud = make("Frame", { Name = "Hud", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, root)
 	buildTop(callbacks)

@@ -3,6 +3,7 @@ local Config = testModules.Config
 local RunConfig = testModules.RunConfig
 local LevelGen = testModules.LevelGen
 local checks, fallbacks = 0, 0
+local riverChecks, bridgeCounts, riverWidths = 0, {}, {}
 
 local function same(a, b)
 	if type(a) ~= type(b) then return false end
@@ -44,6 +45,74 @@ local function flood(map, start)
 	return seen
 end
 
+local function charAt(map, x, y)
+	local row = map[y]
+	return row and row:sub(x, x) or ""
+end
+
+local function validateRiver(map)
+	local riverCells, first, crossings = {}, nil, 0
+	for x = 1, RunConfig.BOARD_WIDTH do
+		local waterRows, bridgeRows = {}, {}
+		for y = 1, #map do
+			local char = charAt(map, x, y)
+			if char == "W" or char == "B" then
+				assert(y < RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS, "Fluss in/an Startzone")
+				local cell = { x = x, y = y }
+				riverCells[cellKey(cell)] = true
+				first = first or cell
+				table.insert(waterRows, y)
+				if char == "B" then table.insert(bridgeRows, y) end
+			end
+		end
+		if #waterRows > 0 then
+			assert(#waterRows >= RunConfig.RIVER_WIDTH.min and #waterRows <= RunConfig.RIVER_WIDTH.max, "Flussbreite")
+			riverWidths[#waterRows] = true
+			assert(waterRows[#waterRows] - waterRows[1] + 1 == #waterRows, "Lücke im Flussquerschnitt")
+		end
+		if #bridgeRows > 0 then
+			crossings += 1
+			assert(#bridgeRows == #waterRows, "Brücke überspannt nicht die volle Flussbreite")
+			assert(canWalk(map, x, bridgeRows[1] - 1) and canWalk(map, x, bridgeRows[#bridgeRows] + 1), "Unpassierbares Brückenufer")
+			for _, y in ipairs(bridgeRows) do
+				assert(charAt(map, x - 1, y) == "W" and charAt(map, x + 1, y) == "W", "Brücke ohne Wasser auf beiden Seiten")
+			end
+		end
+	end
+	if not first then return false end
+	assert(crossings >= RunConfig.BRIDGES_MIN and crossings <= RunConfig.BRIDGES_MAX, "Brückenanzahl")
+	bridgeCounts[crossings] = true
+	-- W und B gemeinsam bilden das Flussbett; eine unabhängige Suche prüft jeden Anschluss.
+	local seen, queue, head = { [cellKey(first)] = true }, { first }, 1
+	while head <= #queue do
+		local cell = queue[head]
+		head += 1
+		for _, offset in ipairs({ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }) do
+			local nextCell = { x = cell.x + offset[1], y = cell.y + offset[2] }
+			local id = cellKey(nextCell)
+			if riverCells[id] and not seen[id] then
+				seen[id] = true
+				table.insert(queue, nextCell)
+			end
+		end
+	end
+	local left, right = false, false
+	for id in pairs(riverCells) do assert(seen[id], "Unterbrochener Fluss") end
+	for _, cell in ipairs(queue) do
+		if cell.x == 1 then left = true end
+		if cell.x == RunConfig.BOARD_WIDTH then right = true end
+	end
+	assert(left and right, "Fluss erreicht nicht gegenüberliegende Ränder")
+	for x = 1, RunConfig.BOARD_WIDTH do
+		local found = false
+		for y = 1, #map do
+			if riverCells[cellKey({ x = x, y = y })] then found = true end
+		end
+		assert(found, "Fluss fehlt in einer Spalte")
+	end
+	return true
+end
+
 local function validate(stage, themeId, depth, teamSize)
 	assert(#stage.map == RunConfig.BOARD_HEIGHT, "Kartenhöhe")
 	local blocked = 0
@@ -61,10 +130,15 @@ local function validate(stage, themeId, depth, teamSize)
 	local occupied, floods = {}, {}
 	for i, slot in ipairs(stage.slots) do
 		assert(slot.y > RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS, "Startzone")
-		assert(canWalk(stage.map, slot.x, slot.y), "Startfeld unpassierbar")
+		local char = charAt(stage.map, slot.x, slot.y)
+		assert(char == "." or char == "F", "Startfeld auf Brücke/Festung/Wasser/Fels")
+		assert(canWalk(stage.map, slot.x, slot.y - 1), "Start ohne Weg nach vorn")
 		assert(not occupied[cellKey(slot)], "Doppeltes Startfeld")
 		occupied[cellKey(slot)] = true
 		floods[i] = flood(stage.map, slot)
+	end
+	for _, slot in ipairs(stage.slots) do
+		assert(not occupied[cellKey({ x = slot.x, y = slot.y - 1 })], "Mitspieler blockiert Weg nach vorn")
 	end
 	local theme = RunConfig.THEMES[themeId]
 	local focus, focusCount = {}, 0
@@ -84,17 +158,43 @@ local function validate(stage, themeId, depth, teamSize)
 		end
 	end
 	assert(math.abs(focusCount - #stage.enemies * theme.share) < 1, "Schwerpunktanteil")
+	if validateRiver(stage.map) then riverChecks += 1 end
 end
 
 for _, chunks in pairs(testModules.MapChunks) do
-	assert(#chunks >= 10, "Zu wenige Bausteine")
+	assert(#chunks >= 24, "Zu wenige Bausteine")
+	local distinct = {}
 	for _, chunk in ipairs(chunks) do
-		assert(#chunk == RunConfig.CHUNK_HEIGHT, "Bausteinhöhe")
-		for _, row in ipairs(chunk) do assert(#row == RunConfig.CHUNK_WIDTH, "Bausteinbreite") end
+		assert(#chunk.rows == RunConfig.CHUNK_HEIGHT, "Bausteinhöhe")
+		local west, east = "", ""
+		for _, row in ipairs(chunk.rows) do
+			assert(#row == RunConfig.CHUNK_WIDTH, "Bausteinbreite")
+			assert(not row:find("[^.FMH]"), "Wasser/Brücke oder unbekanntes Gelände im Baustein")
+			west ..= row:sub(1, 1)
+			east ..= row:sub(-1)
+		end
+		assert(chunk.edges.north == chunk.rows[1] and chunk.edges.south == chunk.rows[#chunk.rows], "Nord-/Südkennung")
+		assert(chunk.edges.west == west and chunk.edges.east == east, "West-/Ostkennung")
+		local id = table.concat(chunk.rows, "/")
+		assert(not distinct[id], "Doppelter Baustein")
+		distinct[id] = true
 	end
 end
 
+local maps, uniqueMaps, terrainCells, sampleRivers = {}, 0, 0, 0
 for seed = 1, 1000 do
+	local sample = LevelGen.generate(seed, "greenland", 1, "axe", RunConfig.START_TEAM)
+	local id = table.concat(sample.map, "/")
+	if not maps[id] then maps[id] = true; uniqueMaps += 1 end
+	local hasRiver = false
+	for _, row in ipairs(sample.map) do
+		for x = 1, #row do
+			local char = row:sub(x, x)
+			if char ~= "." then terrainCells += 1 end
+			if char == "W" then hasRiver = true end
+		end
+	end
+	if hasRiver then sampleRivers += 1 end
 	for depth = 1, RunConfig.LEVELS_PER_REGION do
 		local options = LevelGen.makeOptions(seed, depth, "greenland")
 		assert(same(options, LevelGen.makeOptions(seed, depth, "greenland")), "Optionen nicht deterministisch")
@@ -107,15 +207,51 @@ for seed = 1, 1000 do
 			assert(option.reward.amount == RunConfig.rewardAmount(option.reward.kind, depth), "Belohnungsmenge")
 		end
 		for _, themeId in ipairs(RunConfig.THEME_ORDER) do
-			local teamSize = (seed - 1) % RunConfig.MAX_TEAM + 1
-			local stage = LevelGen.generate(seed, "greenland", depth, themeId, teamSize)
-			assert(same(stage, LevelGen.generate(seed, "greenland", depth, themeId, teamSize)), "Level nicht deterministisch")
-			validate(stage, themeId, depth, teamSize)
-			checks += 1
-			if stage.fallback then fallbacks += 1 end
+			for teamSize = 1, RunConfig.MAX_TEAM do
+				local stage = LevelGen.generate(seed, "greenland", depth, themeId, teamSize)
+				assert(same(stage, LevelGen.generate(seed, "greenland", depth, themeId, teamSize)), "Level nicht deterministisch")
+				validate(stage, themeId, depth, teamSize)
+				checks += 1
+				if stage.fallback then fallbacks += 1 end
+			end
 		end
 	end
 end
+
+assert(uniqueMaps >= 900, "Zu wenig Kartenvielfalt")
+assert(terrainCells / (1000 * RunConfig.BOARD_WIDTH * RunConfig.BOARD_HEIGHT) >= 0.2, "Zu wenig Gelände")
+assert(fallbacks / checks <= 0.001, "Zu viele Rückfall-Level")
+assert(bridgeCounts[1] and bridgeCounts[2] and riverWidths[1] and riverWidths[2], "Fluss-/Brückenvarianten fehlen")
+
+-- Ohne Fluss müssen alle gespiegelten Nachbarn exakt gleiche Anschlussprofile haben.
+local chance = RunConfig.RIVER_CHANCE
+RunConfig.RIVER_CHANCE = 0
+local forestJoins, rockJoins = 0, 0
+for seed = 1, 1000 do
+	local stage = LevelGen.generate(seed, "greenland", 1, "axe", RunConfig.MAX_TEAM)
+	for y = 1, #stage.map do
+		local left, right = charAt(stage.map, RunConfig.CHUNK_WIDTH, y), charAt(stage.map, RunConfig.CHUNK_WIDTH + 1, y)
+		assert(left == right, "West-/Ostanschluss nach Spiegelung")
+		if left == "F" then forestJoins += 1 elseif left == "M" then rockJoins += 1 end
+	end
+	for x = 1, RunConfig.BOARD_WIDTH do
+		local top, bottom = charAt(stage.map, x, RunConfig.CHUNK_HEIGHT), charAt(stage.map, x, RunConfig.CHUNK_HEIGHT + 1)
+		assert(top == bottom, "Nord-/Südanschluss nach Spiegelung")
+		if top == "F" then forestJoins += 1 elseif top == "M" then rockJoins += 1 end
+	end
+	assert(not validateRiver(stage.map), "Fluss trotz Chance 0")
+end
+assert(forestJoins > 0 and rockJoins > 0, "Keine Wald-/Felsanschlüsse")
+RunConfig.RIVER_CHANCE = 1
+for _, seed in ipairs({ 0, -1, 2147483646, 987654321 }) do
+	for teamSize = 1, RunConfig.MAX_TEAM do
+		local stage = LevelGen.generate(seed, "greenland", 5, "bow", teamSize)
+		assert(validateRiver(stage.map), "Fluss trotz Chance 1 fehlt")
+		validate(stage, "bow", 5, teamSize)
+		assert(same(stage, LevelGen.generate(seed, "greenland", 5, "bow", teamSize)), "Randseed nicht deterministisch")
+	end
+end
+RunConfig.RIVER_CHANCE = chance
 
 local attempts = RunConfig.MAX_ATTEMPTS
 RunConfig.MAX_ATTEMPTS = 0
@@ -124,3 +260,4 @@ assert(fallback.fallback, "Rückfall-Level fehlt")
 validate(fallback, "bow", 5, RunConfig.MAX_TEAM)
 RunConfig.MAX_ATTEMPTS = attempts
 print(string.format("OK: %d Levelpruefungen, 5000 Optionspruefungen; Rueckfall-Level: %d (%.2f%%); erzwungener Rueckfall OK.", checks, fallbacks, fallbacks / checks * 100))
+print(string.format("Vielfalt: %d/1000 verschiedene Karten; Gelaendeanteil %.2f%%; Flussquote %.2f%%; %d Flusspruefungen; Anschluesse Wald/Fels: %d/%d.", uniqueMaps, terrainCells / (1000 * RunConfig.BOARD_WIDTH * RunConfig.BOARD_HEIGHT) * 100, sampleRivers / 10, riverChecks, forestJoins, rockJoins))

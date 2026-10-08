@@ -23,10 +23,10 @@ Du bist Planer und Reviewer, nicht der Hauptumsetzer.
 1. `.handoff/status` löschen (falls vorhanden).
 2. Codex als neuen Tab im Windows-Terminal-Fenster „codex" starten (PowerShell;
    das Fenster wird beim ersten Mal angelegt, danach wiederverwendet):
-   `Start-Process wt -ArgumentList '-w codex nt -d . --title Codex powershell -NoExit -Command "codex ''Setze PLAN.md um''"'`
+   `Start-Process wt -ArgumentList '-w codex nt -d . --title Codex powershell -NoExit -Command "codex --approve-for-me ''Setze PLAN.md um''"'`
    (Umweg über PowerShell nötig: Codex ist per npm als `codex.cmd`/`.ps1` installiert, wt startet es nicht direkt.)
    Andere Aufträge (Review, Weiterarbeit): Text zuerst nach `.handoff/auftrag.md`
-   schreiben, dann denselben Befehl mit `codex ''Lies .handoff/auftrag.md und fuehre den Auftrag aus.''`
+   schreiben, dann denselben Befehl mit `codex --approve-for-me ''Lies .handoff/auftrag.md und fuehre den Auftrag aus.''`
    – nie längeren Text direkt übergeben: `;` trennt in wt Tabs, Sonderzeichen brechen den Start.
 3. Im Hintergrund warten (Bash, `run_in_background`): `bash scripts/wait-codex.sh`
    – endet mit `fertig`/`frage` oder mit `STILL`, wenn Codex' Sitzungsprotokoll

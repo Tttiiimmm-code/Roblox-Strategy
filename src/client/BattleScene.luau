@@ -8,6 +8,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Stages = require(Shared:WaitForChild("Stages"))
 local UnitData = require(Shared:WaitForChild("UnitData"))
+local UnitShadow = require(Shared:WaitForChild("UnitShadow"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local UnitAnimator = require(script.Parent:WaitForChild("UnitAnimator"))
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
@@ -68,18 +69,17 @@ function BattleScene.play(info)
 	local scene = { connections = {}, threads = {}, tweens = {}, animations = {} }
 	active = scene
 	-- Das HUD wird währenddessen versteckt; Meldungen im HUD-Gui bleiben darüber.
-	local gui = make("ScreenGui", { Name = "BattleScene", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = -1, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+	local gui = make("ScreenGui", {
+		Name = "BattleScene", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false,
+		DisplayOrder = -1, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	}, Players.LocalPlayer:WaitForChild("PlayerGui"))
 	local group = make("CanvasGroup", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, GroupTransparency = 1 }, gui)
-	local root = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ClipsDescendants = true }, group)
-	local scale = make("UIScale", {}, root)
-	local function resize()
-		local size = workspace.CurrentCamera.ViewportSize
-		local value = math.min(size.X / 1280, size.Y / 720)
-		scale.Scale = value
-		root.Size = UDim2.fromScale(1 / value, 1 / value)
-	end
-	table.insert(scene.connections, workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(resize))
-	resize()
+	local root = UIKit.createRoot(group, 1)
+	root.BackgroundTransparency = 0
+	root.BackgroundColor3 = Color3.new(1, 1, 1)
+	root.BorderSizePixel = 0
+	root.ClipsDescendants = true
 	local function tween(object, time, props)
 		local animation = TweenService:Create(object, TweenInfo.new(time / speed), props)
 		table.insert(scene.tweens, animation)
@@ -126,14 +126,21 @@ function BattleScene.play(info)
 		local base = model:GetAttribute("BaseScale") or 1
 		local sourceScale = model:GetScale() / base
 		local ground = (model:GetAttribute("GroundOffset") or 0) / sourceScale
+		UnitShadow.remove(model)
 		model:ScaleTo(base)
 		for _, child in model:GetDescendants() do
 			if child:IsA("BillboardGui") or child:IsA("Script") or child:IsA("LocalScript") then child:Destroy() end
 		end
 		local x = i == 1 and -3 or 3
 		model:PivotTo(CFrame.lookAt(Vector3.new(x, 0.4 + ground, 0), Vector3.new(-x, 0.4 + ground, 0)))
+		UnitShadow.create(model, 0.4)
 		model.Parent = world
 	end
+	table.insert(scene.connections, RunService.RenderStepped:Connect(function()
+		for _, side in { info.left, info.right } do
+			UnitShadow.update(side.model, 0.4)
+		end
+	end))
 	local left = buildSide(root, info.left, 0, THEME.enemy)
 	local right = buildSide(root, info.right, 0.5, THEME.player)
 	local sides = { [left.unit.id] = left, [right.unit.id] = right }

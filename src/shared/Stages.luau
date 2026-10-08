@@ -26,10 +26,12 @@ Stages.Difficulties = {
 	},
 }
 
+-- Werte WIP: gedämpfte Boden- und Randfarben; Gebietsfarben der Weltkarte bleiben separat.
 Stages.Regions = {
-	{ id = "greenland", name = "Grünland", color = Color3.fromRGB(110, 170, 90), area = { 0.02, 0.38, 0.42, 0.58 }, atmosphere = "battle", surroundMaterial = Enum.Material.Grass, treeColor = Config.TERRAIN.F.color },
+	{ id = "greenland", name = "Grünland", color = Color3.fromRGB(110, 170, 90), area = { 0.02, 0.38, 0.42, 0.58 }, atmosphere = "battle", surroundMaterial = Enum.Material.Grass, surroundColor = Config.TERRAIN["."].color, treeColor = Config.TERRAIN.F.color },
 	{ id = "swamp", name = "Nebelsumpf", color = Color3.fromRGB(85, 115, 85), area = { 0.40, 0.45, 0.30, 0.50 }, atmosphere = "swamp", surroundMaterial = Enum.Material.Grass, treeColor = Color3.fromRGB(55, 75, 45),
-		grassColor = Color3.fromRGB(78, 92, 52), waterColor = Color3.fromRGB(52, 62, 38) },
+		grassColor = Color3.fromRGB(62, 69, 48), waterColor = Color3.fromRGB(41, 47, 34),
+		surroundColor = Color3.fromRGB(76, 92, 64), terrainColors = { ["."] = Color3.fromRGB(86, 107, 73), F = Color3.fromRGB(57, 78, 53), W = Color3.fromRGB(63, 88, 98), D = Config.TERRAIN.D.color } },
 	{ id = "ice", name = "Frostgipfel", color = Color3.fromRGB(175, 205, 235), area = { 0.30, 0.02, 0.40, 0.38 }, comingSoon = true },
 	{ id = "volcano", name = "Glutberg", color = Color3.fromRGB(175, 75, 50), area = { 0.70, 0.30, 0.28, 0.65 }, comingSoon = true },
 }

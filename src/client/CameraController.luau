@@ -17,15 +17,16 @@ local shakeTime, shakeDuration, shakeStrength = 0, 0, 0
 local random = Random.new()
 local controlsWarningShown = false
 
-local function setAvatarControls(on)
+local function setAvatarControls()
 	local controlsOk, controlsError = pcall(function()
 		local playerModule = Players.LocalPlayer.PlayerScripts:WaitForChild("PlayerModule", 5)
 		if not playerModule then error("PlayerModule fehlt") end
 		local controls = require(playerModule):GetControls()
-		if on then controls:Enable() else controls:Disable() end
+		if active then controls:Disable() else controls:Enable() end
 	end)
 	local touchOk, touchError = pcall(function()
-		GuiService.TouchControlsEnabled = on
+		-- Ein früherer wartender PlayerModule-Aufruf darf keinen neueren Kamerawechsel überschreiben.
+		GuiService.TouchControlsEnabled = not active
 	end)
 	if (not controlsOk or not touchOk) and not controlsWarningShown then
 		controlsWarningShown = true
@@ -93,8 +94,10 @@ function CameraController.setActive(on)
 		return
 	end
 	active = on
+	-- TouchGui sofort sperren, auch wenn PlayerModule erst später verfügbar wird.
+	pcall(function() GuiService.TouchControlsEnabled = not on end)
 	-- Im Hintergrund: das Warten auf PlayerModule darf applyState nicht blockieren
-	task.spawn(setAvatarControls, not on)
+	task.spawn(setAvatarControls)
 	if not on then saved, transition = nil, nil; shakeStrength = 0 end
 	if not on then
 		local camera = workspace.CurrentCamera

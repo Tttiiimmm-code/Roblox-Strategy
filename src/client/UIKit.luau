@@ -2,6 +2,7 @@
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UnitData = require(Shared:WaitForChild("UnitData"))
@@ -77,13 +78,60 @@ function UIKit.padding(parent, px)
 	}, parent)
 end
 
+-- Feste Textfelder passen sich an; nachträgliche TextSize-Werte bleiben die Obergrenze.
+function UIKit.fitText(text, minimum, wrap)
+	text.TextScaled = true
+	local function updateWrapping()
+		if text.TextScaled and text.TextWrapped ~= (wrap == true) then
+			text.TextWrapped = wrap == true
+		end
+	end
+	-- TextScaled und spätere Zuweisungen dürfen Kurztexte nicht umbrechen.
+	text:GetPropertyChangedSignal("TextScaled"):Connect(updateWrapping)
+	text:GetPropertyChangedSignal("TextWrapped"):Connect(updateWrapping)
+	updateWrapping()
+	local constraint = text:FindFirstChildOfClass("UITextSizeConstraint") or make("UITextSizeConstraint", {}, text)
+	local function update()
+		constraint.MinTextSize = math.min(minimum or 12, text.TextSize)
+		constraint.MaxTextSize = text.TextSize
+	end
+	text:GetPropertyChangedSignal("TextSize"):Connect(update)
+	update()
+	return text
+end
+
 function UIKit.label(props, parent)
+	local wrap = props.wrap == true
+	props.wrap = nil
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or THEME.text
 	props.Font = props.Font or THEME.body
 	props.TextSize = props.TextSize or 16
 	props.RichText = true
-	return make("TextLabel", props, parent)
+	local text = make("TextLabel", props, parent)
+	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text, nil, wrap) end
+	return text
+end
+
+-- Fließtext behält seine Schriftgröße und erweitert den Kasten nach unten.
+function UIKit.flowLabel(props, parent)
+	props.TextWrapped = true
+	props.TextScaled = false
+	props.AutomaticSize = Enum.AutomaticSize.Y
+	props.TextYAlignment = Enum.TextYAlignment.Top
+	return UIKit.label(props, parent)
+end
+
+function UIKit.textList(props, parent, gap)
+	props.BackgroundTransparency = 1
+	props.BorderSizePixel = 0
+	props.ScrollBarThickness = 6
+	props.ScrollingDirection = Enum.ScrollingDirection.Y
+	props.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	props.CanvasSize = UDim2.new()
+	local list = make("ScrollingFrame", props, parent)
+	make("UIListLayout", { Padding = UDim.new(0, gap or 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	return list
 end
 
 -- Blaues Fenster mit Verlauf und Goldrand
@@ -111,12 +159,14 @@ function UIKit.setButtonStyle(b, style)
 	b.TextTransparency = style == "disabled" and 0.55 or 0
 end
 
-function UIKit.button(text, parent, style, order)
+function UIKit.button(text, parent, style, order, wrap)
 	local b = make("TextButton", {
 		Text = text, Size = UDim2.new(1, 0, 0, 40), AutoButtonColor = false,
 		TextColor3 = THEME.text, Font = THEME.bold, TextSize = 18,
 		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true,
 	}, parent)
+	UIKit.fitText(b, nil, wrap)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
 	UIKit.corner(b, 6)
 	local s = UIKit.stroke(b, THEME.goldDark, 1.5)
 	UIKit.setButtonStyle(b, style or "default")
@@ -335,6 +385,8 @@ function UIKit.portrait(viewport, camera, source, zoomOut)
 		return
 	end
 	local clone = source:Clone()
+	local shadow = clone:FindFirstChild("UnitShadow")
+	if shadow then shadow:Destroy() end
 	for _, d in clone:GetDescendants() do
 		if d:IsA("BillboardGui") or d:IsA("ParticleEmitter") then
 			d:Destroy()
@@ -433,18 +485,101 @@ function UIKit.heroCard(parent, heroId, props)
 end
 
 -- Ganze Oberfläche skaliert mit der Bildschirmgröße (Designgröße 1280×720)
-function UIKit.createRoot(gui)
-	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
+function UIKit.createRoot(gui, maximumScale)
+	local screenGui = gui:IsA("ScreenGui") and gui or gui:FindFirstAncestorOfClass("ScreenGui")
+	-- Reihenfolge ist wichtig: IgnoreGuiInset kann ScreenInsets verändern.
+	screenGui.IgnoreGuiInset = true
+	screenGui.ScreenInsets = Enum.ScreenInsets.None
+	screenGui.SafeAreaCompatibility = Enum.SafeAreaCompatibility.None
+	screenGui.ClipToDeviceSafeArea = false
+	local surface = make("Frame", { Name = "SafeArea", BackgroundTransparency = 1, Active = false }, gui)
+	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Active = false }, surface)
 	local scale = make("UIScale", {}, root)
-	local camera = workspace.CurrentCamera
-	local function update()
-		local vp = camera.ViewportSize
-		local s = math.clamp(math.min(vp.X / 1280, vp.Y / 720), 0.5, 1.15)
-		scale.Scale = s
-		root.Size = UDim2.fromScale(1 / s, 1 / s)
+	local connections = {}
+	local viewportConnection
+	local destroyed, pendingDiagnostics = false, false
+	local lastDiagnostics
+	local diagnosticNames = { PhasenBanner = true, HinweisKasten = true, GelaendeKasten = true }
+	local function diagnose()
+		if not Config.INPUT_DIAGNOSTICS or pendingDiagnostics or destroyed then return end
+		pendingDiagnostics = true
+		-- AbsolutePosition/Size erst nach den gemeinsamen Layout-Zuweisungen lesen.
+		task.defer(function()
+			pendingDiagnostics = false
+			if destroyed then return end
+			local camera = workspace.CurrentCamera
+			local insetTop, insetBottom = GuiService:GetGuiInset()
+			local parts = {
+				("[UI-Diagnose] %s Viewport=%s TopbarInset=%s GuiInset=%s/%s InsetArea(None)=%s InsetArea(Device)=%s UIScale=%.4f"):format(
+					screenGui.Name, tostring(camera and camera.ViewportSize), tostring(GuiService.TopbarInset),
+					tostring(insetTop), tostring(insetBottom), tostring(GuiService:GetInsetArea(Enum.ScreenInsets.None)),
+					tostring(GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)), scale.Scale),
+			}
+			local function addBounds(object)
+				table.insert(parts, ("%s Position=%s Size=%s"):format(object.Name, tostring(object.AbsolutePosition), tostring(object.AbsoluteSize)))
+			end
+			addBounds(surface)
+			addBounds(root)
+			for _, name in { "PhasenBanner", "HinweisKasten", "GelaendeKasten" } do
+				local object = root:FindFirstChild(name, true)
+				if object then addBounds(object) end
+			end
+			local message = table.concat(parts, " | ")
+			if message ~= lastDiagnostics then
+				lastDiagnostics = message
+				print(message)
+			end
+		end)
 	end
-	camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
-	update()
+	local function update()
+		-- InsetArea-Rechtecke sind relativ zur Core-UI, nicht zu Bildschirmpixel 0.
+		local full = GuiService:GetInsetArea(Enum.ScreenInsets.None)
+		local device = GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)
+		local insetTop = GuiService:GetGuiInset()
+		local top = GuiService.TopbarInset.Max.Y
+		if top <= 0 then top = insetTop.Y end
+		local left = math.max(0, device.Min.X - full.Min.X)
+		top = math.max(0, top, device.Min.Y - full.Min.Y)
+		local right = math.max(0, full.Max.X - device.Max.X)
+		local bottom = math.max(0, full.Max.Y - device.Max.Y)
+		local available = Vector2.new(full.Width - left - right, full.Height - top - bottom)
+		if available.X <= 0 or available.Y <= 0 then return end
+		surface.Position = UDim2.fromOffset(left, top)
+		surface.Size = UDim2.fromOffset(available.X, available.Y)
+		-- Unter 360 sicheren Punkten Höhe darf die Oberfläche kleiner als 0,5 werden.
+		local s = math.min(available.X / 1280, available.Y / 720, maximumScale or 1.15)
+		scale.Scale = s
+		root.Size = UDim2.fromOffset(available.X / s, available.Y / s)
+		diagnose()
+	end
+	local function bindCamera()
+		if viewportConnection then viewportConnection:Disconnect() end
+		local camera = workspace.CurrentCamera
+		viewportConnection = camera and camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+		update()
+	end
+	table.insert(connections, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(update))
+	table.insert(connections, GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(update))
+	table.insert(connections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera))
+	if Config.INPUT_DIAGNOSTICS then
+		local function watchBounds(object)
+			table.insert(connections, object:GetPropertyChangedSignal("AbsolutePosition"):Connect(diagnose))
+			table.insert(connections, object:GetPropertyChangedSignal("AbsoluteSize"):Connect(diagnose))
+			diagnose()
+		end
+		watchBounds(surface)
+		watchBounds(root)
+		table.insert(connections, scale:GetPropertyChangedSignal("Scale"):Connect(diagnose))
+		table.insert(connections, root.DescendantAdded:Connect(function(object)
+			if diagnosticNames[object.Name] then watchBounds(object) end
+		end))
+	end
+	surface.Destroying:Connect(function()
+		destroyed = true
+		if viewportConnection then viewportConnection:Disconnect() end
+		for _, connection in connections do connection:Disconnect() end
+	end)
+	bindCamera()
 	return root
 end
 

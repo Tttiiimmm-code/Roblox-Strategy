@@ -291,7 +291,7 @@ local function buildTemplate(unit)
 	if rarity >= 4 then
 		local weaponPart = model:FindFirstChild("Blade") or model:FindFirstChild("AxeHead") or model:FindFirstChild("Tip")
 			or model:FindFirstChild("Bow") or model:FindFirstChild("Tome")
-		if weaponPart then
+		if weaponPart and Config.FEEL.rarityEffects then
 			local light = Instance.new("PointLight")
 			light.Color, light.Brightness, light.Range = rarityColor, 1.5, 7
 			light.Parent = weaponPart
@@ -304,6 +304,8 @@ local function buildTemplate(unit)
 	if rarity >= 5 then
 		extra("Crest", Vector3.new(0.5, 0.5, 0.1), at(0, body.torsoY + lift + 0.2, -0.64) * CFrame.Angles(0, 0, math.rad(45)), GOLD,
 			torso, { Material = Enum.Material.Neon })
+	end
+	if rarity >= 5 and Config.FEEL.rarityEffects then
 		-- Einzelne Segmente lassen die Mitte des Aura-Rings frei.
 		for i = 1, 24 do
 			local angle = i * math.pi / 12
@@ -331,7 +333,7 @@ function ChibiBuilder.build(unit)
 	-- Die Klasse beeinflusst auch bei Helden Pferd, Augenbrauen und Umhang.
 	local key = table.concat({
 		unit.heroId or unit.class, unit.class, unit.team, unit.weapon,
-		tostring(unit.rarity or 1), tostring(unit.isLord == true),
+		tostring(unit.rarity or 1), tostring(unit.isLord == true), tostring(Config.FEEL.rarityEffects == true),
 	}, "|")
 	local template = templates[key]
 	if not template then

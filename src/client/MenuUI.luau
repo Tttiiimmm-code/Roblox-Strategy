@@ -192,14 +192,14 @@ local function buildLobby(root)
 		MenuUI.closeLobby()
 	end)
 	lobby.saveWarning = label({
-		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 18), TextSize = 13, TextColor3 = THEME.warn,
+		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 32), TextSize = 13, TextColor3 = THEME.warn, TextWrapped = true, TextScaled = false,
 		TextXAlignment = Enum.TextXAlignment.Left, Visible = false,
 		Text = "⚠ Speichern nicht verfügbar – Fortschritt gilt nur für diese Sitzung (Studio: Game Settings → Security → API-Zugriff aktivieren).",
 	}, f)
 
 	-- Reiter: Missionen · Rekrutieren · Kaserne
 	local tabBar = make("Frame", {
-		Position = UDim2.fromOffset(0, 62), Size = UDim2.new(1, 0, 0, 42), BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 80), Size = UDim2.new(1, 0, 0, 42), BackgroundTransparency = 1,
 	}, f)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -215,7 +215,7 @@ local function buildLobby(root)
 		end)
 		lobby.tabButtons[tab[1]] = b
 		lobby.pages[tab[1]] = make("Frame", {
-			Position = UDim2.fromOffset(0, 114), Size = UDim2.new(1, 0, 1, -114), BackgroundTransparency = 1,
+			Position = UDim2.fromOffset(0, 132), Size = UDim2.new(1, 0, 1, -132), BackgroundTransparency = 1,
 			Visible = false,
 		}, f)
 	end
@@ -233,14 +233,15 @@ local function buildLobby(root)
 	lobby.name = label({
 		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 30, TextXAlignment = Enum.TextXAlignment.Left,
 	}, d)
-	lobby.desc = label({
-		Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 60), TextSize = 15, TextColor3 = THEME.dim,
+	local details = UIKit.textList({ Position = UDim2.fromOffset(0, 44), Size = UDim2.new(1, 0, 1, -108) }, d)
+	lobby.desc = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), LayoutOrder = 1, TextSize = 15, TextColor3 = THEME.dim,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, d)
+	}, details)
 
 	local tabs = make("Frame", {
-		Position = UDim2.fromOffset(0, 110), Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1,
-	}, d)
+		Size = UDim2.new(1, -12, 0, 46), LayoutOrder = 2, BackgroundTransparency = 1,
+	}, details)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
 	}, tabs)
@@ -255,26 +256,23 @@ local function buildLobby(root)
 		lobby.tabs[diff.id] = t
 	end
 
-	lobby.rules = label({
-		Position = UDim2.fromOffset(0, 166), Size = UDim2.new(1, 0, 0, 78), TextSize = 14,
+	lobby.rules = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), LayoutOrder = 3, TextSize = 14,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, d)
-	lobby.goals = label({
-		Position = UDim2.fromOffset(0, 252), Size = UDim2.new(1, 0, 0, 86), TextSize = 14,
+	}, details)
+	lobby.goals = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), LayoutOrder = 4, TextSize = 14,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, d)
-	lobby.rewards = label({
-		Position = UDim2.fromOffset(0, 344), Size = UDim2.new(1, 0, 0, 50), TextSize = 14,
+	}, details)
+	lobby.rewards = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), LayoutOrder = 5, TextSize = 14,
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left,
-	}, d)
+	}, details)
 	lobby.start = button("⚔  Mission starten", d, "primary")
 	lobby.start.AnchorPoint = Vector2.new(0, 1)
 	lobby.start.Position = UDim2.fromScale(0, 1)
 	lobby.start.Size = UDim2.new(1, 0, 0, 56)
 	lobby.start.TextSize = 22
-	lobby.start.TextWrapped = true
-	lobby.start.TextScaled = true
-	make("UITextSizeConstraint", { MinTextSize = 12, MaxTextSize = 22 }, lobby.start)
 	lobby.start.Activated:Connect(function()
 		if lobby.start:GetAttribute("Style") ~= "disabled" then
 			callbacks.onStart(Stages.List[selectedIndex].id, selectedDiff)
@@ -411,10 +409,11 @@ local function buildPrep(root)
 		AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 214, 1, 0),
 		BackgroundTransparency = 1,
 	}, f)
-	prep.info = label({
-		Size = UDim2.new(1, 0, 1, -120), TextSize = 14, TextWrapped = true, TextColor3 = THEME.dim,
+	local prepDetails = UIKit.textList({ Size = UDim2.new(1, 0, 1, -120) }, side)
+	prep.info = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 14, TextColor3 = THEME.dim,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, side)
+	}, prepDetails)
 	local begin = button("⚔  Kampf starten", side, "primary")
 	begin.AnchorPoint = Vector2.new(0, 1)
 	begin.Position = UDim2.new(0, 0, 1, -54)
@@ -564,7 +563,7 @@ local function buildResult(root)
 	result.frame = overlay
 	local box = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(480, 470),
+		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(480, 540),
 		ZIndex = 11,
 	}, overlay)
 	padding(box, 18)
@@ -593,13 +592,16 @@ local function buildResult(root)
 		result.stars[i] = s
 	end
 
-	result.goals = label({
-		Position = UDim2.fromOffset(20, 172), Size = UDim2.new(1, -40, 0, 90), TextSize = 17, ZIndex = 12,
+	local resultDetails = UIKit.textList({
+		Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 1, -328), ZIndex = 12,
+	}, box)
+	result.goals = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), TextSize = 17, ZIndex = 12, LayoutOrder = 1,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-	}, box)
-	result.rewards = label({
-		Position = UDim2.fromOffset(0, 268), Size = UDim2.new(1, 0, 0, 30), Font = THEME.bold, TextSize = 19, ZIndex = 12,
-	}, box)
+	}, resultDetails)
+	result.rewards = UIKit.flowLabel({
+		Size = UDim2.new(1, -12, 0, 0), Font = THEME.bold, TextSize = 19, ZIndex = 12, LayoutOrder = 2,
+	}, resultDetails)
 
 	local buttons = make("Frame", {
 		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 148),
@@ -703,23 +705,23 @@ local function buildHubHud(root)
 	local f = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, root)
 	hubHud.frame = f
 	local pill = panel({
-		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(380, 56),
+		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(460, 66),
 	}, f)
 	label({
 		Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 28), Font = THEME.title, TextSize = 26,
 		TextColor3 = THEME.gold, Text = "Thronsaal",
 	}, pill)
 	hubHud.currency = label({
-		Position = UDim2.fromOffset(0, 32), Size = UDim2.new(1, 0, 0, 18), Font = THEME.bold, TextSize = 15,
+		Position = UDim2.fromOffset(8, 32), Size = UDim2.new(1, -16, 0, 28), Font = THEME.bold, TextSize = 15,
 	}, pill)
-	hubHud.notice = label({
-		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 72), Size = UDim2.fromOffset(460, 26),
+	hubHud.notice = UIKit.flowLabel({
+		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 84), Size = UDim2.fromOffset(460, 26),
 		BackgroundColor3 = Color3.fromRGB(10, 14, 32), BackgroundTransparency = 0.3, TextSize = 15,
 		TextColor3 = THEME.warn, Visible = false,
 	}, f)
 	corner(hubHud.notice, 6)
 	local touch = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
-	local hint = label({
+	local hint = UIKit.flowLabel({
 		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -16), Size = UDim2.fromOffset(640, 30),
 		BackgroundColor3 = Color3.fromRGB(10, 14, 32), BackgroundTransparency = 0.35, TextSize = 15,
 		Text = touch and "Geh zu einer Einrichtung und tippe auf das Symbol – oder spring auf den <b>Thron</b>."

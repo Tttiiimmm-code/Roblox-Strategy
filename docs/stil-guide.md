@@ -1,4 +1,4 @@
-# Style-Guide – Figuren (Throne Tales)
+# Style-Guide – Figuren und Umgebung (Throne Tales)
 
 Verbindliche Regeln für alle Figuren-Designs. Stil-Anker: **Leon-Referenzblatt** (T-Pose vorne/hinten). Jede neue Figur muss neben Leon wie aus demselben Spiel aussehen. Vom Nutzer am 06.10.2026 festgelegt.
 
@@ -65,3 +65,18 @@ Negativ: *chibi, realistic, photo, 3D render look, outline, text, watermark, wea
 2. Rolle und Silhouette auf einen Blick erkennbar (auch klein auf dem Brett)?
 3. Seltenheitsstufe am Rang/Aufwand erkennbar? ★5 wirklich einzigartig?
 4. Alle Blätter **gemeinsam** ansehen (Aufstellungsprobe) – fällt eine Figur heraus, zuerst nachbessern.
+
+## 9. Umgebung
+
+Umgebung und Figuren gehören zur selben Cel-Welt: **2 Töne je Farbfläche**, harte Schattenstufe, kräftige flache Farben, **keine Konturlinie**, keine Fototexturen oder weichen Farbverläufe. Formen leicht vereinfachen; Silhouette und große Farbflächen müssen auch aus der Taktik-Kamera lesbar bleiben. Blätter als wenige große Kronenflächen, Felsen als klare kantige Volumen, Gebäude mit wenigen großen Mauerflächen statt einzelner Ziegel modellieren. Licht und Schatten in die Textur malen; Partikeleffekte ergänzt das Spiel später.
+
+Der Boden besteht aus flachen SmoothPlastic-Flächen mit dunkleren Seiten. Das Raster bleibt dünn und dezent. **Keine Bodenplatte** unter ein Asset modellieren: Der Builder liefert Boden und Höhenstufen. Feldmitte und Zug-Ring müssen frei bleiben. Bäume, Büsche, Felsen und Festungselemente sitzen an den Ecken; Brücken erhalten eine freie Mitte auf Höhe des vorhandenen Brettbodens.
+
+| Gebiet | Farbwelt / Formen |
+|---|---|
+| Grasland – zuerst | Kräftiges Grasgrün, dunkleres Waldgrün, warmes Braun und sandfarbener Stein; kompakte Baumkronen, einfache Felsen. Königreich-Bauten symmetrisch, klare Rautenformen; Banditen-Ruinen dürfen gezackt und beschädigt sein. |
+| Sumpf – Ausblick | Moosgrün/Violett wie die Fraktion, organische Formen, Fransen, knorriges Holz; Wasser bleibt als kühle Fläche klar vom Morast unterscheidbar. |
+| Eis – Ausblick | Weiß/Hellblau, kristalline Spitzen und Eiszapfen; große klare Flächen. |
+| Vulkan – Ausblick | Schwarz/Orange, kantiger Obsidian und wenige große Glutrisse. Rauch/Partikel gehören später ins Spiel. |
+
+Ein erstes Objekt neben Leon und neben dem stilisierten Boden vergleichen: gleiche Schattenhärte, klare Silhouette, kein kleinteiliges Rauschen. Produktion, technische Grenzen und Prompt-Vorlage stehen in [Umgebungs-Assets](umgebung-assets.md).

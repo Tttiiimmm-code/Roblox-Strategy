@@ -1,6 +1,8 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
+Config.INPUT_DIAGNOSTICS = false -- Vorübergehend für Handy-/Mausfehler einschalten; Ausgabe im Client-Output.
+
 Config.CHARACTER_STYLE = "mesh" -- "chibi", "avatar" oder "mesh"; auf "mesh" umstellen, sobald R15-Modelle vorliegen.
 
 Config.CHIBI = {
@@ -21,7 +23,13 @@ Config.FEEL = {
 	meshTargetHeight = 5.5, -- Studs: importierte 3D-Figuren werden auf diese Höhe skaliert
 	touchEndGrace = 0.25, -- Sekunden, bevor ein Touch ohne InputEnded aufgeräumt wird
 	boardUnitScale = 1.35, turnRingRadius = 2.3, turnRingWidth = 0.3, turnRingTransparency = 0.2, turnRingPulse = 0.45, turnRingPulseRate = 3, -- Zug-Ring (blau/rot)
-	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.06, gridTransparency = 0.75,
+	-- WIP: drei weiche Schichten, über Raster/Flecken und unter Overlays/Zug-Ring.
+	unitShadowWidth = 1.8, unitShadowHorseWidth = 1.15, unitShadowColor = Color3.fromRGB(15, 18, 24),
+	unitShadowSurfaceOffset = 0.022, unitShadowThickness = 0.003, -- über den Bodenflecken (bis 0,015), Schichten mit Abstand gegen Flackern
+	unitShadowLayers = { { size = 0.65, transparency = 0.70 }, { size = 0.82, transparency = 0.84 }, { size = 1, transparency = 0.93 } },
+	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.045, gridTransparency = 0.5,
+	gridSurfaceOffset = 0.005, gridShade = 0.3, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
+	surroundHeight = -0.4, waterTransparency = 0.18,
 	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,
 	hallWhite = Color3.fromRGB(225, 218, 205), hallMarble = Color3.fromRGB(205, 198, 186),
 	hoverSoundCooldown = 0.08,
@@ -39,15 +47,17 @@ Config.FEEL = {
 	battleZoom = 42, cameraFocusTime = 0.22, cameraRestoreTime = 0.3,
 	touchRotateThreshold = 18, touchPanScale = 1,
 	mudColor = Color3.fromRGB(70, 58, 38),
-	swampPuddleSize = Vector3.new(3, 0.6, 3), swampPuddleSurfaceOffset = 0.08,
+	swampPuddleSize = Vector3.new(3, 0.6, 3), swampPuddleSurfaceOffset = 0.005,
 	grassColor = Color3.fromRGB(106, 127, 63), waterColor = Color3.fromRGB(12, 84, 91), -- Roblox-Standard, je Gebiet überschreibbar
 	shakeStrength = 0.28, critShakeStrength = 0.7, shakeDuration = 0.18, critShakeDuration = 0.38,
 	hitStop = 0.06, critFlashTransparency = 0.65, critFlashDuration = 0.2,
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
-	atmosphereFade = 0.8, flickerStrength = 0.12, flickerRate = 7,
+	atmosphereFade = 0.8,
+	rarityEffects = false, -- Nutzer 08.10.2026: Seltenheits-Leuchten/-Partikel (Waffe ★4, Bodenaura ★5) vorerst aus
+	flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
 	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
-	environmentMargin = 72, environmentCount = 16, -- klein halten: jede Stud Rand kostet Terrain-Aufbau und Replikation; Ferne verdeckt der Dunst
+	environmentMargin = 72, environmentCount = 16, -- klein halten: Rand besteht aus vier Parts; Ferne verdeckt der Dunst
 	atmosphere = {
 		hall = {
 			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },
@@ -77,6 +87,49 @@ Config.FEEL = {
 }
 
 Config.TILE_SIZE = 8
+
+-- Werte WIP: Bild-ID leer/nil = prozedurale Flecken; Seitenbilder sind unabhängig.
+Config.GROUND_TEXTURES = {
+	["."] = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
+	F = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
+	M = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
+	W = { top = nil, side = nil, studsPerTile = 8, transparency = 0.7 },
+	S = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
+	D = { top = nil, side = nil, studsPerTile = 8, transparency = 0.7 },
+	H = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
+	B = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
+}
+Config.GROUND_FLECKS = {
+	maxPartsPerTile = 3, patchCount = 2, detailChance = 0.35,
+	thickness = 0.003, surfaceOffset = 0.012, transparency = 0, -- deckend und mit Abstand: kein Flackern, keine Transparenz-Kosten am Handy
+	shade = 0.12, light = 0.06, centerClearance = 2.3, edgeInset = 0.25,
+	minSize = 0.55, maxSize = 1, detailWidth = 0.12, detailLength = 0.65,
+}
+
+-- Maximalmaße in Feldern; auf dem Brett bleibt die Figurenmitte frei.
+Config.ENVIRONMENT = {
+	sizeVariation = 0.1, shadowHeight = 0.6,
+	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
+	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
+	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
+	categories = {
+		tree = { height = 0.55, width = 0.22, rotation = "free" },
+		bush = { height = 0.16, width = 0.2, rotation = "free" },
+		rock = { height = 0.28, width = 0.22, rotation = "quarter" },
+		fortress = { height = 0.38, width = 0.2, rotation = "quarter" },
+		bridge = { height = 0.16, width = 1, rotation = "none" },
+		ruins = { height = 0.38, width = 0.2, rotation = "quarter" },
+		deco_flower = { height = 0.08, width = 0.14, rotation = "free" },
+		deco_stone = { height = 0.08, width = 0.14, rotation = "free" },
+		deco_grass = { height = 0.12, width = 0.14, rotation = "free" },
+		deco_fence = { height = 0.12, width = 0.24, rotation = "quarter" },
+	},
+	outer = {
+		tree = { height = 2.25, width = 1.4 },
+		rock = { height = 0.75, width = 0.9 },
+		bush = { height = 0.45, width = 0.7 },
+	},
+}
 Config.TILE_THICKNESS = 1
 Config.MOVE_STEP_TIME = 0.16
 Config.STRIKE_TIME = 0.85 -- Dauer eines Schlags inkl. Animation
@@ -86,54 +139,55 @@ Config.MAX_LEVEL = 20
 -- Karten liegen in Stages.luau. Zeichen: .  Ebene  F Wald  M Berg  W Wasser  H Festung  B Brücke
 -- cost: Bewegungskosten je Bewegungstyp (fehlt = unpassierbar)
 -- avoid: Ausweich-Bonus, def: Verteidigungs-Bonus, heal: Heilung pro Runde (Anteil der Max-KP)
+-- Werte WIP: Bodenfarben in HSV um etwa 30 % entsättigt und 25 % abgedunkelt.
 Config.TERRAIN = {
 	["."] = {
 		height = 0, terrainMaterial = Enum.Material.Grass,
 		name = "Ebene", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(126, 184, 92), material = Enum.Material.Grass,
+		color = Color3.fromRGB(108, 138, 90), material = Enum.Material.SmoothPlastic,
 	},
 	F = {
 		height = 0.4, terrainMaterial = Enum.Material.LeafyGrass,
 		name = "Wald", avoid = 20, def = 1,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(72, 132, 62), material = Enum.Material.Grass,
+		color = Color3.fromRGB(68, 99, 62), material = Enum.Material.SmoothPlastic,
 	},
 	M = {
 		height = 4, terrainMaterial = Enum.Material.Rock,
 		name = "Berg", avoid = 30, def = 2,
 		cost = { foot = 4 },
-		color = Color3.fromRGB(140, 122, 98), material = Enum.Material.Rock,
+		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.SmoothPlastic,
 	},
 	W = {
 		height = -1.2, terrainMaterial = Enum.Material.Water,
 		name = "Wasser", avoid = 0, def = 0,
 		cost = {},
-		color = Color3.fromRGB(60, 120, 200), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(77, 108, 150), material = Enum.Material.SmoothPlastic,
 	},
 	S = {
 		height = -0.2, terrainMaterial = Enum.Material.Mud,
 		name = "Morast", avoid = -15, def = 0,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(95, 85, 60), material = Enum.Material.Mud,
+		color = Color3.fromRGB(71, 66, 53), material = Enum.Material.SmoothPlastic,
 	},
 	D = {
 		height = -0.8, terrainMaterial = Enum.Material.Mud,
 		name = "Tiefer Morast", avoid = 0, def = 0,
 		cost = {}, -- Später fly = 1 für Flieger.
-		color = Color3.fromRGB(60, 55, 40), material = Enum.Material.Mud,
+		color = Color3.fromRGB(54, 75, 83), material = Enum.Material.SmoothPlastic,
 	},
 	H = {
 		height = 1, terrainMaterial = Enum.Material.Cobblestone,
 		name = "Festung", avoid = 20, def = 3, heal = 0.2,
 		cost = { foot = 2, horse = 2 },
-		color = Color3.fromRGB(170, 160, 150), material = Enum.Material.Cobblestone,
+		color = Color3.fromRGB(128, 122, 117), material = Enum.Material.SmoothPlastic,
 	},
 	B = {
 		height = 0.2, terrainMaterial = Enum.Material.WoodPlanks,
 		name = "Brücke", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(150, 110, 70), material = Enum.Material.WoodPlanks,
+		color = Color3.fromRGB(113, 92, 71), material = Enum.Material.SmoothPlastic,
 	},
 }
 

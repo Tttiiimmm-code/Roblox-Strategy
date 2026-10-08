@@ -1,4 +1,4 @@
-﻿# Bereitet ein KI-Figurenmodell mit Blender für den Roblox-Import auf.
+﻿# Bereitet ein KI-Figurenmodell oder Umgebungsobjekt mit Blender für den Roblox-Import auf.
 # Aufruf: powershell -ExecutionPolicy Bypass -File scripts/cleanup.ps1 -In assets/raw/leon/leon_meshy.fbx -Name leon
 # Exit-Code 0 = erfolgreich, 1 = ungültiger Aufruf; Blender-Fehler werden durchgereicht.
 param(
@@ -9,10 +9,16 @@ param(
 	[ValidateRange(16, 1024)][int]$Size = 1024,
 	[ValidateRange(0.0, 1.0)][double]$HeadShare = 0.25,
 	[ValidateRange(1, 20000)][int]$MaxTris = 19000,
+	[switch]$Prop,
 	[switch]$Cel,
 	[ValidateRange(2, 256)][int]$CelColors = 16,
 	[string]$Blender
 )
+
+if ($Prop) {
+	if (-not $PSBoundParameters.ContainsKey('Size')) { $Size = 512 }
+	if (-not $PSBoundParameters.ContainsKey('MaxTris')) { $MaxTris = 3000 }
+}
 
 $ErrorActionPreference = 'Stop'
 try {
@@ -29,7 +35,7 @@ try {
 	if ($Name -match '[<>:"/\\|?*]' -or $Name -in '.', '..' -or $Name.EndsWith('.')) {
 		throw 'Name muss ein einfacher Dateiname ohne Pfad sein.'
 	}
-	if ($HeadShare -le 0 -or $HeadShare -ge 1) {
+	if (-not $Prop -and ($HeadShare -le 0 -or $HeadShare -ge 1)) {
 		throw 'HeadShare muss größer als 0 und kleiner als 1 sein.'
 	}
 	if (-not $Blender) {
@@ -49,6 +55,7 @@ try {
 		'--', '--input', $inputPath, '--output', $outputPath, '--name', $Name,
 		"--front=$Front", '--size', "$Size", '--head-share', $HeadShare.ToString([Globalization.CultureInfo]::InvariantCulture),
 		'--max-tris', "$MaxTris", '--cel-colors', "$CelColors")
+	if ($Prop) { $blenderArgs += '--prop' }
 	if ($Cel) { $blenderArgs += '--cel' }
 	& $Blender @blenderArgs
 	exit $LASTEXITCODE

@@ -300,7 +300,7 @@ local function prepareRig(model, unit, mesh, modelId)
 		local own = model:FindFirstChild("Waffe")
 		local weaponPart = own and own:FindFirstChildWhichIsA("BasePart", true) or model:FindFirstChild("Blade") or model:FindFirstChild("AxeHead") or model:FindFirstChild("Tip")
 			or model:FindFirstChild("Bow") or model:FindFirstChild("Tome")
-		if weaponPart then
+		if weaponPart and Config.FEEL.rarityEffects then
 			local light = Instance.new("PointLight")
 			light.Color = rarityColor
 			light.Brightness = 1.5
@@ -321,13 +321,17 @@ local function prepareRig(model, unit, mesh, modelId)
 		if not mesh then
 			extra("Crest", Vector3.new(0.7, 0.7, 0.1), torso.CFrame * CFrame.new(0, 0, -torso.Size.Z / 2 - 0.12) * CFrame.Angles(0, 0, math.rad(45)), GOLD,
 				torso, { Material = Enum.Material.Neon })
-			extra("AuraRing", Vector3.new(0.1, 5.5, 5.5), at(0, -groundOffset + 0.08, 0) * CFrame.Angles(0, 0, math.rad(90)), rarityColor, root,
-				{ Material = Enum.Material.Neon, Shape = Enum.PartType.Cylinder, Transparency = 0.65, CastShadow = false })
+			if Config.FEEL.rarityEffects then
+				extra("AuraRing", Vector3.new(0.1, 5.5, 5.5), at(0, -groundOffset + 0.08, 0) * CFrame.Angles(0, 0, math.rad(90)), rarityColor, root,
+					{ Material = Enum.Material.Neon, Shape = Enum.PartType.Cylinder, Transparency = 0.65, CastShadow = false })
+			end
 		end
-		local emitter = extra("AuraEmitter", Vector3.new(4, 0.1, 4), at(0, -groundOffset + 0.1, 0), rarityColor, root,
-			{ Transparency = 1, CastShadow = false })
-		local e = sparkles(emitter, 8, 0.4, 1.4, 3)
-		e.EmissionDirection = Enum.NormalId.Top
+		if Config.FEEL.rarityEffects then
+			local emitter = extra("AuraEmitter", Vector3.new(4, 0.1, 4), at(0, -groundOffset + 0.1, 0), rarityColor, root,
+				{ Transparency = 1, CastShadow = false })
+			local e = sparkles(emitter, 8, 0.4, 1.4, 3)
+			e.EmissionDirection = Enum.NormalId.Top
+		end
 	end
 
 	model:SetAttribute("HeadY", head.Position.Y)
@@ -363,7 +367,7 @@ local function meshModel(unit)
 		return ChibiBuilder.build(unit)
 	end
 	local key = table.concat({ id, unit.class, unit.team, unit.weapon,
-		tostring(unit.rarity or 1), tostring(unit.isLord == true) }, "|")
+		tostring(unit.rarity or 1), tostring(unit.isLord == true), tostring(Config.FEEL.rarityEffects == true) }, "|")
 	local template = templates[key]
 	if not template then
 		for _, name in { "HumanoidRootPart", "Humanoid", "Head", "UpperTorso", "LowerTorso", "RightHand", "LeftHand", "LeftFoot", "RightFoot" } do

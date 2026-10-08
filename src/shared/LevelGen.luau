@@ -52,16 +52,75 @@ local function reachable(map, slot)
 	return visited
 end
 
+local function setCell(map, x, y, char)
+	local row = map[y]
+	map[y] = row:sub(1, x - 1) .. char .. row:sub(x + 1)
+end
+
+local function mirror(chunk, flipX, flipY)
+	local rows, edges = {}, chunk.edges
+	for y = 1, #chunk.rows do
+		local row = chunk.rows[flipY and (#chunk.rows + 1 - y) or y]
+		rows[y] = flipX and string.reverse(row) or row
+	end
+	local north, south = flipY and edges.south or edges.north, flipY and edges.north or edges.south
+	local west, east = flipX and edges.east or edges.west, flipX and edges.west or edges.east
+	return { rows = rows, edges = {
+		north = flipX and string.reverse(north) or north,
+		south = flipX and string.reverse(south) or south,
+		west = flipY and string.reverse(west) or west,
+		east = flipY and string.reverse(east) or east,
+	} }
+end
+
+local variants = {}
+for regionId, chunks in pairs(MapChunks) do
+	variants[regionId] = {}
+	for _, chunk in ipairs(chunks) do
+		for flipX = 0, 1 do
+			for flipY = 0, 1 do
+				table.insert(variants[regionId], mirror(chunk, flipX == 1, flipY == 1))
+			end
+		end
+	end
+end
+
 local function compose(regionId, random)
-	local chunks = MapChunks[regionId]
-	local rows = {}
+	local rows, placed = {}, {}
 	for cy = 1, RunConfig.BOARD_HEIGHT / RunConfig.CHUNK_HEIGHT do
+		placed[cy] = {}
 		for cx = 1, RunConfig.BOARD_WIDTH / RunConfig.CHUNK_WIDTH do
-			local chunk = chunks[random(1, #chunks)]
-			local flipX, flipY = random(0, 1) == 1, random(0, 1) == 1
-			for y = 1, RunConfig.CHUNK_HEIGHT do
-				local row = chunk[flipY and (RunConfig.CHUNK_HEIGHT + 1 - y) or y]
-				if flipX then row = string.reverse(row) end
+			local left = placed[cy][cx - 1]
+			local above = placed[cy - 1] and placed[cy - 1][cx]
+			local candidates = {}
+			for _, variant in ipairs(variants[regionId]) do
+				if (not left or left.edges.east == variant.edges.west)
+					and (not above or above.edges.south == variant.edges.north) then
+					table.insert(candidates, variant)
+				end
+			end
+			local chunk
+			if #candidates > 0 then
+				chunk = candidates[random(1, #candidates)]
+			else
+				-- Bei späteren unvollständigen Katalogen beide Seiten des Anschlusses öffnen.
+				local openRows = {}
+				for y = 1, RunConfig.CHUNK_HEIGHT do
+					openRows[y] = string.rep(".", RunConfig.CHUNK_WIDTH)
+					if left then setCell(rows, (cx - 1) * RunConfig.CHUNK_WIDTH, (cy - 1) * RunConfig.CHUNK_HEIGHT + y, ".") end
+				end
+				if above then
+					for x = 1, RunConfig.CHUNK_WIDTH do
+						setCell(rows, (cx - 1) * RunConfig.CHUNK_WIDTH + x, (cy - 1) * RunConfig.CHUNK_HEIGHT, ".")
+					end
+				end
+				chunk = { rows = openRows, edges = {
+					north = openRows[1], south = openRows[1],
+					west = string.rep(".", RunConfig.CHUNK_HEIGHT), east = string.rep(".", RunConfig.CHUNK_HEIGHT),
+				} }
+			end
+			placed[cy][cx] = chunk
+			for y, row in ipairs(chunk.rows) do
 				local targetY = (cy - 1) * RunConfig.CHUNK_HEIGHT + y
 				rows[targetY] = (rows[targetY] or "") .. row
 			end
@@ -70,22 +129,75 @@ local function compose(regionId, random)
 	return rows
 end
 
+local function river(map, random)
+	local width = random(RunConfig.RIVER_WIDTH.min, RunConfig.RIVER_WIDTH.max)
+	local crossings, protected = {}, {}
+	local possible = {}
+	for x = 2, RunConfig.BOARD_WIDTH - 1 do table.insert(possible, x) end
+	shuffle(possible, random)
+	local count = random(RunConfig.BRIDGES_MIN, RunConfig.BRIDGES_MAX)
+	for _, x in ipairs(possible) do
+		local spaced = true
+		for _, crossing in ipairs(crossings) do
+			if math.abs(x - crossing) < 3 then spaced = false end
+		end
+		if spaced then
+			table.insert(crossings, x)
+			protected[x - 1], protected[x], protected[x + 1] = true, true, true
+			if #crossings == count then break end
+		end
+	end
+	-- Ein Längsfluss würde die unteren Startreihen schneiden: daher links nach rechts.
+	local lastRow = RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS - 1
+	local top = random(2, lastRow - width + 1)
+	local banks = {}
+	for x = 1, RunConfig.BOARD_WIDTH do
+		local previous = top
+		if x > 1 and not protected[x] then
+			top = math.clamp(top + random(-1, 1), 2, lastRow - width + 1)
+		end
+		-- Ein einfeldbreiter Knick braucht eine zweite Zelle für orthogonalen Anschluss.
+		local first = width == 1 and math.min(previous, top) or top
+		local last = width == 1 and math.max(previous, top) or top + width - 1
+		banks[x] = { first = first, last = last }
+		for y = first, last do setCell(map, x, y, "W") end
+	end
+	for _, x in ipairs(crossings) do
+		local bank = banks[x]
+		for y = bank.first, bank.last do setCell(map, x, y, "B") end
+		setCell(map, x, bank.first - 1, ".")
+		setCell(map, x, bank.last + 1, ".")
+	end
+end
+
 local function populate(map, regionId, depth, themeId, teamSize, random)
-	local starts = {}
+	local starts, forestStarts = {}, {}
 	local blocked = 0
 	for y, row in ipairs(map) do
 		for x = 1, #row do
 			if not passable(map, x, y, "foot") then blocked += 1 end
-			if y > RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS and passable(map, x, y, "horse") then
-				table.insert(starts, { x = x, y = y })
+			local char = row:sub(x, x)
+			if y > RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS and (char == "." or char == "F")
+				and passable(map, x, y - 1, "horse") then
+				table.insert(char == "." and starts or forestStarts, { x = x, y = y })
 			end
 		end
 	end
 	if blocked / (RunConfig.BOARD_WIDTH * RunConfig.BOARD_HEIGHT) > RunConfig.MAX_BLOCKED_SHARE
-		or #starts < teamSize then return nil end
+		or #starts + #forestStarts < teamSize then return nil end
 	shuffle(starts, random)
+	shuffle(forestStarts, random)
+	for _, slot in ipairs(forestStarts) do table.insert(starts, slot) end
 	local slots = {}
-	for i = 1, teamSize do slots[i] = starts[i] end
+	for _, candidate in ipairs(starts) do
+		local free = true
+		for _, slot in ipairs(slots) do
+			if slot.x == candidate.x and math.abs(slot.y - candidate.y) == 1 then free = false end
+		end
+		if free then table.insert(slots, candidate) end
+		if #slots == teamSize then break end
+	end
+	if #slots < teamSize then return nil end
 	local visited = reachable(map, slots[1])
 	for _, slot in ipairs(slots) do
 		if not visited[key(slot.x, slot.y)] then return nil end
@@ -122,9 +234,13 @@ end
 function LevelGen.generate(seed, regionId, depth, themeId, teamSize)
 	assert(MapChunks[regionId] and RunConfig.THEMES[themeId], "Unbekanntes Gebiet oder Thema")
 	assert(teamSize >= 1 and teamSize <= RunConfig.MAX_TEAM and teamSize % 1 == 0, "Ungültige Teamgröße")
+	-- Die Flussentscheidung bleibt bei Neuversuchen erhalten, damit die Quote nicht absinkt.
+	local withRiver = randomSource(seed)(1, 10000) <= RunConfig.RIVER_CHANCE * 10000
 	for attempt = 1, RunConfig.MAX_ATTEMPTS do
 		local random = randomSource(seed + (attempt - 1) * 7919)
-		local stage = populate(compose(regionId, random), regionId, depth, themeId, teamSize, random)
+		local map = compose(regionId, random)
+		if withRiver then river(map, random) end
+		local stage = populate(map, regionId, depth, themeId, teamSize, random)
 		if stage then
 			stage.fallback = false
 			return stage
