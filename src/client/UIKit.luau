@@ -335,6 +335,8 @@ function UIKit.portrait(viewport, camera, source, zoomOut)
 		return
 	end
 	local clone = source:Clone()
+	local shadow = clone:FindFirstChild("UnitShadow")
+	if shadow then shadow:Destroy() end
 	for _, d in clone:GetDescendants() do
 		if d:IsA("BillboardGui") or d:IsA("ParticleEmitter") then
 			d:Destroy()

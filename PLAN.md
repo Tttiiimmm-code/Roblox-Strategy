@@ -14,7 +14,7 @@ Branch: `feature/level-optik` (weiter)
 - [x] 2. **Rundschatten** – ein flaches, dunkles Rund unter jeder Brett-Figur, das ihr folgt (am Wurzelteil verschweißt oder in `UnitAnimator` mitbewegt – so, dass es beim Laufen, Angreifen und Tod korrekt mitgeht und beim Tod mit ausblendet). Weich wirkend ohne Bild-Asset: z. B. 2–3 konzentrische flache Scheiben mit abnehmender Deckkraft nach außen (Größe/Deckkraft/Anzahl in `Config.FEEL`, Werte WIP; Größe relativ zur Figurenbreite, Pferde größer). Knapp über der Oberfläche, unter Zug-Ring und Overlays, über Raster/Flecken (Höhen wie in Etappe A2 dokumentiert), `CanCollide/CanQuery/CanTouch/CastShadow = false` (Klicks müssen weiter das Feld treffen). Möglichst wenige transparente Teile (Handy).
   - Auf allen Geländehöhen korrekt (Wald, Berg, Festung, Brücke) – Bezug ist die Feldoberfläche (`Grid.toWorld`/`GroundOffset`), nicht die Figurenhöhe.
 
-- [ ] 3. **Kampfszene, Porträts, Ghost** – Kampfszene: Rundschatten auf dem Szenenboden passend mitnehmen oder dort neu setzen; Porträts/ViewportFrames: **kein** Rundschatten; Ghost-Vorschau: halbtransparent wie die Figur oder ohne – Hauptsache kein doppelter/falscher Schatten.
+- [x] 3. **Kampfszene, Porträts, Ghost** – Kampfszene: Rundschatten auf dem Szenenboden passend mitnehmen oder dort neu setzen; Porträts/ViewportFrames: **kein** Rundschatten; Ghost-Vorschau: halbtransparent wie die Figur oder ohne – Hauptsache kein doppelter/falscher Schatten.
 
 - [ ] 4. **Schattenweichheit zurück** – `battleShadowSoftness` entfernen bzw. auf den ursprünglichen Wert (Saalwert) setzen, damit Baum-/Objektschatten nicht mehr mit dem Zoom wachsen. Thronsaal unverändert.
 

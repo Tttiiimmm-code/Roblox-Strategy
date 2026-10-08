@@ -252,6 +252,8 @@ local function showGhost(unit, x, y)
 	end
 
 	ghost = model:Clone()
+	local shadow = ghost:FindFirstChild("UnitShadow")
+	if shadow then shadow:Destroy() end
 	for _, d in ghost:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.CanQuery = false

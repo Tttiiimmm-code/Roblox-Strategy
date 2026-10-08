@@ -8,6 +8,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Stages = require(Shared:WaitForChild("Stages"))
 local UnitData = require(Shared:WaitForChild("UnitData"))
+local UnitShadow = require(Shared:WaitForChild("UnitShadow"))
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local UnitAnimator = require(script.Parent:WaitForChild("UnitAnimator"))
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
@@ -126,14 +127,21 @@ function BattleScene.play(info)
 		local base = model:GetAttribute("BaseScale") or 1
 		local sourceScale = model:GetScale() / base
 		local ground = (model:GetAttribute("GroundOffset") or 0) / sourceScale
+		UnitShadow.remove(model)
 		model:ScaleTo(base)
 		for _, child in model:GetDescendants() do
 			if child:IsA("BillboardGui") or child:IsA("Script") or child:IsA("LocalScript") then child:Destroy() end
 		end
 		local x = i == 1 and -3 or 3
 		model:PivotTo(CFrame.lookAt(Vector3.new(x, 0.4 + ground, 0), Vector3.new(-x, 0.4 + ground, 0)))
+		UnitShadow.create(model, 0.4)
 		model.Parent = world
 	end
+	table.insert(scene.connections, RunService.RenderStepped:Connect(function()
+		for _, side in { info.left, info.right } do
+			UnitShadow.update(side.model, 0.4)
+		end
+	end))
 	local left = buildSide(root, info.left, 0, THEME.enemy)
 	local right = buildSide(root, info.right, 0.5, THEME.player)
 	local sides = { [left.unit.id] = left, [right.unit.id] = right }
