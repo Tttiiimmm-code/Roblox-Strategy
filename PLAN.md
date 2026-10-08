@@ -22,7 +22,7 @@ Branch: `feature/level-optik`
   - Raster und Overlays bleiben über den Flecken sichtbar (Höhen-Reihenfolge prüfen).
   - Fertig, wenn: ohne IDs Flecken sichtbar und deterministisch; mit Test-ID (Stub) korrekte `Texture`-Instanzen; Klick-Raycast-Prüfung aus Schritt 1 weiterhin grün.
 
-- [ ] 4. **Anleitung eigene Boden-Texturen** – `docs/umgebung-assets.md` (neuer Abschnitt)
+- [x] 4. **Anleitung eigene Boden-Texturen** – `docs/umgebung-assets.md` (neuer Abschnitt)
   - Für Einsteiger: nahtlose (tileable) stilisierte Textur per Bild-KI erzeugen (Prompt-Vorlage: „seamless tileable stylized anime grass texture, top-down, cel shaded, 2-tone, muted colors, no shadows, 512x512“ + Varianten für Stein/Weg/Morast), auf Nahtlosigkeit prüfen, in Roblox Studio hochladen (**Ansicht → Asset Manager → Importieren**, Bild-ID kopieren), in `Config.GROUND_TEXTURES` eintragen. Roblox-Hinweis: hochgeladene Bilder werden moderiert, erst danach sichtbar.
   - Fertig, wenn: Nutzer kann ohne Rückfrage eine Textur einbinden.
 
@@ -41,6 +41,7 @@ Branch: `feature/level-optik`
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden. Befehle außerhalb der Sandbox wie zuvor nur mit Freigabe des Nutzers.)
 
 ## Notizen (Codex)
+- Schritt 4: Anleitung mit Gras-/Stein-/Weg-/Morast-/Holzprompt, 2×2-Nahtprüfung, Upload/Bild-ID, Config-Beispiel, Zeichentabelle und allen vier Einstellungen sowie Fehlersuche ergänzt. Abweichung beim Menüweg: aktuelle offizielle Roblox-Doku nennt Fenster bzw. Start → Asset Manager; älteres Ansicht ebenfalls dokumentiert. Quellen direkt im Abschnitt. Keine echten Bild-Assets generiert/hochgeladen; Standard bleibt prozedural.
 - Schritt 3: GROUND_TEXTURES für alle acht Geländearten (nil/leer = ohne Bild), reine Zahlen-IDs und rbxassetid:// unterstützt. Oberseitenbild auf Ground_; Seitenbild auf vier Seiten von Side_ sowie auf dem dünnen Ground_-Rand. Tint entspricht der jeweiligen Bodenfarbe, Standardtransparenz 0,65 (W/D 0,70), Kachelung 8 Studs. Ohne Oberseitenbild zwei unterschiedlich große/gedrehte flache Dreiecksflecken je Feld; auf Ebene/Wald zu 35 % zusätzlich ein Halm-/Steinfleck. Maximal drei Teile pro Feld, alle ohne Kollision/Query/Touch/Schatten. Karten-/Gebiets-/Feldhash deterministisch; Mitte mit 2,3 Studs Abstand und Rasterrand frei. Bild ersetzt Oberseitenflecken; nur Seitenbild lässt sie bestehen.
 - Höhenfolge relativ zu Grid.toWorld: Flecken 0,001–0,004 Studs; Raster ab 0,005; Bewegungs-/Angriffsoverlays ab 0,01; Ring bleibt darüber. Stub mit vollständigen WedgePart-Rotationen prüft Fleckhöhe/alle Eckpunkte, Feldrand, Mitte, Teilelimit (auch Limit 1), zwei Flecken je Feld, Determinismus und Gebietsschlüssel; Test-IDs ergeben pro Rechteck eine Oberseiten- und acht Seiten-Textures mit korrekter Farbe/Transparenz/Kachelung. Alle 5.616 bisherigen Klickstrahlen plus Bildtest grün. Pflichtcheck OK (32 Dateien).
 - Vergleich vor/nach Flecken im selben Stub-Lauf (je 30 Aufbauten, kein Roblox-Rendering/Replikation): s1 4,61/11,58 ms, 449/639 Parts; s2 7,83/17,98 ms, 776/1.029; s3 7,32/18,28 ms, 681/953; s4 9,24/19,04 ms, 874/1.115; s5 10,93/22,35 ms, 985/1.254; Lauf Seed 12345 4,82/12,42 ms, 479/669. Höchstens drei zusätzliche Parts je Feld; Handy-Leistung bleibt unbestätigt.

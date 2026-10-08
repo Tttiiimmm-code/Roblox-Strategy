@@ -74,3 +74,62 @@ Negativ: *realistic, photo, noisy texture, soft gradient shading, outline, text,
 8. Von oben und aus Brett-Entfernung prüfen: Figur und Zug-Ring sichtbar, Feldklicks funktionieren, kein roter Output, flüssig auf dem Handy. Fehlende andere Kategorien bleiben Part-Deko. Bei Fehlern Dateiname, Kategorie und Output-Meldung melden.
 
 Die Auswahl hängt deterministisch von Karteninhalt, Gebiet und Feldposition ab. Ein unverändertes Brett mit denselben Vorlagen erhält dieselben Varianten, Drehungen und Größen. Anordnung größerer Gebäude und Bausteine ist **Etappe B**.
+
+## Eigene Boden-Texturen einbinden
+
+Der Boden ist zunächst mit gedämpften Farben und kleinen prozeduralen Flecken versehen. Du kannst die Oberseite jeder Geländeart durch ein eigenes Bild ersetzen und unabhängig davon ein Bild für die Seiten eintragen. Dafür brauchst du kein 3D-Modell und kein Blender.
+
+### 1. Nahtloses Bild erzeugen
+
+Diese Vorlage in einer Bild-KI verwenden; als quadratisches PNG mit 512×512 Pixeln speichern:
+
+> seamless tileable stylized anime grass texture, top-down, cel shaded, 2-tone, muted colors, no shadows, 512x512, subtle painted irregular patches, flat lighting, no perspective, no objects, no grid, no text
+
+Varianten: `grass texture` durch `weathered stone texture` (Berg/Festung), `packed earth path texture` (Weglook), `mud texture with subtle wet patches` (Morast) oder `wood plank texture` (Brücke) ersetzen. Keine Bäume, Gebäude, großen Halme, Perspektive oder eingebrannten Schlagschatten ins Bild malen. Wenige große, dezente Farbflächen passen zum Figurenstil; viele winzige Details flimmern auf dem Handy. Eine eher helle, entsättigte Vorlage eignet sich zum Einfärben mit der Bodenfarbe; ein bereits sehr dunkles Bild wird durch diese Einfärbung noch dunkler.
+
+„Seamless“ im Prompt garantiert keine Nahtlosigkeit: Das Bild vor dem Hochladen in einem Bildeditor viermal als 2×2-Muster nebeneinander legen. An den mittleren Kanten dürfen keine hellen Linien, Farbwechsel oder abgeschnittenen Flecken auffallen. Alternativ das Bild um 256 Pixel horizontal und vertikal mit umlaufendem Versatz verschieben, die nun mittigen Nähte korrigieren und das 2×2-Muster erneut prüfen. PNG in voller Größe speichern.
+
+### 2. Bild in Roblox hochladen
+
+1. Das eigene Spiel in Roblox Studio öffnen. **Fenster → Asset Manager** (oder auf der Start-Registerkarte) wählen. In älteren Studio-Versionen heißt der Weg **Ansicht → Asset Manager**. Den Button **Importieren / Asset-Import** im Asset Manager anklicken.
+2. Die PNG auswählen und den Upload abschließen. In das Inventar des Nutzers bzw. der Gruppe hochladen, der das Spiel gehört.
+3. Roblox moderiert hochgeladene Bilder. Das Bild erscheint erst nach Freigabe; bei einem ausstehenden oder abgelehnten Upload bleibt die Textur unsichtbar. Im Asset Manager bei Bedarf die Ansicht aktualisieren und nach dem Bildnamen bzw. Asset-Typ **Bild** filtern.
+4. Beim freigegebenen **Bild** Rechtsklick → **Asset-ID kopieren**. Die Bild-ID verwenden, nicht die ID eines separaten Decal-Objekts. Die Ziffernfolge für den nächsten Schritt bereithalten.
+
+Der aktuelle Menüweg, Import, Moderation und Kopieren der ID sind im [Roblox Asset Manager](https://create.roblox.com/docs/projects/assets/manager) beschrieben.
+
+### 3. ID in Config eintragen
+
+In `src/shared/Config.luau` den vorhandenen Abschnitt `Config.GROUND_TEXTURES` suchen. Den vorhandenen Eintrag für die Ebene ändern; **keinen zweiten Eintrag hinzufügen**:
+
+```luau
+["."] = { top = "rbxassetid://DEINE_BILD_ID", side = nil, studsPerTile = 8, transparency = 0.65 },
+```
+
+`DEINE_BILD_ID` durch die kopierten Ziffern ersetzen. Auch `top = "123456789"` ist möglich; diese Beispielnummer nicht als echte Textur verwenden. Für ein eigenes Seitenbild bei `side` dessen Bild-ID in Anführungszeichen einsetzen.
+
+| Zeichen | Boden |
+|---|---|
+| `.` | Ebene / Gras |
+| `F` | Wald |
+| `M` | Berg / Fels |
+| `H` | Festung / Stein |
+| `B` | Brücke / Holz |
+| `W` | Wasser |
+| `S` | Morast |
+| `D` | Tiefer Morast |
+
+Es gibt noch keinen eigenen Weg-Geländetyp. Eine Wegtextur lässt sich zum Ausprobieren bei `.` eintragen und gilt dann für alle Ebenenfelder. Wald und Ebene benötigen jeweils ihre eigene `top`-Zuordnung; dieselbe Bild-ID darf in beiden stehen. Die Zuordnung gilt in allen Gebieten, die Farbe wird passend zum Gebiet eingefärbt.
+
+- `top`: Bild auf der Oberseite. `nil` oder `""` aktiviert wieder die prozeduralen Flecken. Mit gesetzter Bild-ID entfallen diese Flecken, auch solange Roblox das Bild noch nicht anzeigt.
+- `side`: Bild auf den vier Seitenflächen einschließlich des dünnen Oberseitenrandes. `nil` oder `""` lässt die Seiten einfarbig und dunkler. Nur ein Seitenbild verändert die prozeduralen Oberseitenflecken nicht.
+- `studsPerTile`: Wiederholung in beiden Bildrichtungen. `8` entspricht einer Bildwiederholung je Feldbreite; `4` wiederholt das Bild häufiger, `16` vergrößert das Muster. Einen Wert größer als 0 verwenden. Große Bodenrechtecke wiederholen das Bild, statt es über die ganze Fläche zu strecken.
+- `transparency`: `0` zeigt das eingefärbte Bild vollständig, `1` macht es unsichtbar. Mit `0.65` bleibt die Bodenfarbe deutlich sichtbar. Für stärkere Flecken z. B. `0.5` ausprobieren. Raster und Zuganzeigen liegen darüber.
+
+Die Bedeutung von Einfärbung, Transparenz und Kachelung erklärt die [Roblox-Anleitung zu Texturen](https://create.roblox.com/docs/parts/textures-decals).
+
+### 4. Im Spiel prüfen
+
+Datei speichern, Rojo verbinden (**127.0.0.1:34872**) und die Mission neu starten: Der Boden wird beim Kartenaufbau erzeugt. In `Workspace.Board.Ground.Ground_…` findet sich bei gesetzter `top`-ID ein `Texture`-Objekt; die Seitenbilder sitzen zusätzlich in `Side_…`. Keine Bilddatei in `assets/environment` ablegen: Roblox lädt sie über ihre Asset-ID.
+
+Story, Lauf und Sumpf ansehen: keine störenden Bildnähte, Gelände gut unterscheidbar, Figur und Zug-Ring sichtbar, blaue Felder anklickbar. Danach auf dem Handy prüfen. Falls das Bild fehlt: Upload-/Moderationsstatus, Bild-ID, Eigentümer/Zugriff und rote Output-Meldungen kontrollieren; `top = nil` stellt bis zur Klärung die Flecken wieder her. Die begrenzte Anzahl und Gestaltung der Standardflecken steht unter `Config.GROUND_FLECKS` (Werte WIP).
