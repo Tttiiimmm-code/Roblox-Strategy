@@ -22,7 +22,7 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
   - **Themen** (Gegnerschwerpunkt) als Daten: z. B. `axe` → `brigand`, `lance` → `soldier`/`javelin`, `bow` → `archer`; je Thema Name, Symbol (Emoji/Text, später Bild), Gegnerarten, Anteil Schwerpunkt (z. B. 0.6). Belohnungsarten in Phase 1: `gold`, `gems`.
   - Fertig, wenn: Modul lädt, keine Lauf-Zahl steht verstreut in anderer Logik.
 
-- [ ] 2. **Bausteine + Generator** – neue Dateien `src/shared/MapChunks.luau`, `src/shared/LevelGen.luau`
+- [x] 2. **Bausteine + Generator** – neue Dateien `src/shared/MapChunks.luau`, `src/shared/LevelGen.luau`
   - `MapChunks.greenland`: mindestens 10 handgemachte 5×4-Stücke aus `. F M W H B` (Wald-Gruppen, Hügel/Berg, Bach mit Brücke, kleine Festung …). Brett 10×8 = 2×2 Stücke, je Stück zufällig gespiegelt (horizontal/vertikal).
   - `LevelGen.generate(seed, regionId, depth, themeId, teamSize)` → `{ map, slots, enemies, region, theme }` im Format von `Stages.List`-Einträgen. **Rein deterministisch** mit eigenem kleinem PRNG im Modul (kein `Random`/`math.random`, damit es auch im reinen Luau-Test läuft): gleicher Seed → identisches Level.
   - Startzone: untere 2 Reihen; dort `teamSize` passierbare Startfelder (bis 6 vorsehen). Gegner in der oberen Hälfte auf passierbaren Feldern, Mindestabstand (Manhattan) zu allen Startfeldern aus `RunConfig`, Anzahl/Level/Schwerpunkt aus `RunConfig`.
