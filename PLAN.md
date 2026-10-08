@@ -36,7 +36,7 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
   - `scripts/check.ps1` bleibt unverändert; in `AGENTS.md` unter „Befehle“ eine Zeile für das Prüfskript ergänzen.
   - Fertig, wenn: `powershell -ExecutionPolicy Bypass -File scripts/test-levelgen.ps1` → OK, Exit 0.
 
-- [ ] 4. **Lauf-Zustand im Profil** – `src/server/ProfileStore.luau`
+- [x] 4. **Lauf-Zustand im Profil** – `src/server/ProfileStore.luau`
   - `profile.run = nil | { seed, region, depth (1..), team = { [heroId] = { hp, alive } }, order = { heroId… }, options = { … }, current = optionIndex | nil, earned = { gold, gems }, cleared = Anzahl }`. In `load` übernehmen, in `normalize` prüfen (Typen, Helden im Besitz und bekannt, Indizes gültig; sonst `run = nil`).
   - `profilePayload` (Main) liefert eine Kopie des Laufs an den Client.
   - Fertig, wenn: alte Profile ohne `run` laden unverändert; manipulierter `run` wird verworfen (geprüft, Ergebnis in Notizen).
@@ -85,4 +85,5 @@ Kontext: **`docs/roguelike-design.md` lesen** (Entscheidungen + Phasen). Diese P
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen, falls etwas unklar ist – **Designfragen nicht selbst entscheiden**, der Nutzer will gefragt werden)
 
 ## Notizen (Codex)
--
+- Schritt 3: 15.000 Level- und 5.000 Optionsprüfungen grün; Rückfallquote 0 %. Teamgrößen 1–6 und erzwungener Rückfall geprüft.
+- Schritt 4: Echter ProfileStore.load mit DataStore-Stubs geprüft: altes Profil ohne Lauf, gültiger und gewählter Lauf sowie 16 defekte/manipulierte Stände (Seed, Tiefe, Gebiet, Team/Besitz, KP, Optionen/Belohnung, Index einschließlich NaN, Ertrag) – OK; ungültige Läufe werden verworfen.

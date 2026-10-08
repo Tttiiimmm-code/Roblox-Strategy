@@ -87,6 +87,13 @@ local function pause(t)
 	task.wait(t / state.speed)
 end
 
+local function copyRun(value)
+	if type(value) ~= "table" then return value end
+	local copy = {}
+	for key, item in pairs(value) do copy[key] = copyRun(item) end
+	return copy
+end
+
 local function profilePayload(profile)
 	return {
 		gold = profile.gold,
@@ -96,6 +103,7 @@ local function profilePayload(profile)
 		pity = profile.pity,
 		settings = profile.settings,
 		saveOk = profile.saveOk,
+		run = copyRun(profile.run),
 	}
 end
 
