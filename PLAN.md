@@ -16,7 +16,7 @@ Branch: `feature/level-optik` (weiter)
 
 - [x] 3. **Kampfszene, Porträts, Ghost** – Kampfszene: Rundschatten auf dem Szenenboden passend mitnehmen oder dort neu setzen; Porträts/ViewportFrames: **kein** Rundschatten; Ghost-Vorschau: halbtransparent wie die Figur oder ohne – Hauptsache kein doppelter/falscher Schatten.
 
-- [ ] 4. **Schattenweichheit zurück** – `battleShadowSoftness` entfernen bzw. auf den ursprünglichen Wert (Saalwert) setzen, damit Baum-/Objektschatten nicht mehr mit dem Zoom wachsen. Thronsaal unverändert.
+- [x] 4. **Schattenweichheit zurück** – `battleShadowSoftness` entfernen bzw. auf den ursprünglichen Wert (Saalwert) setzen, damit Baum-/Objektschatten nicht mehr mit dem Zoom wachsen. Thronsaal unverändert.
 
 - [ ] 5. Abschluss: `scripts/check.ps1` = OK, `scripts/test-levelgen.ps1` = OK, Rojo-Build ok, Prüfung mit Stubs (Rundschatten folgt der Figur, Klick-Raycast trifft weiter die Kachel, keine Figur wirft Schatten). Devlog #26 um Nachtrag ergänzen. **Ein Commit pro Schritt**, pushen, `.handoff/status` = `fertig`.
 
