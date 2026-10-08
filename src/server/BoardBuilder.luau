@@ -8,8 +8,6 @@ local Stages = require(Shared.Stages)
 
 local BoardBuilder = {}
 local lastTerrainRegion
-local lastTerrainKey
-local sinkCache = {}
 
 local function deco(props, parent)
 	local p = Instance.new("Part")
@@ -17,6 +15,7 @@ local function deco(props, parent)
 	p.CanCollide = false
 	p.CanQuery = false -- Klicks sollen das Feld darunter treffen
 	p.CanTouch = false
+	p.CastShadow = false
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	for k, v in props do
@@ -27,7 +26,7 @@ local function deco(props, parent)
 end
 
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
-local function decorate(ch, x, y, parent, reuseTerrain)
+local function decorate(ch, x, y, parent)
 	local center = Grid.toWorld(x, y)
 	local c = Config.TILE_SIZE / 2 - 1.3
 	if ch == "F" then
@@ -42,15 +41,10 @@ local function decorate(ch, x, y, parent, reuseTerrain)
 			end
 		end
 	elseif ch == "S" then
-		if not reuseTerrain then
-			local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
-			local params = RaycastParams.new()
-			params.FilterType = Enum.RaycastFilterType.Include
-			params.FilterDescendantsInstances = { workspace.Terrain }
-			local surface = workspace:Raycast(puddle + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
-			local puddleY = (surface and surface.Position.Y or center.Y) + Config.FEEL.swampPuddleSurfaceOffset - Config.FEEL.swampPuddleSize.Y / 2
-			workspace.Terrain:FillBlock(CFrame.new(puddle.X, puddleY, puddle.Z), Config.FEEL.swampPuddleSize, Enum.Material.Water)
-		end
+		local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
+		deco({ Name = "SwampPuddle", Size = Vector3.new(Config.FEEL.swampPuddleSize.X, Config.FEEL.groundCapHeight, Config.FEEL.swampPuddleSize.Z),
+			Position = puddle + Vector3.new(0, Config.FEEL.swampPuddleSurfaceOffset - Config.FEEL.groundCapHeight / 2, 0),
+			Color = Config.TERRAIN.D.color, Material = Enum.Material.SmoothPlastic }, parent)
 		for i = 1, 3 + (x + y) % 2 do
 			local off = Vector3.new(((x * 17 + y * 11 + i * 7) % 2 == 0 and -1 or 1) * c, 0,
 				((x * 13 + y * 19 + i * 5) % 7 / 3 - 1) * c)
@@ -61,12 +55,7 @@ local function decorate(ch, x, y, parent, reuseTerrain)
 				CFrame = stalk * CFrame.new(0.8, 0, 0), Color = Color3.fromRGB(80, 50, 30), Material = Enum.Material.Wood }, parent)
 		end
 	elseif ch == "D" then
-		-- Trüber Tümpel: Seerosen auf der gemessenen Wasseroberfläche zeigen „hier kann man nicht laufen"
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Include
-		params.FilterDescendantsInstances = { workspace.Terrain }
-		local surface = workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
-		local waterY = surface and surface.Position.Y or center.Y
+		local waterY = center.Y
 		for i = 1, 3 do
 			local off = Vector3.new(((x * 7 + y * 3 + i * 5) % 5 - 2) * 0.9, 0, ((x * 5 + y * 11 + i * 3) % 5 - 2) * 0.9)
 			deco({ Name = "LilyPad", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.08, 1.3, 1.3),
@@ -113,94 +102,80 @@ end
 -- Baut die aktuelle Karte aus Grid.getMap() (vorher Grid.setMap aufrufen)
 function BoardBuilder.build(regionId)
 	local region = Stages.getRegion(regionId)
-	local surroundMaterial = region and region.surroundMaterial or Enum.Material.Grass
 	local treeColor = region and region.treeColor or Config.TERRAIN.F.color
-	-- Standard-Baseplate/Spawn würden mit dem Brett kollidieren
 	for _, name in { "Baseplate", "SpawnLocation", "Board" } do
 		local old = workspace:FindFirstChild(name)
-		if old then
-			old:Destroy()
-		end
+		if old then old:Destroy() end
 	end
-
 	local T = Config.TILE_SIZE
-	local terrain = workspace.Terrain
-	terrain:SetMaterialColor(Enum.Material.Mud, Config.FEEL.mudColor)
-	-- Gras- und Wasserfarbe je Gebiet: nur Morast ist Schlamm, Tümpel im Sumpf sind trüb-grün
-	terrain:SetMaterialColor(Enum.Material.Grass, region and region.grassColor or Config.FEEL.grassColor)
-	terrain.WaterColor = region and region.waterColor or Config.FEEL.waterColor
 	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
 	local w, h = Grid.width() * T, Grid.height() * T
-	local terrainKey = table.concat(Grid.getMap(), "|") .. (regionId or "")
-	local reuseTerrain = terrainKey == lastTerrainKey
 	local size = Vector3.new(w + margin * 2, depth + Config.FEEL.terrainClearTop, h + margin * 2)
 	local cf = CFrame.new(w / 2, (Config.FEEL.terrainClearTop - depth) / 2, h / 2)
-	pcall(function() terrain.Decoration = false end)
-	local function fillTerrain(sinkByChar)
-		local groundSink = sinkByChar["."] or 0
-		terrain:FillBlock(CFrame.new(w / 2, -depth / 2 - groundSink, h / 2), Vector3.new(w + margin * 2, depth, h + margin * 2), Enum.Material.Ground)
-		terrain:FillBlock(CFrame.new(w / 2, -2 - groundSink, h / 2), Vector3.new(w + margin * 2, 4, h + margin * 2), surroundMaterial)
-		for y = 1, Grid.height() do
-			for x = 1, Grid.width() do
-				local definition = Grid.terrainAt(x, y)
-				local center = Grid.toWorld(x, y)
-				local ch = string.sub(Grid.getMap()[y], x, x)
-				center -= Vector3.new(0, sinkByChar[ch] or 0, 0)
-				terrain:FillBlock(CFrame.new(center.X, 2, center.Z), Vector3.new(T, 12, T), Enum.Material.Air)
-				if definition.terrainMaterial == Enum.Material.Water then
-					terrain:FillBlock(CFrame.new(center.X, -6, center.Z), Vector3.new(T, 4, T), Enum.Material.Sand)
-					terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), Enum.Material.Water)
-				else
-					terrain:FillBlock(CFrame.new(center.X, (-4 + center.Y) / 2, center.Z), Vector3.new(T, 4 + center.Y, T), definition.terrainMaterial)
-					if ch == "D" then
-						terrain:FillBlock(CFrame.new(center.X, center.Y + 0.5, center.Z), Vector3.new(T, 1, T), Enum.Material.Water)
-					end
-					if definition.terrainMaterial == Enum.Material.Rock then
-						for _, sign in { -1, 1 } do
-							terrain:FillBall(center + Vector3.new(sign * 2.8, -1.3, ((x * 17 + y * 11) % 3) - 1), 2, Enum.Material.Rock)
-						end
-					end
-				end
-			end
-		end
-	end
-	if not reuseTerrain then
-		if lastTerrainRegion then terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
-		terrain:FillBlock(cf, size, Enum.Material.Air)
-		local missing = {}
-		for y = 1, Grid.height() do
-			for x = 1, Grid.width() do
-				local ch = string.sub(Grid.getMap()[y], x, x)
-				if sinkCache[ch] == nil and missing[ch] == nil then
-					if ch == "W" then
-						sinkCache[ch] = 0
-					else
-						missing[ch] = Grid.toWorld(x, y)
-					end
-				end
-			end
-		end
-		if next(missing) then
-			fillTerrain({})
-			local params = RaycastParams.new()
-			params.FilterType = Enum.RaycastFilterType.Include
-			params.FilterDescendantsInstances = { terrain }
-			local calibration = {}
-			for ch, center in missing do
-				local hit = workspace:Raycast(center + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), params)
-				if hit then
-					sinkCache[ch] = math.max(0, hit.Position.Y - center.Y + Config.FEEL.terrainSurfaceMargin)
-					table.insert(calibration, ("%s=%.3f"):format(ch, sinkCache[ch]))
-				end
-			end
-			terrain:FillBlock(cf, size, Enum.Material.Air)
-			if #calibration > 0 then print("Terrain-Kalibrierung: " .. table.concat(calibration, ", ")) end
-		end
-		fillTerrain(sinkCache)
-		lastTerrainRegion = { cf = cf, size = size }
+	-- Auch Terrain aus früheren Karten entfernen; der Thronsaal liegt außerhalb.
+	if not lastTerrainRegion or lastTerrainRegion.w ~= w or lastTerrainRegion.h ~= h then
+		if lastTerrainRegion then workspace.Terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
+		workspace.Terrain:FillBlock(cf, size, Enum.Material.Air)
+		lastTerrainRegion = { cf = cf, size = size, w = w, h = h }
 	end
 	local board = Instance.new("Folder")
 	board.Name = "Board"
+
+	local ground = Instance.new("Folder")
+	ground.Name = "Ground"
+	ground.Parent = board
+	local function colorFor(ch)
+		return region and region.terrainColors and region.terrainColors[ch] or Config.TERRAIN[ch].color
+	end
+	local top = Config.FEEL.surroundHeight
+	local surroundColor = region and region.surroundColor or Config.TERRAIN["."].color
+	for _, rect in {
+		{ -margin / 2, h / 2, margin, h + margin * 2 },
+		{ w + margin / 2, h / 2, margin, h + margin * 2 },
+		{ w / 2, -margin / 2, w, margin },
+		{ w / 2, h + margin / 2, w, margin },
+	} do
+		deco({ Name = "Surround", Size = Vector3.new(rect[3], Config.FEEL.groundDepth + top, rect[4]),
+			Position = Vector3.new(rect[1], (top - Config.FEEL.groundDepth) / 2, rect[2]),
+			Color = surroundColor, Material = Enum.Material.SmoothPlastic, CanCollide = true }, board)
+	end
+	-- Gleiche Zeichen bilden einfache Rechtecke statt eines sichtbaren Blocks pro Feld.
+	local used, groundCount = {}, 0
+	for y = 1, Grid.height() do
+		for x = 1, Grid.width() do
+			local key = Grid.key(x, y)
+			if used[key] then continue end
+			local ch = Grid.getMap()[y]:sub(x, x)
+			local right = x
+			while right < Grid.width() and not used[Grid.key(right + 1, y)] and Grid.getMap()[y]:sub(right + 1, right + 1) == ch do right += 1 end
+			local bottom = y
+			while bottom < Grid.height() do
+				local same = true
+				for xx = x, right do
+					if used[Grid.key(xx, bottom + 1)] or Grid.getMap()[bottom + 1]:sub(xx, xx) ~= ch then same = false; break end
+				end
+				if not same then break end
+				bottom += 1
+			end
+			for yy = y, bottom do for xx = x, right do used[Grid.key(xx, yy)] = true end end
+			groundCount += 1
+			local height = Config.TERRAIN[ch].height
+			local cap = Config.FEEL.groundCapHeight
+			local color = colorFor(ch)
+			local cx, cz = (x + right - 1) * T / 2, (y + bottom - 1) * T / 2
+			local width, length = (right - x + 1) * T, (bottom - y + 1) * T
+			deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
+				Position = Vector3.new(cx, (height - cap - Config.FEEL.groundDepth) / 2, cz),
+				Color = color:Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.groundSideShade),
+				Material = Enum.Material.SmoothPlastic, CanCollide = true }, ground)
+			deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
+				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
+				Transparency = (ch == "W" or ch == "D") and Config.FEEL.waterTransparency or 0,
+				Material = Enum.Material.SmoothPlastic, CanCollide = true }, ground)
+		end
+	end
+	board:SetAttribute("GroundCount", groundCount)
+	board:SetAttribute("MapKey", table.concat(Grid.getMap(), "|"))
 
 	for y = 1, Grid.height() do
 		for x = 1, Grid.width() do
@@ -214,16 +189,25 @@ function BoardBuilder.build(regionId)
 			tile.Transparency = 1
 			tile.CanCollide = false
 			tile.CanQuery = true
+			tile.CanTouch = false
+			tile.CastShadow = false
 			tile.Color = terrain.color
 			tile.Material = terrain.material
 			tile.TopSurface = Enum.SurfaceType.Smooth
 			tile:SetAttribute("X", x)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
-			decorate(ch, x, y, board, reuseTerrain)
+			decorate(ch, x, y, board)
 			local center = Grid.toWorld(x, y)
-			for _, offset in { Vector3.new(-T / 2, 0, 0), Vector3.new(T / 2, 0, 0), Vector3.new(0, 0, -T / 2), Vector3.new(0, 0, T / 2) } do
-				deco({ Name = "GridLine", Size = offset.X ~= 0 and Vector3.new(Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth, T) or Vector3.new(T, Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth), Position = center + offset + Vector3.new(0, 0.08, 0), Color = Color3.fromRGB(40, 45, 35), Transparency = Config.FEEL.gridTransparency }, board)
+			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
+			-- Gemeinsame Kanten nur einmal; an Höhenstufen bleibt jede Oberkante sichtbar.
+			if x == Grid.width() or Grid.tileHeight(x + 1, y) ~= center.Y then table.insert(offsets, Vector3.new(T / 2, 0, 0)) end
+			if y == Grid.height() or Grid.tileHeight(x, y + 1) ~= center.Y then table.insert(offsets, Vector3.new(0, 0, T / 2)) end
+			for _, offset in offsets do
+				deco({ Name = "GridLine", Size = offset.X ~= 0 and Vector3.new(Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth, T) or Vector3.new(T, Config.FEEL.gridLineWidth, Config.FEEL.gridLineWidth),
+					Position = center + offset + Vector3.new(0, Config.FEEL.gridLineWidth / 2 + Config.FEEL.gridSurfaceOffset, 0),
+					Color = colorFor(ch):Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.gridShade), Transparency = Config.FEEL.gridTransparency,
+					Material = Enum.Material.SmoothPlastic }, board)
 			end
 		end
 	end
@@ -236,14 +220,13 @@ function BoardBuilder.build(regionId)
 		local z = fraction * h
 		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -distance or h + distance end
 		if i % 3 == 0 then
-			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, 2, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
+			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, top + 3, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
 		else
-			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, 4.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
-			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, 12, z), Color = treeColor, Material = Enum.Material.Grass }, board)
+			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, top + 4.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
+			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, top + 12, z), Color = treeColor, Material = Enum.Material.Grass }, board)
 		end
 	end
 	board.Parent = workspace
-	lastTerrainKey = terrainKey
 	return board
 end
 

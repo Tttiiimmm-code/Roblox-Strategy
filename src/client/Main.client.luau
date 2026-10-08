@@ -113,8 +113,15 @@ local function missionReady(request)
 			if not tile or not tile:IsA("BasePart") then return false end
 		end
 	end
-	local center = Vector3.new(Grid.width() * Config.TILE_SIZE / 2, Config.FEEL.terrainClearTop, Grid.height() * Config.TILE_SIZE / 2)
-	if not workspace:Raycast(center, Vector3.new(0, -Config.FEEL.terrainClearTop - Config.FEEL.terrainDepth, 0), request.terrainParams) then return false end
+	if board:GetAttribute("MapKey") ~= table.concat(Grid.getMap(), "|") then return false end
+	local ground = board:FindFirstChild("Ground")
+	local count = board:GetAttribute("GroundCount")
+	if not ground or type(count) ~= "number" or count < 1 then return false end
+	for i = 1, count do
+		local surface = ground:FindFirstChild("Ground_" .. i)
+		local side = ground:FindFirstChild("Side_" .. i)
+		if not surface or not surface:IsA("BasePart") or not side or not side:IsA("BasePart") then return false end
+	end
 	for id in state.units do
 		local model = units:FindFirstChild(id)
 		if not model or not model:IsA("Model") or not model.PrimaryPart then return false end
@@ -138,10 +145,7 @@ local function startLoading(stageId, difficulty, runLevel)
 	MenuUI.closeLobby()
 	MenuUI.setLoading(true)
 	UI.showLoading(title, subtitle)
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { workspace.Terrain }
-	loadingMission = { stageId = stageId, difficulty = difficulty, run = runLevel, started = os.clock(), terrainParams = params, receivedState = false }
+	loadingMission = { stageId = stageId, difficulty = difficulty, run = runLevel, started = os.clock(), receivedState = false }
 	loadingMission.connection = RunService.Heartbeat:Connect(function()
 		local request = loadingMission
 		if missionReady(request) then
