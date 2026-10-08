@@ -37,6 +37,7 @@ local portraitId = nil
 -- Aufbau -------------------------------------------------------------------------
 local function buildTop(callbacks)
 	local pill = panel({
+		Name = "PhasenBanner",
 		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(460, 82),
 	}, hud)
 	turnLabel = label({
@@ -59,6 +60,7 @@ local function buildTop(callbacks)
 	}, hud)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, hints)
 	hintLabel = UIKit.flowLabel({
+		Name = "HinweisKasten",
 		Size = UDim2.new(1, 0, 0, 66), LayoutOrder = 1,
 		BackgroundColor3 = Color3.fromRGB(10, 14, 32), BackgroundTransparency = 0.3,
 		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
@@ -90,6 +92,7 @@ local function buildTop(callbacks)
 	end)
 
 	terrainFrame = panel({
+		Name = "GelaendeKasten",
 		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.fromOffset(340, 78),
 		Visible = false, AutomaticSize = Enum.AutomaticSize.Y,
 	}, hud)
@@ -390,8 +393,8 @@ end
 -- Öffentliche API ----------------------------------------------------------------
 local function buildLoading(playerGui)
 	local gui = make("ScreenGui", {
-		Name = "MissionLoading", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets, DisplayOrder = 1000,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true, Enabled = false,
+		Name = "MissionLoading", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None, DisplayOrder = 1000,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false, Enabled = false,
 	}, playerGui)
 	loading.gui = gui
 	loading.frame = make("CanvasGroup", {
@@ -456,8 +459,8 @@ end
 function UI.init(callbacks)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local gui = make("ScreenGui", {
-		Name = "TacticsUI", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true,
+		Name = "TacticsUI", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false,
 	}, playerGui)
 	root = UIKit.createRoot(gui)
 	hud = make("Frame", { Name = "Hud", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, root)

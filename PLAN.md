@@ -11,7 +11,7 @@ Branch: `feature/level-optik` (weiter)
 
 - [x] 1. **Kurze Texte einzeilig** – `src/client/UIKit.luau` (`fitText`/`label`/Buttons): Bei Fit-Texten nach `TextScaled = true` immer `TextWrapped = false` erzwingen (auch wenn später gesetzt), außer der Aufrufer verlangt ausdrücklich Umbruch (z. B. Option `wrap = true` bzw. `flowLabel`). Alle Stellen prüfen, die bisher bewusst `TextWrapped = true` mit festem Kasten nutzen (Waffenzeile im Infofenster, Beschreibungen) – dort entweder `flowLabel` oder Umbruch ohne TextScaled. Infofenster-Raster: jede Zelle einzeilig „Str 2“, „Mag 8“ …; nichts überlappt.
 
-- [ ] 2. **Oben nicht abschneiden – deterministischer Aufbau** – `src/client/UIKit.luau` (`createRoot`), `src/client/UI.luau`, `src/client/BattleScene.luau`, Ladebildschirm:
+- [x] 2. **Oben nicht abschneiden – deterministischer Aufbau** – `src/client/UIKit.luau` (`createRoot`), `src/client/UI.luau`, `src/client/BattleScene.luau`, Ladebildschirm:
   - ScreenGuis: `IgnoreGuiInset = true`, `ScreenInsets = None`, `ClipToDeviceSafeArea = false` → Layoutfläche beginnt bei Bildschirmpixel 0, **nichts wird von Roblox geclippt**.
   - Sicheren Bereich selbst berechnen: oben = `GuiService.TopbarInset.Max.Y` (Unterkante der Roblox-Leiste in Bildschirmpunkten; falls 0 → `GuiService:GetGuiInset()` Y), links/rechts/unten aus Geräte-Aussparungen (`GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)` relativ zum vollen Bildschirm). Der `SafeArea`-Frame bekommt genau diese Position/Größe (in Pixeln, außerhalb der UIScale), `Root` mit UIScale liegt darin. Aktualisierung bei Änderung von `TopbarInset`, `ViewportSize`.
   - **Diagnose:** Bei `Config.INPUT_DIAGNOSTICS = true` (oder eigenem `UI_DIAGNOSTICS`) einmalig und bei Änderung ausgeben: Viewport, TopbarInset, GuiInset, InsetArea, AbsolutePosition/Size von SafeArea, Root, Phasen-Banner, Hinweis-Kasten, UIScale-Wert – damit der Nutzer bei Bedarf Zahlen liefern kann.
@@ -32,4 +32,8 @@ Branch: `feature/level-optik` (weiter)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden.)
 
 ## Notizen (Codex)
--
+- Schritt 1: Fit-Kurztexte und Buttons erzwingen Einzeiligkeit auch nach späteren Zuweisungen; ausdrücklicher Fit-Umbruch über wrap = true. Waffenzeile, Ladetitel, Speicherwarnung und Laufbeschreibungen behalten Umbruch ohne TextScaled. Eingabelogik unverändert.
+- Schritt 2: ScreenGuis ohne automatische Insets/Clipping; SafeArea in Bildschirm-Punkten vor der UIScale. Geräte-Ränder aus DeviceSafeInsets relativ zu ScreenInsets.None, da GetInsetArea laut offizieller GuiService-Doku relativ zur Core-UI liefert. Oben TopbarInset.Max.Y mit GetGuiInset-Fallback, mindestens oberer Geräte-Rand. Kamerawechsel bindet die Viewport-Aktualisierung neu.
+- INPUT_DIAGNOSTICS = true protokolliert [UI-Diagnose] einmal und bei Layoutänderungen inklusive Viewport, beider InsetArea-Rechtecke, Topbar-/GuiInset, SafeArea/Root, oberem Phasenbanner, Hinweis, Gelände und UIScale. Standard bleibt false.
+- 128 lokale Anschlussprüfungen mit aktuellen Modulen erfolgreich: 16 sichere Flächen einschließlich seitlicher/unterer Aussparungen und negativer InsetArea-Ursprünge, TextScaled-Umbruch-Nebenwirkung, spätere Property-Zuweisungen, expliziter Fit-Umbruch, Leisten-Fallback, Kamerawechsel, Bereinigung und Diagnose. Prüfhilfen in ignoriertem tools/. Kein Roblox-Renderer; manueller Studio-/Handytest und Claude-Review offen.
+- Sandbox-Prozessstart defekt; Projektbefehle gemäß Dauerfreigabe über automatische Prüfung außerhalb ausgeführt.

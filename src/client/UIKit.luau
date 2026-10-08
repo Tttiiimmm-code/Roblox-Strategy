@@ -486,31 +486,100 @@ end
 
 -- Ganze Oberfläche skaliert mit der Bildschirmgröße (Designgröße 1280×720)
 function UIKit.createRoot(gui, maximumScale)
-	-- Der ScreenGui respektiert Geräte-Aussparungen; die Leiste wird vor dem Skalieren ausgespart.
+	local screenGui = gui:IsA("ScreenGui") and gui or gui:FindFirstAncestorOfClass("ScreenGui")
+	-- Reihenfolge ist wichtig: IgnoreGuiInset kann ScreenInsets verändern.
+	screenGui.IgnoreGuiInset = true
+	screenGui.ScreenInsets = Enum.ScreenInsets.None
+	screenGui.SafeAreaCompatibility = Enum.SafeAreaCompatibility.None
+	screenGui.ClipToDeviceSafeArea = false
 	local surface = make("Frame", { Name = "SafeArea", BackgroundTransparency = 1, Active = false }, gui)
 	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Active = false }, surface)
 	local scale = make("UIScale", {}, root)
+	local connections = {}
+	local viewportConnection
+	local destroyed, pendingDiagnostics = false, false
+	local lastDiagnostics
+	local diagnosticNames = { PhasenBanner = true, HinweisKasten = true, GelaendeKasten = true }
+	local function diagnose()
+		if not Config.INPUT_DIAGNOSTICS or pendingDiagnostics or destroyed then return end
+		pendingDiagnostics = true
+		-- AbsolutePosition/Size erst nach den gemeinsamen Layout-Zuweisungen lesen.
+		task.defer(function()
+			pendingDiagnostics = false
+			if destroyed then return end
+			local camera = workspace.CurrentCamera
+			local insetTop, insetBottom = GuiService:GetGuiInset()
+			local parts = {
+				("[UI-Diagnose] %s Viewport=%s TopbarInset=%s GuiInset=%s/%s InsetArea(None)=%s InsetArea(Device)=%s UIScale=%.4f"):format(
+					screenGui.Name, tostring(camera and camera.ViewportSize), tostring(GuiService.TopbarInset),
+					tostring(insetTop), tostring(insetBottom), tostring(GuiService:GetInsetArea(Enum.ScreenInsets.None)),
+					tostring(GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)), scale.Scale),
+			}
+			local function addBounds(object)
+				table.insert(parts, ("%s Position=%s Size=%s"):format(object.Name, tostring(object.AbsolutePosition), tostring(object.AbsoluteSize)))
+			end
+			addBounds(surface)
+			addBounds(root)
+			for _, name in { "PhasenBanner", "HinweisKasten", "GelaendeKasten" } do
+				local object = root:FindFirstChild(name, true)
+				if object then addBounds(object) end
+			end
+			local message = table.concat(parts, " | ")
+			if message ~= lastDiagnostics then
+				lastDiagnostics = message
+				print(message)
+			end
+		end)
+	end
 	local function update()
+		-- InsetArea-Rechtecke sind relativ zur Core-UI, nicht zu Bildschirmpixel 0.
+		local full = GuiService:GetInsetArea(Enum.ScreenInsets.None)
 		local device = GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets)
-		local core = GuiService:GetInsetArea(Enum.ScreenInsets.CoreUISafeInsets)
-		local available = Vector2.new(core.Width, core.Height)
+		local insetTop = GuiService:GetGuiInset()
+		local top = GuiService.TopbarInset.Max.Y
+		if top <= 0 then top = insetTop.Y end
+		local left = math.max(0, device.Min.X - full.Min.X)
+		top = math.max(0, top, device.Min.Y - full.Min.Y)
+		local right = math.max(0, full.Max.X - device.Max.X)
+		local bottom = math.max(0, full.Max.Y - device.Max.Y)
+		local available = Vector2.new(full.Width - left - right, full.Height - top - bottom)
 		if available.X <= 0 or available.Y <= 0 then return end
-		surface.Position = UDim2.fromOffset(core.Min.X - device.Min.X, core.Min.Y - device.Min.Y)
+		surface.Position = UDim2.fromOffset(left, top)
 		surface.Size = UDim2.fromOffset(available.X, available.Y)
 		-- Unter 360 sicheren Punkten Höhe darf die Oberfläche kleiner als 0,5 werden.
 		local s = math.min(available.X / 1280, available.Y / 720, maximumScale or 1.15)
 		scale.Scale = s
 		root.Size = UDim2.fromOffset(available.X / s, available.Y / s)
+		diagnose()
 	end
-	local connections = {
-		gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(update),
-		GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(update),
-		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update),
-	}
+	local function bindCamera()
+		if viewportConnection then viewportConnection:Disconnect() end
+		local camera = workspace.CurrentCamera
+		viewportConnection = camera and camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+		update()
+	end
+	table.insert(connections, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(update))
+	table.insert(connections, GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(update))
+	table.insert(connections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera))
+	if Config.INPUT_DIAGNOSTICS then
+		local function watchBounds(object)
+			table.insert(connections, object:GetPropertyChangedSignal("AbsolutePosition"):Connect(diagnose))
+			table.insert(connections, object:GetPropertyChangedSignal("AbsoluteSize"):Connect(diagnose))
+			diagnose()
+		end
+		watchBounds(surface)
+		watchBounds(root)
+		table.insert(connections, scale:GetPropertyChangedSignal("Scale"):Connect(diagnose))
+		table.insert(connections, root.DescendantAdded:Connect(function(object)
+			if diagnosticNames[object.Name] then watchBounds(object) end
+		end))
+	end
 	surface.Destroying:Connect(function()
+		destroyed = true
+		if viewportConnection then viewportConnection:Disconnect() end
 		for _, connection in connections do connection:Disconnect() end
 	end)
-	update()
+	bindCamera()
 	return root
 end
 

@@ -70,8 +70,8 @@ function BattleScene.play(info)
 	active = scene
 	-- Das HUD wird währenddessen versteckt; Meldungen im HUD-Gui bleiben darüber.
 	local gui = make("ScreenGui", {
-		Name = "BattleScene", ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets,
-		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = true,
+		Name = "BattleScene", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false,
 		DisplayOrder = -1, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	}, Players.LocalPlayer:WaitForChild("PlayerGui"))
 	local group = make("CanvasGroup", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, GroupTransparency = 1 }, gui)
