@@ -57,6 +57,7 @@ local pendingTargetId = nil
 local inspectedId = nil
 local dangerOn = false
 local loadingMission = nil
+local resetSelection -- weiter unten definiert; finishLoading braucht es
 local reopenMissions = false
 
 local overlays = {}
@@ -90,6 +91,9 @@ local function finishLoading(failed)
 	end
 	UI.setHudVisible(isMine() and state.phase ~= "Prep" and not state.result and not BattleScene.isPlaying())
 	UI.hideLoading()
+	-- Lauf-Level starten ohne Prep direkt im Spielerzug: Eingabe freigeben, ohne auf den nächsten Spielstand zu warten.
+	-- Nach einem Ladefehler gesperrt lassen, bis die Antwort auf ToLobby kommt.
+	if not failed then resetSelection() end
 end
 
 local function missionReady(request)
@@ -349,7 +353,7 @@ local function setMode(newMode)
 	updateTools()
 end
 
-local function resetSelection()
+function resetSelection()
 	UnitAnimator.select(nil)
 	selectedId, nodes, dest, pendingTargetId, inspectedId = nil, nil, nil, nil, nil
 	targets = {}

@@ -20,7 +20,8 @@ UnitData.Rarities = {
 UnitData.Weapons = {
 	IronSword = { name = "Eisenschwert", type = "Sword", might = 5, hit = 90, crit = 0, minRange = 1, maxRange = 1 },
 	IronLance = { name = "Eisenlanze", type = "Lance", might = 7, hit = 80, crit = 0, minRange = 1, maxRange = 1 },
-	Javelin = { name = "Wurfspeer", type = "Lance", might = 6, hit = 65, crit = 0, minRange = 1, maxRange = 2 },
+	-- farMight/farHit: Abzug bei Angriff aus 2 Feldern (Werte WIP)
+	Javelin = { name = "Wurfspeer", type = "Lance", might = 6, hit = 65, crit = 0, minRange = 1, maxRange = 2, farMight = -3, farHit = -20 },
 	IronAxe = { name = "Eisenaxt", type = "Axe", might = 8, hit = 75, crit = 0, minRange = 1, maxRange = 1 },
 	SteelAxe = { name = "Stahlaxt", type = "Axe", might = 11, hit = 65, crit = 0, minRange = 1, maxRange = 1 },
 	IronBow = { name = "Eisenbogen", type = "Bow", might = 6, hit = 85, crit = 0, minRange = 2, maxRange = 2 },

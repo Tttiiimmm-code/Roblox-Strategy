@@ -22,11 +22,13 @@ local function clamp100(v)
 	return math.clamp(math.floor(v), 0, 100)
 end
 
-local function sideStats(unit, weapon, foe, foeWeapon, foeTerrain)
+local function sideStats(unit, weapon, foe, foeWeapon, foeTerrain, dist)
 	local tri = Combat.triangle(weapon.type, foeWeapon.type)
-	local power = (weapon.magic and unit.mag or unit.str) + weapon.might + tri
+	-- Wurfwaffen (z. B. Wurfspeer) treffen aus der Ferne schwächer als im Nahkampf.
+	local far = dist >= 2
+	local power = (weapon.magic and unit.mag or unit.str) + weapon.might + (far and weapon.farMight or 0) + tri
 	local defense = (weapon.magic and foe.res or foe.def) + foeTerrain.def
-	local hit = weapon.hit + unit.skl * 2 + math.floor(unit.lck / 2) + tri * 15
+	local hit = weapon.hit + (far and weapon.farHit or 0) + unit.skl * 2 + math.floor(unit.lck / 2) + tri * 15
 	local avoid = foe.spd * 2 + foe.lck + foeTerrain.avoid
 	local crit = weapon.crit + math.floor(unit.skl / 2) - foe.lck
 	return {
@@ -45,8 +47,8 @@ function Combat.forecast(attacker, defender, ax, ay)
 	local defenderTerrain = Grid.terrainAt(defender.x, defender.y)
 	local dist = Grid.dist(ax, ay, defender.x, defender.y)
 
-	local a = sideStats(attacker, aw, defender, dw, defenderTerrain)
-	local d = sideStats(defender, dw, attacker, aw, attackerTerrain)
+	local a = sideStats(attacker, aw, defender, dw, defenderTerrain, dist)
+	local d = sideStats(defender, dw, attacker, aw, attackerTerrain, dist)
 
 	a.hp = attacker.hp
 	a.count = (attacker.spd - defender.spd >= DOUBLE_THRESHOLD) and 2 or 1
