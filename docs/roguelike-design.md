@@ -70,6 +70,23 @@ Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vo
 - **Punktebudget** pro Level für Gegner und Gefahren; der Gegnerschwerpunkt der Option bestimmt, wofür das Budget ausgegeben wird.
 - Prüfskript, das viele Seeds automatisch erzeugt und auf Lösbarkeit/Schwierigkeit prüft.
 
+## Nachträge (08.10.2026)
+- **1 Spieler pro Server** (Servergröße 1 in den Roblox-Spieleinstellungen). Das eine Spielbrett gehört immer dem einzigen Spieler.
+- **Leon ist ein normaler Held:** frei wählbar, kein Pflichtmitglied, sein Tod beendet den Lauf nicht.
+- **Tutorial = Mission 1 + 2**, Pflicht für neue Spieler, aber per Abfrage überspringbar. Die übrigen handgemachten Missionen werden **entfernt**.
+- **Wer während eines Laufs das Spiel verlässt, landet beim nächsten Start direkt wieder im Lauf** (Levelwahl), nicht im Hub. **Aufgeben ist jederzeit möglich** und führt zurück in den Hub.
+- **Teamwechsel und Kaserne nur im Lager**; dort auch die teurere Beschwörung. Während eines Laufs gibt es keinen Hub-Zugang.
+
+## Phasen der Umsetzung
+Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein zentrales Konfigurationsmodul.
+1. **Lauf-Grundgerüst (Grasland):** Lauf starten/aufgeben/fortsetzen, Lauf-Speicherstand im Profil, Team aus 3 Helden, Seed-Generator mit Bausteinen und Lösbarkeitsprüfung, Levelwahl mit 2–3 Optionen (Gegnerschwerpunkt + Belohnung), Teilheilung, Tote bleiben tot, Niederlage wenn alle tot, Belohnung pro Level.
+2. **Tutorial-Umbau:** Mission 1 + 2 als Pflicht-Tutorial mit Überspringen-Abfrage, übrige Missionen, Sterne und Schwierigkeitsstufen entfernen, Lauf-Knopf im Hub.
+3. **Bosse + Lager:** Miniboss (Level 3) und Gebietsboss (Level 5), Lager als Option (garantiert vor Bossen), volle Heilung, Teamwechsel über Kaserne, Wiederbeleben, Teamplatz +1 nach Boss.
+4. **Beute + Händler:** Waffensammlung, Waffen als Level-/Boss-Belohnung, Händler, Rückblende als Item, Notfall-Beschwörung (Wahrscheinlichkeiten sichtbar).
+5. **Sumpf + Gefahren-System:** Matsch/Gift, KI meidet Gefahren, weitere Leveltypen (Überleben, Ziel erreichen/verteidigen, Boss besiegen), Gefahren-Symbole in der Wahl.
+6. **Eis + Vulkan:** Schneesturm-Nebel (serverseitig verdeckt), Lava, angekündigter Steinschlag, wachsende Bretter.
+7. **Punktzahl + Ränge:** Punktzahl, Bestenliste (global, Freunde, Rekord), Ränge nach Sieg, Weiterspielen nach Level 20.
+
 ## Offene Punkte (vor der jeweiligen Etappe klären)
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
 - Konkrete Bosse und Minibosse je Gebiet (Namen, Fähigkeiten).
