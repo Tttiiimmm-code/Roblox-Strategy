@@ -171,10 +171,12 @@ local function decorate(ch, x, y, parent, mapKey)
 				Color = Color3.fromRGB(120, 110, 100), Material = Enum.Material.Rock }, parent)
 		end
 	elseif ch == "B" then
-		if place(category, center, parent, key, { rotation = bridgeAngle(x, y) }) then return end
+		local angle = bridgeAngle(x, y)
+		if place(category, center, parent, key, { rotation = angle }) then return end
 		for _, side in { -1, 1 } do
 			deco({ Size = Vector3.new(0.4, 1, Config.TILE_SIZE - 0.2),
-				Position = center + Vector3.new(side * (Config.TILE_SIZE / 2 - 0.4), 0.5, 0),
+				CFrame = CFrame.new(center) * CFrame.Angles(0, angle, 0)
+					* CFrame.new(side * (Config.TILE_SIZE / 2 - 0.4), 0.5, 0),
 				Color = Color3.fromRGB(110, 76, 46), Material = Enum.Material.Wood }, parent)
 		end
 	elseif ch == "H" then

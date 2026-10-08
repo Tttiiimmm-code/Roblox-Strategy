@@ -18,6 +18,11 @@ RunConfig.ENEMY_ROWS = 4
 RunConfig.MIN_ENEMY_DISTANCE = 4
 RunConfig.MAX_BLOCKED_SHARE = 0.25
 RunConfig.MAX_ATTEMPTS = 50
+-- WIP: Flüsse liegen vor der Startzone, Querungen umfassen die volle Breite.
+RunConfig.RIVER_CHANCE = 0.4
+RunConfig.RIVER_WIDTH = { min = 1, max = 2 }
+RunConfig.BRIDGES_MIN = 1
+RunConfig.BRIDGES_MAX = 2
 RunConfig.ENEMY_COUNT_BASE = 4
 RunConfig.ENEMY_COUNT_PER_DEPTH = 1
 RunConfig.ENEMY_LEVEL_BASE = 1

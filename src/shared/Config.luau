@@ -46,7 +46,8 @@ Config.FEEL = {
 	shakeStrength = 0.28, critShakeStrength = 0.7, shakeDuration = 0.18, critShakeDuration = 0.38,
 	hitStop = 0.06, critFlashTransparency = 0.65, critFlashDuration = 0.2,
 	volume = 1, pitchVariation = 0.05, musicFade = 1, soundLifetime = 30,
-	atmosphereFade = 0.8, flickerStrength = 0.12, flickerRate = 7,
+	atmosphereFade = 0.8, battleShadowSoftness = 1, -- WIP: weichere Echtzeitschatten im Kampf
+	flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
 	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
 	environmentMargin = 72, environmentCount = 16, -- klein halten: Rand besteht aus vier Parts; Ferne verdeckt der Dunst
