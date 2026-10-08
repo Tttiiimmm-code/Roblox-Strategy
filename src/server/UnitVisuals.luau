@@ -8,6 +8,7 @@ local Config = require(Shared.Config)
 local Grid = require(Shared.Grid)
 
 local CharacterBuilder = require(Shared.CharacterBuilder)
+local UnitShadow = require(Shared.UnitShadow)
 
 local UnitData = require(Shared.UnitData)
 
@@ -84,6 +85,7 @@ function UnitVisuals.create(unit)
 		if value then model:SetAttribute(name, value * scale) end
 	end
 	model:PivotTo(rootCFrame(unit.x, unit.y, unit.team == "Player" and 0 or math.pi, model:GetAttribute("GroundOffset")))
+	UnitShadow.create(model)
 	local root = model.PrimaryPart
 
 	local bb = Instance.new("BillboardGui")
@@ -203,6 +205,7 @@ function UnitVisuals.moveAlong(unit, path)
 		local target = CFrame.Angles(0, yawBetween(from, to) or 0, 0)
 		rotation = rotation:Lerp(target, 1 - math.exp(-Config.FEEL.turnSmoothness * dt * speed))
 		root.CFrame = CFrame.new(from:Lerp(to, distance - index + 1) + Vector3.new(0, (model:GetAttribute("GroundOffset") or 0) + 0.1, 0)) * rotation
+		UnitShadow.update(model)
 	end
 	model:SetAttribute("Moving", false)
 end

@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local UnitData = require(Shared:WaitForChild("UnitData"))
+local UnitShadow = require(Shared:WaitForChild("UnitShadow"))
 
 local Animator = {}
 
@@ -556,6 +557,7 @@ local function idle(dt)
 	end
 	for _, model in models do
 		local data = livingState(model, t)
+		UnitShadow.update(model)
 		if model:GetAttribute("UnitId") then turnRing(model, data, t) end
 		standardAnimation(model, data)
 		if not busy[model] then
