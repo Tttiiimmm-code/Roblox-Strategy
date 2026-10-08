@@ -83,7 +83,7 @@ Config.TILE_SIZE = 8
 -- Maximalmaße in Feldern; auf dem Brett bleibt die Figurenmitte frei.
 Config.ENVIRONMENT = {
 	sizeVariation = 0.1, shadowHeight = 0.6,
-	decoChance = 0.08, bushChance = 0.25, edgeInset = 0.8,
+	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
 	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
 	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
 	categories = {

@@ -121,23 +121,24 @@ function EnvironmentAssets.place(category, cframe, opts)
 	local _, size = model:GetBoundingBox()
 	local height = (opts.height or definition.height) * Config.TILE_SIZE
 	local width = (opts.width or definition.width) * Config.TILE_SIZE
-	local spread = Config.ENVIRONMENT.sizeVariation
-	-- Auch die größte Zufallsvariante bleibt innerhalb der konfigurierten Grenzen.
-	local scale = math.min(height / size.Y, width / math.max(size.X, size.Z))
-		* random:NextNumber(1 - spread, 1 + spread) / (1 + spread)
-	model:ScaleTo(scale)
 	local angle = opts.rotation
 	if angle == nil then
 		local mode = opts.rotationMode or definition.rotation
 		angle = mode == "quarter" and random:NextInteger(0, 3) * math.pi / 2
 			or mode == "free" and random:NextNumber(0, math.pi * 2) or 0
 	end
+	local spread = Config.ENVIRONMENT.sizeVariation
+	-- Auch die größte Zufallsvariante bleibt innerhalb der konfigurierten Grenzen.
+	local scale = math.min(height / size.Y, width / math.max(math.abs(math.cos(angle)) * size.X + math.abs(math.sin(angle)) * size.Z,
+			math.abs(math.sin(angle)) * size.X + math.abs(math.cos(angle)) * size.Z))
+		* random:NextNumber(1 - spread, 1 + spread) / (1 + spread)
+	model:ScaleTo(scale)
 	local box, scaledSize = model:GetBoundingBox()
 	local transform = cframe * CFrame.Angles(0, angle, 0) * CFrame.new(0, scaledSize.Y / 2, 0) * box:Inverse()
 	model:PivotTo(transform * model:GetPivot())
 	for _, object in model:GetDescendants() do
 		if object:IsA("BasePart") then
-			object.CastShadow = height >= Config.ENVIRONMENT.shadowHeight * Config.TILE_SIZE
+			object.CastShadow = scaledSize.Y >= Config.ENVIRONMENT.shadowHeight * Config.TILE_SIZE
 		end
 	end
 	model.Parent = opts.parent

@@ -32,7 +32,7 @@ Nutzerentscheidungen (08.10.2026): Boden stilisiert passend zu Cel; Raster dezen
   - Thronsaal (`HubBuilder`) nicht anfassen.
   - Fertig, wenn: Story-Mission, Lauf-Level und Sumpf-Mission bauen ohne Terrain auf dem Brett; Aufbauzeit in Notizen (vorher/nachher); keine Figur versinkt oder schwebt (statisch geprüft, Studio-Test durch Nutzer).
 
-- [ ] 3. **Assets im Brett verwenden** – `src/server/BoardBuilder.luau`
+- [x] 3. **Assets im Brett verwenden** – `src/server/BoardBuilder.luau`
   - Zuordnung in `Config.ENVIRONMENT`: `F` → `tree` (+ gelegentlich `bush`), `M` → `rock`, `H` → `fortress`, `B` → `bridge` (längs zur Brückenrichtung ausgerichtet), Ebene `.` → selten `deco_*` (Blumen/Steine/Gras, Anteil konfigurierbar, nur am Feldrand, Feldmitte frei für Figuren), Rand-Umgebung → `tree`/`rock`/`bush`.
   - Gibt es für eine Kategorie keine Vorlage → bisherige Part-Deko (gleiches Aussehen, auf dem neuen Boden).
   - Deko darf Figuren und Zug-Ring nicht verdecken: Bäume/Büsche an den Feldecken bzw. klein genug; Höhe begrenzt (`Config.ENVIRONMENT`).
@@ -69,6 +69,7 @@ Nutzerentscheidungen (08.10.2026): Boden stilisiert passend zu Cel; Raster dezen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden)
 
 ## Notizen (Codex)
+- Schritt 3: Feld-/Rand-Zuordnung, seltene Rand-Deko und Brückenrichtung angebunden. Lokale Model/MeshPart-Vorlagen für tree/bush/rock/fortress/bridge und vier deco-Kategorien: Platzierung, freie Feldmitte, Bodenhöhe, Rand und Determinismus OK; beide Brückenrichtungen geprüft. Ohne Vorlagen Part-Signatur identisch zu Schritt 2. Lader begrenzt zusätzlich die gedrehte Breite (45° getestet); äußere Optionen werden kopiert, Config bleibt unverändert. Pflichtcheck OK (32 Dateien), Rojo-Build OK. Festungsvorlage dient als Eckelement; Brückenvorlage braucht freie Mitte ohne erhöhte Laufplatte (Doku folgt in Schritt 5). Studio/Handy ungetestet.
 - Schritt 2: SmoothPlastic-Flächen mit dunkleren Seiten, flache Wasserflächen, vier Randflächen; einfache Rechteckzusammenfassung (Story s2: 51/108, Sumpf s4: 57/108, Lauf Seed 12345: 29/80). Stubs prüfen jeden Feldmittelpunkt auf genau eine Fläche mit Oberkante = Grid.toWorld, Rasterhöhe und Klickattribute. Echte missionReady mit fehlendem Boden, falscher Karte, fehlenden Einheiten und Lauf-Seed getestet. Pflichtcheck OK (32 Dateien); Rojo-Build OK. Beispielzeiten im Luau-Stub (vorher/nachher): Story 7,89/6,24 ms, Sumpf 5,84/8,59 ms, Lauf 3,71/3,29 ms; diese schwankenden Stub-Zeiten simulieren keine Terrain-Voxel, Roblox-Replikation oder Rendering. Reale „Missionsaufbau … Brett“-Zeiten vorher/nachher muss der Nutzer in Studio vergleichen; Leistungsziel dort noch unbestätigt. HubBuilder und Grid unverändert.
 - Schritt 1: ServerStorage-Ladeweg und Größenkonfiguration angelegt. Lokale Luau-Stubs mit Model/MeshPart und zwölf unerwünschten Skript-/Effekt-/Interaktionsklassen: leerer Ordner, ungültige Vorlage, Bereinigung, Warnung einmal, deterministische Größe, Maximalmaße, Pivot unten Mitte und Klickdurchlass OK. Originalvorlage unverändert; Testvorlagen/Runner nur unter ignoriertem tools/. Pflichtcheck: OK, 32 Dateien, Exit 0.
 -

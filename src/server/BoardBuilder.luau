@@ -5,6 +5,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Grid = require(Shared.Grid)
 local Stages = require(Shared.Stages)
+local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
 
 local BoardBuilder = {}
 local lastTerrainRegion
@@ -25,13 +26,40 @@ local function deco(props, parent)
 	return p
 end
 
+local function hash(key)
+	local value = 0
+	for i = 1, #key do value = (value * 131 + key:byte(i)) % 2147483647 end
+	return value
+end
+
+local function bridgeAngle(x, y)
+	local function charAt(xx, yy)
+		return Grid.inBounds(xx, yy) and Grid.getMap()[yy]:sub(xx, xx) or ""
+	end
+	local left, right = charAt(x - 1, y), charAt(x + 1, y)
+	local up, down = charAt(x, y - 1), charAt(x, y + 1)
+	if left == "B" or right == "B" then return math.pi / 2 end
+	if up == "B" or down == "B" then return 0 end
+	if (up == "W" or up == "D" or down == "W" or down == "D") and left ~= "W" and right ~= "W" then return math.pi / 2 end
+	return 0
+end
+
+local function place(category, base, parent, key, opts)
+	opts = table.clone(opts or {})
+	opts.parent, opts.key = parent, key
+	return EnvironmentAssets.place(category, CFrame.new(base), opts)
+end
+
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
-local function decorate(ch, x, y, parent)
+local function decorate(ch, x, y, parent, mapKey)
 	local center = Grid.toWorld(x, y)
-	local c = Config.TILE_SIZE / 2 - 1.3
+	local c = Config.TILE_SIZE / 2 - Config.ENVIRONMENT.edgeInset
+	local key = mapKey .. ":" .. Grid.key(x, y)
+	local category = Config.ENVIRONMENT.terrainCategories[ch]
 	if ch == "F" then
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, c) } do
 			local base = center + off
+			if place(category, base, parent, key .. tostring(off)) then continue end
 			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 0.6, 0.6),
 				CFrame = CFrame.new(base + Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90)),
 				Color = Color3.fromRGB(100, 70, 40), Material = Enum.Material.Wood }, parent)
@@ -39,6 +67,9 @@ local function decorate(ch, x, y, parent)
 				local diameter = 3.2 - layer * 0.5
 				deco({ Shape = Enum.PartType.Ball, Size = Vector3.new(diameter, 1.6, diameter), Position = base + Vector3.new(0, 1.8 + layer * 0.7, 0), Color = Color3.fromRGB(40, 100, 45), Material = Enum.Material.Grass }, parent)
 			end
+		end
+		if hash(key .. ":bush") % 10000 / 10000 < Config.ENVIRONMENT.bushChance then
+			place("bush", center + Vector3.new(c, 0, -c), parent, key .. ":bush")
 		end
 	elseif ch == "S" then
 		local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
@@ -70,11 +101,13 @@ local function decorate(ch, x, y, parent)
 		end
 	elseif ch == "M" then
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, -c), Vector3.new(-c, 0, c) } do
+			if place(category, center + off, parent, key .. tostring(off)) then continue end
 			deco({ Size = Vector3.new(2.4, 2.2, 2.4),
 				CFrame = CFrame.new(center + off + Vector3.new(0, 1.1, 0)) * CFrame.Angles(0, math.rad(45), 0),
 				Color = Color3.fromRGB(120, 110, 100), Material = Enum.Material.Rock }, parent)
 		end
 	elseif ch == "B" then
+		if place(category, center, parent, key, { rotation = bridgeAngle(x, y) }) then return end
 		for _, side in { -1, 1 } do
 			deco({ Size = Vector3.new(0.4, 1, Config.TILE_SIZE - 0.2),
 				Position = center + Vector3.new(side * (Config.TILE_SIZE / 2 - 0.4), 0.5, 0),
@@ -82,8 +115,20 @@ local function decorate(ch, x, y, parent)
 		end
 	elseif ch == "H" then
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, -c), Vector3.new(-c, 0, c), Vector3.new(c, 0, c) } do
+			if place(category, center + off, parent, key .. tostring(off)) then continue end
 			deco({ Size = Vector3.new(1.2, 3, 1.2), Position = center + off + Vector3.new(0, 1.5, 0),
 				Color = Color3.fromRGB(150, 140, 130), Material = Enum.Material.Brick }, parent)
+		end
+	elseif ch == "." and hash(key .. ":deco") % 10000 / 10000 < Config.ENVIRONMENT.decoChance then
+		local available = {}
+		for _, kind in Config.ENVIRONMENT.decoCategories do
+			if #EnvironmentAssets.variants(kind) > 0 then table.insert(available, kind) end
+		end
+		if #available > 0 then
+			local choice = hash(key .. ":kind") % #available + 1
+			local sx = hash(key .. ":x") % 2 == 0 and -1 or 1
+			local sz = hash(key .. ":z") % 2 == 0 and -1 or 1
+			place(available[choice], center + Vector3.new(sx * c, 0, sz * c), parent, key)
 		end
 	end
 end
@@ -107,6 +152,7 @@ function BoardBuilder.build(regionId)
 		local old = workspace:FindFirstChild(name)
 		if old then old:Destroy() end
 	end
+	local mapKey = (regionId or "") .. ":" .. table.concat(Grid.getMap(), "|")
 	local T = Config.TILE_SIZE
 	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
 	local w, h = Grid.width() * T, Grid.height() * T
@@ -197,7 +243,7 @@ function BoardBuilder.build(regionId)
 			tile:SetAttribute("X", x)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
-			decorate(ch, x, y, board)
+			decorate(ch, x, y, board, mapKey)
 			local center = Grid.toWorld(x, y)
 			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
 			-- Gemeinsame Kanten nur einmal; an Höhenstufen bleibt jede Oberkante sichtbar.
@@ -219,6 +265,10 @@ function BoardBuilder.build(regionId)
 		local x = edge < 2 and -distance or (w + distance)
 		local z = fraction * h
 		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -distance or h + distance end
+		local category = i % 3 == 0 and "rock" or (i % 5 == 0 and "bush" or "tree")
+		local limits = Config.ENVIRONMENT.outer[category]
+		local asset = place(category, Vector3.new(x, top, z), board, mapKey .. ":outer:" .. i, limits)
+		if asset then continue end
 		if i % 3 == 0 then
 			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, top + 3, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
 		else
