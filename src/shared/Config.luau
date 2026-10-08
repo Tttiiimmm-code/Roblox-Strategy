@@ -93,7 +93,7 @@ Config.GROUND_TEXTURES = {
 }
 Config.GROUND_FLECKS = {
 	maxPartsPerTile = 3, patchCount = 2, detailChance = 0.35,
-	thickness = 0.003, surfaceOffset = 0.001, transparency = 0.35,
+	thickness = 0.003, surfaceOffset = 0.012, transparency = 0, -- deckend und mit Abstand: kein Flackern, keine Transparenz-Kosten am Handy
 	shade = 0.12, light = 0.06, centerClearance = 2.3, edgeInset = 0.25,
 	minSize = 0.55, maxSize = 1, detailWidth = 0.12, detailLength = 0.65,
 }
