@@ -7,7 +7,7 @@ Branch: `feature/level-optik`
 
 ## Schritte
 
-- [ ] 1. **Review + Commit Klickfix (Claude, uncommittet in `src/server/BoardBuilder.luau`)**
+- [x] 1. **Review + Commit Klickfix (Claude, uncommittet in `src/server/BoardBuilder.luau`)**
   - Ursache: `Surround`, `Side_*`, `Ground_*` hatten `CanCollide = true`; Roblox ignoriert `CanQuery = false` nur bei `CanCollide = false`. Der Klick-Raycast (`tileFromRay`, Include = Board + Units) traf deshalb die Bodenplatte (bündig mit der Oberkante der unsichtbaren `Tile_x_y`) statt der Kachel mit X/Y-Attributen. Fix: diese drei `deco`-Aufrufe ohne `CanCollide = true`.
   - Prüfen: keine anderen Brett-Teile mit `CanCollide = true` und fehlenden X/Y-Attributen im Raycast-Bereich (auch Fallback-Deko, Wasser, Pfützen, Rand); nichts im Spiel braucht kollidierende Bodenplatten (Figuren sind verankert, Spieler-Avatar steht im Thronsaal). Ergebnis in Notizen, dann committen.
   - Fertig, wenn: Raycast-Stub (wie frühere Prüfhilfen) trifft für jeden Feldmittelpunkt von oben und schräg aus Kamerawinkel die richtige `Tile_x_y`.
@@ -41,4 +41,6 @@ Branch: `feature/level-optik`
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden. Befehle außerhalb der Sandbox wie zuvor nur mit Freigabe des Nutzers.)
 
 ## Notizen (Codex)
--
+- Schritt 1: Claudes vorbereiteten Klickfix geprüft. Sämtliche Brett-Deko einschließlich Boden, Seiten, Rand, Fallbacks, Wasser und Pfützen hat CanCollide/CanQuery/CanTouch = false; importierte Modelle werden ebenfalls bereinigt. Nur Tile_x_y bleibt abfragbar. Figurenwurzeln sind verankert, der Avatar steht im separaten Thronsaal: keine Boden-Kollision erforderlich.
+- Raycast-Stub mit Strahl/Quader-Schnitt und Roblox-Kollisionsregel: alle fünf Storykarten, Lauf Seed 12345 und alle acht Geländearten; 5.616 Strahlen senkrecht sowie im echten Kamerawinkel (Offset 0/1/0,75) und 70°, jeweils vier Drehrichtungen, treffen die richtige Kachel. Pflichtcheck OK (32 Dateien). Studio-/Handytest ausstehend.
+- Aufbauzeit vor Texturflecken (30 Aufbauten/Karte, lokaler Stub): s1 4,49 ms / 449 Parts; s2 7,50 / 776; s3 6,88 / 681; s4 8,27 / 874; s5 9,81 / 985; Lauf 4,87 / 479. Keine Aussage über Roblox-Rendering/Replikation; tools-Prüfhilfen bleiben ignoriert.

@@ -14,7 +14,7 @@ local function deco(props, parent)
 	local p = Instance.new("Part")
 	p.Anchored = true
 	p.CanCollide = false
-	p.CanQuery = false -- Klicks sollen das Feld darunter treffen
+	p.CanQuery = false -- Klicks sollen das Feld darunter treffen (wirkt nur zusammen mit CanCollide = false)
 	p.CanTouch = false
 	p.CastShadow = false
 	p.TopSurface = Enum.SurfaceType.Smooth
@@ -183,7 +183,7 @@ function BoardBuilder.build(regionId)
 	} do
 		deco({ Name = "Surround", Size = Vector3.new(rect[3], Config.FEEL.groundDepth + top, rect[4]),
 			Position = Vector3.new(rect[1], (top - Config.FEEL.groundDepth) / 2, rect[2]),
-			Color = surroundColor, Material = Enum.Material.SmoothPlastic, CanCollide = true }, board)
+			Color = surroundColor, Material = Enum.Material.SmoothPlastic }, board)
 	end
 	-- Gleiche Zeichen bilden einfache Rechtecke statt eines sichtbaren Blocks pro Feld.
 	local used, groundCount = {}, 0
@@ -213,11 +213,11 @@ function BoardBuilder.build(regionId)
 			deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
 				Position = Vector3.new(cx, (height - cap - Config.FEEL.groundDepth) / 2, cz),
 				Color = color:Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.groundSideShade),
-				Material = Enum.Material.SmoothPlastic, CanCollide = true }, ground)
+				Material = Enum.Material.SmoothPlastic }, ground)
 			deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
 				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
 				Transparency = (ch == "W" or ch == "D") and Config.FEEL.waterTransparency or 0,
-				Material = Enum.Material.SmoothPlastic, CanCollide = true }, ground)
+				Material = Enum.Material.SmoothPlastic }, ground)
 		end
 	end
 	board:SetAttribute("GroundCount", groundCount)
