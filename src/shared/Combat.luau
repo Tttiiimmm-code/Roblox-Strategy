@@ -61,6 +61,12 @@ function Combat.forecast(attacker, defender, ax, ay)
 		d.count = (defender.spd - attacker.spd >= DOUBLE_THRESHOLD) and 2 or 1
 	end
 
+	for _, pair in { { attacker, a }, { defender, d } } do
+		if pair[1].tutorial then
+			if Config.TUTORIAL.alwaysHit and pair[1].team == "Player" then pair[2].hit = 100 end
+			if not Config.TUTORIAL.criticals then pair[2].crit = 0 end
+		end
+	end
 	return { attacker = a, defender = d }
 end
 

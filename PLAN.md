@@ -20,7 +20,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
   - `s3`–`s5` entfernen. `Difficulties` und Sterne-Helfer entfernen bzw. auf das reduzieren, was Tutorial braucht (feste Werte, kein Rundenziel, keine Sterne). Alle Verwendungen anpassen (MenuUI, Main.server, Main.client).
   - Fertig, wenn: keine Referenz mehr auf Schwierigkeit/Sterne außer ggf. toleriertem altem Profilfeld `stars` (bleibt unberührt gespeichert oder wird in normalize verworfen – in Notizen begründen).
 
-- [ ] 3. **Profil + Server-Ablauf** – `src/server/ProfileStore.luau`, `src/server/Main.server.luau`
+- [x] 3. **Profil + Server-Ablauf** – `src/server/ProfileStore.luau`, `src/server/Main.server.luau`
   - `profile.tutorial = { state = "new" | "done" | "skipped" }` (normalize: altes Profil **mit** vorhandenen Helden-Leveln oder Sternen → `done`, damit Bestandsspieler nicht gefragt werden; ganz neues → `new`).
   - Befehle: `TutorialChoice { play = bool }` (nur bei `new`; skip → `skipped`), `StartTutorial { mission = 1|2, replay = bool }`. Tutorial-Kampf: Helden fest (M1 nur Leon, M2 die drei Starter) ohne Prep-Bildschirm; Niederlage → Mission neu; Lord-Regel nur im Tutorial. Sieg M1 → direkt M2 anbieten/starten; Sieg M2 → `done` (erste Absolvierung: kleine Belohnung WIP, z. B. Gold aus Config; Wiederholung ohne Belohnung). Läufe bleiben bis `done`/`skipped` gesperrt.
   - Tutorial-Kampfregeln für sicheren Ablauf (WIP, in Config): Angriffe des Spielers treffen im Tutorial immer; Gegner-KI vorhersehbar (z. B. Gegner in M1 greifen erst nach dem gezeigten Schritt an).
@@ -58,6 +58,7 @@ Kontext: **`docs/roguelike-design.md`** lesen, Abschnitt „Entscheidungen Phase
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+- Gemeinsames Modul `src/shared/Tutorial.luau`: Schrittdaten und Prüfungen werden von Server und Client verwendet. Übungskämpfe nutzen feste Level-1-Werte und geben keine EP; damit funktioniert die Führung auch bei Wiederholungen mit hochgelevelten Profilen. M1 bietet M2 im Ergebnisfenster an. Belohnung: einmalig 150 Gold (Config, WIP).
 - Schritt 2 entfernt auch die alten Start-/Prep-Pfade und Missionsmenüs, damit keine Aufrufe entfernter Sterne-/Schwierigkeits-Helfer verbleiben. Tutorial-Profilablauf und neue Oberfläche folgen in Schritten 3–5.
 - Das alte Profilfeld `stars` bleibt unverändert gespeichert, wird aber nicht mehr an den Client gesendet oder im Spiel ausgewertet.
 -

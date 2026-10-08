@@ -208,4 +208,10 @@ Config.OVERLAY = {
 	Cursor = Color3.fromRGB(255, 220, 80),
 }
 
+-- Tutorial-Werte WIP: feste Übungswerte verhindern, dass alte Profile die Führung überspringen.
+Config.TUTORIAL = {
+	gold = 150, alwaysHit = true, criticals = false, speed = 1, battleScenes = false,
+	enemyStats = { hp = 10, str = 1, mag = 0, skl = 0, spd = 0, lck = 0, def = 0, res = 0 },
+}
+
 return Config

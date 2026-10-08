@@ -9,6 +9,7 @@ local UnitData = require(Shared.UnitData)
 local Grid = require(Shared.Grid)
 local Combat = require(Shared.Combat)
 local Stages = require(Shared.Stages)
+local Tutorial = require(Shared.Tutorial)
 local Recruit = require(Shared.Recruit)
 local RunConfig = require(Shared.RunConfig)
 local RunService = require(script.Parent.RunService)
@@ -48,6 +49,7 @@ task.spawn(UnitVisuals.buildHeroTemplates)
 
 local rng = Random.new()
 local nextUnitId = 0
+local nextTutorialId = 0
 local undoStack = {}
 local enemySpeedBefore
 local pendingAbandon = {}
@@ -62,6 +64,7 @@ local function snapshot()
 	return {
 		mode = state.mode,
 		stageId = state.stageId,
+		tutorial = state.tutorial,
 		units = state.units,
 		phase = state.phase,
 		turn = state.turn,
@@ -104,6 +107,7 @@ local function profilePayload(profile)
 		heroes = profile.heroes,
 		pity = profile.pity,
 		settings = profile.settings,
+		tutorial = copyRun(profile.tutorial),
 		saveOk = profile.saveOk,
 		run = copyRun(profile.run),
 	}
@@ -183,6 +187,7 @@ local function setupBattle(stage, opts)
 		ownerPlayer = state.ownerPlayer,
 		stageId = opts.stageId,
 		run = opts.run,
+		tutorial = opts.tutorial,
 		map = stage.map,
 		units = {},
 		heroUnits = {}, -- heroId -> Einheit (auch gefallene), für das Zurückschreiben des Fortschritts
@@ -200,6 +205,14 @@ local function setupBattle(stage, opts)
 	local enemies = table.clone(stage.enemies)
 	for _, e in enemies do
 		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level)
+		if opts.tutorial then
+			unit.tutorial = true
+			unit.tutorialTarget = e.tutorialTarget
+			unit.ai = "stationary"
+			for stat, value in Config.TUTORIAL.enemyStats do
+				if stat == "hp" then unit.hp, unit.maxHp = value, value else unit[stat] = value end
+			end
+		end
 		state.units[unit.id] = unit
 		UnitVisuals.create(unit)
 	end
@@ -227,6 +240,23 @@ local function spawnHero(heroId, entry, x, y, hp)
 	state.units[unit.id] = unit
 	state.heroUnits[heroId] = unit
 	UnitVisuals.create(unit)
+end
+
+-- Tutorial benutzt feste Übungswerte und verändert weder Helden-Level noch Lauf-KP.
+local function beginTutorial(player, mission, replay)
+	nextTutorialId += 1
+	state.ownerUserId, state.ownerName, state.ownerPlayer = player.UserId, player.DisplayName, player
+	state.speed, state.battleScenes = Config.TUTORIAL.speed, Config.TUTORIAL.battleScenes
+	UnitVisuals.setSpeed(state.speed)
+	local stage = Stages.List[mission]
+	setupBattle(stage, { stageId = stage.id, tutorial = { mission = mission, replay = replay, step = 1, id = nextTutorialId } })
+	for i, heroId in stage.heroes do
+		local slot = stage.slots[i]
+		spawnHero(heroId, ProfileStore.newHeroEntry(), slot.x, slot.y)
+		state.heroUnits[heroId].tutorial = true
+	end
+	state.phase, state.busy = "Player", false
+	broadcast()
 end
 
 -- Level, EP und Werte der eingesetzten Helden ins Profil übernehmen
@@ -279,10 +309,23 @@ local function finishRunBattle()
 	sendProfile(player)
 end
 
--- Tutorial-Abschluss wird im nächsten Planschritt an das Profil angebunden.
+-- Einmalige Belohnung nur nach beiden Missionen; Wiederholungen geben auch keine EP.
 local function finishBattle()
 	if state.run then finishRunBattle(); return end
-	state.resultInfo = { victory = state.result == "Victory" }
+	local tutorial = state.tutorial
+	local victory = state.result == "Victory"
+	local player = state.ownerPlayer
+	local profile = player and ProfileStore.get(player)
+	local gold = 0
+	if tutorial and victory and tutorial.mission == 2 and not tutorial.replay
+		and profile and profile.tutorial.state == "new" then
+		gold = Config.TUTORIAL.gold
+		profile.gold += gold
+		profile.tutorial.state = "done"
+		ProfileStore.save(player)
+		sendProfile(player)
+	end
+	state.resultInfo = { victory = victory, gold = gold, tutorial = true }
 end
 
 local function checkResult()
@@ -347,7 +390,7 @@ local function battle(attacker, defender)
 
 	for _, pair in { { attacker, defender }, { defender, attacker } } do
 		local unit, foe = pair[1], pair[2]
-		if unit.team == "Player" and unit.hp > 0 then
+		if unit.team == "Player" and unit.hp > 0 and not state.tutorial then
 			local dealt = false
 			for _, s in result.strikes do
 				if s.attackerId == unit.id and s.damage > 0 then
@@ -405,7 +448,22 @@ local function runEnemyPhase()
 	for _, id in ids do
 		local enemy = state.units[id]
 		if enemy and not state.result then
-			local plan = EnemyAI.plan(enemy, state.units)
+			local plan
+			if state.tutorial then
+				local step = Tutorial.step(state.tutorial)
+				if step.kind == "Enemy" then
+					local pos = Stages.List[state.tutorial.mission].enemyMove
+					local nodes = Grid.reachable(enemy, state.units)
+					plan = { x = pos.x, y = pos.y, path = Grid.pathTo(nodes, pos.x, pos.y) }
+				else
+					-- Im freien Abschnitt stehen Gegner still und wählen das erste erreichbare Ziel.
+					local targets = Grid.targetsFrom(enemy, state.units, enemy.x, enemy.y)
+					table.sort(targets, function(a, b) return a.id < b.id end)
+					if targets[1] then plan = { x = enemy.x, y = enemy.y, path = { { x = enemy.x, y = enemy.y } }, targetId = targets[1].id } end
+				end
+			else
+				plan = EnemyAI.plan(enemy, state.units)
+			end
 			if plan then
 				if #plan.path > 1 then
 					BattleEvent:FireAllClients({ enemyMove = { unitId = enemy.id, x = plan.x, y = plan.y } })
@@ -435,6 +493,7 @@ local function runEnemyPhase()
 			UnitVisuals.update(u)
 		end
 		healOnForts("Player")
+		if state.tutorial and Tutorial.step(state.tutorial).kind == "Enemy" then state.tutorial.step += 1 end
 	end
 	if enemySpeedBefore then
 		state.speed = enemySpeedBefore
@@ -475,11 +534,13 @@ end
 
 -- Bewegen + Aktion als ein Befehl; der Client zeigt die Bewegung vorher nur als Vorschau
 local function handleAct(cmd)
+	if state.tutorial and not Tutorial.allowsAct(state, cmd) then return false end
 	local unit = state.units[cmd.unitId]
 	if not unit or unit.team ~= "Player" or unit.done then
 		return false
 	end
-	if typeof(cmd.x) ~= "number" or typeof(cmd.y) ~= "number" then
+	if typeof(cmd.x) ~= "number" or typeof(cmd.y) ~= "number"
+		or cmd.x % 1 ~= 0 or cmd.y % 1 ~= 0 or not Grid.inBounds(cmd.x, cmd.y) then
 		return false
 	end
 
@@ -518,6 +579,7 @@ local function handleAct(cmd)
 		UnitVisuals.update(unit)
 	end
 
+	if state.tutorial then Tutorial.afterAct(state.tutorial) end
 	state.busy = false
 	return true
 end
@@ -572,6 +634,7 @@ local function handleCommand(player, cmd)
 	if t == "AbandonRun" then return abandonRun(player) end
 	if pendingAbandon[player] then return false end
 	if t == "SetBattleScenes" then
+		if state.tutorial then return false end
 		if state.mode == "Battle" and state.ownerUserId ~= player.UserId then return false end
 		local profile = ProfileStore.get(player)
 		if not profile or typeof(cmd.on) ~= "boolean" then return false end
@@ -584,6 +647,7 @@ local function handleCommand(player, cmd)
 	end
 
 	if t == "SetSpeed" then
+		if state.tutorial then return false end
 		if state.mode == "Battle" and state.ownerUserId ~= player.UserId then return false end
 		if cmd.speed == 1 or cmd.speed == 2 or cmd.speed == 3 then
 			if cmd.speed == 3 and state.phase == "Enemy" and not enemySpeedBefore then
@@ -609,8 +673,30 @@ local function handleCommand(player, cmd)
 
 	local profile = ProfileStore.get(player)
 	local free = state.mode == "Lobby" or (state.result and state.ownerUserId == player.UserId)
-	if t == "StartRun" then
-		if state.mode ~= "Lobby" or not profile or not RunService.start(profile, cmd.heroes, rng:NextInteger(1, 2147483646)) then return false end
+	if t == "TutorialChoice" then
+		if not free or not profile or profile.run or profile.tutorial.state ~= "new" or typeof(cmd.play) ~= "boolean" then return false end
+		if cmd.play then
+			beginTutorial(player, 1, false)
+		else
+			profile.tutorial.state = "skipped"
+			ProfileStore.save(player)
+			sendProfile(player)
+		end
+		return true
+	elseif t == "StartTutorial" then
+		if not free or not profile or profile.run or (cmd.mission ~= 1 and cmd.mission ~= 2)
+			or typeof(cmd.replay) ~= "boolean" then return false end
+		local previous = state.tutorial
+		local ownResult = state.result and state.ownerUserId == player.UserId and previous and previous.replay == cmd.replay
+		local retry = ownResult and state.result == "Defeat" and previous.mission == cmd.mission
+		local nextMission = ownResult and state.result == "Victory" and previous.mission == 1 and cmd.mission == 2
+		local replayStart = cmd.replay and Tutorial.unlocked(profile) and cmd.mission == 1
+		if not retry and not nextMission and not replayStart then return false end
+		if not cmd.replay and profile.tutorial.state ~= "new" then return false end
+		beginTutorial(player, cmd.mission, cmd.replay)
+		return true
+	elseif t == "StartRun" then
+		if state.mode ~= "Lobby" or not Tutorial.unlocked(profile) or not RunService.start(profile, cmd.heroes, rng:NextInteger(1, 2147483646)) then return false end
 		state = lobbyState(state.speed)
 		state.ownerUserId = player.UserId
 		state.ownerPlayer = player
@@ -621,7 +707,7 @@ local function handleCommand(player, cmd)
 		broadcast()
 		return true
 	elseif t == "ChooseLevel" then
-		if not free or not profile or not RunService.choose(profile.run, cmd.index) then return false end
+		if not free or not Tutorial.unlocked(profile) or not RunService.choose(profile.run, cmd.index) then return false end
 		state.ownerUserId = player.UserId
 		state.ownerPlayer = player
 		state.busy = true
@@ -630,7 +716,7 @@ local function handleCommand(player, cmd)
 		beginRunLevel(player, profile)
 		return true
 	elseif t == "ResumeLevel" then
-		if not free or not profile or not profile.run or not profile.run.current then return false end
+		if not free or not Tutorial.unlocked(profile) or not profile.run or not profile.run.current then return false end
 		state.busy = true
 		beginRunLevel(player, profile)
 		return true
@@ -678,7 +764,10 @@ local function handleCommand(player, cmd)
 				broadcast()
 				return true
 			end
+		elseif t == "TutorialStep" then
+			if state.tutorial and Tutorial.checkpoint(state, cmd) then broadcast(); return true end
 		elseif t == "EndTurn" then
+			if state.tutorial and Tutorial.step(state.tutorial).kind ~= "Free" then return false end
 			runEnemyPhase()
 			return true
 		elseif t == "Act" then
