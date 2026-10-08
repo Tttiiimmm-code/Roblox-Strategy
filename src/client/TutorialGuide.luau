@@ -84,6 +84,15 @@ function TutorialGuide.render()
 	marker.Position = Grid.toWorld(pos.x, pos.y) + Vector3.new(0, 0.12, 0)
 	marker.Anchored, marker.CanCollide, marker.CanTouch, marker.CanQuery = true, false, false, false
 	marker.Transparency = 1
+	marker.CastShadow = false
+	if step.mark == "tile" then
+		-- ?ber Bewegungsfl?chen und Cursor, ohne den Feld-Ray zu blockieren.
+		marker.Size = Vector3.new(Config.TILE_SIZE, 0.04, Config.TILE_SIZE)
+		marker.Position = Grid.toWorld(pos.x, pos.y) + Vector3.new(0, 0.2, 0)
+		marker.Color = Config.TUTORIAL.targetColor
+		marker.Material = Enum.Material.SmoothPlastic
+		marker.Transparency = Config.TUTORIAL.targetTransparency
+	end
 	marker.Parent = fxFolder
 	local outline = Instance.new("SelectionBox")
 	outline.Adornee, outline.Color3, outline.LineThickness = marker, Config.OVERLAY.Cursor, 0.1

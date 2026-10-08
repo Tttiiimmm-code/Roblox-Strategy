@@ -15,7 +15,7 @@ Branch: `feature/lauf-phase2` (weiter)
 
 - [x] 1. **Tutorial-Texte größer** – Tutorial-Hinweis deutlich größer (Richtwert Schrift ~1,4× der bisherigen Hinweisgröße, Kasten wächst mit, Umbruch erlaubt), gut lesbar auf Handy und PC; kein Überdecken der Spielfläche über das Nötige hinaus (Position so, dass Ziel-Feld/Figur sichtbar bleibt). Werte in Config (WIP).
 
-- [ ] 2. **Ziel-Felder komplett gelb** – Bewegungsziel im Tutorial als **vollflächig gelb gefülltes Feld** (deckend bzw. kaum transparent, kräftiges Gelb, leichtes Pulsieren erlaubt) statt nur Rahmen/Pfeil; liegt über Bewegungs-Overlays, unter Figuren; Klicks treffen weiterhin das Feld (`CanQuery = false`, `CanCollide = false`). Ziel-Figuren/Gegner weiterhin klar markiert (bestehende Markierung oder gelber Ring). Farbe/Transparenz in Config.
+- [x] 2. **Ziel-Felder komplett gelb** – Bewegungsziel im Tutorial als **vollflächig gelb gefülltes Feld** (deckend bzw. kaum transparent, kräftiges Gelb, leichtes Pulsieren erlaubt) statt nur Rahmen/Pfeil; liegt über Bewegungs-Overlays, unter Figuren; Klicks treffen weiterhin das Feld (`CanQuery = false`, `CanCollide = false`). Ziel-Figuren/Gegner weiterhin klar markiert (bestehende Markierung oder gelber Ring). Farbe/Transparenz in Config.
 
 - [ ] 3. **Größere Oberfläche nur auf PC** – in `UIKit.createRoot` zusätzlicher Faktor für Maus-/Tastatur-Geräte ohne Touch (z. B. `UserInputService.TouchEnabled == false` bzw. `MouseEnabled and not TouchEnabled`), Wert in Config (Richtwert 1,25, WIP); Obergrenze so, dass auf typischen PC-Fenstern (1280×720 bis 1920×1080, auch kleine Studio-Fenster) nichts aus dem Bildschirm läuft oder sich überlappt. Gilt für Thronsaal-HUD, Menüs und Kampf-HUD gleichermaßen (nicht nur Thronsaal-Text). Handy/Tablet unverändert.
 
@@ -36,3 +36,5 @@ Branch: `feature/lauf-phase2` (weiter)
 
 ## Notizen (Codex)
 - Schritt 1: Tutorial-Hinweise mit 31 Designpunkten (vorher gef?hrte Schritte 22), Mindesth?he 92 und automatischem Umbruch/H?henwachstum. Gilt auch f?r freie Tutorial-Schritte; links oben bleibt die bisherige schmale Spalte erhalten. Darstellung in Studio/auf Handy noch ungetestet.
+
+- Schritt 2: Bewegungsziel mit voller Feldgr??e, kr?ftigem Gelb und 3 % Transparenz. D?nne Fl?che oberhalb von Bewegungsfl?chen/Cursor; keine Kollision, Touch- oder Raycast-Abfrage. Figuren-/Gegnermarkierungen bleiben erhalten.

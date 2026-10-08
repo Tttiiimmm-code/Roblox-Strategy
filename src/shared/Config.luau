@@ -211,6 +211,7 @@ Config.OVERLAY = {
 -- Tutorial-Werte WIP: feste Übungswerte verhindern, dass alte Profile die Führung überspringen.
 Config.TUTORIAL = {
 	hintTextSize = 31, hintMinHeight = 92, -- WIP: etwa 1,4-mal gr??er als bisher.
+	targetColor = Color3.fromRGB(255, 225, 0), targetTransparency = 0.03, -- WIP
 	gold = 150, alwaysHit = true, criticals = false, speed = 1, battleScenes = false,
 	enemyStats = { hp = 10, str = 1, mag = 0, skl = 0, spd = 0, lck = 0, def = 0, res = 0 },
 }
