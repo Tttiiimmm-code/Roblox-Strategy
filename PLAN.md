@@ -73,7 +73,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - **Figuren stehen auf dem Bogen:** Höhe pro `B`-Feld (und, falls die Brücke darauf aufliegt, pro Uferfeld), zum Beispiel einmalig beim Aufbau per Raycast auf das Brückenmodell gemessen oder aus einem Profil berechnet. Die Höhe muss Server **und** Client bekannt sein: Figurenposition, Bewegungs-Overlays, Auswahlring, Blob-Schatten (`UnitShadow`), Kampfkamera. Zentral über `Grid` lösen (zum Beispiel eine Höhenkorrektur pro Feld, die `toWorld` berücksichtigt), statt an jeder Stelle einzeln.
   - Akzeptanz: Die Füße stehen höchstens ±0,3 Studs neben dem Brückenboden. Ohne `archbridge`-Variante bleiben bisherige Brücken und Höhen unverändert. Tests für Querungs-Erkennung (1 und 2 Felder breit), Ausrichtung und Höhenkorrektur.
 
-- [ ] 6. **Runde Ufer mit Sandstreifen** – `BoardBuilder` (Bodenaufbau), `Config.FEEL`
+- [x] 6. **Runde Ufer mit Sandstreifen** – `BoardBuilder` (Bodenaufbau), `Config.FEEL`
   - Ufer sollen rund statt rechteckig wirken: an Landfeldern neben Wasser ein schmaler Sand- oder Uferstreifen, an konvexen Ecken abgerundete Übergänge (zum Beispiel Zylinder-Teile), an konkaven Ecken passende Füllstücke. Raster, Klickfelder und Feldfarben bleiben eindeutig erkennbar, Brückenenden bleiben frei.
   - Teilebudget als WIP-Wert; Teilezahl vorher/nachher in den Notizen.
 
@@ -106,6 +106,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 6: Schmale Sandstreifen mit verkürzten Tangenten, runde Sand-/Landkappen an konvexen Ecken, Füllscheiben an konkaven Ecken. Konvexe Boden-Kappen werden optisch durch eine wasserfarbige Maske gerundet; Geländehöhen/Regeln/Klickraster unverändert. WIP-Budget maximal 12 zusätzliche Parts je Feld, abschaltbar; Brückenenden und gemessene Ufer bleiben frei. Stub prüft Formen, Klickbarkeit, Budget und Abschaltung; check/test-run grün. Vorher Mittel 1.747,3 / max. 2.062 Teile, danach Mittel 1.797,5 / max. 2.129; Dreiecke geschätzt Mittel 330.337 / max. 568.430; Stub-Aufbau 108,53 ms. Darstellung der optischen Rundung in Studio noch ungetestet.
 
 - Schritt 5: `Grid.bridgeCrossings` erkennt zusammenhängende B-Querungen und ihre Längsachse. Originalpaket geprüft: `archbridge_1` ist 8,0 × 2,1277 × 2,2514 Studs, X-Längsachse ohne Rotation. Je Querung ein proportional skaliertes Modell mit 0,65 Feldern Uferüberstand; Wasserboden unter B-Feldern. Synchroner Include-Raycast entlang der Mitte misst Brücken- und bedeckte Uferfelder; danach alle Modelle wieder nicht abfragbar. Ist ein B-Feld nicht messbar, sichere bisherige Part-Brücke statt einer geratenen Fußhöhe. Absolute Feldhöhen zentral in Grid; Server-Snapshot überträgt sie vor Client-Markierungen/Tutorial. Damit profitieren Figuren, Overlays, Ringe, UnitShadow und Kampfkamera. Stub prüft 1/2 Felder, beide Achsen, Spannweite, Wasser, Ufer, Höhenübertragung und beide Fallbacks; check/test-run grün. ±0,3 Studs gegenüber Stub-Raycast bestätigt; reale Kollisionsoberfläche/Fußstellung bleibt Studio-Test. Messung: Mittel 1.747,3 / max. 2.062 Teile, geschätzt Mittel 326.872 / max. 568.430 Dreiecke, Aufbau 78,46 ms.
 

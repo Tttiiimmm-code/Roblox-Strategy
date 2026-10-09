@@ -34,6 +34,8 @@ Config.FEEL = {
 	gridSurfaceOffset = 0.005, gridShade = 0.3, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
 	surroundHeight = -0.4, waterTransparency = 0.18,
 	cliffSideShade = 0.42,
+	shore = { enabled = true, width = 0.1, radius = 0.25, maxPartsPerTile = 12,
+		thickness = 0.01, surfaceOffset = 0.018, layerOffset = 0.002, color = Color3.fromRGB(179, 162, 116) }, -- WIP
 	waterfallsEnabled = true, waterfallWidth = 0.62, waterfallThickness = 0.12,
 	waterfallColor = Color3.fromRGB(161, 207, 235), waterfallFoamColor = Color3.fromRGB(230, 242, 250),
 	waterfallTransparency = 0.15, waterfallFoamCount = 3, waterfallFoamSize = 0.65,
