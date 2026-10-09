@@ -11,7 +11,17 @@ Stages.Regions = {
 	{ id = "volcano", name = "Glutberg", color = Color3.fromRGB(175, 75, 50), area = { 0.70, 0.30, 0.28, 0.65 }, surroundColor = Color3.fromRGB(63, 58, 54), comingSoon = true },
 }
 
-for _, region in Stages.Regions do region.treePalette = Config.TREE_PALETTES[region.id] end
+for _, region in Stages.Regions do
+	region.treePalette = Config.TREE_PALETTES[region.id]
+	region.landscape = table.clone(Config.LANDSCAPE.palette)
+	region.landscape.colors = table.clone(Config.LANDSCAPE.palette.colors)
+	region.landscape.colors[Enum.Material.Grass] = region.surroundColor
+end
+Stages.Regions[2].landscape.ground = Enum.Material.Mud
+Stages.Regions[2].landscape.colors[Enum.Material.Mud] = Color3.fromRGB(62, 59, 43)
+Stages.Regions[3].landscape.grass = Enum.Material.Snow
+Stages.Regions[3].landscape.colors[Enum.Material.Snow] = Color3.fromRGB(196, 213, 218)
+Stages.Regions[4].landscape.grass = Enum.Material.Ground
 
 Stages.List = {
 	{

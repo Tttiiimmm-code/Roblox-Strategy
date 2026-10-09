@@ -28,8 +28,8 @@ if ($result -ne 0) { exit $result }
 # Separater Runner: tatsächlicher BoardBuilder statt des Server-Platzhalters.
 $runner = Join-Path $projectRoot "tools/board.runner.luau"
 $source = Get-Content -LiteralPath (Join-Path $projectRoot "tests/board.stubs.luau") -Raw -Encoding UTF8
-foreach ($module in @("Config", "UnitData", "Grid", "Stages", "RunConfig", "MapChunks", "LevelGen", "EnvironmentAssets", "BoardBuilder", "CameraController", "ForestOutlines")) {
-    $directory = if ($module -in @("EnvironmentAssets", "BoardBuilder")) { "server" } elseif ($module -in @("CameraController", "ForestOutlines")) { "client" } else { "shared" }
+foreach ($module in @("Config", "UnitData", "Grid", "Stages", "RunConfig", "MapChunks", "LevelGen", "EnvironmentAssets", "LandscapeBuilder", "BoardBuilder", "CameraController", "ForestOutlines")) {
+    $directory = if ($module -in @("EnvironmentAssets", "LandscapeBuilder", "BoardBuilder")) { "server" } elseif ($module -in @("CameraController", "ForestOutlines")) { "client" } else { "shared" }
     $moduleSource = Get-Content -LiteralPath (Join-Path $projectRoot "src/$directory/$module.luau") -Raw -Encoding UTF8
     $moduleSource = [regex]::Replace($moduleSource, 'require\((?:script.Parent|Shared)\.([A-Za-z]+)\)', 'modules.$1')
     $moduleSource = $moduleSource.Replace('require(ReplicatedStorage:WaitForChild("Shared").Config)', 'modules.Config')
@@ -44,6 +44,7 @@ $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/shore.test.lu
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment-pack.fixture.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/outer.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment-metrics.test.luau") -Raw -Encoding UTF8
+$source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/landscape.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/walls.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/meadow.test.luau") -Raw -Encoding UTF8
 try {

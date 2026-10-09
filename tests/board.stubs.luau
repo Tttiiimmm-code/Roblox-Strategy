@@ -144,9 +144,57 @@ modules.PlayerModule = { GetControls = function() return { Disable = function() 
 services.Players = { LocalPlayer = { PlayerScripts = { WaitForChild = function() return "PlayerModule" end } } }
 local task = { spawn = function(fn) fn() end }
 workspace.CurrentCamera = {}
-local terrainClears = {}
+local terrainClears, terrainBlocks, terrainColumns = {}, {}, {}
+local terrainSerial = 0
+local Region3 = { new = function(lo, hi) return { lo = lo, hi = hi } end }
+local function terrainHeightAt(x, z)
+	local column = terrainColumns[math.floor(x / 4) .. ":" .. math.floor(z / 4)]
+	local serial = column and column.serial or -1
+	local height, material = column and column.height, column and column.material
+	for index = #terrainBlocks, 1, -1 do
+		local block = terrainBlocks[index]
+		if block.serial <= serial then break end
+		if x >= block.lo.X and x < block.hi.X and z >= block.lo.Z and z < block.hi.Z then
+			height = block.material ~= Enum.Material.Air and block.hi.Y or nil
+			material = block.material
+			break
+		end
+	end
+	return height, material
+end
 workspace.Terrain.FillBlock = function(_, cf, size, material)
-	table.insert(terrainClears, { cf = cf, size = size, material = material })
+	terrainSerial += 1
+	local lo, hi = cf.Position - size * 0.5, cf.Position + size * 0.5
+	table.insert(terrainBlocks, { lo = lo, hi = hi, material = material, serial = terrainSerial })
+	if material == Enum.Material.Air then
+		table.insert(terrainClears, { cf = cf, size = size, material = material })
+		for key, column in terrainColumns do
+			if column.x >= lo.X and column.x < hi.X and column.z >= lo.Z and column.z < hi.Z then terrainColumns[key] = nil end
+		end
+	end
+end
+workspace.Terrain.WriteVoxels = function(_, region, resolution, materials, occupancies)
+	assert(resolution == 4, "Terrainaufl?sung muss 4 sein")
+	local lo, hi = region.lo, region.hi
+	local nx, ny, nz = (hi.X - lo.X) / 4, (hi.Y - lo.Y) / 4, (hi.Z - lo.Z) / 4
+	assert(nx * ny * nz <= 4194304, "Schreibblock zu gro?")
+	for _, value in { lo.X, lo.Y, lo.Z, hi.X, hi.Y, hi.Z } do assert(value % 4 == 0, "Region nicht ausgerichtet") end
+	assert(#materials == nx and #occupancies == nx, "Falsche X-Dimension")
+	terrainSerial += 1
+	for ix = 1, nx do
+		assert(#materials[ix] == ny and #occupancies[ix] == ny, "Falsche Y-Dimension")
+		for iy = 1, ny do assert(#materials[ix][iy] == nz and #occupancies[ix][iy] == nz, "Falsche Z-Dimension") end
+		for iz = 1, nz do
+			local height, material
+			for iy = 1, ny do
+				local occupancy, kind = occupancies[ix][iy][iz], materials[ix][iy][iz]
+				assert(occupancy >= 0 and occupancy <= 1 and ((occupancy == 0) == (kind == Enum.Material.Air)), "Ung?ltige Terrainbelegung")
+				if occupancy > 0 then height, material = lo.Y + (iy - 1 + occupancy) * 4, kind end
+			end
+			local x, z = lo.X + (ix - 0.5) * 4, lo.Z + (iz - 0.5) * 4
+			terrainColumns[math.floor(x / 4) .. ":" .. math.floor(z / 4)] = { x = x, z = z, height = height, material = material, serial = terrainSerial }
+		end
+	end
 end
 
 local cameraMultiply = cm.__mul

@@ -1,0 +1,202 @@
+-- Terrain trägt die Landschaft; Paketmodelle setzen nur wenige Akzente.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Grid = require(Shared.Grid)
+local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
+
+local LandscapeBuilder = {}
+local previous = {}
+
+local function hash(key)
+	local value = 0
+	for i = 1, #key do value = (value * 131 + key:byte(i)) % 2147483647 end
+	return value
+end
+
+local function smooth(value)
+	value = math.clamp(value, 0, 1)
+	return value * value * (3 - 2 * value)
+end
+
+local function aligned(value, up)
+	local resolution = Config.LANDSCAPE.resolution
+	return (up and math.ceil(value / resolution) or math.floor(value / resolution)) * resolution
+end
+
+-- Auch große Sichtflächen dürfen das räumlich getrennte Hub-Terrain nie berühren.
+local function withoutHub(rect)
+	local s, hub = Config.LANDSCAPE, Config.HUB_ORIGIN
+	local x0, x1 = aligned(hub.X - s.hubHalfWidth), aligned(hub.X + s.hubHalfWidth, true)
+	local z0, z1 = aligned(hub.Z - s.hubHalfDepth), aligned(hub.Z + s.hubHalfDepth, true)
+	if rect.x1 <= x0 or rect.x0 >= x1 or rect.z1 <= z0 or rect.z0 >= z1 then return { rect } end
+	local result = {}
+	local function add(a, b, c, d)
+		if b > a and d > c then table.insert(result, { x0 = a, x1 = b, z0 = c, z1 = d }) end
+	end
+	add(rect.x0, math.max(rect.x0, x0), rect.z0, rect.z1)
+	add(math.min(rect.x1, x1), rect.x1, rect.z0, rect.z1)
+	add(math.max(rect.x0, x0), math.min(rect.x1, x1), rect.z0, math.max(rect.z0, z0))
+	add(math.max(rect.x0, x0), math.min(rect.x1, x1), math.min(rect.z1, z1), rect.z1)
+	return result
+end
+
+local function fill(rect, bottom, top, material, stats)
+	if top <= bottom then return end
+	workspace.Terrain:FillBlock(CFrame.new((rect.x0 + rect.x1) / 2, (bottom + top) / 2, (rect.z0 + rect.z1) / 2),
+		Vector3.new(rect.x1 - rect.x0, top - bottom, rect.z1 - rect.z0), material)
+	stats.calls += 1
+	local volume = (rect.x1 - rect.x0) * (top - bottom) * (rect.z1 - rect.z0)
+	if material == Enum.Material.Air then stats.clearVolume += volume else stats.volume += volume end
+end
+
+function LandscapeBuilder.prepare(mapKey, region)
+	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
+	local w, h = Grid.width() * T, Grid.height() * T
+	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
+	local margin = aligned(overview * s.zoomMargin, true)
+	local random = Random.new(hash(mapKey .. ":landscape"))
+	local state = { w = w, h = h, region = region, key = mapKey, phase = random:NextNumber(0, math.pi * 2),
+		margin = margin, sculptMargin = aligned(s.sculptDistance * T, true),
+		palette = region and region.landscape or s.palette }
+	state.rects = withoutHub({ x0 = -margin, x1 = w + margin, z0 = -margin, z1 = h + margin })
+	return state
+end
+
+function LandscapeBuilder.surface(state, x, z)
+	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
+	if x >= 0 and x < state.w and z >= 0 and z < state.h then return nil end
+	local dx = math.max(-x, x - state.w, 0)
+	local dz = math.max(-z, z - state.h, 0)
+	local distance = math.sqrt(dx * dx + dz * dz)
+	local rim = s.rimWidth * T
+	local rise = smooth((distance - rim) / (s.hillRise * T))
+	local front = smooth((state.h - z) / (s.frontTransition * T))
+	local phase = state.phase
+	local broad = (math.sin(x / s.broadScale + phase) * math.cos(z / s.broadScale - phase) + 1) / 2
+	local detail = (math.sin(x / s.detailScale - phase) * math.sin(z / s.detailScale + phase) + 1) / 2
+	local mountain = smooth((distance - s.mountainStart * T) / (s.mountainRise * T))
+	local height = Config.FEEL.surroundHeight + rise * front
+		* (s.hillHeight * (s.valleyFloor + broad * (1 - s.valleyFloor)) + mountain * s.mountainHeight * detail)
+	-- Vorne bleibt die Grundausrichtung flach; der Horizont ist in der Welt verankert.
+	height = math.min(height, Config.FEEL.surroundHeight + (front == 0 and s.frontMaxHeight or s.hillHeight + s.mountainHeight))
+	local fade = smooth((state.sculptMargin - distance) / (s.edgeFade * T))
+	height = s.foundationTop + (height - s.foundationTop) * fade
+	local material = height > s.rockHeight and (detail > s.slateThreshold and state.palette.slate or state.palette.rock)
+		or (broad < s.groundThreshold and state.palette.ground or state.palette.grass)
+	return height, material
+end
+
+local function writeSurface(state, rect, stats)
+	local s, R = Config.LANDSCAPE, Config.LANDSCAPE.resolution
+	local chunk = s.chunkCells * R
+	for x0 = rect.x0, rect.x1 - R, chunk do for z0 = rect.z0, rect.z1 - R, chunk do
+		local x1, z1 = math.min(x0 + chunk, rect.x1), math.min(z0 + chunk, rect.z1)
+		local nx, nz = (x1 - x0) / R, (z1 - z0) / R
+		local heights, kinds, top = {}, {}, s.foundationTop
+		for ix = 1, nx do
+			heights[ix], kinds[ix] = {}, {}
+			for iz = 1, nz do
+				local height, kind = LandscapeBuilder.surface(state, x0 + (ix - 0.5) * R, z0 + (iz - 0.5) * R)
+				heights[ix][iz], kinds[ix][iz] = height, kind
+				top = math.max(top, height or s.foundationTop)
+			end
+		end
+		top = aligned(top, true) + R -- Luft über jeder Oberfläche ist Teil desselben Schreibblocks.
+		local bottom = -Config.FEEL.terrainDepth
+		local ny = (top - bottom) / R
+		local materials, occupancies = {}, {}
+		for ix = 1, nx do
+			materials[ix], occupancies[ix] = {}, {}
+			for iy = 1, ny do
+				materials[ix][iy], occupancies[ix][iy] = {}, {}
+				local y = bottom + (iy - 1) * R
+				for iz = 1, nz do
+					local height = heights[ix][iz]
+					local occupancy = height and math.clamp((height - y) / R, 0, 1) or 0
+					materials[ix][iy][iz] = occupancy > 0 and kinds[ix][iz] or Enum.Material.Air
+					occupancies[ix][iy][iz] = occupancy
+					stats.volume += occupancy * R ^ 3
+				end
+			end
+		end
+		workspace.Terrain:WriteVoxels(Region3.new(Vector3.new(x0, bottom, z0), Vector3.new(x1, top, z1)), R, materials, occupancies)
+		stats.calls += 1
+		stats.voxels += nx * ny * nz
+	end end
+end
+
+local function bounds(asset)
+	local box, size = asset:GetBoundingBox()
+	local lo, hi = Vector3.new(math.huge, math.huge, math.huge), Vector3.new(-math.huge, -math.huge, -math.huge)
+	for _, dx in { -1, 1 } do for _, dy in { -1, 1 } do for _, dz in { -1, 1 } do
+		local p = box:PointToWorldSpace(Vector3.new(dx * size.X / 2, dy * size.Y / 2, dz * size.Z / 2))
+		lo = Vector3.new(math.min(lo.X, p.X), math.min(lo.Y, p.Y), math.min(lo.Z, p.Z))
+		hi = Vector3.new(math.max(hi.X, p.X), math.max(hi.Y, p.Y), math.max(hi.Z, p.Z))
+	end end end
+	return lo, hi
+end
+
+local function details(state, board)
+	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
+	local random = Random.new(hash(state.key .. ":clusters"))
+	local trees = 0
+	for group = 1, s.clusterCount do
+		local edge = random:NextInteger(1, 3)
+		local distance = random:NextNumber(s.clusterDistance.min, s.clusterDistance.max) * T
+		local x = edge == 1 and random:NextNumber(-distance, state.w + distance) or (edge == 2 and -distance or state.w + distance)
+		local z = edge == 1 and -distance or random:NextNumber(-distance, state.h - s.frontTransition * T)
+		for index = 1, s.clusterSize do
+			local px, pz = x + random:NextNumber(-s.clusterSpread, s.clusterSpread) * T, z + random:NextNumber(-s.clusterSpread, s.clusterSpread) * T
+			local height = LandscapeBuilder.surface(state, px, pz)
+			if not height then continue end
+			local kind = index == s.clusterSize and (group % 2 == 0 and "rock" or "bush") or "tree"
+			if kind == "tree" and trees >= s.maxTrees then continue end
+			local options = table.clone(s[kind])
+			options.parent, options.key, options.palette = board, state.key .. ":landscape:" .. group .. ":" .. index, state.region and state.region.treePalette
+			local asset = EnvironmentAssets.place(kind, CFrame.new(px, height - s.rootSink, pz), options)
+			if not asset then continue end -- Ohne Paket bleibt das Terrain die vollständige Landschaft.
+			local lo, hi = bounds(asset)
+			local hub = Config.HUB_ORIGIN
+			local boardOverlap = hi.X > -s.objectClearance and lo.X < state.w + s.objectClearance
+				and hi.Z > -s.objectClearance and lo.Z < state.h + s.objectClearance
+			local hubOverlap = hi.X > hub.X - s.hubHalfWidth and lo.X < hub.X + s.hubHalfWidth
+				and hi.Z > hub.Z - s.hubHalfDepth and lo.Z < hub.Z + s.hubHalfDepth
+			if boardOverlap or hubOverlap or (hi.Z >= state.h and hi.Y > Config.FEEL.surroundHeight + s.frontMaxHeight) then asset:Destroy(); continue end
+			asset:SetAttribute("LandscapeDetail", kind)
+			if kind == "tree" then trees += 1 end
+		end
+	end
+	board:SetAttribute("LandscapeTrees", trees)
+end
+
+function LandscapeBuilder.build(board, mapKey, region)
+	local s = Config.LANDSCAPE
+	local stats = { calls = 0, volume = 0, clearVolume = 0, voxels = 0 }
+	local state = LandscapeBuilder.prepare(mapKey, region)
+	local clearTop = aligned(math.max(Config.FEEL.terrainClearTop, s.hillHeight + s.mountainHeight + s.resolution), true)
+	for _, rect in previous do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end
+	for _, rect in state.rects do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end
+	previous = state.rects
+	for material, color in state.palette.colors do workspace.Terrain:SetMaterialColor(material, color) end
+	-- Fernboden in wenigen großen Blöcken; das Brett selbst bleibt frei.
+	for _, rect in {
+		{ x0 = -state.margin, x1 = 0, z0 = -state.margin, z1 = state.h + state.margin },
+		{ x0 = state.w, x1 = state.w + state.margin, z0 = -state.margin, z1 = state.h + state.margin },
+		{ x0 = 0, x1 = state.w, z0 = -state.margin, z1 = 0 },
+		{ x0 = 0, x1 = state.w, z0 = state.h, z1 = state.h + state.margin },
+	} do
+		for _, safe in withoutHub(rect) do fill(safe, -Config.FEEL.terrainDepth, s.foundationTop, state.palette.grass, stats) end
+	end
+	for _, rect in withoutHub({ x0 = -state.sculptMargin, x1 = state.w + state.sculptMargin, z0 = -state.sculptMargin, z1 = state.h + state.sculptMargin }) do
+		writeSurface(state, rect, stats)
+	end
+	details(state, board)
+	board:SetAttribute("TerrainWriteCalls", stats.calls)
+	board:SetAttribute("TerrainVolume", stats.volume)
+	board:SetAttribute("TerrainClearVolume", stats.clearVolume)
+	board:SetAttribute("TerrainVoxels", stats.voxels)
+	return state
+end
+
+return LandscapeBuilder

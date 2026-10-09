@@ -173,20 +173,25 @@ Config.ENVIRONMENT = {
 		deco_grass = { height = 0.12, width = 0.14, rotation = "free" },
 		deco_fence = { height = 0.12, width = 0.24, rotation = "quarter" },
 	},
-	outer = {
-		tree = { height = 1.8, crownWidth = 2.4 },
-		treeHeightMin = 1.35, treeWidthMin = 2,
-		rock = { height = 0.5, width = 1 },
-		bush = { height = 0.45, width = 1.1 },
-		front = { maxHeight = 0.5, cornerDepth = 1 }, -- WIP: +Z und vordere Seitenecken, unabhängig von Drehung
-		clusterSize = { min = 2, max = 4 }, clusterOverlap = 0.45,
-		boardClearance = 0.7, maxSideGap = 0.5, gapMin = 0.15,
-		distanceJitter = 1, -- WIP: Gruppen stehen unterschiedlich weit vom Brett entfernt
-		farSpacing = 2.4, farDistance = 4.5, farWidth = 2.6, farHeight = 1.1,
-		positionJitter = 0.3, -- Ersatzkronen nur hinter dem hinteren Baumring
-		groundZoomMargin = 4.2, maxGroundPartSpan = 512,
-		groundColor = Color3.fromRGB(73, 86, 64), groundMaterial = Enum.Material.Grass,
-	},}
+}
+-- WIP: Distanzen in Feldern, H?hen/Skalen in Studs; Terrainaufl?sung von Roblox fest vorgegeben.
+Config.LANDSCAPE = {
+	resolution = 4, chunkCells = 32, zoomMargin = 4.2, sculptDistance = 24,
+	hubHalfWidth = 80, hubHalfDepth = 100, foundationTop = -4,
+	rimWidth = 1.5, hillRise = 7, hillHeight = 28, valleyFloor = 0.2,
+	mountainStart = 7, mountainRise = 10, mountainHeight = 76,
+	broadScale = 47, detailScale = 29, edgeFade = 5,
+	frontTransition = 4, frontMaxHeight = 4, rockHeight = 27, slateThreshold = 0.55, groundThreshold = 0.18,
+	maxTrees = 32, clusterCount = 12, clusterSize = 4, clusterSpread = 2,
+	clusterDistance = { min = 4, max = 15 }, objectClearance = 4, rootSink = 0.8,
+	tree = { height = 1.8, crownWidth = 2 }, rock = { height = 0.8, width = 1.3, rotationMode = "free" },
+	bush = { height = 0.4, width = 0.8 },
+	palette = {
+		grass = Enum.Material.Grass, ground = Enum.Material.Ground, rock = Enum.Material.Rock, slate = Enum.Material.Slate,
+		colors = { [Enum.Material.Grass] = Color3.fromRGB(88, 115, 72), [Enum.Material.Ground] = Color3.fromRGB(96, 85, 64),
+			[Enum.Material.Rock] = Color3.fromRGB(91, 96, 94), [Enum.Material.Slate] = Color3.fromRGB(71, 80, 85) },
+	},
+}
 Config.TILE_THICKNESS = 1
 Config.MOVE_STEP_TIME = 0.16
 Config.STRIKE_TIME = 0.85 -- Dauer eines Schlags inkl. Animation

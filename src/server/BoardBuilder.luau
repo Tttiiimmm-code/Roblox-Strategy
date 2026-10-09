@@ -8,7 +8,7 @@ local Stages = require(Shared.Stages)
 local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
 
 local BoardBuilder = {}
-local lastTerrainRegion
+local LandscapeBuilder = require(script.Parent.LandscapeBuilder)
 
 local function deco(props, parent, className)
 	local p = Instance.new(className or "Part")
@@ -455,18 +455,6 @@ function BoardBuilder.build(regionId, features, stage)
 	end
 	local mapKey = (regionId or "") .. ":" .. table.concat(Grid.getMap(), "|")
 	local T = Config.TILE_SIZE
-	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
-	local w, h = Grid.width() * T, Grid.height() * T
-	-- Größere Karten brauchen auch beim Herauszoomen einen größeren Umgebungsrand.
-	margin = math.max(margin, math.max(w, h) * Config.CAMERA.zoomOverviewScale / 2)
-	local size = Vector3.new(w + margin * 2, depth + Config.FEEL.terrainClearTop, h + margin * 2)
-	local cf = CFrame.new(w / 2, (Config.FEEL.terrainClearTop - depth) / 2, h / 2)
-	-- Auch Terrain aus früheren Karten entfernen; der Thronsaal liegt außerhalb.
-	if not lastTerrainRegion or lastTerrainRegion.w ~= w or lastTerrainRegion.h ~= h then
-		if lastTerrainRegion then workspace.Terrain:FillBlock(lastTerrainRegion.cf, lastTerrainRegion.size, Enum.Material.Air) end
-		workspace.Terrain:FillBlock(cf, size, Enum.Material.Air)
-		lastTerrainRegion = { cf = cf, size = size, w = w, h = h }
-	end
 	local board = Instance.new("Folder")
 	board.Name = "Board"
 	board.Parent = workspace
@@ -483,26 +471,7 @@ function BoardBuilder.build(regionId, features, stage)
 		local color = region and region.terrainColors and region.terrainColors[ch] or Config.TERRAIN[ch].color
 		return ch == "F" and color:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade) or color
 	end
-	local top = Config.FEEL.surroundHeight
-	local surroundColor = region and region.surroundColor or Config.ENVIRONMENT.outer.groundColor
-	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
-	local groundMargin = math.max(margin, overview * Config.ENVIRONMENT.outer.groundZoomMargin)
-	for _, rect in {
-		{ -groundMargin / 2, h / 2, groundMargin, h + groundMargin * 2 },
-		{ w + groundMargin / 2, h / 2, groundMargin, h + groundMargin * 2 },
-		{ w / 2, -groundMargin / 2, w, groundMargin },
-		{ w / 2, h + groundMargin / 2, w, groundMargin },
-	} do
-		local columns = math.ceil(rect[3] / Config.ENVIRONMENT.outer.maxGroundPartSpan)
-		local rows = math.ceil(rect[4] / Config.ENVIRONMENT.outer.maxGroundPartSpan)
-		for yy = 1, rows do for xx = 1, columns do
-			local width, length = rect[3] / columns, rect[4] / rows
-			deco({ Name = "Surround", Size = Vector3.new(width, Config.FEEL.groundDepth + top, length),
-				Position = Vector3.new(rect[1] - rect[3] / 2 + (xx - 0.5) * width,
-					(top - Config.FEEL.groundDepth) / 2, rect[2] - rect[4] / 2 + (yy - 0.5) * length),
-				Color = surroundColor, Material = region and region.surroundMaterial or Config.ENVIRONMENT.outer.groundMaterial }, board)
-		end end
-	end
+	LandscapeBuilder.build(board, mapKey, region)
 	-- Gleiche Zeichen bilden einfache Rechtecke statt eines sichtbaren Blocks pro Feld.
 	local used, groundCount = {}, 0
 	local shoreCount = 0
@@ -591,96 +560,6 @@ function BoardBuilder.build(regionId, features, stage)
 	end
 
 	board:SetAttribute("ShoreParts", shoreCount)
-	local outer = Config.ENVIRONMENT.outer
-	local function markOuter(asset, edge, layer)
-		asset:SetAttribute("OuterEdge", edge); asset:SetAttribute("OuterLayer", layer)
-	end
-	local function outerBounds(asset)
-		local box, size
-		if asset:IsA("Model") then box, size = asset:GetBoundingBox()
-		else box, size = asset.CFrame, asset.Size end
-		local lo, hi = Vector3.new(math.huge, math.huge, math.huge), Vector3.new(-math.huge, -math.huge, -math.huge)
-		for _, dx in { -1, 1 } do for _, dy in { -1, 1 } do for _, dz in { -1, 1 } do
-			local p = box:PointToWorldSpace(Vector3.new(dx * size.X / 2, dy * size.Y / 2, dz * size.Z / 2))
-			lo = Vector3.new(math.min(lo.X, p.X), math.min(lo.Y, p.Y), math.min(lo.Z, p.Z))
-			hi = Vector3.new(math.max(hi.X, p.X), math.max(hi.Y, p.Y), math.max(hi.Z, p.Z))
-		end end end
-		return (lo + hi) / 2, hi - lo
-	end
-	-- Echte Maße bestimmen Abstände: Gruppen dürfen überlappen, ihre Lücken bleiben begrenzt.
-	for edge = 1, 4 do
-		local horizontal = edge <= 2
-		local length = horizontal and w or h
-		local cursor, index, remaining = -outer.boardClearance * T, 0, 0
-		local groupDistance, finish = 0, cursor
-		while finish < length do
-			index += 1
-			local key = mapKey .. ":outer:1:" .. edge .. ":" .. index
-			local random = Random.new(hash(key))
-			local front = edge == 2 or (not horizontal and cursor + outer.tree.crownWidth * T >= h - outer.front.cornerDepth * T)
-			local category = "tree"
-			if front or remaining == 0 then
-				category = random:NextInteger(0, 1) == 0 and "bush" or "rock"
-				remaining = random:NextInteger(outer.clusterSize.min, outer.clusterSize.max)
-				groupDistance = random:NextNumber(0, outer.distanceJitter) * T
-			else remaining -= 1 end
-			local limits = table.clone(outer[category]); limits.palette = region and region.treePalette
-			if category == "tree" then
-				limits.height = random:NextNumber(outer.treeHeightMin, limits.height)
-				limits.crownWidth = random:NextNumber(outer.treeWidthMin, limits.crownWidth)
-			elseif front then limits.height = math.min(limits.height, outer.front.maxHeight) end
-			local asset = place(category, Vector3.new(0, top, 0), board, key, limits)
-			if not asset then
-				if category == "tree" then
-					local height, diameter = limits.height * T, limits.crownWidth * T
-					asset = deco({ Name = "OuterTree", Size = Vector3.new(diameter * 0.12, height, diameter * 0.12),
-						Position = Vector3.new(0, top + height / 2, 0), Color = Color3.fromRGB(100, 70, 40), Material = Enum.Material.Wood }, board)
-					for crown = 1, 3 do
-						local width = diameter * (1 - (crown - 1) * 0.2)
-						local leaves = deco({ Name = "OuterTreeCrown", Size = Vector3.new(width, height * 0.25, width),
-							Position = Vector3.new(0, top + height * (0.45 + crown * 0.12), 0),
-							Color = EnvironmentAssets.crownColor(key, limits.palette), Material = Enum.Material.Grass }, board)
-						leaves.Parent = asset -- Fallback als Modell zusammenhalten.
-					end
-					local tree = Instance.new("Model"); tree.Name, tree.Parent = "OuterTree", board
-					for _, leaves in asset:GetChildren() do leaves.Parent = tree end
-					asset.Parent = tree; asset = tree
-				else
-					asset = deco({ Name = category == "bush" and "OuterBush" or "OuterRock", Shape = category == "bush" and Enum.PartType.Ball or Enum.PartType.Block,
-						Size = Vector3.new(limits.width * T, limits.height * T, limits.width * T),
-						Position = Vector3.new(0, top + limits.height * T / 2, 0),
-						Color = category == "bush" and EnvironmentAssets.crownColor(key, limits.palette) or Config.TERRAIN.M.color,
-						Material = category == "bush" and Enum.Material.Grass or Enum.Material.Rock }, board)
-				end
-			end
-			local center, size = outerBounds(asset)
-			local extent = horizontal and size.X or size.Z
-			local along = math.min(cursor + extent / 2, length)
-			cursor = along - extent / 2
-			local away = (horizontal and size.Z or size.X) / 2 + outer.boardClearance * T + groupDistance
-			local x = horizontal and along or (edge == 3 and -away or w + away)
-			local z = not horizontal and along or (edge == 1 and -away or h + away)
-			local shift = CFrame.new(Vector3.new(x, top + size.Y / 2, z) - center)
-			if asset:IsA("Model") then asset:PivotTo(shift * asset:GetPivot()) else asset.CFrame = shift * asset.CFrame end
-			markOuter(asset, edge, 1)
-			finish = cursor + extent
-			cursor = finish + random:NextNumber(outer.gapMin, outer.maxSideGap) * T
-			if category == "tree" and remaining > 0 then cursor -= outer.clusterOverlap * T end
-		end
-	end
-	-- Günstige Ersatzkronen ausschließlich weit hinter der rückwärtigen Baumreihe.
-	local distance, spacing = outer.farDistance * T, outer.farSpacing * T
-	local count = math.ceil((w + distance * 2) / spacing)
-	for i = 1, count do
-		local key = mapKey .. ":outer:2:1:" .. i
-		local random = Random.new(hash(key))
-		local diameter, height = outer.farWidth * T, outer.farHeight * T
-		local x = -distance + (i - 0.5) * (w + distance * 2) / count + random:NextNumber(-outer.positionJitter, outer.positionJitter) * T
-		local asset = deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(diameter, height, diameter),
-			Position = Vector3.new(x, top + height / 2, -distance - random:NextNumber(0, outer.distanceJitter) * T),
-			Color = EnvironmentAssets.crownColor(key, region and region.treePalette), Material = Enum.Material.Grass }, board)
-		markOuter(asset, 1, 2)
-	end
 	waterfall(features and features.waterfall, board)
 	board.Parent = workspace
 	return board

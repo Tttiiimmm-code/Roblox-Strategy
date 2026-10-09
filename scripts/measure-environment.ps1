@@ -6,11 +6,15 @@ $runner = Join-Path $taskRoot 'tools/environment-measure.runner.luau'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 foreach ($state in $Revision) {
     $source = Get-Content "$taskRoot/tests/board.stubs.luau" -Raw -Encoding UTF8
-    foreach ($module in @('Config', 'UnitData', 'Grid', 'Stages', 'RunConfig', 'MapChunks', 'LevelGen', 'EnvironmentAssets', 'BoardBuilder')) {
-        $folder = if ($module -in @('EnvironmentAssets', 'BoardBuilder')) { 'server' } else { 'shared' }
+    foreach ($module in @('Config', 'UnitData', 'Grid', 'Stages', 'RunConfig', 'MapChunks', 'LevelGen', 'EnvironmentAssets', 'LandscapeBuilder', 'BoardBuilder')) {
+        $folder = if ($module -in @('EnvironmentAssets', 'LandscapeBuilder', 'BoardBuilder')) { 'server' } else { 'shared' }
         $path = "src/$folder/$module.luau"
         if ($state -eq 'working') { $body = Get-Content "$taskRoot/$path" -Raw -Encoding UTF8 }
         else {
+            if ($module -eq 'LandscapeBuilder') {
+                & git -C $taskRoot cat-file -e "${state}:$path" 2>$null
+                if ($LASTEXITCODE -ne 0) { continue }
+            }
             $lines = & git -C $taskRoot show "${state}:$path"
             if ($LASTEXITCODE -ne 0) { throw "Git-Stand $state fehlt: $path" }
             $body = $lines -join "`n"

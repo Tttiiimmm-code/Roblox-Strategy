@@ -49,7 +49,7 @@ local function boardMetrics(label)
 		sumParts += count; maxParts = math.max(maxParts, count)
 		sumTriangles += triangles; maxTriangles = math.max(maxTriangles, triangles)
 	end
-	print(string.format("C3-Messung %s: 100 Seeds, Teile Mittel %.1f / Max %d; Dreiecke geschaetzt Mittel %.0f / Max %d; Stub-Aufbau Mittel %.2f ms.", label, sumParts / 100, maxParts, sumTriangles / 100, maxTriangles, seconds * 10))
+	print(string.format("C5-Messung %s: 100 Seeds, Teile Mittel %.1f / Max %d; Dreiecke geschaetzt Mittel %.0f / Max %d; Stub-Aufbau Mittel %.2f ms.", label, sumParts / 100, maxParts, sumTriangles / 100, maxTriangles, seconds * 10))
 	return maxTriangles, sumTriangles / 100
 end
 metricAssets()
