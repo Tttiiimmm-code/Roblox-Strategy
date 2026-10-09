@@ -31,14 +31,28 @@ for _, north in ipairs(northProfiles) do
 	end
 end
 
--- Garricks Festung: Leibwache davor, freie Ankunftsfelder am Rand, sechs Starts unten.
+-- Garricks Festung: Klippen schützen den Rücken, zwei Brücken führen zur Leibwache.
 MapChunks.bossMaps = {
 	greenland = {
-		map = { ".....MM..MM.....", "....F..H...F....", ".......FF.......", "....F......F....", ".....F....F.....", "................", "................", "................", "................", "................", "................", "................" },
+		map = {
+			"CC....MMMM....CC",
+			"CC..F..HH..F..CC",
+			".FFF..HHHH..FFF.",
+			".FF..F....F..FF.",
+			"....FF....FF....",
+			"..M..........M..",
+			"WWWWBWWWWWWBWWWW",
+			"...F........F...",
+			"....MM....MM....",
+			"..FF........FF..",
+			"................",
+			"................",
+		},
 		boss = { x = 8, y = 2 },
-		guards = { { x = 7, y = 3 }, { x = 9, y = 3 }, { x = 8, y = 4 } },
-		slots = { { x = 5, y = 12 }, { x = 6, y = 12 }, { x = 7, y = 12 }, { x = 9, y = 12 }, { x = 10, y = 12 }, { x = 11, y = 12 } },
-		reinforcementFields = { { x = 1, y = 2 }, { x = 16, y = 2 }, { x = 1, y = 4 }, { x = 16, y = 4 } },
+		guards = { { x = 7, y = 3 }, { x = 10, y = 3 }, { x = 8, y = 4 } },
+		slots = { { x = 6, y = 12 }, { x = 7, y = 12 }, { x = 8, y = 12 },
+			{ x = 9, y = 12 }, { x = 10, y = 12 }, { x = 11, y = 12 } },
+		reinforcementFields = { { x = 1, y = 3 }, { x = 16, y = 3 }, { x = 1, y = 5 }, { x = 16, y = 5 } },
 	},
 }
 return MapChunks

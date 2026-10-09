@@ -347,12 +347,14 @@ for seed = 1, 200 do
 		for size = 1, RunConfig.MAX_TEAM do
 			local stage = LevelGen.generate(seed, "greenland", depth, "axe", size, kind)
 			assert(same(stage, LevelGen.generate(seed, "greenland", depth, "axe", size, kind)), "Bosskarte nicht deterministisch")
+			assert(#stage.map == RunConfig.BOARD_HEIGHT, "Bosskartenhöhe")
+			for _, row in ipairs(stage.map) do assert(#row == RunConfig.BOARD_WIDTH, "Bosskartenbreite") end
 			assert(#stage.slots == size and stage.enemies[1].kind == RunConfig.BOSSES.greenland[kind], "Boss/Startzahl")
 			assert(stage.kind == kind and stage.bossId == stage.enemies[1].kind, "Bossmetadaten")
 			assert(#stage.enemies == (kind == "boss" and 4 or RunConfig.MINIBOSS_GUARDS + 1), "Leibwache")
 			local occupied = {}
 			for _, pos in ipairs(stage.slots) do
-				assert(pos.y >= 7 and canWalk(stage.map, pos.x, pos.y - 1), "Bossstart ohne Weg")
+				assert(pos.y > RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS and canWalk(stage.map, pos.x, pos.y - 1), "Bossstart ohne Weg")
 				assert(not occupied[cellKey(pos)], "Doppelter Bossstart")
 				occupied[cellKey(pos)] = true
 				local seen = flood(stage.map, pos)
