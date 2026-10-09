@@ -1,71 +1,70 @@
-# PLAN: Level-Optik Etappe C4 – keine Baumschatten, lichterer Wald, natürlicher Waldring
+# PLAN: Level-Optik Etappe C5 – Tal-Landschaft aus Terrain, Felshügel statt Würfel, lichterer Wald
 
-Ziel: Feinschliff nach dem Studio-Test von C3 (Nutzer-Screenshots vom 09.10.2026).
-Branch: `feature/level-optik-c` (enthält Phase 3, C1–C3)
+Ziel: Ein Optik-Standard wie bei beliebten Roblox-Spielen mit Spielfeld von oben (Tower-Defense-/Anime-Spiele): **natürliche Formen statt Kisten**, das Spielfeld **in eine Landschaft eingebettet** statt von einem Ring aus Einzelobjekten umgeben, **keine sichtbaren Platzhalter**, Ferne geht in Dunst über.
+Branch: `feature/level-optik-c` (enthält Phase 3, C1–C4)
 
-**Befunde aus dem Test:**
-1. **Schatten poppen auf und verschwinden** (Nutzer). Ursache: Seit C3 werfen über 100 große Bäume echte Schatten (`EnvironmentAssets.place`: `CastShadow = scaledSize.Y >= shadowHeight · TILE_SIZE`). Roblox rendert Schatten nur in begrenzter Reichweite/Auflösung, deshalb springen sie beim Kamerabewegen/Zoomen. Das kostet außerdem Leistung auf dem Handy.
-2. **Der Wald verdeckt zu viel:** Kronen 1,35–1,5 Felder verdecken Raster und Figuren; Leon im Wald ist nur über einen schwachen Umriss zu erkennen.
-3. **Der Waldring wirkt wie eine Hecke:** gleichmäßige Reihen rundum. Auf der Kameraseite (unten im Bild, +Z) verdecken große Bäume und die günstigen Kronen-Ersatzteile („grüne Eier“) das untere Brettende.
+**Nutzer-Feedback zum C4-Test (10.10.2026):** Thronsaal normal, keine Warnungen, Schatten ok, Figuren auf Brücken ok, Handy (Samsung S25+) flüssig. **Berge sehen aus wie braune Würfel mit Steinen**, **Wald noch etwas zu dicht**, **Gelände außerhalb muss besser werden: ein Ring aus zufälligen Gegenständen sieht nicht schön aus**, **hintere Bäume sind nur runde Kronen** (Kugel-Platzhalter).
 
-**Nutzerentscheidungen (09.10.2026):**
-- **Baumschatten aus:** Bäume und Umgebung werfen keine echten Schatten; dafür ein dunklerer, ruhiger Waldboden für Tiefe. Figuren behalten ihre Rundschatten (`UnitShadow`).
-- **Wald etwas lichter:** Kronen etwa 1,1–1,2 Felder statt 1,35–1,5; Raster und Figuren scheinen stärker durch. Umriss für Figuren im und am Wald **kräftiger**.
-- **Waldring vorne niedrig, natürlicher:** Auf der Kameraseite nur niedrige Büsche und Felsen, hinten und an den Seiten hohe Bäume, unregelmäßig statt als Hecke. Kronen-Ersatzteile weg oder nur ganz hinten (außerhalb des normalen Sichtbereichs).
+**Nutzerentscheidungen (10.10.2026):**
+- **Umgebung: Tal mit Hügeln und Bergen:** Das Spielfeld liegt in einem Wiesental. Ringsum steigen Grashügel mit Gruppen echter Yasu-Bäume an, hinten und an den Seiten felsige Berge, die in Dunst übergehen. Vorne zur Kamera (+Z in Grundausrichtung) flach, damit nichts das Brett verdeckt. Gebaut mit **Roblox-Terrain**. **Keine Kugel-Platzhalter** mehr.
+- **Bergfelder: Terrain + Felsmodelle:** Benachbarte `M`-Felder (und `C`-Klippen) werden zu natürlichen Felshügeln aus Terrain geformt, mit größeren Felsmodellen aus dem Paket als Details. Das Feldraster und die Klickflächen bleiben erkennbar.
+- **Wald: 1–2 Bäume pro Waldfeld** (statt 2–3), Kronengröße wie in C4 (1,1–1,2 Felder).
 
-**Bestehender Code:** `src/server/EnvironmentAssets.luau` (`place`, CastShadow-Regel), `src/shared/Config.luau` (`ENVIRONMENT.shadowHeight`, `ENVIRONMENT.forest.treeWidth/treeHeight`, `ENVIRONMENT.outer` mit `tree.crownWidth`, `nearSpacing`, `farDistance/farWidth/farHeight`, `FOREST_OUTLINES`), `src/server/BoardBuilder.luau` (Waldfelder, Umgebungsring, Bodenfarben), `src/client/ForestOutlines.luau`, `src/client/CameraController.luau` (Kamerarichtung aus +Z, `rotation`), Tests `tests/outer.test.luau`, `tests/environment-metrics.test.luau`, `tests/forest-outlines.test.luau`, Messung `scripts/measure-environment.ps1`.
+**Bestehender Code:**
+- `src/server/BoardBuilder.luau`: Terrain wird bisher nur geräumt (`lastTerrainRegion`, `FillBlock(... Air)`, nur bei Größenwechsel). Umgebungsring (C3/C4, `outer`-Platzierung, Kronen-Ersatzteile), Sichtboden-Parts (`groundZoomMargin = 4.2`, bis ~1.075 Studs), Felswände `M`/`C` (C3: Wedge-Facetten), Waldfelder (`decorate` Fall `F`), Klick-Kacheln (`tile.CanQuery = true`).
+- `src/shared/Config.luau`: `ENVIRONMENT.forest` (`treesPerForestTile`, `thirdTreeChance`), `ENVIRONMENT.outer`, `ENVIRONMENT.rocks`, `TERRAIN.M` (Höhe 4, begehbar mit Kosten) und `TERRAIN.C` (Höhe 8, unpassierbar), `FEEL.atmosphere.battle` (Atmosphere/ColorCorrection/Bloom vorhanden).
+- `src/client/Main.client.luau:614–627`: Klick-Raycast mit **Include**-Filter auf `Board` + `Units`, ignoriert Terrain also bereits. So muss es bleiben.
+- `src/client/CameraController.luau`: frei drehbar (`rotateBy`, `yaw`), Zoomgrenzen aus C1.
+- `Config.HUB_ORIGIN = (0, 0, 420)`: Der Thronsaal (ca. x −50…50, z 345…495) darf weder von Terrain noch von Umgebungsteilen berührt werden.
+- Tests/Messung: `tests/outer.test.luau`, `tests/walls.test.luau`, `tests/environment-metrics.test.luau`, `tests/board.stubs.luau`, `scripts/measure-environment.ps1`.
 
-**Leitlinien:** Klickbarkeit, Figurenmitte, Brückenhöhen, Determinismus und Part-Fallback bleiben erhalten. Alle Werte WIP in `Config`. Teile/Dreiecke vorher/nachher mit `scripts/measure-environment.ps1` in den Notizen. Ein Commit pro Schritt, alle Prüfskripte grün. Geschmacksfragen: zurückhaltende Variante wählen, über Config umstellbar machen und in den Notizen nennen.
+**Leitlinien:**
+- **Spielregeln und Lesbarkeit:** Feldraster, Klickflächen, Bewegungs-Overlays, Figurenhöhe (`Grid.toWorld`/`tileHeight`), Brückenhöhen und Umrisse funktionieren unverändert. Terrain darf Overlays und Figuren auf begehbaren Feldern nicht durchdringen.
+- **Leistung:** Terrain statt hunderter Einzelteile. Dazu Teile/Dreiecke vorher/nachher (`measure-environment.ps1`) und die Zahl der Terrain-Schreibaufrufe bzw. das Terrain-Volumen in den Notizen. Die reale Aufbauzeit („Missionsaufbau …“) misst der Nutzer in Studio. Terrain-Aufbau so bündeln, dass er auch auf dem Server zügig bleibt (wenige große `Fill*`-Aufrufe bzw. `WriteVoxels` in Blöcken).
+- **Determinismus:** gleiche Karte = gleiche Landschaft (Seed aus Karte/Lauf).
+- **Terrain-Aufräumen:** Bei jedem Brettaufbau wird das Terrain des vorherigen Bretts vollständig entfernt (nicht nur bei Größenwechsel), auch Tutorial ↔ Lauf. Der Thronsaal bleibt unberührt.
+- Part-Fallback ohne Paket bleibt funktionsfähig (Terrain ist immer verfügbar; nur Modelle fallen weg).
+- Alle Werte WIP in `Config`. Ein Commit pro Schritt, alle Prüfskripte grün. Geschmacksfragen: zurückhaltende Variante, über Config umstellbar, in den Notizen nennen.
 
 ## Schritte
 
-- [x] 1. **Keine Baum- und Umgebungsschatten** – `EnvironmentAssets.place`, `BoardBuilder`, `Config`
-  - Umgebungsmodelle und Ersatz-Parts (Bäume, Büsche, Felsen, Ring, Wurzeln, Deko) werfen keine Schatten mehr. Ein Config-Schalter (z. B. `ENVIRONMENT.castShadows = false`) stellt das alte Verhalten wieder her.
-  - Waldfelder bekommen einen etwas dunkleren, ruhigen Bodenton (WIP, Config), damit der Wald ohne Schatten Tiefe hat. Raster und Feldfarben bleiben lesbar.
-  - Fertig, wenn: Ein Stub prüft, dass kein Umgebungsteil `CastShadow = true` hat (Schalter aus) und mit Schalter an das alte Verhalten gilt; Figuren-Rundschatten bleiben unverändert.
+- [ ] 1. **Wald lichter** – `Config.ENVIRONMENT.forest`, `BoardBuilder.decorate` (Fall `F`)
+  - 1–2 Bäume pro Waldfeld (WIP z. B. `treesPerForestTile = {min = 1, max = 2}`, Anteil mit 2 Bäumen als WIP-Wert), dritter Baum entfällt. Kronengröße aus C4 bleibt. Bei einem Baum steht er leicht außermittig, damit die Figurenmitte sichtbarer ist.
+  - Fertig, wenn: Stub prüft 1–2 Bäume pro Feld und Determinismus; Teile/Dreiecke vorher/nachher.
 
-- [x] 2. **Lichterer Wald + kräftigerer Umriss** – `Config.ENVIRONMENT.forest`, `BoardBuilder.decorate` (Fall `F`), `ForestOutlines`, `Config.FOREST_OUTLINES`
-  - Kronenbreite auf etwa 1,1–1,2 Felder, Höhe passend etwa 1,2–1,5 Felder (WIP). Kronen nicht mehr stärker in die Breite ziehen als nötig, damit nichts gestreckt wirkt.
-  - Umriss kräftiger: zum Beispiel eine schwache Füllung in Teamfarbe (WIP etwa `fillTransparency` 0,75–0,8) zusätzlich zum Umriss, damit Figuren unter Kronen klar erkennbar sind. Prüfe die Verdeckungsregel für die kleineren Kronen und passe Nachbarradius/Sichtweite an (Regel in den Notizen).
-  - Fertig, wenn: Fixture-Messung zeigt Kronenmaße im Zielbereich; die Waldabdeckung von oben wird wie C3 gemessen und nur informativ in den Notizen dokumentiert (Antwort unter Offene Fragen). Outline-Stub mit neuer Füllung grün; Budget und Vorrang unverändert.
+- [ ] 2. **Tal-Landschaft aus Terrain** – neues Modul, z. B. `src/server/LandscapeBuilder.luau`, aufgerufen aus `BoardBuilder.build`; `Config.LANDSCAPE` (WIP), Farben/Materialien pro Region in `Stages`
+  - **Ersetzt** den Umgebungsring aus C3/C4 (Bäume/Büsche/Felsen in Ringform) und **alle Kronen-Ersatzteile**. Der Sichtboden aus Parts wird durch Terrain ersetzt oder nur noch dort genutzt, wo Terrain nicht hinreicht (in den Notizen begründen).
+  - Form: Direkt ums Brett ein flacher Wiesenrand (etwa 1–2 Felder, Höhe wie Brettboden). Danach steigen **Grashügel** an, unregelmäßig mit Mulden und Kuppen statt eines gleichmäßigen Walls. **Hinten und an den Seiten** gehen sie in **felsige Berge** über (Rock/Slate oben, Grass/Ground an den Hängen, WIP-Materialien). **Vorne** (+Z in Grundausrichtung) bleibt es flach bis leicht abfallend, sodass aus Start- und Normalansicht nichts das Brett verdeckt. Die Höhen nehmen mit der Entfernung zu, damit die Berge den Horizont bilden. Ganz außen geht die Landschaft in den vorhandenen Atmosphere-Dunst über; beim maximalen Zoom ist kein harter Rand und keine leere Fläche zu sehen.
+  - **Echte Yasu-Bäume in Gruppen** auf Hügeln und Hangfüßen (Cluster mit Lücken, keine Reihen), dazu einige Felsmodelle und Büsche als Details. Es gibt keine Kugel-/Kronen-Platzhalter mehr. Die Baumzahl der Landschaft ist als WIP-Wert begrenzt, mit Terrain als Hauptträger der Form.
+  - Wasser: Fließt ein Fluss am Brettrand hinaus, darf er im Terrain sichtbar weiterlaufen (Terrain-Wasser), optional als WIP-Schalter. Wasserflächen auf dem Brett bleiben wie sie sind.
+  - Kamera frei drehbar: Lösung für die flache Vorderseite wie in C4 (Grundausrichtung) beibehalten oder verbessern; in den Notizen nennen.
+  - Fertig, wenn: Stub/Test prüft, dass kein Terrain oder Objekt Brettfelder überdeckt (Terrain-Oberfläche im Brettbereich unter Feldhöhe bzw. geräumt), die Vorderseite unter einer WIP-Höchsthöhe bleibt, hinten/seitlich höher ist, der Thronsaal-Bereich frei bleibt und dass alles deterministisch und vollständig aufgeräumt wird (zweiter Aufbau mit anderer Karte hinterlässt kein altes Terrain). Teile/Dreiecke vorher/nachher.
 
-- [x] 3. **Natürlicher Waldring, vorne niedrig** – `BoardBuilder` (Umgebungsring), `Config.ENVIRONMENT.outer`
-  - **Kameraseite** (in Grundausrichtung +Z, unteres Bildende): nur niedrige Büsche, Felsen und vereinzelt kleine Bäume, die das Brett aus der Start- und Normalansicht nicht verdecken (WIP Höchsthöhe, z. B. ≤ 0,5 Feld nah am Brett). **Hinten und an den Seiten**: hohe Bäume, unregelmäßig gruppiert (Cluster und Lücken statt gleichmäßiger Reihen), gemischt mit Büschen und Felsen.
-  - Kronen-Ersatzteile („Eier“) nur noch ganz hinten bzw. weit außen, wo sie von Bäumen davor teilweise verdeckt sind; auf der Kameraseite gar nicht.
-  - Kamera dreht sich (`rotation`): Prüfe, ob die Rotation in der Normalansicht fest ist oder frei drehbar. Bei freier Drehung nenne die gewählte Lösung in den Notizen (z. B. Seiten nach Grundausrichtung oder überall mittelhoch).
-  - Fertig, wenn: Ein Stub prüft, dass auf der Kameraseite keine Objekte über der Höchsthöhe nahe am Brett stehen, der Ring hinten/seitlich weiterhin lückenarm ist, keine Objekte auf Brettfeldern stehen und alles deterministisch bleibt. Teile/Dreiecke vorher/nachher.
+- [ ] 3. **Felshügel statt Würfel** – `BoardBuilder` (Bodenaufbau `M`/`C`, Felswände aus C3), `LandscapeBuilder` bzw. eigener Helfer, `Config`
+  - Zusammenhängende `M`-Gruppen werden zu einem **organischen Felshügel aus Terrain** geformt (Rock/Slate, Grass an flachen Stellen, WIP). Die Hügelform greift über Feldgrenzen weich ineinander. **Auf jedem `M`-Feld** bleibt um die Feldmitte eine **ebene Standfläche in Feldhöhe** (`TERRAIN.M.height`), damit Figur, Overlay und Auswahlring richtig sitzen; Terrain ragt dort nicht über die Overlays.
+  - `C`-Klippen werden als steilere, höhere Felsformation aus Terrain gebaut (unpassierbar, Oberkante unregelmäßig). Die Wasserfälle (`BoardBuilder.waterfall`) setzen an der neuen Oberkante richtig an.
+  - Die braunen Kistenkörper und die Wedge-Facetten aus C3 entfallen für `M`/`C`, oder sie werden vollständig vom Terrain verdeckt (dann nicht mehr sichtbar und ohne CastShadow). Die Klick-Kacheln bleiben (Raycast ignoriert Terrain).
+  - **Größere Felsmodelle** aus dem Paket als Details auf und an den Hügeln (mehrere Größen, nur am Rand und an den Hängen, nicht auf der Standfläche).
+  - Feldraster und Feldgrenzen bleiben auf `M` erkennbar (z. B. Rasterlinien über der Standfläche). In den Notizen beschreiben, wie.
+  - Fertig, wenn: Stub prüft ebene Standflächen auf allen `M`-Feldern (Terrain-Oberfläche an der Feldmitte ≈ Feldhöhe, keine Überdeckung der Overlay-Höhe), Klippen unpassierbar und höher, Felsmodelle nicht auf Standflächen, Klickbarkeit erhalten, Wasserfall-Anschluss korrekt. Teile/Dreiecke vorher/nachher.
 
-- [x] 4. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#36** „Level-Optik Etappe C4“, „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
+- [ ] 4. **Messung + Prüfskripte** – Tests für alle Schritte. In den Notizen: Teile, geschätzte Dreiecke, Terrain-Volumen/Schreibaufrufe und Stub-Aufbauzeit vorher/nachher (100 Seeds, Paket-Fixtures). Tutorial-Karten bauen weiterhin fehlerfrei; ihre Umgebung nutzt dieselbe Landschaft.
+
+- [ ] 5. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#37** „Level-Optik Etappe C5“ (inklusive Optik-Standard: natürliche Formen, eingebettete Karte, keine Platzhalter), „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Keine aufpoppenden Schatten mehr beim Drehen/Zoomen; Figuren haben weiter Rundschatten
-- [ ] Wald dicht, aber Raster und Figuren scheinen durch; Figuren im/am Wald klar erkennbar (Umriss + leichte Füllung)
-- [ ] Waldring: vorne niedrig, nichts verdeckt das untere Brettende; hinten/seitlich hohe, unregelmäßige Bäume; keine „grünen Eier“ im Vordergrund
-- [ ] Noch offen aus C2/C3: Figuren stehen auf dem Brückenbogen; keine Warnung zur Kronenfarbe; Thronsaal unverändert; Handy flüssig, Aufbauzeit („Missionsaufbau …“)
+- [ ] Spielfeld liegt in einem Wiesental: Grashügel mit Baumgruppen, hinten/seitlich felsige Berge im Dunst; vorne flach, nichts verdeckt das Brett; keine Kugel-Platzhalter, kein Ring aus Einzelobjekten
+- [ ] Ganz herausgezoomt und beim Drehen kein harter Rand / keine leere Fläche
+- [ ] Bergfelder sind natürliche Felshügel mit Felsen; Figuren stehen sauber auf Bergfeldern, Bewegungsfelder sind sichtbar und anklickbar
+- [ ] Klippen als Felsformation, Wasserfälle setzen richtig an
+- [ ] Wald luftiger (1–2 Bäume pro Feld)
+- [ ] Thronsaal unverändert; Tutorial-Missionen sehen ordentlich aus
+- [ ] Aufbauzeit („Missionsaufbau …“) im Rahmen, Handy weiterhin flüssig
 
 ## Nicht anfassen
-- Spielregeln, Generator, Tutorial-Karten, Lager-/Boss-Logik, Brücken, Ufer, Felswände, UI außer Umriss-Darstellung
+- Spielregeln, Generator, Brücken, Ufer, Wiesen-Deko, Umrisse, UI, Lager-/Boss-Logik
 
 ## Offene Fragen
-
-- **Schritt 2 – Entscheidung zur Waldabdeckung nötig:** Die unveränderte maßhaltige C3-Methode (4×4 Wald, 32×32 Stichproben pro Feld, Union echter Kronen-AABBs) ergibt mit den vorgegebenen Kronenbreiten **1,10–1,20 Felder** und Baumhöhen **1,20–1,49 Felder** weiterhin **99,48 %** Abdeckung (C3: 99,99 %). Mit den bisherigen 2–3 Bäumen pro Feld und ihrer bisherigen Anordnung wird das Ziel **70–85 %** also nicht erreicht. Soll ich dafür **die Baumzahl reduzieren**, **die Bäume stärker gruppieren und bewusst Lücken lassen**, oder soll **die höhere AABB-Abdeckung bei den gewünschten kleineren Kronen akzeptiert** werden? Bitte eine Variante im Plan festlegen; Zahl/Anordnung bzw. Akzeptanzkriterium entsprechend freigeben. Keine dieser zusätzlichen Designentscheidungen wurde umgesetzt.
-  - **Antwort (Claude):** Die Zahl 70–85 % war Claudes Schätzung, keine Nutzervorgabe. Die Nutzerentscheidung lautet „Kronen etwa 1,1–1,2 Felder“, das ist umgesetzt. **Höhere AABB-Abdeckung akzeptieren**, Baumzahl und Anordnung unverändert lassen. Die AABB-Methode überschätzt runde Kronen. Das Akzeptanzkriterium wird ersetzt durch: Kronenmaße im Zielbereich plus gemessene Abdeckung in den Notizen (nur informativ). Ob der Wald licht genug wirkt, beurteilt der Nutzer in Studio. Weiter mit Schritt 2 (abschließen/committen), dann 3 und 4.
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-
-- Schritt 1: `ENVIRONMENT.castShadows = false`; aktivieren stellt die bisherige Höhenschwelle für Modelle wieder her. Ersatzteile bleiben wie vorher schattenlos. Waldboden regional um 10 % dunkler, Fleckkontrast halbiert (beides WIP/Config). UnitShadow unverändert. Schatten-Stubs mit/ohne Paket sowie Grünland-/Sumpfboden grün; `test-run.ps1` und `check.ps1` OK.
-- Vorher (Git `fb0cb28`): 100 Grünland-Seeds, Teile Mittel 2.006,2 / Max 2.154; geschätzte Dreiecke Mittel 344.396 / Max 500.220; Stub-Aufbau Mittel 97,75 / Max 120,34 ms.
-
-- Historischer Stopp vor Claude-Antwort: Die Zielmaße waren umgesetzt; allein das geschätzte Abdeckungsziel scheiterte (99,48 %). Claude akzeptierte die höhere informative AABB-Abdeckung; Fortsetzung und Abschluss siehe unten.
-- Kamera frei drehbar: `CameraController.rotateBy` und Zweifingerrotation in `Main.client.luau`; gewählte Ringlösung siehe Schritt 3 unten.
-- Sandbox-Prozessstart defekt (`helper_unknown_error: setup refresh had errors`); autorisierte Projektbefehle gemäß Dauerregel über automatische Prüfung außerhalb ausgeführt. Studio/Handy weiterhin ungetestet. Abschlussprüfungen und Devlog #36 siehe Schritt 4.
-
-- Schritt 2 abgeschlossen gemäß Claude-Antwort: Baumzahl/Anordnung unverändert; Kronen 1,10–1,20 Felder und Höhen 1,20–1,49. AABB-Abdeckung 99,48 % (C3 99,99 %) nur informativ. Nachbarradius 1 und Sichtweite 2 bleiben wegen Ecküberhang und Perspektive erhalten. Füllung 0,8 in Teamfarbe; Budget/Vorrang unverändert. Optische Abnahme durch Nutzer in Studio offen.
-
-- Schritt 3 abgeschlossen: +Z und vordere Seitenecken (1 Feld) nur Büsche/Felsen, höchstens 0,5 Feld über Umgebungsboden. Kamera frei drehbar; niedrige Seite bleibt bewusst in Grundausrichtung, beim Drehen können hohe Seiten ins Vorderbild kommen. Config enthält die WIP-Grenzen.
-- Hinten/seitlich Gruppen aus 2–4 Bäumen, Kronen 2,0–2,4 und Höhen 1,35–1,8 Felder; unterschiedliche Gruppentiefe bis 1 Feld, Überlappungen sowie niedrige Büsche/Felsen zwischen Gruppen. Tatsächliche Welt-Bounding-Boxen bestimmen Abstände (Lücken höchstens 0,5 Feld) und sichern Brettfreiheit. Ersatzkronen nur hinten ab 4,5 Feldern; ohne Paket echte Part-Baumgruppen statt großer Kroneneier in der Nahreihe.
-- Ring-Stubs über 100 Paket-Seeds prüfen niedrige Vorderkante/Ecken, hohe Rück-/Seitenränder, entfernte Ersatzkronen, Lücken, Brettfreiheit und Klickbarkeit. Wiederholte Builds sind mit Paket und Part-Fallback deterministisch. Notwendige Stub-Korrektur: CFrame:Inverse berücksichtigt jetzt die volle Rotationsmatrix; bislang verfälschte ein zweites PivotTo die Position/Rotation. Keine Änderung an der Roblox-Kamera. test-run.ps1 und check.ps1 OK.
-- Vergleich über scripts/measure-environment.ps1 mit identischen maßhaltigen Paket-Fixtures, 100 Grünland-Seeds: vor C4 (fb0cb28) Teile Mittel 2.006,2 / Max 2.154, geschätzte Dreiecke 344.396 / 500.220, Stub-Aufbau 98,57 / 118,89 ms; nach C4 Teile 1.989,5 / 2.128, Dreiecke 343.195 / 495.996, Stub-Aufbau 105,14 / 128,83 ms. Mittleres Dreieckbudget 350.000 eingehalten; Stub-Zeit leicht höher, reale Aufbauzeit/Handyleistung ungetestet.
-
-- Schritt 4 abgeschlossen: check.ps1 OK (37 Dateien), test-levelgen.ps1 OK (19.000 Level-, 5.000 Optionsprüfungen, 2.400 Boss-/Minibosskarten), test-run.ps1 OK (34.458 Lauf-/Boss-/Lager- und 528.020 Brett-/Kameraprüfungen plus Umgebungs-Stubs), test-tutorial.ps1 OK (168), test-run-ui.ps1 OK (116), Rojo-Build TacticsGame.rbxlx OK. Devlog #36 und Nächste Schritte aktualisiert. Separate Commits je Schritt auf feature/level-optik-c; Push und Übergabesignal erfolgen zum Abschluss. Studio/Handy ungetestet; Review durch Claude ausstehend.
