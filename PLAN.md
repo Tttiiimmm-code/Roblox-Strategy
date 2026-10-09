@@ -1,71 +1,107 @@
-# PLAN: Level-Optik Etappe C1 – große Karten, geschwungene Flüsse, Seen, Klippen und Wasserfälle
+# PLAN: Level-Optik Etappe C2 – Creator-Store-Modelle, dichter Wald, gewölbte Brücken, runde Ufer
 
-Ziel: Lauf-Karten sollen der **Nutzer-Vorlage** näherkommen (gemalte Taktikkarten von oben: geschwungene Flüsse mit kleinen Brücken, Seen mit Inseln, Wasserfall von einer Felsklippe, dichte Wald- und Felsgruppen, belebte Wiesen). Diese Etappe C1 betrifft **Kartengröße und Generator**; die Optik (runde Ufer, dichter Wald mit Umriss, Wiesen-Deko) folgt in **C2**.
-Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`, enthält Bosse/Lager)
+Ziel: Die Lauf-Karten sollen wie die **Nutzer-Vorlage** aussehen (gemalte Taktikkarten von oben: dichte Wälder, geschwungene Flüsse mit kleinen Brücken, runde Ufer, belebte Wiesen). C1 hat Größe und Generator geliefert. C2 setzt die **vom Nutzer ausgewählten Creator-Store-Modelle** richtig ein und verbessert die Bodenoptik.
+Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
-**Nutzerentscheidungen (09.10.2026):** Kartengröße **wie die Vorlage, ca. 16×12 oder mehr** · **Kamera bleibt** (schräger Blick wie bisher) · Wald **dicht + Umriss** für Figuren (C2) · **Höhenstufen als Klippen mit Wasserfällen: ja**.
+**Modelle (liegen als Paket vor):** `assets/environment/grasland_pack.rbxm` → `ServerStorage.EnvironmentModels.grasland_pack` (Ordner). Inhalt laut Import (Befehlsleiste, `scripts/studio/umgebung-import.luau`):
+`tree_1…20`, `bush_1…3`, `deco_root_1…5` (Yasu's Stylized Tree Pack), `rock_1…49` (Stylized Rock Pack), `deco_flower_1…3`, `deco_grass_1`, `deco_fence_1`, `archbridge_1`, Ordner `materials` (5 MaterialVariants, von den Modellen nicht genutzt). Alle Vorlagen sind Models mit Namen `<kategorie>_<nr>`, Vorschaugröße normiert (größte Seite 8 Studs). Credits: `assets/environment/README.md`.
 
-**Bestehender Code:** `src/shared/RunConfig.luau` (`BOARD_WIDTH = 10`, `BOARD_HEIGHT = 8`, `CHUNK_WIDTH/HEIGHT = 5/4`, `START_ROWS`, `ENEMY_ROWS`, Fluss-/Brückenwerte, Gegneranzahl je Tiefe, Bosswerte), `src/shared/LevelGen.luau` (Bausteine 2×2, Rand-Profile, Fluss quer links→rechts in Reihen 2–5, Brücken über volle Breite, Startfelder, Lösbarkeit, Boss-/Miniboss-Varianten), `src/shared/MapChunks.luau` (28 Grasland-Stücke 5×4 + Boss-Festung 10×8), `src/shared/Config.luau` (`TERRAIN`, `FEEL`), `src/server/BoardBuilder.luau` (Boden, Randfläche, Terrain-Freiraum, Deko), `src/client/CameraController.luau` (`bounds`, `zoom = clamp(max(size)·0.85, 45, 120)`), Tests `tests/levelgen.test.luau` + `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`.
+**Aufbau der Modelle (vom Nutzer in Studio ausgelesen):**
+- Baum/Busch: Model aus 2 MeshParts: Stamm (`Material=Wood`, SurfaceAppearance `AlphaMode=Overlay`) + Krone (`Material=LeafyGrass`, SurfaceAppearance `AlphaMode=Transparency`). `MeshPart.Color` grau (163,163,163), keine TextureID. Die Kronentexturen sind laut Urheber farblos und zum Umfärben gedacht.
+- Fels: einzelner MeshPart mit TextureID, Formen sehr unterschiedlich (z. B. `rock_1` flach 7,5×1,6×8).
+- Brücke `archbridge_1`: ein MeshPart mit TextureID, **gewölbt**, Maße ≈ 8,0 lang × 2,1 hoch × 2,3 breit (Länge entlang X der Vorlage – Ausrichtung prüfen).
+- Gras: eine UnionOperation (4,7×8×4,8). Zaun: Model aus 10 Unions/Parts, Länge entlang Z. Blumen: Model aus 2 MeshParts (Stängel + Blüten, über `Color` gefärbt).
 
-**Leitlinien:** Story-/Tutorial-Karten bleiben klein und unverändert. Lösbarkeit, Startfeld-Regeln (Devlog #26) und Determinismus bleiben Pflicht. Handy-Leistung: Teilezahl des Bretts im Blick (Ausgabe „Missionsaufbau … Brett/Figuren x ms“, Teilezahl in Notizen vor/nach). Alle Werte WIP in `RunConfig`/`Config`. Ein Commit pro Schritt, alle Prüfskripte grün.
+**Nutzerentscheidungen (09.10.2026):**
+- Modelle aus dem Creator Store: siehe oben (Yasu für Bäume + Büsche, Felspaket F2, drei Blumenfarben, Gras, Zaun)
+- **Felsen in verschiedenen Größen**: große Größenspanne, kleine Felsen zusätzlich als Deko-Steinchen
+- **gewölbte Brücken**: eine Brücke pro Querung, Figuren stehen auf dem Bogen
+- **Wald 2–3 Bäume pro Waldfeld**, dazu Busch/Wurzel; **Figuren im Wald mit Umriss**
+- **Wiesen-Deko mittel**: etwa jedes zweite Wiesenfeld 1–2 Grasbüschel, ab und zu Blumen/Steinchen, selten Zaun
+- **Wasserfälle auf etwa jeder 6.–8. Karte**, auch an Seen statt nur am linken Rand
+- **Kronen pro Region umfärben, mit Mischung**: Grasland meist grün mit einigen Herbstbäumen, später Sumpf dunkelgrün, Eis weiß, Vulkan verbrannt
+- Bodentexturen malt der Nutzer selbst (`Config.GROUND_TEXTURES`, nicht Teil von C2)
+
+**Bestehender Code:**
+- `src/server/EnvironmentAssets.luau`: `variants(category)` (Claude hat in 18698ea Ordner-Pakete + MaterialVariants ergänzt), `place(category, cframe, opts)` skaliert anhand von `Config.ENVIRONMENT.categories[category]` und `sizeVariation`
+- `src/server/BoardBuilder.luau`: `decorate(ch, x, y, parent, mapKey)` setzt Eckobjekte; `bridgeAngle`; Bodenaufbau; `waterfall(feature, parent)`
+- `src/shared/Config.luau`: `ENVIRONMENT` (Kategorien, `decoChance`, `bushChance`, `edgeInset`, `outer`), `TERRAIN.B.height = 0.2`, `FEEL`
+- `src/shared/Grid.luau`: `toWorld`/`tileHeight` (19 Aufrufe von `Grid.toWorld` in `src`)
+- `src/shared/LevelGen.luau`: `cliffs(...)` mit Wasserfall nur am linken Flussende, `RunConfig.WATERFALL_CHANCE`
+- `src/shared/Stages.luau`: Region mit `treeColor`
+- `src/client/UnitAnimator.luau:131` und `TutorialGuide.luau:107` nutzen bereits `Highlight` (Roblox zeigt höchstens ~31 Highlights gleichzeitig)
+- `src/client/CameraController.luau`: Kamera schaut aus +Z schräg nach unten (`offset = (0, 1, 0.75)` mit `rotation`)
+
+**Leitlinien:**
+- Tutorial-/Story-Karten dürfen von den neuen Modellen profitieren, ihre Karten und Regeln bleiben aber unverändert.
+- Ohne Paket (keine Varianten) bleibt die bisherige Part-Deko vollständig funktionsfähig, das ist in den Tests Pflicht.
+- **Handy-Leistung:** Nach jedem großen Schritt Teilezahl und geschätzte Dreiecke des Bretts in den Notizen festhalten. Ziel ≤ 300.000 Dreiecke für eine typische 16×12-Karte inklusive Umgebungsrand. Alle Mengen (Bäume pro Feld, Deko-Quote, Schatten) als WIP-Werte in `Config`.
+- Determinismus: gleiche Karte = gleiche Deko.
+- Ein Commit pro Schritt, alle Prüfskripte grün.
 
 ## Schritte
 
-- [x] 1. **Variable Brettgröße** – `RunConfig`, `LevelGen`, `BoardBuilder`, `CameraController`
-  - Lauf-Karten **16×12** (Werte zentral, später je Gebiet/Leveltyp änderbar). Bausteingröße so wählen, dass das Brett glatt aufgeht (z. B. 4×4 → 4×3 Stücke, oder 4×3 → 4×4 Stücke – frei, in Notizen begründen); Startzone unten (2 Reihen), Gegnerzone obere Hälfte, Startfelder bis 6 mittig-unten verteilt.
-  - Gegnerzahl an die größere Fläche anpassen (WIP-Formel, z. B. Basis + Tiefe, Obergrenze), damit Level nicht leer wirken, aber auf dem Handy nicht ewig dauern.
-  - Kamera: Grenzen/Zoom für das große Brett (ganzes Brett erreichbar; Startansicht auf eigene Truppe; Zoom-Obergrenze so, dass man das Brett überblicken kann). Terrain-Freiraum/Randfläche im BoardBuilder auf die neue Größe.
-  - Fertig, wenn: Lauf-Level 16×12 bauen; Tutorial unverändert; Teilezahl/Aufbauzeit vorher/nachher in Notizen.
+- [ ] 0. **Review der Lader-Änderung von Claude** (Commit 18698ea, `EnvironmentAssets.variants`): Ordner-Pakete werden durchsucht, und MaterialVariants landen im MaterialService. Befunde unter Notizen festhalten und kleine Fehler direkt beheben. Ergänze einen Test: Paket-Ordner mit `tree_1`/`tree_2` und ein loses `rock_1` werden erkannt, Namen ohne Muster werden ignoriert.
 
-- [x] 2. **Neue, größere Bausteine** – `MapChunks.luau`
-  - Bausteinsatz für die neue Größe neu anlegen (mind. 30 Stücke), im Stil der Vorlage: große zusammenhängende Waldflächen, Felsgruppen, Lichtungen, kleine Festungen/Ruinen, gemischte Wald-Fels-Ränder. Rand-Profile wie bisher (Anschlüsse passend). Bausteine weiterhin ohne Wasser.
-  - Fertig, wenn: Vielfalt-Kennzahlen (verschiedene Karten, Geländeanteil, Anschlüsse) in den Notizen.
+- [ ] 1. **Dichter Wald** – `BoardBuilder.decorate` (Fall `F`), `Config.ENVIRONMENT`
+  - Pro Waldfeld **2–3 Bäume** (WIP `treesPerForestTile = {min = 2, max = 3}`). Die Positionen werden deterministisch im Feld gestreut, Kronen dürfen in Nachbarfelder ragen. Baumgröße deutlich größer als bisher (WIP etwa 1,0–1,4 Felder hoch und 0,6–0,9 Felder breit), mit Größenstreuung.
+  - Dazu mit WIP-Wahrscheinlichkeit ein Busch (`bush`) oder eine Wurzel (`deco_root`) am Feldrand.
+  - Eigene Platzierungsgrößen für Baum/Busch/Wurzel im Wald, damit Eck-Deko und Umgebungsrand (`outer`) ihre eigenen Werte behalten.
+  - Fallback ohne Varianten: bisherige Part-Bäume.
+  - Fertig, wenn: Waldfelder wirken geschlossen; Teile/Dreiecke vorher/nachher in den Notizen.
 
-- [x] 3. **Flüsse, Seen, Inseln** – `LevelGen.luau`, `RunConfig`
-  - **Flüsse stärker geschwungen** (Mäander mit Kurven über mehrere Reihen, Breite 1–2), weiterhin von Rand zu Rand, nicht durch die Startzone; **2–3 Brücken** je nach Länge, jede über die volle Breite, Ufer frei.
-  - **Seen/Teiche**: gelegentlich ein See (z. B. 3×3 bis 5×4, unregelmäßige Form), auf Wunsch mit **Insel** (1–2 Felder Land/Wald darin, nicht zwingend erreichbar – dann darf dort kein Gegner/Ziel stehen); ein Fluss darf in einen See münden bzw. aus ihm herausfließen. Zusätzlich kleine Teiche (1–2 Felder) als Hindernis.
-  - Lösbarkeit: alle Gegner von allen Startfeldern erreichbar; Hindernisanteil begrenzt (Grenze ggf. für große Karten anpassen).
-  - Fertig, wenn: Prüfskript prüft Mäander (Fluss verbindet zwei Ränder, orthogonal zusammenhängend), Brücken volle Breite, Seen/Inseln (keine Gegner auf unerreichbaren Inseln), Quoten in Notizen.
+- [ ] 2. **Umriss für Figuren im Wald** – Client (Figuren-Darstellung, z. B. `UnitAnimator`), `Config`
+  - Figuren auf Waldfeldern bekommen einen `Highlight`-Umriss, der durch Bäume sichtbar ist (`DepthMode = AlwaysOnTop`, Füllung unsichtbar oder sehr schwach). Teamfarbe: Spieler blau, Gegner rot (Werte in Config). Dasselbe gilt für Figuren auf Feldern, die von Kronen verdeckt werden: das Feld direkt hinter einem Waldfeld aus Kamerasicht. Wie du diese Felder bestimmst, entscheidest du; nenne die Regel in den Notizen.
+  - **Highlight-Budget:** Bestehende Highlights (Auswahl, Tutorial) dürfen nicht verdrängt werden. Begrenze die Wald-Umrisse auf einen Config-Wert (z. B. 20). Ist das Budget voll, haben die Figuren des Spielers Vorrang.
+  - Der Umriss folgt Bewegung, Tod und Phasenwechsel: kein Umriss bleibt hängen.
+  - Fertig, wenn: Ein Test oder Stub prüft Budget, Vorrang und Aufräumen.
 
-- [x] 4. **Klippen und Wasserfälle** – `Config.TERRAIN` (neues Zeichen), `LevelGen.luau`, `BoardBuilder.luau`
-  - Neues Gelände **„Klippe“/Plateau** (z. B. Zeichen `C`): erhöhte, **unpassierbare** Felsfläche (deutlich höher als Berg, senkrechter Felsrand), in Gruppen von mehreren Feldern am Kartenrand oder als Plateau. Darstellung im bestehenden stilisierten Bodenstil (dunklere Felswände), Klickfeld weiterhin abfragbar (für Info), Figuren können es nicht betreten.
-  - **Wasserfall:** gelegentlich entspringt ein Fluss an einer Klippe am Kartenrand und fällt sichtbar herab (einfache stilisierte Darstellung: hellblaue/weiße Fallfläche + etwas Gischt-Deko, keine teuren Partikel auf dem Handy – höchstens wenige, abschaltbar in Config).
-  - Fertig, wenn: Klippen/Wasserfälle erscheinen in einem Teil der Karten (Quote WIP), Lösbarkeit und Startzone bleiben ok, Brett baut ohne Fehler.
+- [ ] 3. **Kronenfarbe pro Region** – `Stages`/`Config`, `EnvironmentAssets` oder `BoardBuilder`
+  - Pro Region eine gewichtete Farbmischung für Kronen (WIP), zum Beispiel Grasland: meist mittelgrün, etwas hellgrün und etwa 10 % Herbst orange/rot. Für Sumpf, Eis und Vulkan legst du Platzhalterwerte an.
+  - Die Farbe gilt nur für Kronen-Teile: MeshParts mit `LeafyGrass` oder mit einer SurfaceAppearance mit `AlphaMode = Transparency`. Der Stamm bleibt unverändert. Setze sie über `SurfaceAppearance.Color` (mit pcall; schlägt das zur Laufzeit fehl, Hinweis in die Notizen und auf `MeshPart.Color` ausweichen). Gilt für Bäume, Büsche und den Umgebungsrand, deterministisch pro Platzierung.
+  - Fertig, wenn: Die Farbe ist pro Baum deterministisch und Stämme bleiben unverändert (Test mit Stub-SurfaceAppearance).
 
-- [x] 5. **Boss- und Miniboss-Karten auf neue Größe** – Grasland-Festung für Garrick als handgemachte 16×12-Karte (Festung oben, Leibwache, 6 Startfelder unten, Verstärkungs-Randfelder, gern mit Fluss/Klippe im Stil der Vorlage); Miniboss-Level nutzt den neuen Generator. Bossabläufe aus Phase 3 bleiben unverändert funktionsfähig.
+- [ ] 4. **Felsen in verschiedenen Größen + Deko-Steinchen** – `BoardBuilder.decorate` (Fall `M`, Klippen `C`), `Config`
+  - Bergfelder: zum Beispiel ein großer Fels und 1–2 kleinere, Größenspanne als WIP-Wert (etwa 0,5×–1,6× der Grundgröße), freie Drehung.
+  - Klippen (`C`): ein paar große Felsen auf der Oberkante, damit die Blöcke weniger glatt wirken. Klickbarkeit bleibt erhalten, weil die Modelle nicht abfragbar sind.
+  - `deco_stone`: Gibt es keine eigenen `deco_stone_*`-Varianten, werden Felsvarianten in Deko-Größe genutzt.
+  - Fertig, wenn: In einer Testkarte wird eine sichtbare Größenstreuung geprüft (Stub-Maße).
 
-- [x] 6. **Prüfskripte** – `tests/levelgen.test.luau`, `scripts/test-run.ps1`: alle neuen Regeln (Größe, Mäander, Seen/Inseln, Klippen/Wasserfall, Boss-Karte), Determinismus, Rückfallquote ≈ 0. Laufzeit im Rahmen halten (ggf. Seedzahl anpassen und begründen).
+- [ ] 5. **Gewölbte Brücken** – `BoardBuilder`, `Grid`, Client-Overlays, `Config`
+  - Für jede Querung (zusammenhängende `B`-Felder quer zum Fluss) **ein** `archbridge`-Modell, das von Ufer zu Ufer über die ganze Querung reicht. Ausrichtung je nach Flussrichtung; achte darauf, dass die Längsachse der Vorlage stimmt.
+  - Unter der Brücke sieht man Wasser: `B`-Felder zeigen bei vorhandenem Modell Wasserboden statt Holzboden, die Wasserhöhe bleibt wie bei `W`.
+  - **Figuren stehen auf dem Bogen:** Höhe pro `B`-Feld (und, falls die Brücke darauf aufliegt, pro Uferfeld), zum Beispiel einmalig beim Aufbau per Raycast auf das Brückenmodell gemessen oder aus einem Profil berechnet. Die Höhe muss Server **und** Client bekannt sein: Figurenposition, Bewegungs-Overlays, Auswahlring, Blob-Schatten (`UnitShadow`), Kampfkamera. Zentral über `Grid` lösen (zum Beispiel eine Höhenkorrektur pro Feld, die `toWorld` berücksichtigt), statt an jeder Stelle einzeln.
+  - Akzeptanz: Die Füße stehen höchstens ±0,3 Studs neben dem Brückenboden. Ohne `archbridge`-Variante bleiben bisherige Brücken und Höhen unverändert. Tests für Querungs-Erkennung (1 und 2 Felder breit), Ausrichtung und Höhenkorrektur.
 
-- [x] 7. Abschluss: `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1` = OK, Rojo-Build. Devlog **#33** „Level-Optik Etappe C1“, „Nächste Schritte“ (C2: runde Ufer/Sandstreifen, dichter Wald + Umriss, Wiesen-Deko). Committen, pushen, `.handoff/status` = `fertig`.
+- [ ] 6. **Runde Ufer mit Sandstreifen** – `BoardBuilder` (Bodenaufbau), `Config.FEEL`
+  - Ufer sollen rund statt rechteckig wirken: an Landfeldern neben Wasser ein schmaler Sand- oder Uferstreifen, an konvexen Ecken abgerundete Übergänge (zum Beispiel Zylinder-Teile), an konkaven Ecken passende Füllstücke. Raster, Klickfelder und Feldfarben bleiben eindeutig erkennbar, Brückenenden bleiben frei.
+  - Teilebudget als WIP-Wert; Teilezahl vorher/nachher in den Notizen.
+
+- [ ] 7. **Wiesen-Deko mittel** – `BoardBuilder.decorate` (Fall `.`), `Config.ENVIRONMENT`
+  - Etwa jedes zweite Wiesenfeld 1–2 Grasbüschel (`deco_grass`), dazu ab und zu Blumen (`deco_flower`, drei Farben) oder Steinchen, selten ein Zaunstück (`deco_fence`). Positionen am Feldrand, die Feldmitte bleibt frei (Zug-Ring/Figur sichtbar). Alle Quoten als WIP-Werte.
+  - Start- und Gegnerfelder bleiben gut lesbar, keine Deko auf Feldern mit Figuren beim Start.
+
+- [ ] 8. **Wasserfälle auf etwa jeder 6.–8. Karte** – `LevelGen`, `RunConfig`
+  - Wasserfälle auch an Seen und an anderen Flussenden, nicht nur links (Klippe am Ufer, Fall ins Wasser). Ziel-Quote 12–17 % der normalen Laufkarten, im Generatortest messen.
+  - Die Bedingungen aus C1 bleiben (Lösbarkeit, Startzone, `BoardBuilder.waterfall` prüft `C` → `W`).
+
+- [ ] 9. **Prüfskripte + Messung** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke je Karte (Mittel/Max über 100 Seeds, mit Stub-Varianten in Originalgröße der Kategorien) und Stub-Aufbauzeit.
+
+- [ ] 10. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#34** „Level-Optik Etappe C2“ (inklusive Creator-Store-Import und Credits-Hinweis), „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Lauf-Level 16×12: Kamera erreicht das ganze Brett, Start zeigt die eigene Truppe, Zoom ok (PC + Handy)
-- [ ] Flüsse geschwungen mit 2–3 Brücken; Seen mit Inseln; Klippen am Rand, manchmal Wasserfall
-- [ ] Karten wirken abwechslungsreich, Startfelder sinnvoll, alle Gegner erreichbar
-- [ ] Miniboss und Garrick funktionieren auf den neuen Karten
-- [ ] Handy flüssig (Aufbauzeit/Bildrate)
+- [ ] Waldfelder dicht mit 2–3 Bäumen, Kronen gemischt gefärbt (meist grün, einige Herbstbäume), Stämme natürlich
+- [ ] Figuren im Wald haben einen gut sichtbaren Umriss (blau/rot), der beim Bewegen/Sterben verschwindet; Auswahl- und Tutorial-Markierungen funktionieren weiter
+- [ ] Gewölbte Brücken: eine pro Querung, Figuren stehen auf dem Bogen, Bewegungsfelder liegen richtig
+- [ ] Ufer wirken rund, mit Sandstreifen; Felsen in verschiedenen Größen; Wiesen mit Gras, Blumen, Steinchen, vereinzelt Zaun
+- [ ] Ab und zu ein Wasserfall, auch an Seen
+- [ ] Alle Felder lassen sich anklicken/antippen, kein roter Output
+- [ ] Handy: flüssig, Ladezeit („Missionsaufbau …“) im Rahmen
 
 ## Nicht anfassen
-- Tutorial-Karten, Lager-/Boss-Logik (nur Karten), Brett-Grundoptik (C2), Spielregeln
+- Spielregeln, Generatorlogik außer Wasserfall-Quote/-Orte, Tutorial-Karten, Lager-/Boss-Logik, Bodentexturen (`GROUND_TEXTURES`-Werte setzt der Nutzer)
 
 ## Offene Fragen
-- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
+- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-- Schritt 1: Lauf 16×12, Bausteine 8×4 (2×3 Stücke; 32 statt 20 Felder pro Stück für größere zusammenhängende Gruppen). Bestehenden Katalog/Festung für lauffähige Zwischenstände auf neue Maße portiert; neue Entwürfe folgen in Schritt 2/5. Startfelder bevorzugen mittig die unteren zwei Reihen. Gegner WIP: min(12, 6 + Tiefe), obere sechs Reihen; Bosslogik unverändert. Grid/Brett bereits variabel; Umgebungsrand skaliert zusätzlich mit Größe. Laufkamera startet mittig unten, Zoom bis Brettdiagonale × 1,6 (16×12: 256 Studs); Tutorial bleibt zentriert.
-- Ausgangsmessung: 100 Seeds (1–100), Tiefe 1, sechs Startfelder, Fallback-Deko ohne importierte Assets: 10×8 im Mittel 744,2 Brettteile (633–979), Stub-Aufbau 12,03 ms. Reale Roblox-Aufbauzeit/Bildrate/Figurenaufbau kann nur der Nutzer in Studio/auf Handy bestätigen; hier ungetestet. Nachmessung folgt nach dem finalen Generator.
-
-- Schritt 2: 36 Bausteine aus vier handgezeichneten Wald-/Fels-/Ruinenkernen und neun exakten Randkombinationen. Alle Nord-/Westprofile vorhanden; kein Notanschluss nötig. 1.000 Seeds ohne Fluss: 1.000 verschiedene Karten, Gelände 46,10 %, 7.554 Wald- und 3.522 Felsanschlüsse (alle inneren Nähte geprüft), 0 Rückfälle. Pflichtcheck OK (36 Dateien).
-
-- Schritt 3: Flüsse 1–2 Felder breit mit mindestens drei Reihen Mäander-Spanne und 2–3 Querungen; geschützte volle Brücken/Ufer. Seen 3×3–5×4 mit unregelmäßigen Ecken, optional 1–2 Insel-Land-/Waldfeldern; Fluss/See dürfen zusammenfließen. Teiche 1–2 Felder. Hindernisgrenze WIP 32 %. Unabhängige Flutsuchen prüfen alle Gegner von jedem Start, einschließlich Inseln. Features als Serverdaten für gezielte Prüfungen.
-- Schritt 3 geprüft: 18.000 normale Level, 1.000 Optionen, 2.400 Boss-/Minibosskarten; 0 Rückfälle. 200/200 verschiedene Karten, Gelände 49,47 %, Flüsse 40,50 %, Seen 30,00 %, Inselkarten 14,00 %, Teiche 30,50 %. Prüflauf vorläufig auf 200 Seeds verkürzt (alle fünf Tiefen, drei Themen, sechs Teamgrößen bleiben); finale Erweiterung/Begründung in Schritt 6. Größenport-Korrektur: Verstärkungsfelder wieder an echten Rand verschoben. Pflichtcheck und 34.006 Laufprüfungen OK.
-
-- Schritt 4: Gelände C = Klippe, Höhe 8 statt Berg 4, für alle Bewegungstypen unpassierbar, dunklere senkrechte Seiten im bisherigen Bodenstil. Zufällige Randgruppen vor der Startzone; Quellklippe neben dem linken Flussrand. Wasserfall (hellblauer Quellstreifen, Fallfläche, drei Gischtteile) = fünf Parts, keine Partikel, über Config.FEEL.waterfallsEnabled abschaltbar. Main.server übergibt ausschließlich vom Generator erzeugte Features an BoardBuilder (notwendiger Anschluss). 200 BoardBuilder-Aufbauten mit realen Modulen/Stubs erfolgreich, sechs Wasserfälle inkl. Abschaltung und Klippen-Klickhöhe. 18.000 Level/2.400 Bosskarten grün, 0 Rückfälle; Klippenquote 40 %, Wasserfallquote 3 % im 200-Seed-Sample. Pflichtcheck und Laufprüfung OK; Studio-Darstellung ungetestet.
-
-- Schritt 5: Garricks handgezeichnete 16×12-Festung oben, Leibwache davor, Klippen am oberen Rand, Querfluss mit zwei Brücken, sechs mittige Starts unten und vier freie Randfelder. Seed-Spiegelung und sämtliche Bossabläufe unverändert; Miniboss nutzt neuen Generator. 2.400 Karten unabhängig von jedem Start auf Größe/Erreichbarkeit/freie Randfelder geprüft; 34.006 Lauf-/Boss-/Lagerprüfungen und Pflichtcheck OK.
-
-- Schritt 6: Dauerhaft 19.000 normale Levelprüfungen (200 Seeds × fünf Tiefen × drei Themen × sechs Teamgrößen = 18.000, dazu 1.000 Stichproben), 5.000 Optionsprüfungen, 2.400 Boss-/Minibosskarten, 96 erzwungene Kombinationen aller Landschaftsmerkmale mit Randseeds, erzwungener Rückfall und Determinismus. Vollständiges 1.000-Seed-Sample für Vielfalt/Quoten/alle inneren Anschlüsse bleibt erhalten; teure Kombinationen von 1.000 auf 200 Seeds reduziert, da das Brett 2,4× so groß ist und jeder Start unabhängig geflutet wird. Laufzeit 49,24 s, 0 Rückfälle. Vielfalt 1.000/1.000, Gelände 50,64 %, Flüsse 40,10 %, Seen 29,80 %, Inselkarten 14,60 %, Teiche 34,80 %, Klippen 39,90 %, Wasserfälle 3,60 %; 7.554 Wald-/3.522 Felsanschlüsse.
-- Neue Zusammenhangsprüfung fand zerlegte kleine Inselseen bei mehreren ausgeschnittenen Ecken: auf genau eine ausgeschnittene Ecke begrenzt, See-/Teich-/Klippengruppen orthogonal zusammenhängend geprüft. Neue tests/board.stubs.luau und tests/board.test.luau über scripts/test-run.ps1: tatsächlicher BoardBuilder/Kamera, Klickfelder/Klippenhöhe, fünf Wasserfallteile/Abschaltung, Terrain-Freiraum bei Größenwechsel, Fuß-/Reiter-Wegfindung, alle vier Kameraecken/Zoom, Tutorial 6×5 und 10×6 unverändert. 34.458 Laufprüfungen und 421.719 Brett-/Kamera-/Teileassertionen OK. Testfixture-Klassen/alte Tutorialmaße/CFrame-Zielweitergabe anhand echter Module korrigiert.
-- Nachmessung (gleiche Seeds 1–100, Tiefe 1, sechs Starts, ohne importierte Umgebungsassets): 16×12 im Mittel 1.848,6 Brettteile (1.570–2.305), Stub-Aufbau 33,46 ms, zwei Wasserfälle. Vorher 744,2 Teile (633–979), 12,03 ms. Reale Brett-/Figurenzeiten anhand „Missionsaufbau …“ und Handy-Bildrate weiterhin vom Nutzer in Studio testen; Stub-Zeiten messen keine Roblox-Replikation, Renderer oder importierte Modelle.
-
-- Schritt 7: Pflichtcheck OK (36 Dateien); Generator 49,24 s/alle oben genannten Prüfungen OK; Lauf-/Brett-/Kameraprüfung OK; Tutorialprüfung 168 OK; Rojo-Build TacticsGame.rbxlx erfolgreich. Devlog #33 und nächste Schritte (C1-Review/manueller Test, danach C2) ergänzt. Studio/Handy und Claude-Review offen; manuelle Checkboxen bleiben leer. Sieben Schritt-Commits auf feature/level-optik-c; Abschluss wird gepusht und als letzte Aktion .handoff/status = fertig geschrieben.
