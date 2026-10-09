@@ -17,7 +17,7 @@ Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`
   - Kamera: Grenzen/Zoom für das große Brett (ganzes Brett erreichbar; Startansicht auf eigene Truppe; Zoom-Obergrenze so, dass man das Brett überblicken kann). Terrain-Freiraum/Randfläche im BoardBuilder auf die neue Größe.
   - Fertig, wenn: Lauf-Level 16×12 bauen; Tutorial unverändert; Teilezahl/Aufbauzeit vorher/nachher in Notizen.
 
-- [ ] 2. **Neue, größere Bausteine** – `MapChunks.luau`
+- [x] 2. **Neue, größere Bausteine** – `MapChunks.luau`
   - Bausteinsatz für die neue Größe neu anlegen (mind. 30 Stücke), im Stil der Vorlage: große zusammenhängende Waldflächen, Felsgruppen, Lichtungen, kleine Festungen/Ruinen, gemischte Wald-Fels-Ränder. Rand-Profile wie bisher (Anschlüsse passend). Bausteine weiterhin ohne Wasser.
   - Fertig, wenn: Vielfalt-Kennzahlen (verschiedene Karten, Geländeanteil, Anschlüsse) in den Notizen.
 
@@ -54,3 +54,5 @@ Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`
 ## Notizen (Codex)
 - Schritt 1: Lauf 16×12, Bausteine 8×4 (2×3 Stücke; 32 statt 20 Felder pro Stück für größere zusammenhängende Gruppen). Bestehenden Katalog/Festung für lauffähige Zwischenstände auf neue Maße portiert; neue Entwürfe folgen in Schritt 2/5. Startfelder bevorzugen mittig die unteren zwei Reihen. Gegner WIP: min(12, 6 + Tiefe), obere sechs Reihen; Bosslogik unverändert. Grid/Brett bereits variabel; Umgebungsrand skaliert zusätzlich mit Größe. Laufkamera startet mittig unten, Zoom bis Brettdiagonale × 1,6 (16×12: 256 Studs); Tutorial bleibt zentriert.
 - Ausgangsmessung: 100 Seeds (1–100), Tiefe 1, sechs Startfelder, Fallback-Deko ohne importierte Assets: 10×8 im Mittel 744,2 Brettteile (633–979), Stub-Aufbau 12,03 ms. Reale Roblox-Aufbauzeit/Bildrate/Figurenaufbau kann nur der Nutzer in Studio/auf Handy bestätigen; hier ungetestet. Nachmessung folgt nach dem finalen Generator.
+
+- Schritt 2: 36 Bausteine aus vier handgezeichneten Wald-/Fels-/Ruinenkernen und neun exakten Randkombinationen. Alle Nord-/Westprofile vorhanden; kein Notanschluss nötig. 1.000 Seeds ohne Fluss: 1.000 verschiedene Karten, Gelände 46,10 %, 7.554 Wald- und 3.522 Felsanschlüsse (alle inneren Nähte geprüft), 0 Rückfälle. Pflichtcheck OK (36 Dateien).
