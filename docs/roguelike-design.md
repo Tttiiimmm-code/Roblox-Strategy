@@ -112,6 +112,16 @@ Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein ze
 - Missionen 3–5, Sterneziele und Schwierigkeitspfade entfernt. Weltkarten-Reiter verborgen/entfernt; Kriegstisch öffnet die Lauf-Teamwahl. Die spätere Lauf-Karte bleibt offen.
 - Prüfungen: `scripts/check.ps1`, `scripts/test-tutorial.ps1` (168 Stub-Prüfungen), `scripts/test-levelgen.ps1` und Rojo-Build. Zusätzlich 179 lokale UI-Anschlussprüfungen mit den vorhandenen Stubs. Darstellung, Replikation und Bedienung in Studio/auf dem Handy noch ungetestet; unabhängiger Review durch Claude ausstehend.
 
+## Entscheidungen Phase 3 – Bosse + Lager (09.10.2026)
+- **Grasland-Boss = Garrick** (Bandenführer, vorhandene Figur). **Miniboss = neuer Bandit** (z. B. sein Hauptmann; Name/Design Platzhalter, Nutzer entwirft).
+- **Garrick (Level 5):** deutlich stärkere Werte; steht in einer **Festung** auf einer **handgemachten Boss-Karte** und bleibt dort, **bis er verletzt wird**, danach bewegt er sich. Fähigkeit **„Kriegsschrei“**: alle Banditen in der Nähe +Stärke für 1 Runde (alle paar Runden). **Phase 2 bei halben KP:** 2–3 Banditen stürmen vom Kartenrand herein, **eine Runde vorher angekündigt**.
+- **Miniboss (Level 3):** höhere Werte, **bewegt sich aktiv**, aber mit geringerer Bewegungsweite als normale Gegner; **beschwört bei niedrigen KP 1–2 Gegner**. Keine weitere Phase.
+- **Boss-Level gewonnen, sobald der Boss fällt** (restliche Gegner fliehen).
+- **Lager:** volle Heilung, Teamwechsel über die Kaserne, Wiederbeleben. **Wiederbeleben kostet Gold (Grundpreis + Aufschlag pro Heldenlevel) oder einen festen Edelsteinpreis** (Werte WIP). Gefallene dürfen gegen Sammlungs-Helden **ausgewechselt** werden, bleiben aber tot, bis sie wiederbelebt werden.
+- **Lager-Rhythmus je Gebiet:** L1 Wahl · L2 Wahl · **L3 Miniboss** (fest) · L4 Wahl · **Extra-Lager (garantiert, zählt nicht als Level)** · **L5 Boss** (fest). In den Wahlen L1/L2/L4 kann zufällig ein Lager unter den Optionen sein – gewählt **ersetzt es den Kampf dieses Levels** (kein Kampf, keine Kampfbelohnung, man rückt ein Level vor).
+- **+1 Teamplatz nach jedem Gebietsboss** (wirksam beim nächsten Lager bzw. nächsten Gebiet).
+- Händler, Waffenbeute, Rückblende-Item und Notfall-Beschwörung folgen in Phase 4.
+
 ## Offene Punkte (vor der jeweiligen Etappe klären)
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
 - Konkrete Bosse und Minibosse je Gebiet (Namen, Fähigkeiten).
