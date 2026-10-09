@@ -169,6 +169,9 @@ local function buildResult(info, profile)
 	else
 		table.insert(lines, ("🪙 +%d Gold     💎 +%d Edelsteine"):format(info.reward.gold, info.reward.gems))
 	end
+	if (info.teamPlaceGained or 0) > 0 then
+		table.insert(lines, ("+%d Teamplatz: jetzt %d Plätze für das nächste Gebiet."):format(info.teamPlaceGained, info.maxTeam))
+	end
 	local heroIds = {}
 	for id in pairs(info.healed) do table.insert(heroIds, id) end
 	table.sort(heroIds)

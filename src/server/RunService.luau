@@ -78,7 +78,7 @@ local function summary(run, outcome)
 		run = true, ended = true, outcome = outcome, victory = outcome == "Completed",
 		cleared = run.cleared, totalLevels = RunConfig.totalLevels(),
 		earned = table.clone(run.earned), depth = run.depth, region = run.region,
-		reward = { gold = 0, gems = 0 }, healed = {},
+		reward = { gold = 0, gems = 0 }, healed = {}, maxTeam = run.maxTeam, teamPlaceGained = 0,
 	}
 end
 
@@ -103,7 +103,13 @@ function RunService.finish(profile, heroUnits, victory)
 				info.healed[id] = { before = before, after = member.hp, amount = member.hp - before, alive = member.alive, maxHp = unit and unit.maxHp or RunService.maxHp(id, profile.heroes[id]) }
 			end
 		end
-		local reward = run.options[run.current].reward
+		local option = run.options[run.current]
+		if option.kind == "boss" then
+			local before = run.maxTeam
+			run.maxTeam = math.min(RunConfig.MAX_TEAM, run.maxTeam + 1)
+			info.maxTeam, info.teamPlaceGained = run.maxTeam, run.maxTeam - before
+		end
+		local reward = option.reward
 		profile[reward.kind] += reward.amount
 		run.earned[reward.kind] += reward.amount
 		info.reward[reward.kind] = reward.amount

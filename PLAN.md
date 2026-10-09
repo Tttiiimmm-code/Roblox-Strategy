@@ -27,7 +27,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
   - **Miniboss-Level:** erzeugte Karte wie normale Level + Miniboss + kleine Leibwache.
   - Fertig, wenn: Prüfskript prüft Boss-/Miniboss-Karten (Erreichbarkeit, Startfelder, Verstärkungsfelder frei).
 
-- [ ] 4. **Sieg bei Bossfall** – `Main.server.luau` (`checkResult`), `RunService.finish`
+- [x] 4. **Sieg bei Bossfall** – `Main.server.luau` (`checkResult`), `RunService.finish`
   - In Boss-/Miniboss-Leveln: Boss fällt → sofort Sieg, übrige Gegner „fliehen“ (entfernen mit kurzer Ansage). Höhere Belohnung (WIP). Nach dem **Gebietsboss**: `run.maxTeam += 1` (bis `MAX_TEAM`), Hinweis im Ergebnis. Da aktuell nur das Grasland existiert, endet der Lauf danach wie bisher als „geschafft“ – Teamplatz-Logik muss trotzdem korrekt im Laufstand landen (für spätere Gebiete).
   - Fertig, wenn: Stub-Prüfung Boss-Sieg mit lebenden Gegnern, Miniboss-Sieg, Teamplatz.
 
@@ -66,3 +66,5 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - Schritt 2: Bewegungsweite als Einheitenwert (Grid mit erweitert); Bossereignisse, Randmarkierungen und Kriegsschrei-Symbol angebunden. Besetzte angekündigte Felder warten auf eine spätere freie Gegnerphase. Fähigkeiten- und KI-Stubs grün; Darstellung in Studio ungetestet.
 
 - Schritt 3: Grasland-Festung horizontal gespiegelt, sechs stabile Startfelder, drei Leibwachen und vier freie Randfelder. Normale Generatoraufrufe bleiben unverändert; Bossvarianten werden explizit gewählt. 2000 Lauf-Aufstellungen grün, zusätzliche 12000 Kartenprüfungen im Generatorrunner.
+
+- Schritt 4: Bossfall beendet den Kampf sofort, Leibwache flieht. Gebietsboss schreibt den Teamplatz vor Laufende in den Laufstand und ins Ergebnis. Echte Server-Stubs für beide Bosslevel grün.

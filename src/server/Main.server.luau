@@ -292,6 +292,7 @@ local function beginRunLevel(player, profile)
 	state.battleScenes = profile.settings.battleScenes
 	setupBattle(stage, { run = {
 		depth = run.depth, region = run.region, themeId = option.themeId,
+		kind = option.kind, bossId = stage.bossId,
 		totalLevels = RunConfig.totalLevels(), seed = option.seed,
 	} })
 	for i, id in ipairs(living) do
@@ -339,10 +340,11 @@ local function checkResult()
 	if state.result then
 		return true
 	end
-	local enemies, players, lordAlive = 0, 0, false
+	local enemies, players, lordAlive, bossAlive = 0, 0, false, false
 	for _, u in state.units do
 		if u.team == "Enemy" then
 			enemies += 1
+			if state.run and u.enemyKind == state.run.bossId and u.hp > 0 then bossAlive = true end
 		end
 		if u.team == "Player" then players += 1 end
 		if u.team == "Player" and u.isLord then
@@ -351,6 +353,13 @@ local function checkResult()
 	end
 	if (state.run and players == 0) or (not state.run and not lordAlive) then
 		state.result = "Defeat"
+	elseif state.run and state.run.bossId and not bossAlive then
+		state.result = "Victory"
+		local fleeing = {}
+		for id, unit in pairs(state.units) do if unit.team == "Enemy" then table.insert(fleeing, id) end end
+		for _, id in ipairs(fleeing) do state.units[id] = nil; UnitVisuals.remove(id, true) end
+		state.reinforcementMarks = {}
+		BattleEvent:FireAllClients({ ability = { type = "flee", text = "Der Anführer ist gefallen – die übrigen Gegner fliehen!" } })
 	elseif enemies == 0 then
 		state.result = "Victory"
 	end

@@ -36,7 +36,7 @@ for seed = 1, 1000 do
 			expect(info.victory, "Sieg verloren")
 		end
 	end
-	expect(profile.run == nil and run.cleared == 5, "Laufabschluss")
+	expect(profile.run == nil and run.cleared == 5 and run.maxTeam == 4, "Laufabschluss/Teamplatz")
 end
 print("OK: 1000 Laufabfolgen mit festen Bossen, Wahllagern und Extra-Lager.")
 
@@ -135,3 +135,31 @@ for seed = 1, 1000 do
 	end
 end
 print("OK: 2000 Bosskarten über die echte Laufanbindung.")
+
+local serverProfile = Profiles.get(player)
+serverProfile.tutorial.state = "skipped"
+serverProfile.heroes.bruno, serverProfile.heroes.tobi = Profiles.newHeroEntry(), Profiles.newHeroEntry()
+for _, depth in ipairs({ 3, 5 }) do
+	expect(testServer.command(player, { type = "StartRun", heroes = { "leon", "bruno", "tobi" } }), "Server-Laufstart")
+	local run = serverProfile.run
+	run.depth, run.cleared = depth, depth - 1
+	run.options = testModules.LevelGen.makeOptions(run.seed, depth, "greenland")
+	expect(testServer.command(player, { type = "ChooseLevel", index = 1 }), "Server-Bosswahl")
+	local state = testServer.state()
+	local bossId, guardAlive
+	for id, unit in pairs(state.units) do
+		if unit.enemyKind == state.run.bossId then bossId = id
+		elseif unit.team == "Enemy" then guardAlive = true end
+	end
+	expect(bossId and guardAlive and not testServer.checkResult(), "Boss fehlt/Sieg zu früh")
+	state.units[bossId] = nil
+	expect(testServer.checkResult() and state.result == "Victory", "Kein sofortiger Bosssieg")
+	for _, unit in pairs(state.units) do expect(unit.team ~= "Enemy", "Leibwache flieht nicht") end
+	expect(state.resultInfo.reward.gold == RC.rewardAmount("gold", depth), "Bossbelohnung")
+	if depth == 5 then
+		expect(run.maxTeam == 4 and state.resultInfo.teamPlaceGained == 1 and not serverProfile.run, "Teamplatz bei Laufende")
+	else expect(run.maxTeam == 3 and state.resultInfo.teamPlaceGained == 0, "Teamplatz beim Miniboss") end
+	expect(testServer.command(player, { type = "ToLobby" }), "Ergebnis verlassen")
+	serverProfile.run = nil
+end
+print("OK: Sofortiger Boss-/Miniboss-Sieg mit lebender Leibwache, Belohnung und Teamplatz.")
