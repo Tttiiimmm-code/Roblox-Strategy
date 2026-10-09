@@ -1,88 +1,70 @@
-# PLAN: Level-Optik Etappe C5 – Tal-Landschaft aus Terrain, Felshügel statt Würfel, lichterer Wald
+# PLAN: Level-Optik Etappe C6 – Zoomgrenze, Bodenmaterialien, saubere Felshügel, Wurzelfüße, Wasserfälle
 
-Ziel: Ein Optik-Standard wie bei beliebten Roblox-Spielen mit Spielfeld von oben (Tower-Defense-/Anime-Spiele): **natürliche Formen statt Kisten**, das Spielfeld **in eine Landschaft eingebettet** statt von einem Ring aus Einzelobjekten umgeben, **keine sichtbaren Platzhalter**, Ferne geht in Dunst über.
-Branch: `feature/level-optik-c` (enthält Phase 3, C1–C4)
+Ziel: Feinschliff nach dem Studio-/Handy-Test von C5 (Nutzer, 10.10.2026).
+Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
 
-**Nutzer-Feedback zum C4-Test (10.10.2026):** Thronsaal normal, keine Warnungen, Schatten ok, Figuren auf Brücken ok, Handy (Samsung S25+) flüssig. **Berge sehen aus wie braune Würfel mit Steinen**, **Wald noch etwas zu dicht**, **Gelände außerhalb muss besser werden: ein Ring aus zufälligen Gegenständen sieht nicht schön aus**, **hintere Bäume sind nur runde Kronen** (Kugel-Platzhalter).
+**Nutzer-Feedback zum C5-Test:**
+- **OK:** Aufbau „Missionsaufbau Lauf: Brett 263 ms, Figuren 16 ms“, PC und Handy flüssig, **Wald gut so**, Thronsaal unverändert.
+- **Zoom:** Ganz herausgezoomt sieht man das Ende der Karte. Das Herauszoomen soll nur so weit gehen, wie es sinnvoll ist.
+- **Spielfeldboden zu grell:** Er soll zum Terrain außerhalb und zu den Baum-/Grasmodellen passen.
+- **Felsen (`M`):** Kleine Steine schweben über dem großen Felsen; Anzahl, Farbe und Detailgrad der kleinen Steine passen nicht zum großen Terrain-Felsen. **Füße von Einheiten clippen** durch die großen Felsen. Auf dem Screenshot verdeckt der Felshügel außerdem einen Teil des gelben Zielfelds daneben.
+- **Bäume:** Die **Baumfüße fehlen**; die Stämme werden nach unten dünner, das ergibt keinen Sinn. Claude: Yasu's Paket liefert dafür eigene Wurzelstücke (`deco_root_1…5`, „Root Meshes“), die an den Stammfuß gehören; bisher werden sie nur lose als Deko gesetzt.
+- **Wasserfälle:** In 10 getesteten Karten keinen gesehen.
 
 **Nutzerentscheidungen (10.10.2026):**
-- **Umgebung: Tal mit Hügeln und Bergen:** Das Spielfeld liegt in einem Wiesental. Ringsum steigen Grashügel mit Gruppen echter Yasu-Bäume an, hinten und an den Seiten felsige Berge, die in Dunst übergehen. Vorne zur Kamera (+Z in Grundausrichtung) flach, damit nichts das Brett verdeckt. Gebaut mit **Roblox-Terrain**. **Keine Kugel-Platzhalter** mehr.
-- **Bergfelder: Terrain + Felsmodelle:** Benachbarte `M`-Felder (und `C`-Klippen) werden zu natürlichen Felshügeln aus Terrain geformt, mit größeren Felsmodellen aus dem Paket als Details. Das Feldraster und die Klickflächen bleiben erkennbar.
-- **Wald: 1–2 Bäume pro Waldfeld** (statt 2–3), Kronengröße wie in C4 (1,1–1,2 Felder).
+- **Spielfeldboden: Roblox-Materialien** in denselben Materialien/Farben wie das Terrain drumherum (Gras, Erde, Fels; `Config.LANDSCAPE.palette` bzw. Region in `Stages`). Gedämpft, einheitlich. Eigene Texturen können später über `GROUND_TEXTURES` darüber gelegt werden.
+- **Wasserfälle:** Sichtbarkeit mit den Terrain-Klippen prüfen und reparieren, **Häufigkeit auf etwa jede 4.–5. Karte** (20–25 % der normalen Laufkarten).
+- Nicht in diesem Plan (folgen separat): **eigener 3D-Lagerplatz** (Lichtung mit Lagerfeuer und Zelten, Helden sitzen ums Feuer). **Notfall-Beschwörung** bleibt bei Phase 4.
 
-**Bestehender Code:**
-- `src/server/BoardBuilder.luau`: Terrain wird bisher nur geräumt (`lastTerrainRegion`, `FillBlock(... Air)`, nur bei Größenwechsel). Umgebungsring (C3/C4, `outer`-Platzierung, Kronen-Ersatzteile), Sichtboden-Parts (`groundZoomMargin = 4.2`, bis ~1.075 Studs), Felswände `M`/`C` (C3: Wedge-Facetten), Waldfelder (`decorate` Fall `F`), Klick-Kacheln (`tile.CanQuery = true`).
-- `src/shared/Config.luau`: `ENVIRONMENT.forest` (`treesPerForestTile`, `thirdTreeChance`), `ENVIRONMENT.outer`, `ENVIRONMENT.rocks`, `TERRAIN.M` (Höhe 4, begehbar mit Kosten) und `TERRAIN.C` (Höhe 8, unpassierbar), `FEEL.atmosphere.battle` (Atmosphere/ColorCorrection/Bloom vorhanden).
-- `src/client/Main.client.luau:614–627`: Klick-Raycast mit **Include**-Filter auf `Board` + `Units`, ignoriert Terrain also bereits. So muss es bleiben.
-- `src/client/CameraController.luau`: frei drehbar (`rotateBy`, `yaw`), Zoomgrenzen aus C1.
-- `Config.HUB_ORIGIN = (0, 0, 420)`: Der Thronsaal (ca. x −50…50, z 345…495) darf weder von Terrain noch von Umgebungsteilen berührt werden.
-- Tests/Messung: `tests/outer.test.luau`, `tests/walls.test.luau`, `tests/environment-metrics.test.luau`, `tests/board.stubs.luau`, `scripts/measure-environment.ps1`.
+**Bestehender Code:** `src/client/CameraController.luau` (`maximumZoom()`, `Config.CAMERA.zoomOverviewMin/zoomOverviewScale`), `src/server/LandscapeBuilder.luau` (`zoomMargin = 4.2`, `sculptDistance`, Fernboden, `surface()` für `M`/`C`, `rockFields`), `src/server/BoardBuilder.luau` (Bodenaufbau mit `TERRAIN[ch].color/material`, Standkappen auf `M`, Felsmodelle an `M`/`C`, Waldfelder, `waterfall()`), `src/shared/Config.luau` (`TERRAIN`, `GROUND_TEXTURES`, `GROUND_FLECKS`, `LANDSCAPE`, `ENVIRONMENT.rocks/forest`), `src/shared/Stages.luau` (Regionspaletten), `src/shared/LevelGen.luau` + `RunConfig.WATERFALL_CHANCE` (aktuell 0,56 bedingt, ergibt 15,6 %), Tests `tests/landscape.test.luau`, `tests/walls.test.luau`, `tests/environment-metrics.test.luau`, `tests/levelgen.test.luau`, Messung `scripts/measure-environment.ps1`.
 
-**Leitlinien:**
-- **Spielregeln und Lesbarkeit:** Feldraster, Klickflächen, Bewegungs-Overlays, Figurenhöhe (`Grid.toWorld`/`tileHeight`), Brückenhöhen und Umrisse funktionieren unverändert. Terrain darf Overlays und Figuren auf begehbaren Feldern nicht durchdringen.
-- **Leistung:** Terrain statt hunderter Einzelteile. Dazu Teile/Dreiecke vorher/nachher (`measure-environment.ps1`) und die Zahl der Terrain-Schreibaufrufe bzw. das Terrain-Volumen in den Notizen. Die reale Aufbauzeit („Missionsaufbau …“) misst der Nutzer in Studio. Terrain-Aufbau so bündeln, dass er auch auf dem Server zügig bleibt (wenige große `Fill*`-Aufrufe bzw. `WriteVoxels` in Blöcken).
-- **Determinismus:** gleiche Karte = gleiche Landschaft (Seed aus Karte/Lauf).
-- **Terrain-Aufräumen:** Bei jedem Brettaufbau wird das Terrain des vorherigen Bretts vollständig entfernt (nicht nur bei Größenwechsel), auch Tutorial ↔ Lauf. Der Thronsaal bleibt unberührt.
-- Part-Fallback ohne Paket bleibt funktionsfähig (Terrain ist immer verfügbar; nur Modelle fallen weg).
-- Alle Werte WIP in `Config`. Ein Commit pro Schritt, alle Prüfskripte grün. Geschmacksfragen: zurückhaltende Variante, über Config umstellbar, in den Notizen nennen.
+**Leitlinien:** Klickbarkeit, Figurenmitte, Overlays, Brückenhöhen, Umrisse, Determinismus und Part-Fallback bleiben erhalten. Alle Werte WIP in `Config`. Teile/Dreiecke/Terrain-Volumen vorher/nachher in den Notizen. Ein Commit pro Schritt, alle Prüfskripte grün. Geschmacksfragen: zurückhaltende Variante, über Config umstellbar, in den Notizen nennen.
 
 ## Schritte
 
-- [x] 1. **Wald lichter** – `Config.ENVIRONMENT.forest`, `BoardBuilder.decorate` (Fall `F`)
-  - 1–2 Bäume pro Waldfeld (WIP z. B. `treesPerForestTile = {min = 1, max = 2}`, Anteil mit 2 Bäumen als WIP-Wert), dritter Baum entfällt. Kronengröße aus C4 bleibt. Bei einem Baum steht er leicht außermittig, damit die Figurenmitte sichtbarer ist.
-  - Fertig, wenn: Stub prüft 1–2 Bäume pro Feld und Determinismus; Teile/Dreiecke vorher/nachher.
+- [ ] 1. **Zoomgrenze + kleineres Terrain** – `CameraController`, `Config.CAMERA`, `Config.LANDSCAPE`
+  - Bestimme die größte sinnvolle Zoomstufe: Das ganze Brett passt bequem ins Bild (PC 16:9 und Handy quer), aber auch bei allen Kameradrehungen und Brettecken ist **kein Kartenende** zu sehen. Die Grenze leitet sich aus Brettgröße und Landschaftsgröße ab, nicht als freie Zahl. Kleine Bretter (Tutorial) bekommen eine passende kleinere Grenze.
+  - Danach die Landschaft (`zoomMargin`, Fernboden, Aufräumbereich) auf das verkleinern, was bei dieser Grenze sichtbar ist, plus Sicherheitsrand. Ziel: kürzerer Aufbau und weniger Terrain zum Übertragen. Der Dunst (`FEEL.atmosphere`) darf so abgestimmt werden, dass der Horizont weich ausläuft.
+  - Fertig, wenn: Strahl-/Sichtprüfung (wie C3-Bodentest: vier Ecken, acht Drehungen, 4:3/16:9/21:9, FOV) zeigt bei maximalem Zoom nur Landschaft bzw. Dunst, kein Kartenende; Terrain-Volumen und Aufrufe vorher/nachher in den Notizen.
 
-- [x] 2. **Tal-Landschaft aus Terrain** – neues Modul, z. B. `src/server/LandscapeBuilder.luau`, aufgerufen aus `BoardBuilder.build`; `Config.LANDSCAPE` (WIP), Farben/Materialien pro Region in `Stages`
-  - **Ersetzt** den Umgebungsring aus C3/C4 (Bäume/Büsche/Felsen in Ringform) und **alle Kronen-Ersatzteile**. Der Sichtboden aus Parts wird durch Terrain ersetzt oder nur noch dort genutzt, wo Terrain nicht hinreicht (in den Notizen begründen).
-  - Form: Direkt ums Brett ein flacher Wiesenrand (etwa 1–2 Felder, Höhe wie Brettboden). Danach steigen **Grashügel** an, unregelmäßig mit Mulden und Kuppen statt eines gleichmäßigen Walls. **Hinten und an den Seiten** gehen sie in **felsige Berge** über (Rock/Slate oben, Grass/Ground an den Hängen, WIP-Materialien). **Vorne** (+Z in Grundausrichtung) bleibt es flach bis leicht abfallend, sodass aus Start- und Normalansicht nichts das Brett verdeckt. Die Höhen nehmen mit der Entfernung zu, damit die Berge den Horizont bilden. Ganz außen geht die Landschaft in den vorhandenen Atmosphere-Dunst über; beim maximalen Zoom ist kein harter Rand und keine leere Fläche zu sehen.
-  - **Echte Yasu-Bäume in Gruppen** auf Hügeln und Hangfüßen (Cluster mit Lücken, keine Reihen), dazu einige Felsmodelle und Büsche als Details. Es gibt keine Kugel-/Kronen-Platzhalter mehr. Die Baumzahl der Landschaft ist als WIP-Wert begrenzt, mit Terrain als Hauptträger der Form.
-  - Wasser: Fließt ein Fluss am Brettrand hinaus, darf er im Terrain sichtbar weiterlaufen (Terrain-Wasser), optional als WIP-Schalter. Wasserflächen auf dem Brett bleiben wie sie sind.
-  - Kamera frei drehbar: Lösung für die flache Vorderseite wie in C4 (Grundausrichtung) beibehalten oder verbessern; in den Notizen nennen.
-  - Fertig, wenn: Stub/Test prüft, dass kein Terrain oder Objekt Brettfelder überdeckt (Terrain-Oberfläche im Brettbereich unter Feldhöhe bzw. geräumt), die Vorderseite unter einer WIP-Höchsthöhe bleibt, hinten/seitlich höher ist, der Thronsaal-Bereich frei bleibt und dass alles deterministisch und vollständig aufgeräumt wird (zweiter Aufbau mit anderer Karte hinterlässt kein altes Terrain). Teile/Dreiecke vorher/nachher.
+- [ ] 2. **Spielfeldboden aus Roblox-Materialien** – `Config.TERRAIN`, `BoardBuilder` (Bodenaufbau), `Stages`, `Config.LANDSCAPE.palette`
+  - Bodenflächen der Felder nutzen Roblox-Materialien passend zum Terrain: Wiese `.` = Grass, Wald `F` = Grass (dunkler) oder LeafyGrass, Weg/Erde = Ground, Fels = Rock/Slate, Sumpf passend. Farben aus derselben Regionspalette wie das Terrain, damit Spielfeld und Umgebung nahtlos wirken. Gedämpft, nicht grell. Die Felder bleiben unterscheidbar (Wald etwas dunkler als Wiese), das Raster bleibt sichtbar.
+  - Bodenflecken (`GROUND_FLECKS`) und Sandstreifen farblich an die neue Basis anpassen oder abschalten, wenn sie mit dem Material unruhig wirken (Entscheidung in den Notizen).
+  - `GROUND_TEXTURES` mit eigener Bild-ID hat weiterhin Vorrang (spätere Nutzertexturen).
+  - Fertig, wenn: Stub prüft Material/Farbe pro Gelände aus der Regionspalette und den Vorrang von `GROUND_TEXTURES`.
 
-- [x] 3. **Felshügel statt Würfel** – `BoardBuilder` (Bodenaufbau `M`/`C`, Felswände aus C3), `LandscapeBuilder` bzw. eigener Helfer, `Config`
-  - Zusammenhängende `M`-Gruppen werden zu einem **organischen Felshügel aus Terrain** geformt (Rock/Slate, Grass an flachen Stellen, WIP). Die Hügelform greift über Feldgrenzen weich ineinander. **Auf jedem `M`-Feld** bleibt um die Feldmitte eine **ebene Standfläche in Feldhöhe** (`TERRAIN.M.height`), damit Figur, Overlay und Auswahlring richtig sitzen; Terrain ragt dort nicht über die Overlays.
-  - `C`-Klippen werden als steilere, höhere Felsformation aus Terrain gebaut (unpassierbar, Oberkante unregelmäßig). Die Wasserfälle (`BoardBuilder.waterfall`) setzen an der neuen Oberkante richtig an.
-  - Die braunen Kistenkörper und die Wedge-Facetten aus C3 entfallen für `M`/`C`, oder sie werden vollständig vom Terrain verdeckt (dann nicht mehr sichtbar und ohne CastShadow). Die Klick-Kacheln bleiben (Raycast ignoriert Terrain).
-  - **Größere Felsmodelle** aus dem Paket als Details auf und an den Hügeln (mehrere Größen, nur am Rand und an den Hängen, nicht auf der Standfläche).
-  - Feldraster und Feldgrenzen bleiben auf `M` erkennbar (z. B. Rasterlinien über der Standfläche). In den Notizen beschreiben, wie.
-  - Fertig, wenn: Stub prüft ebene Standflächen auf allen `M`-Feldern (Terrain-Oberfläche an der Feldmitte ≈ Feldhöhe, keine Überdeckung der Overlay-Höhe), Klippen unpassierbar und höher, Felsmodelle nicht auf Standflächen, Klickbarkeit erhalten, Wasserfall-Anschluss korrekt. Teile/Dreiecke vorher/nachher.
+- [ ] 3. **Saubere Felshügel** – `LandscapeBuilder.surface` (`M`/`C`), `BoardBuilder` (Standkappen, Felsmodelle an `M`/`C`), `Config.LANDSCAPE.rockFields`, `ENVIRONMENT.rocks`
+  - **Keine clippenden Füße:** Die *gerenderte* Terrain-Oberfläche auf `M`-Feldern liegt im Standbereich unter der Figuren-/Overlayhöhe. Achtung: Roblox-Smooth-Terrain glättet zwischen 4-Stud-Voxeln und kann dadurch über die Belegungshöhe hinausragen; dafür Sicherheitsabstand einplanen. Alternative: Die Standhöhe der Figur auf `M` an die sichtbare Felsoberfläche anpassen (zentral über `Grid`-Höhen wie bei Brücken). Wähle die robustere Variante und begründe sie.
+  - **Nachbarfelder frei:** Der Felshügel bleibt innerhalb der `M`/`C`-Felder (plus höchstens kleinem Überhang unterhalb der Overlayhöhe). Overlays und Zielfelder auf Nachbarfeldern werden nicht verdeckt.
+  - **Kleine Steine:** keine schwebenden Steine. Platzierung auf der tatsächlichen Hügeloberfläche (z. B. Höhe aus `LandscapeBuilder.surface`), leicht eingesunken. Deutlich weniger (WIP), und eingefärbt bzw. abgestimmt auf Farbe und Material des Terrain-Felsens (Rock/Slate-Palette). Wirkt ein Paketfels neben dem glatten Terrain zu detailreich, lieber größere, ruhigere Felsen oder gar keine.
+  - **Standkappen** auf `M` farblich an den Fels anpassen, damit sie nicht als helle Quadrate auffallen.
+  - Fertig, wenn: Stub prüft Terrain-Höhe mit Glättungsreserve unter der Standhöhe, keine Terrainbelegung über Overlayhöhe in Nachbarfeldern, alle Felsdetails auf der Oberfläche (kein Abstand > WIP-Toleranz nach unten), geringere Anzahl. Teile/Dreiecke vorher/nachher.
 
-- [x] 4. **Messung + Prüfskripte** – Tests für alle Schritte. In den Notizen: Teile, geschätzte Dreiecke, Terrain-Volumen/Schreibaufrufe und Stub-Aufbauzeit vorher/nachher (100 Seeds, Paket-Fixtures). Tutorial-Karten bauen weiterhin fehlerfrei; ihre Umgebung nutzt dieselbe Landschaft.
+- [ ] 4. **Wurzelfüße an Bäumen** – `BoardBuilder` (Waldfelder), `LandscapeBuilder.details`, `EnvironmentAssets`, `Config`
+  - Jeder Paketbaum (Brett und Landschaft) bekommt ein `deco_root`-Modell am Stammfuß: zentriert auf den Stamm (Wood-MeshPart des Baums), skaliert auf die Stammdicke am unteren Ende, leicht in den Boden eingesunken, zufällig gedreht. So endet der Stamm nicht mehr in einer dünnen Spitze.
+  - Die bisherigen losen `deco_root`-Platzierungen als Unterholz entfallen oder werden reduziert, um das Dreieckbudget zu halten.
+  - Ohne Paket: keine Änderung am Part-Fallback.
+  - Fertig, wenn: Stub prüft: pro Paketbaum genau ein Wurzelfuß, Mittelpunkt innerhalb einer WIP-Toleranz um den Stammfuß, Skalierung relativ zur Stammbreite, deterministisch. Teile/Dreiecke vorher/nachher.
 
-- [x] 5. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#37** „Level-Optik Etappe C5“ (inklusive Optik-Standard: natürliche Formen, eingebettete Karte, keine Platzhalter), „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
+- [ ] 5. **Wasserfälle sichtbar + häufiger** – `LevelGen`, `RunConfig`, `BoardBuilder.waterfall`, `LandscapeBuilder` (Klippenkanal)
+  - Prüfe, ob Wasserfälle mit den Terrain-Klippen aus C5 noch sichtbar sind (Quellstreifen, Fallfläche und Gischt nicht im Terrain versteckt, Kanal in der Klippenoberkante frei, Fallfläche sitzt an der sichtbaren Klippenkante). Reparieren, falls nötig.
+  - Häufigkeit auf **20–25 %** der normalen Laufkarten anheben (WIP), im Generatortest messen. Lösbarkeit und Startzone unverändert.
+  - Fertig, wenn: Generatortest zeigt 20–25 %, und ein Brett-Stub prüft, dass alle Wasserfallteile außerhalb des Terrain-Volumens liegen und an der Klippenkante anschließen.
+
+- [ ] 6. **Messung + Abschluss:** Tests für alle Schritte; `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#38** „Level-Optik Etappe C6“, „Nächste Schritte“ (3D-Lagerplatz als nächster Plan; Notfall-Beschwörung Phase 4). Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Spielfeld liegt in einem Wiesental: Grashügel mit Baumgruppen, hinten/seitlich felsige Berge im Dunst; vorne flach, nichts verdeckt das Brett; keine Kugel-Platzhalter, kein Ring aus Einzelobjekten
-- [ ] Ganz herausgezoomt und beim Drehen kein harter Rand / keine leere Fläche
-- [ ] Bergfelder sind natürliche Felshügel mit Felsen; Figuren stehen sauber auf Bergfeldern, Bewegungsfelder sind sichtbar und anklickbar
-- [ ] Klippen als Felsformation, Wasserfälle setzen richtig an
-- [ ] Wald luftiger (1–2 Bäume pro Feld)
-- [ ] Thronsaal unverändert; Tutorial-Missionen sehen ordentlich aus
-- [ ] Aufbauzeit („Missionsaufbau …“) im Rahmen, Handy weiterhin flüssig
+- [ ] Maximal herausgezoomt: ganzes Brett im Bild, kein Kartenende, auch beim Drehen
+- [ ] Spielfeldboden gedämpft, passt zu Terrain und Modellen; Felder weiterhin unterscheidbar, Raster sichtbar
+- [ ] Felshügel: keine clippenden Füße, keine schwebenden Steine, Steine passen farblich, Zielfelder daneben frei
+- [ ] Bäume mit Wurzelfuß statt dünner Spitze
+- [ ] Wasserfälle tauchen etwa auf jeder 4.–5. Karte auf und sind gut sichtbar
+- [ ] „Missionsaufbau …“ gleich schnell oder schneller als 263 ms; Handy flüssig
 
 ## Nicht anfassen
-- Spielregeln, Generator, Brücken, Ufer, Wiesen-Deko, Umrisse, UI, Lager-/Boss-Logik
+- Spielregeln, Generator (außer Wasserfall), Brücken, Ufer-Logik, Wiesen-Deko-Mengen, Umrisse, UI, Lager-/Boss-Logik, Thronsaal
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-
-- Schritt 1: 35 % zweite Bäume, ein Baum 0,22 Felder außermittig; C4-Kronenmaße erhalten. Paket-/Fallback-Stubs prüfen jedes Waldfeld und Determinismus. Fallback mit kantiger Tannensilhouette statt Kugelkronen. Ausgangsstand `ad26c63`: 1.989,5/2.128 Teile, 343.195/495.996 geschätzte Dreiecke, 101,43/126,15 ms Stub-Aufbau (Mittel/Max; 100 Seeds).
-- Schritt 1 nachher: 1.908,0/2.072 Teile, 282.045/368.996 geschätzte Dreiecke, 95,27/126,74 ms Stub-Aufbau; Syntaxcheck grün.
-- Schritt 2: Terrain-Tal mit 1,5 Feldern flachem Rand, ansteigenden Grashügeln und Fels-/Schieferkuppen hinten/seitlich. 12 lockere Cluster mit maximal 32 echten Paketbäumen; ohne Paket trägt Terrain die Umgebung, keine Kronen-Ersatzteile. Sichtboden-Parts und Ringkonfiguration entfernt. Fernboden bis zum bisherigen Zoomrand in großen Terrain-Blöcken; detaillierte Nahlandschaft in 32×32-Voxelblöcken. Hub-Schutz ±80/±100 Studs wird vor jedem Schreib-/Löschaufruf geometrisch ausgespart. Jeder Aufbau löscht die alten und neuen Flächen, auch bei gleicher Größe. Vorderseite bleibt wie C4 in Grundausrichtung +Z, Kamera unverändert frei drehbar. Optionale Flussfortsetzung vorerst ausgelassen. Material/Farben pro Region in Stages. Nachher: 1.863,7/2.020 Teile, 279.952/370.596 geschätzte Modelldreiecke, 200,47/217,45 ms Stub-Aufbau (inklusive Terrain-Stubs; reale Roblox-Zeit offen). Tests prüfen Schreibdaten und Hub-Sentinel, keine gerenderte Terrain-Oberfläche.
-- Schritt 3: M/C verwenden dieselbe Terrain-Schreibmatrix wie das Tal; zusammenliegende Felsfelder verschmelzen. Alle braunen M/C-Bodenkörper und Wedge-Facetten entfernt. M-Terrain 3,73-3,85 Studs, darüber je Feld eine kleine felsfarbene Standkappe (4,4×4,4×0,4) mit Oberseite exakt bei 4; bei Roblox’ 4-Stud-Voxelauflösung sichert sie ebene Figuren-/Ringhöhen. Terrain bleibt unter Feld-/Overlayhöhe, vorhandene Rasterlinien auf M bleiben bei Feldhöhe sichtbar. C-Oberkante 8-11 Studs, am Wasserfallkanal genau 8. Größere Paketfelsen stehen in den Ecken/am Hang mit 2,3 Studs freier Bergmitte; ohne Paket bildet Terrain den Fels, keine Ersatzwürfel. Nachher: 1.657,3/1.787 Teile, 273.495/367.368 geschätzte Modelldreiecke, 194,10/220,63 ms Stub-Aufbau. Felshügel-/Klick-/Wasserfall-/Aufräumtests und Syntax grün; Terrain-Meshing weiterhin nur in Studio prüfbar.
-
-- Schritt 4: Einheitliche Messung mit aktuellen Stubs, maßhaltigen Paket-Fixtures, Seeds 1–100, Grünland/Tiefe 1. Teile/Dreiecke beinhalten Brett und Modelle, **keine Terrain-Dreiecke**. Zeiten enthalten Terrain-Datenaufbau und Stub-Validierung, keine Rendering-/Roblox-Messung. `measure-environment.ps1` unterstützt alte Revisionen ohne Landschaftsmodul und bereinigt die Fernboden-Doppelzählung im Zwischenstand.
-
-| Stand | Teile Mittel / Max | Modell-/Partdreiecke Mittel / Max | Stub-Aufbau ms Mittel / Max |
-|---|---:|---:|---:|
-| Vor C5 (`ad26c63`) | 1.989,5 / 2.128 | 343.195 / 495.996 | 103,07 / 144,07 |
-| Schritt 1 (`817d258`) | 1.908,0 / 2.072 | 282.045 / 368.996 | 92,75 / 115,69 |
-| Schritt 2 (`59cf25e`) | 1.863,7 / 2.020 | 279.952 / 370.596 | 207,32 / 234,20 |
-| Schritte 3/4 | 1.657,3 / 1.787 | 273.495 / 367.368 | 197,67 / 267,75 |
-
-- Terrain: vor C5 kein Festvolumen, nur ein initialer Air-Aufruf in der 100-Seed-Probe (Mittel 0,01). Schritt 2 netto 44.585.014/44.664.539 Studs³ (Mittel/Max); Schritte 3/4 netto 44.611.829/44.707.799 Studs³, aus Voxelbelegung und Fernboden berechnet. 247.327/258.048 verarbeitete Nah-Voxels, 16 `WriteVoxels`-Aufrufe je 16×12-Brett. Dazu 8 Fernboden-`FillBlock` und 4 Air-Aufrufe beim Erstaufbau bzw. 8 beim Folgeaufbau: insgesamt 28/32, Mittel 31,96. Hub-Aussparung bleibt bei allen Aufrufen frei. Der Fernboden trägt den bisherigen großen Zoom-Sichtbereich; Volumen und längere Stub-Zeit sind ausdrücklich kein Nachweis für mobile Leistung. Die Schutzfläche des separaten Hubs ist in den Zoomtests ausgespart; deren Sichtbarkeit/Dunst muss der Nutzer in Studio beurteilen.
-- Waldprobe vor/nach C5: gleiche Kronenmaße 1,1–1,2 Felder, AABB-Abdeckung 99,48 % → 95,43 % (nur informativ). Terrain-Stubs prüfen ausgerichtete Regionen, gültige 3D-Arrays/Belegung, Hub-Schutz aller Schreibblöcke, Kartenwechsel einschließlich gleicher Größe, M/C-Höhen/Standkappen, Wasserfallanschluss und Paket-/Fallback-Determinismus. Tutorial-Karten durchlaufen dieselbe Landschaft. Keine Spielregeln oder Client-Raycastfilter geändert. Standkappen begründet durch [Roblox-Terrain mit festem 4-Stud-Raster](https://create.roblox.com/docs/reference/engine/classes/Terrain).
-- Schritt 5: Alle Pflichtprüfungen grün: `check.ps1` (38 Dateien), `test-levelgen.ps1` (19.000 Level-, 5.000 Options-, 96 Landschaftskombinationen, 2.400 Boss-/Minibossprüfungen), `test-run.ps1` (34.458 Lauf-Stubs, 408.732 Brett-/Kameraprüfungen plus C5-Tests), `test-tutorial.ps1` (168), `test-run-ui.ps1` (116), Rojo-Build `TacticsGame.rbxlx`. Devlog #37 und nächste Schritte aktualisiert. **Studio/Handy für C5 ungetestet, Claude-Review ausstehend**; manuelle Checkboxen bleiben offen. Sandbox-Ausnahme gemäß dauerhafter Nutzerregel genutzt. Fünf separate Schritt-Commits auf `feature/level-optik-c`; Abschluss per Push und `.handoff/status = fertig`.
