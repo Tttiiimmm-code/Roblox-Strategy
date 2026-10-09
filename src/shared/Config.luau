@@ -175,16 +175,18 @@ Config.ENVIRONMENT = {
 	},
 	outer = {
 		tree = { height = 1.8, crownWidth = 2.4 },
-		rock = { height = 0.75, width = 0.9 },
-		bush = { height = 0.45, width = 0.7 },
-		nearSpacing = 2.2, farSpacing = 2.4, boardClearance = 0.7,
-		maxSideGap = 0.5, -- WIP: höchstens ein halbes Feld zwischen Kronenprojektionen
-		positionJitter = 0.08, detailChance = 0.1,
-		farDistance = 2.6, farWidth = 2.6, farHeight = 1.1,
-		groundZoomMargin = 4.2, maxGroundPartSpan = 512, -- WIP: C1-Neigung, 70° FOV, bis 21:9, alle Drehungen/Ecken
+		treeHeightMin = 1.35, treeWidthMin = 2,
+		rock = { height = 0.5, width = 1 },
+		bush = { height = 0.45, width = 1.1 },
+		front = { maxHeight = 0.5, cornerDepth = 1 }, -- WIP: +Z und vordere Seitenecken, unabhängig von Drehung
+		clusterSize = { min = 2, max = 4 }, clusterOverlap = 0.45,
+		boardClearance = 0.7, maxSideGap = 0.5, gapMin = 0.15,
+		distanceJitter = 1, -- WIP: Gruppen stehen unterschiedlich weit vom Brett entfernt
+		farSpacing = 2.4, farDistance = 4.5, farWidth = 2.6, farHeight = 1.1,
+		positionJitter = 0.3, -- Ersatzkronen nur hinter dem hinteren Baumring
+		groundZoomMargin = 4.2, maxGroundPartSpan = 512,
 		groundColor = Color3.fromRGB(73, 86, 64), groundMaterial = Enum.Material.Grass,
-	},
-}
+	},}
 Config.TILE_THICKNESS = 1
 Config.MOVE_STEP_TIME = 0.16
 Config.STRIKE_TIME = 0.85 -- Dauer eines Schlags inkl. Animation

@@ -144,6 +144,9 @@ do
 		return table.concat(rows, "|")
 	end
 	expect(signature() == signature(), "Brett-Deko mit Originalvarianten nicht deterministisch")
+	freshAssets()
+	expect(signature() == signature(), "Brett-Deko mit Part-Fallback nicht deterministisch")
+	metricAssets()
 end
 local _, meanTriangles = boardMetrics("mit Paket-Fixtures")
 expect(meanTriangles <= Config.ENVIRONMENT.estimatedTriangleBudget, "Typisches Dreieckbudget überschritten: " .. meanTriangles)
@@ -151,4 +154,4 @@ freshAssets()
 Grid.setMap({ "......", "......", "......" })
 validateOuter(Board.build("greenland"))
 validateZoomGround(Board.build("greenland"))
-print("OK: Waldrand (100 Paket-Seeds, Part-Fallback, alle Seiten geschlossen, kein Brettueberhang).")
+print("OK: Waldrand (100 Paket-Seeds, niedrige Vorderkante/Ecken, hohe Bäume hinten/seitlich, rückwärtige Ersatzkronen, begrenzte Lücken, Brettfreiheit, deterministischer Paket-/Part-Fallback).")

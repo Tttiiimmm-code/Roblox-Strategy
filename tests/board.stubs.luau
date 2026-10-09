@@ -104,6 +104,14 @@ cm.__mul = function(a, b)
 	result.rotation = rr
 	return result
 end
+-- Erneutes PivotTo benötigt auch die inverse vollständige Rotation.
+function cm:Inverse()
+	local r = rotation(self)
+	local result = CFrame.new()
+	result.rotation = { r[1], r[4], r[7], r[2], r[5], r[8], r[3], r[6], r[9] }
+	result.Position = result:PointToWorldSpace(self.Position * -1)
+	return result
+end
 local originalIsA = methods.IsA
 function methods:IsA(class)
 	return (class == 'BasePart' and (self.ClassName == 'WedgePart' or self.ClassName == 'UnionOperation')) or originalIsA(self, class)
