@@ -50,13 +50,13 @@ local function fill(rect, bottom, top, material, stats)
 	if material == Enum.Material.Air then stats.clearVolume += volume else stats.volume += volume end
 end
 
-function LandscapeBuilder.prepare(mapKey, region)
+function LandscapeBuilder.prepare(mapKey, region, features)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local w, h = Grid.width() * T, Grid.height() * T
 	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
 	local margin = aligned(overview * s.zoomMargin, true)
 	local random = Random.new(hash(mapKey .. ":landscape"))
-	local state = { w = w, h = h, region = region, key = mapKey, phase = random:NextNumber(0, math.pi * 2),
+	local state = { w = w, h = h, region = region, key = mapKey, waterfall = features and features.waterfall, phase = random:NextNumber(0, math.pi * 2),
 		margin = margin, sculptMargin = aligned(s.sculptDistance * T, true),
 		palette = region and region.landscape or s.palette }
 	state.rects = withoutHub({ x0 = -margin, x1 = w + margin, z0 = -margin, z1 = h + margin })
@@ -65,7 +65,26 @@ end
 
 function LandscapeBuilder.surface(state, x, z)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
-	if x >= 0 and x < state.w and z >= 0 and z < state.h then return nil end
+	if x >= 0 and x < state.w and z >= 0 and z < state.h then
+		local tx, ty = math.floor(x / T) + 1, math.floor(z / T) + 1
+		local ch = Grid.getMap()[ty]:sub(tx, tx)
+		if ch ~= "M" and ch ~= "C" then return nil end
+		local settings = s.rockFields
+		if ch == "M" then
+			-- Gemeinsame Voxeloberfläche verschmilzt auch über M-Feldgrenzen.
+			local wave = (math.sin(x / settings.roughnessScale + state.phase) * math.cos(z / settings.roughnessScale - state.phase) + 1) / 2
+			return Config.TERRAIN.M.height - settings.surfaceInset - wave * settings.mountainRoughness,
+				wave < settings.grassChance and state.palette.grass or state.palette.rock
+		end
+		local wave = (math.sin(x / settings.cliffScale + state.phase) * math.sin(z / settings.cliffScale - state.phase) + 1) / 2
+		local height = Config.TERRAIN.C.height + wave * settings.cliffRoughness
+		local fall = state.waterfall
+		if fall and fall.x == tx and fall.y == ty then
+			local lateral = fall.dx ~= 0 and math.abs(z - (ty - 0.5) * T) or math.abs(x - (tx - 0.5) * T)
+			if lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height end
+		end
+		return height, state.palette.slate
+	end
 	local dx = math.max(-x, x - state.w, 0)
 	local dz = math.max(-z, z - state.h, 0)
 	local distance = math.sqrt(dx * dx + dz * dz)
@@ -170,10 +189,10 @@ local function details(state, board)
 	board:SetAttribute("LandscapeTrees", trees)
 end
 
-function LandscapeBuilder.build(board, mapKey, region)
+function LandscapeBuilder.build(board, mapKey, region, features)
 	local s = Config.LANDSCAPE
 	local stats = { calls = 0, volume = 0, clearVolume = 0, voxels = 0 }
-	local state = LandscapeBuilder.prepare(mapKey, region)
+	local state = LandscapeBuilder.prepare(mapKey, region, features)
 	local clearTop = aligned(math.max(Config.FEEL.terrainClearTop, s.hillHeight + s.mountainHeight + s.resolution), true)
 	for _, rect in previous do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end
 	for _, rect in state.rects do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end

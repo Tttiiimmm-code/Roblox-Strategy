@@ -7,7 +7,7 @@ local function validateOuter(board)
 		if column.x >= 0 and column.x < w and column.z >= 0 and column.z < h then
 			local x, y = math.floor(column.x / T) + 1, math.floor(column.z / T) + 1
 			local ch = Grid.getMap()[y]:sub(x, x)
-			if ch ~= "M" and ch ~= "C" then expect(not column.height, "Terrain ?berdeckt Brettfeld") end
+			if ch ~= "M" and ch ~= "C" then expect(not column.height, "Terrain überdeckt Brettfeld") end
 		elseif column.height then
 			if column.z >= h then expect(column.height <= Config.FEEL.surroundHeight + s.frontMaxHeight, "Vorderes Terrain zu hoch") end
 			highest = math.max(highest, column.height)
@@ -27,9 +27,9 @@ local function validateOuter(board)
 		expect(hi.X <= 0 or lo.X >= w or hi.Z <= 0 or lo.Z >= h, "Landschaftsobjekt ragt auf Brett")
 		expect(hi.X <= Config.HUB_ORIGIN.X - s.hubHalfWidth or lo.X >= Config.HUB_ORIGIN.X + s.hubHalfWidth
 			or hi.Z <= Config.HUB_ORIGIN.Z - s.hubHalfDepth or lo.Z >= Config.HUB_ORIGIN.Z + s.hubHalfDepth, "Landschaftsobjekt im Hub")
-		for _, part in asset:GetDescendants() do if part:IsA("BasePart") then expect(not part.CanQuery and not part.CanCollide, "Landschaft f?ngt Klicks ab") end end
+		for _, part in asset:GetDescendants() do if part:IsA("BasePart") then expect(not part.CanQuery and not part.CanCollide, "Landschaft fängt Klicks ab") end end
 	end
-	expect(board:GetAttribute("LandscapeTrees") <= s.maxTrees, "Baumbudget ?berschritten")
+	expect(board:GetAttribute("LandscapeTrees") <= s.maxTrees, "Baumbudget überschritten")
 end
 local function validateZoomGround(_board)
 	local w, h = Grid.width() * Config.TILE_SIZE, Grid.height() * Config.TILE_SIZE

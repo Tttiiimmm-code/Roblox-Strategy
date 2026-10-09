@@ -99,7 +99,7 @@ do
 		end
 		for y = 1, 4 do for x = 1, 4 do
 			local count = counts[Grid.key(x, y)] or 0
-			expect(count >= 1 and count <= 2, "Waldfeld ohne 1-2 B?ume")
+			expect(count >= 1 and count <= 2, "Waldfeld ohne 1-2 Bäume")
 		end end
 		return table.concat(signature, "|")
 	end
@@ -178,4 +178,4 @@ freshAssets()
 Grid.setMap({ "......", "......", "......" })
 validateOuter(Board.build("greenland"))
 validateZoomGround(Board.build("greenland"))
-print("OK: Waldrand (100 Paket-Seeds, niedrige Vorderkante/Ecken, hohe Bäume hinten/seitlich, rückwärtige Ersatzkronen, begrenzte Lücken, Brettfreiheit, deterministischer Paket-/Part-Fallback).")
+print("OK: Terrainlandschaft (100 Paket-Seeds, Vorderseite, Berge, Brettfreiheit, Determinismus, Paket/Fallback).")

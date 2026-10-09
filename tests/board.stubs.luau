@@ -174,10 +174,10 @@ workspace.Terrain.FillBlock = function(_, cf, size, material)
 	end
 end
 workspace.Terrain.WriteVoxels = function(_, region, resolution, materials, occupancies)
-	assert(resolution == 4, "Terrainaufl?sung muss 4 sein")
+	assert(resolution == 4, "Terrainauflösung muss 4 sein")
 	local lo, hi = region.lo, region.hi
 	local nx, ny, nz = (hi.X - lo.X) / 4, (hi.Y - lo.Y) / 4, (hi.Z - lo.Z) / 4
-	assert(nx * ny * nz <= 4194304, "Schreibblock zu gro?")
+	assert(nx * ny * nz <= 4194304, "Schreibblock zu groß")
 	for _, value in { lo.X, lo.Y, lo.Z, hi.X, hi.Y, hi.Z } do assert(value % 4 == 0, "Region nicht ausgerichtet") end
 	assert(#materials == nx and #occupancies == nx, "Falsche X-Dimension")
 	terrainSerial += 1
@@ -188,7 +188,7 @@ workspace.Terrain.WriteVoxels = function(_, region, resolution, materials, occup
 			local height, material
 			for iy = 1, ny do
 				local occupancy, kind = occupancies[ix][iy][iz], materials[ix][iy][iz]
-				assert(occupancy >= 0 and occupancy <= 1 and ((occupancy == 0) == (kind == Enum.Material.Air)), "Ung?ltige Terrainbelegung")
+				assert(occupancy >= 0 and occupancy <= 1 and ((occupancy == 0) == (kind == Enum.Material.Air)), "Ungültige Terrainbelegung")
 				if occupancy > 0 then height, material = lo.Y + (iy - 1 + occupancy) * 4, kind end
 			end
 			local x, z = lo.X + (ix - 0.5) * 4, lo.Z + (iz - 0.5) * 4
