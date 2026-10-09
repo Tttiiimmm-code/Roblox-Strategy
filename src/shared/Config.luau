@@ -63,7 +63,7 @@ Config.FEEL = {
 	surroundHeight = -0.4, waterTransparency = 0.18,
 	cliffSideShade = 0.42,
 	shore = { enabled = true, width = 0.1, maxPartsPerTile = 4,
-		thickness = 0.01, surfaceOffset = 0.018, color = Color3.fromRGB(123, 119, 89) }, -- WIP: gedämpfter Erdton
+		thickness = 0.01, surfaceOffset = 0.018, color = Color3.fromRGB(104, 95, 75) }, -- WIP: gedämpfter Erdton
 	waterfallsEnabled = true, waterfallWidth = 0.62, waterfallThickness = 0.12,
 	waterfallColor = Color3.fromRGB(161, 207, 235), waterfallFoamColor = Color3.fromRGB(230, 242, 250),
 	waterfallTransparency = 0.15, waterfallFoamCount = 3, waterfallFoamSize = 0.65,
@@ -153,6 +153,7 @@ Config.GROUND_TEXTURES = {
 	B = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
 }
 Config.GROUND_FLECKS = {
+	enabled = false, -- WIP: Roblox-Materialien liefern bereits Bodendetail.
 	maxPartsPerTile = 3, patchCount = 2, detailChance = 0.35,
 	thickness = 0.003, surfaceOffset = 0.012, transparency = 0, -- deckend und mit Abstand: kein Flackern, keine Transparenz-Kosten am Handy
 	shade = 0.12, light = 0.06, centerClearance = 2.3, edgeInset = 0.25,
@@ -233,25 +234,25 @@ Config.TERRAIN = {
 		height = 0, terrainMaterial = Enum.Material.Grass,
 		name = "Ebene", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(108, 138, 90), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(108, 138, 90), material = Enum.Material.Grass, paletteKey = "grass",
 	},
 	F = {
 		height = 0.4, terrainMaterial = Enum.Material.LeafyGrass,
 		name = "Wald", avoid = 20, def = 1,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(68, 99, 62), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(68, 99, 62), material = Enum.Material.Grass, paletteKey = "grass",
 	},
 	M = {
 		height = 4, terrainMaterial = Enum.Material.Rock,
 		name = "Berg", avoid = 30, def = 2,
 		cost = { foot = 4 },
-		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.Rock, paletteKey = "rock",
 	},
 	C = {
 		height = 8, terrainMaterial = Enum.Material.Rock,
 		name = "Klippe", avoid = 0, def = 0,
 		cost = {},
-		color = Color3.fromRGB(99, 96, 91), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(99, 96, 91), material = Enum.Material.Slate, paletteKey = "slate",
 	},
 	W = {
 		height = -1.2, terrainMaterial = Enum.Material.Water,
@@ -263,25 +264,25 @@ Config.TERRAIN = {
 		height = -0.2, terrainMaterial = Enum.Material.Mud,
 		name = "Morast", avoid = -15, def = 0,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(71, 66, 53), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(71, 66, 53), material = Enum.Material.Mud, paletteKey = "ground",
 	},
 	D = {
 		height = -0.8, terrainMaterial = Enum.Material.Mud,
 		name = "Tiefer Morast", avoid = 0, def = 0,
 		cost = {}, -- Später fly = 1 für Flieger.
-		color = Color3.fromRGB(54, 75, 83), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(54, 75, 83), material = Enum.Material.Mud, paletteKey = "ground",
 	},
 	H = {
 		height = 1, terrainMaterial = Enum.Material.Cobblestone,
 		name = "Festung", avoid = 20, def = 3, heal = 0.2,
 		cost = { foot = 2, horse = 2 },
-		color = Color3.fromRGB(128, 122, 117), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(128, 122, 117), material = Enum.Material.Cobblestone, paletteKey = "slate",
 	},
 	B = {
 		height = 0.2, terrainMaterial = Enum.Material.WoodPlanks,
 		name = "Brücke", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(113, 92, 71), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(113, 92, 71), material = Enum.Material.WoodPlanks,
 	},
 }
 

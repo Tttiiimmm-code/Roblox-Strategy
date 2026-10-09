@@ -41,6 +41,7 @@ $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment.t
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/forest-outlines.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/bridges.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/shore.test.luau") -Raw -Encoding UTF8
+$source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/ground.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment-pack.fixture.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/outer.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment-metrics.test.luau") -Raw -Encoding UTF8

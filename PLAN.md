@@ -27,7 +27,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
   - Danach die Landschaft (`zoomMargin`, Fernboden, Aufräumbereich) auf das verkleinern, was bei dieser Grenze sichtbar ist, plus Sicherheitsrand. Ziel: kürzerer Aufbau und weniger Terrain zum Übertragen. Der Dunst (`FEEL.atmosphere`) darf so abgestimmt werden, dass der Horizont weich ausläuft.
   - Fertig, wenn: Strahl-/Sichtprüfung (wie C3-Bodentest: vier Ecken, acht Drehungen, 4:3/16:9/21:9, FOV) zeigt bei maximalem Zoom nur Landschaft bzw. Dunst, kein Kartenende; Terrain-Volumen und Aufrufe vorher/nachher in den Notizen.
 
-- [ ] 2. **Spielfeldboden aus Roblox-Materialien** – `Config.TERRAIN`, `BoardBuilder` (Bodenaufbau), `Stages`, `Config.LANDSCAPE.palette`
+- [x] 2. **Spielfeldboden aus Roblox-Materialien** – `Config.TERRAIN`, `BoardBuilder` (Bodenaufbau), `Stages`, `Config.LANDSCAPE.palette`
   - Bodenflächen der Felder nutzen Roblox-Materialien passend zum Terrain: Wiese `.` = Grass, Wald `F` = Grass (dunkler) oder LeafyGrass, Weg/Erde = Ground, Fels = Rock/Slate, Sumpf passend. Farben aus derselben Regionspalette wie das Terrain, damit Spielfeld und Umgebung nahtlos wirken. Gedämpft, nicht grell. Die Felder bleiben unterscheidbar (Wald etwas dunkler als Wiese), das Raster bleibt sichtbar.
   - Bodenflecken (`GROUND_FLECKS`) und Sandstreifen farblich an die neue Basis anpassen oder abschalten, wenn sie mit dem Material unruhig wirken (Entscheidung in den Notizen).
   - `GROUND_TEXTURES` mit eigener Bild-ID hat weiterhin Vorrang (spätere Nutzertexturen).
@@ -82,3 +82,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
 - Hub-Ursprung aus maximalem aktuellem Brett (16?12), Sicht-/Landschaftsrand, Hub-Halbtiefe und 2 Feldern Sicherheitsrand abgeleitet. Pr?fung gegen Lauf- und feste Kartenma?e; Sichttest ohne Hub-Ausnahme gr?n. `rg`: HubBuilder verwendet ausschlie?lich `origin`/`at`, Spawn ebenfalls; Client-Prompts/Thron referenzieren Instanzen, Kamera kehrt zum Humanoid zur?ck, kein koordinatenbasierter Teleport n?tig. Aussehen unver?ndert; Studio-R?ckkehr/Interaktionen noch ungetestet.
 - 100 Seeds: Teile/Dreiecke unver?ndert 1657,3 / 273495 im Mittel. Terrain-Aufrufe vorher 31,96 ? 17,99 (Max 32 ? 18), Air 7,96 ? 1,99, WriteVoxels 16 ? 12; Schreibvoxels 247327 ? 123878 (Max 258048 ? 134144); Festvolumen 44611829 ? 33962873 Studs? (Max 44707799 ? 34068729). Stub-Zeit 224,80 ms bei parallelem Testlauf: keine belastbare Studio-Zeitmessung.
 - `check.ps1` OK (38 Dateien), `test-run.ps1` OK einschlie?lich Sicht-/Bretteckenpr?fung. Minimale Server-/Generator-Vektor-Stubs um XYZ-Felder erg?nzt, damit Config-Geometrie beim Laden berechnet werden kann.
+
+### Schritt 2
+- Roblox-Materialien und gemeinsame Regionspalette für Wiese/Wald, Morast, Fels und Festung; Wald 10 % dunkler. Bestehende Regionsmaterialien (Snow/Ground) bleiben wirksam. Brückenholz und Wasserfarbe erhalten.
+- Zurückhaltende WIP-Variante: prozedurale Bodenflecken per `GROUND_FLECKS.enabled = false` abgeschaltet, um Materialdetails ruhig zu halten. Sandfarbe gedämpft und Material Ground; Ufergeometrie unverändert. Eigene `GROUND_TEXTURES` bleiben sichtbar und unterdrücken auch bei eingeschalteten Flecken deren Erzeugung.
+- `check.ps1` und `test-run.ps1` OK. Neue Prüfung aller vier Regionen/Geländearten und Texturvorrang. 100 gleiche Paket-Seeds nach Schritt 2: Teile Mittel 1303,4 / Max 1401; Dreiecke Mittel 270569 / Max 364224 (vorher 1657,3 / 1787 und 273495 / 367368). Studio ungetestet.

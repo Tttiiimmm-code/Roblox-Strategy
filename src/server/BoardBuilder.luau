@@ -55,6 +55,7 @@ local function groundFlecks(ch, x, y, parent, mapKey, color)
 	local settings = Config.GROUND_TEXTURES[ch]
 	if settings and imageId(settings.top) then return end
 	local feel = Config.GROUND_FLECKS
+	if not feel.enabled then return end
 	-- Karteninhalt nur einmal hashen, statt für jedes Fleckmerkmal erneut.
 	local key = tostring(hash(mapKey .. ":" .. Grid.key(x, y))) .. ":ground:"
 	local center = Grid.toWorld(x, y)
@@ -348,7 +349,7 @@ local function shoreline(ch, x, y, parent, bridgeTiles)
 		local part = deco({ Name = "ShoreStrip", Shape = Enum.PartType.Block,
 			Size = Vector3.new(horizontal and width or T, settings.thickness, horizontal and T or width),
 			Position = center + Vector3.new(d[1] * edge, settings.surfaceOffset, d[2] * edge),
-			Color = settings.color, Material = Enum.Material.SmoothPlastic }, parent)
+			Color = settings.color, Material = Enum.Material.Ground }, parent)
 		part:SetAttribute("ShoreX", x); part:SetAttribute("ShoreY", y)
 		part:SetAttribute("WaterX", x + d[1]); part:SetAttribute("WaterY", y + d[2])
 		count += 1
@@ -419,7 +420,10 @@ function BoardBuilder.build(regionId, features, stage)
 	ground.Name = "Ground"
 	ground.Parent = board
 	local function colorFor(ch)
-		local color = region and region.terrainColors and region.terrainColors[ch] or Config.TERRAIN[ch].color
+		local terrain = Config.TERRAIN[ch]
+		local palette = region and region.landscape or Config.LANDSCAPE.palette
+		local color = terrain.paletteKey and palette.colors[palette[terrain.paletteKey]]
+			or (region and region.terrainColors and region.terrainColors[ch]) or terrain.color
 		return ch == "F" and color:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade) or color
 	end
 	local landscape = LandscapeBuilder.build(board, mapKey, region, features)
@@ -455,11 +459,11 @@ function BoardBuilder.build(regionId, features, stage)
 			local side = deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
 				Position = Vector3.new(cx, (height - cap - Config.FEEL.groundDepth) / 2, cz),
 				Color = color:Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.groundSideShade),
-				Material = Enum.Material.SmoothPlastic }, ground)
+				Material = Config.TERRAIN[groundCh].material }, ground)
 			local surface = deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
 				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
 				Transparency = (groundCh == "W" or groundCh == "D") and Config.FEEL.waterTransparency or 0,
-				Material = Enum.Material.SmoothPlastic }, ground)
+				Material = (groundCh == "." or groundCh == "F") and landscape.palette.grass or Config.TERRAIN[groundCh].material }, ground)
 			local textures = Config.GROUND_TEXTURES[groundCh]
 			if textures then
 				groundTexture(surface, Enum.NormalId.Top, textures.top, textures)
