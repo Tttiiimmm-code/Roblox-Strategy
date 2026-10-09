@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local UnitData = require(Shared.UnitData)
 local RunConfig = require(Shared.RunConfig)
+local Tutorial = require(Shared.Tutorial)
 local Recruit = require(Shared.Recruit)
 local UIKit = require(script.Parent.UIKit)
 local THEME = UIKit.THEME
@@ -209,7 +210,8 @@ function RunUI.init(root, cbs)
 end
 
 function RunUI.openTeam()
-	if not lastProfile or lastProfile.run or not lastProfile.heroes or not lastState or lastState.mode ~= "Lobby" then return end
+	if not Tutorial.unlocked(lastProfile) or lastProfile.run or not lastProfile.heroes or not lastState
+		or lastState.mode ~= "Lobby" or lastState.busy then return end
 	selecting, selected, renderKey = true, {}, nil
 	callbacks.onChanged()
 end

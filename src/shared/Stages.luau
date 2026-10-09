@@ -1,32 +1,7 @@
--- Missionen, Schwierigkeitsstufen, Sterneziele und Freischaltregeln
+-- Tutorial-Missionen und Gebiete für Tutorial, Läufe und Brett
 local Config = require(script.Parent.Config)
 local Stages = {}
 
--- enemyBonus: Wertänderung für alle Gegner · undo: Anzahl Rückblenden · turnBonus: Änderung am Rundenziel
--- maxUnits: höchstens so viele eigene Einheiten · requires: diese Stufe muss vorher geschafft sein
-Stages.Difficulties = {
-	{
-		id = "Easy", name = "Leicht", color = Color3.fromRGB(110, 214, 120),
-		enemyBonus = { hp = -3, str = -1, skl = -1, spd = -1, def = -1 },
-		rewardMul = 1, gemsPerStar = 5, undo = 3, turnBonus = 4,
-		rules = { "Schwächere Gegner", "3× Rückblende (Zug zurücknehmen)", "Großzügiges Rundenziel" },
-	},
-	{
-		id = "Normal", name = "Normal", color = Color3.fromRGB(90, 160, 255),
-		enemyBonus = {},
-		rewardMul = 2, gemsPerStar = 10, undo = 1, turnBonus = 0,
-		rules = { "Ausgewogene Gegner", "1× Rückblende" },
-	},
-	{
-		id = "Hard", name = "Schwer", color = Color3.fromRGB(255, 110, 110),
-		enemyBonus = { hp = 4, str = 2, skl = 2, spd = 1, def = 1 },
-		rewardMul = 3, gemsPerStar = 20, undo = 0, turnBonus = -1,
-		maxUnits = 4, extraEnemies = true, requires = "Normal",
-		rules = { "Stärkere und zusätzliche Gegner", "Höchstens 4 Einheiten", "Keine Rückblende" },
-	},
-}
-
--- Werte WIP: gedämpfte Boden- und Randfarben; Gebietsfarben der Weltkarte bleiben separat.
 Stages.Regions = {
 	{ id = "greenland", name = "Grünland", color = Color3.fromRGB(110, 170, 90), area = { 0.02, 0.38, 0.42, 0.58 }, atmosphere = "battle", surroundMaterial = Enum.Material.Grass, surroundColor = Config.TERRAIN["."].color, treeColor = Config.TERRAIN.F.color },
 	{ id = "swamp", name = "Nebelsumpf", color = Color3.fromRGB(85, 115, 85), area = { 0.40, 0.45, 0.30, 0.50 }, atmosphere = "swamp", surroundMaterial = Enum.Material.Grass, treeColor = Color3.fromRGB(55, 75, 45),
@@ -38,261 +13,38 @@ Stages.Regions = {
 
 Stages.List = {
 	{
-		id = "s1", name = "Grenzdorf", baseGold = 100, turnGoal = 6,
-		region = "greenland", mapPos = Vector2.new(0.10, 0.80), requires = {},
-		description = "Banditen plündern ein Dorf an der Grenze. Vertreibe sie, bevor sie mit der Beute verschwinden!",
-		map = {
-			"..F....F..",
-			"....H.....",
-			".F....F...",
-			"...F......",
-			"......M...",
-			".F.....F..",
-			"..........",
-			"....F.....",
-		},
-		unlockHero = "mira",
-		slots = {
-			{ x = 2, y = 7 },
-			{ x = 1, y = 8 },
-			{ x = 3, y = 8 },
-		},
-		enemies = {
-			{ kind = "brigand", x = 5, y = 2 },
-			{ kind = "brigand", x = 8, y = 3 },
-			{ kind = "brigand", x = 3, y = 1 },
-		},
-		hardEnemies = {
-			{ kind = "brigand", x = 9, y = 5 },
-			{ kind = "archer", x = 6, y = 1 },
-		},
+		id = "tutorial1", name = "Tutorial 1 – Leon", region = "greenland",
+		map = { "......", "......", "......", "......", "......" },
+		heroes = { "leon" }, slots = { { x = 2, y = 5 } },
+		enemies = { { kind = "brigand", x = 3, y = 2, tutorialTarget = "bandit" } },
+		move = { x = 2, y = 3 }, enemyMove = { x = 3, y = 3 },
 	},
 	{
-		id = "s2", name = "Waldpass", baseGold = 150, turnGoal = 8,
-		region = "greenland", mapPos = Vector2.new(0.22, 0.58), requires = { "s1" },
-		description = "Soldaten des Grafen bewachen die Brücken über den Fluss. Nur wer den Pass hält, kommt weiter.",
-		map = {
-			"FF..F..FF..F",
-			"F...FF....F.",
-			"..F.....F...",
-			"WWWWBWWWWBWW",
-			"...F....F...",
-			".F...FF....F",
-			"....F....F..",
-			"F.........F.",
-			"..F..H...F..",
-		},
-		unlockHero = "selina",
-		slots = {
-			{ x = 6, y = 9 },
-			{ x = 5, y = 8 },
-			{ x = 7, y = 8 },
-			{ x = 6, y = 7 },
-		},
+		id = "tutorial2", name = "Tutorial 2 – Dein Team", region = "greenland",
+		map = { "..........", "..........", "..........", "..........", "..........", ".........." },
+		heroes = { "leon", "starter_mage", "starter_knight" },
+		slots = { { x = 1, y = 5 }, { x = 2, y = 4 }, { x = 3, y = 3 } },
 		enemies = {
-			{ kind = "brigand", x = 3, y = 1, level = 2 },
-			{ kind = "brigand", x = 10, y = 1, level = 2 },
-			{ kind = "soldier", x = 6, y = 2, level = 2 },
-			{ kind = "archer", x = 8, y = 3, level = 2 },
-			{ kind = "javelin", x = 11, y = 2, level = 2 },
+			{ kind = "brigand", x = 4, y = 4, tutorialTarget = "mage" },
+			{ kind = "archer", x = 10, y = 2, tutorialTarget = "knight" },
+			{ kind = "brigand", x = 5, y = 3 },
 		},
-		hardEnemies = {
-			{ kind = "brigand", x = 2, y = 5, level = 2 },
-			{ kind = "archer", x = 12, y = 5, level = 2 },
-		},
-	},
-	{
-		id = "s3", name = "Banditenfestung", baseGold = 220, turnGoal = 10,
-		region = "greenland", mapPos = Vector2.new(0.32, 0.82), requires = { "s2" },
-		description = "Garrick, der Anführer der Banditen, verschanzt sich in seiner Festung. Zeit, das zu beenden.",
-		map = {
-			"....F..MM.H.",
-			".F.....M....",
-			"...WW....F..",
-			"..FWW..F....",
-			"...WW.....M.",
-			".......F....",
-			"..F...M..F..",
-			".....FF.....",
-			".H..........",
-			"......F..M..",
-		},
-		slots = {
-			{ x = 2, y = 9 },
-			{ x = 3, y = 10 },
-			{ x = 3, y = 9 },
-			{ x = 1, y = 10 },
-			{ x = 1, y = 8 },
-		},
-		enemies = {
-			{ kind = "brigand", x = 6, y = 4, level = 3 },
-			{ kind = "brigand", x = 9, y = 3, level = 3 },
-			{ kind = "brigand", x = 8, y = 6, level = 3 },
-			{ kind = "soldier", x = 10, y = 4, level = 3 },
-			{ kind = "javelin", x = 12, y = 2, level = 3 },
-			{ kind = "archer", x = 10, y = 1, level = 3 },
-			{ kind = "chieftain", x = 11, y = 1, level = 5 },
-		},
-		hardEnemies = {
-			{ kind = "soldier", x = 7, y = 2, level = 3 },
-			{ kind = "brigand", x = 12, y = 5, level = 3 },
-		},
-	},
-	{
-		id = "s4", name = "Nebelfurt", baseGold = 180, turnGoal = 9,
-		region = "swamp", mapPos = Vector2.new(0.48, 0.66), requires = { "s2" },
-		description = "Im Nebelsumpf verschwinden Händler spurlos. Folge den Furten – und bleib nicht im Morast stecken.",
-		map = {
-			"..SS.F..SSD.",
-			".SSDS...SDD.",
-			"..S..H...S..",
-			"F...SS.F....",
-			"..D.SS..SS.F",
-			".SSD...S..S.",
-			"..S..F..SD..",
-			"F....SS.....",
-			"........F...",
-		},
-		slots = {
-			{ x = 5, y = 9 }, { x = 6, y = 9 }, { x = 7, y = 9 }, { x = 4, y = 8 },
-		},
-		enemies = {
-			{ kind = "brigand", x = 7, y = 2, level = 3 },
-			{ kind = "brigand", x = 2, y = 3, level = 3 },
-			{ kind = "archer", x = 6, y = 3, level = 3 },
-			{ kind = "javelin", x = 11, y = 3, level = 3 },
-			{ kind = "witch", x = 12, y = 1, level = 3 },
-		},
-		hardEnemies = {
-			{ kind = "brigand", x = 1, y = 5, level = 3 },
-			{ kind = "archer", x = 8, y = 4, level = 3 },
-		},
-	},
-	{
-		id = "s5", name = "Hexenhütte", baseGold = 260, turnGoal = 11,
-		region = "swamp", mapPos = Vector2.new(0.62, 0.82), requires = { "s4" },
-		description = "Morwen, die Moorhexe, lenkt die Banditen aus ihrer Hütte im Sumpf. Brich ihren Bann!",
-		map = {
-			"SSD..H..DSSS",
-			"SD...F...DSS",
-			"S..SS..SS..S",
-			"..SDDS.SDD..",
-			"F..SS...S..F",
-			"...........S",
-			".SS..F..SS..",
-			"..S.....DS..",
-			".F...SS...F.",
-			"....S....S..",
-		},
-		slots = {
-			{ x = 6, y = 10 }, { x = 7, y = 10 }, { x = 8, y = 10 }, { x = 4, y = 10 }, { x = 5, y = 9 },
-		},
-		enemies = {
-			{ kind = "morwen", x = 6, y = 1, level = 6 },
-			{ kind = "brigand", x = 4, y = 2, level = 4 },
-			{ kind = "brigand", x = 8, y = 2, level = 4 },
-			{ kind = "archer", x = 7, y = 3, level = 4 },
-			{ kind = "javelin", x = 2, y = 5, level = 4 },
-			{ kind = "soldier", x = 11, y = 6, level = 4 },
-			{ kind = "witch", x = 11, y = 4, level = 4 },
-		},
-		hardEnemies = {
-			{ kind = "brigand", x = 1, y = 6, level = 4 },
-			{ kind = "archer", x = 12, y = 5, level = 4 },
-		},
+		move = { x = 9, y = 2 },
 	},
 }
 
 function Stages.get(id)
 	for _, stage in Stages.List do
-		if stage.id == id then
-			return stage
-		end
+		if stage.id == id then return stage end
 	end
 	return nil
 end
 
 function Stages.getRegion(id)
 	for _, region in Stages.Regions do
-		if region.id == id then
-			return region
-		end
+		if region.id == id then return region end
 	end
 	return nil
-end
-
-function Stages.indexOf(id)
-	for i, stage in Stages.List do
-		if stage.id == id then
-			return i
-		end
-	end
-	return nil
-end
-
-function Stages.getDifficulty(id)
-	for _, diff in Stages.Difficulties do
-		if diff.id == id then
-			return diff
-		end
-	end
-	return nil
-end
-
--- Texte der drei Sterneziele
-function Stages.goalTexts(turnGoal)
-	return {
-		"Sieg",
-		"Keine Einheit verloren",
-		("Sieg in höchstens %d Runden"):format(turnGoal),
-	}
-end
-
--- Wie viele eigene Einheiten aufgestellt werden dürfen (Felder der Karte, ggf. durch die Stufe begrenzt)
-function Stages.unitLimit(stage, diff)
-	return math.min(#stage.slots, diff.maxUnits or #stage.slots)
-end
-
-function Stages.turnGoal(stage, diff)
-	return math.max(1, stage.turnGoal + diff.turnBonus)
-end
-
--- Profil: { stars = { [stageId] = { [difficultyId] = 0..3 } } }
-function Stages.bestStars(profile, stageId, diffId)
-	local s = profile and profile.stars and profile.stars[stageId]
-	return s and s[diffId] or 0
-end
-
-function Stages.isCleared(profile, stageId)
-	for _, diff in Stages.Difficulties do
-		if Stages.bestStars(profile, stageId, diff.id) > 0 then
-			return true
-		end
-	end
-	return false
-end
-
--- Eine erfüllte Vorgängermission genügt; Schwer erst nach Normal
-function Stages.isUnlocked(profile, index, diffId)
-	local stage = Stages.List[index]
-	local diff = Stages.getDifficulty(diffId)
-	if not stage or not diff then
-		return false
-	end
-	local unlocked = #stage.requires == 0
-	for _, requiredId in stage.requires do
-		if Stages.isCleared(profile, requiredId) then
-			unlocked = true
-			break
-		end
-	end
-	if not unlocked then
-		return false
-	end
-	if diff.requires and Stages.bestStars(profile, stage.id, diff.requires) == 0 then
-		return false
-	end
-	return true
 end
 
 return Stages

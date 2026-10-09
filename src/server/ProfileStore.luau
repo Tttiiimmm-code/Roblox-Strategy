@@ -1,4 +1,4 @@
--- Spielerprofile (Gold, Edelsteine, Sterne) per DataStore.
+-- Spielerprofile und Tutorial-Fortschritt per DataStore.
 -- Ohne API-Zugriff (z. B. unveröffentlichter Ort in Studio) läuft alles im Speicher weiter; saveOk = false.
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,7 +11,7 @@ local Recruit = require(Shared.Recruit)
 
 local ProfileStore = {}
 
--- Profil v3 (zusätzlich run): { gold, gems, stars, heroes = { [heroId] = { level, xp, merges, stats? } }, pity = { since4, since5 } }
+-- Profil v4 (zusätzlich tutorial; stars nur als Altdaten): { gold, gems, stars, heroes = { [heroId] = { level, xp, merges, stats? } }, pity = { since4, since5 } }
 local STORE_NAME = "TacticsProfiles_v1"
 local START_GEMS = 300 -- GRUNDGERÜST: Startguthaben zum Ausprobieren der Rekrutierung
 local store = nil
@@ -31,7 +31,7 @@ function ProfileStore.newHeroEntry()
 end
 
 local function newProfile()
-	return { gold = 0, gems = START_GEMS, stars = {}, heroes = {}, pity = { since4 = 0, since5 = 0 }, settings = { battleScenes = true } }
+	return { gold = 0, gems = START_GEMS, stars = {}, heroes = {}, pity = { since4 = 0, since5 = 0 }, settings = { battleScenes = true }, tutorial = { state = "new" } }
 end
 
 local function integer(value, low, high)
@@ -96,6 +96,16 @@ end
 
 -- Fehlende Felder ergänzen, Starthelden sicherstellen, unbekannte Helden entfernen
 local function normalize(profile)
+	local tutorialState = type(profile.tutorial) == "table" and profile.tutorial.state
+	if tutorialState ~= "new" and tutorialState ~= "done" and tutorialState ~= "skipped" then
+		-- Vor dem Ergänzen der Starter prüfen: gespeicherte Helden-Level kennzeichnen Bestandsspieler.
+		local existing = type(profile.stars) == "table" and next(profile.stars) ~= nil
+		for id, entry in (type(profile.heroes) == "table" and profile.heroes or {}) do
+			if UnitData.Heroes[id] and type(entry) == "table" and type(entry.level) == "number" then existing = true end
+		end
+		tutorialState = existing and "done" or "new"
+	end
+	profile.tutorial = { state = tutorialState }
 	profile.settings = type(profile.settings) == "table" and profile.settings or {}
 	if type(profile.settings.battleScenes) ~= "boolean" then profile.settings.battleScenes = true end
 	profile.heroes = type(profile.heroes) == "table" and profile.heroes or {}
@@ -131,6 +141,7 @@ function ProfileStore.load(player)
 		profile.pity = data.pity
 		profile.settings = data.settings
 		profile.run = data.run
+		profile.tutorial = data.tutorial
 	end
 	normalize(profile)
 	profile.saveOk = ok
@@ -156,6 +167,7 @@ local function write(player, profile)
 			pity = profile.pity,
 			settings = profile.settings,
 			run = profile.run,
+			tutorial = profile.tutorial,
 		})
 	end)
 	writing[player] = nil

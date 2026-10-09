@@ -367,13 +367,6 @@ function UIKit.rarityStars(rarity)
 		r.hex, string.rep("★", rarity), string.rep("★", 5 - rarity))
 end
 
--- Sterne einer Mission: gefüllt gold, leer dunkel
-function UIKit.goalStars(count, max)
-	max = max or 3
-	return ("<font color='%s'>%s</font><font color='#4a5068'>%s</font>"):format(
-		UIKit.GOLD_HEX, string.rep("★", count), string.rep("★", max - count))
-end
-
 -- 3D-Kopie einer Figur in einem ViewportFrame (Porträt)
 function UIKit.portrait(viewport, camera, source, zoomOut)
 	for _, child in viewport:GetChildren() do
@@ -547,7 +540,13 @@ function UIKit.createRoot(gui, maximumScale)
 		surface.Position = UDim2.fromOffset(left, top)
 		surface.Size = UDim2.fromOffset(available.X, available.Y)
 		-- Unter 360 sicheren Punkten Höhe darf die Oberfläche kleiner als 0,5 werden.
-		local s = math.min(available.X / 1280, available.Y / 720, maximumScale or 1.15)
+		local cap = maximumScale or 1.15
+		local s = math.min(available.X / 1280, available.Y / 720, cap)
+		if UserInputService.MouseEnabled and not UserInputService.TouchEnabled then
+			local settings = Config.UI_SCALE
+			s = math.min(s * settings.desktopFactor, available.X / settings.desktopMinWidth,
+				available.Y / settings.desktopMinHeight, cap * settings.desktopFactor)
+		end
 		scale.Scale = s
 		root.Size = UDim2.fromOffset(available.X / s, available.Y / s)
 		diagnose()

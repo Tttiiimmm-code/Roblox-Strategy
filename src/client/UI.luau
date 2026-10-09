@@ -20,7 +20,8 @@ local UI = {}
 local root, hud, critFlash
 local phaseLabel, turnLabel, stageLabel, hintLabel
 local info = {}
-local menuFrame, attackButton
+local menuFrame, attackButton, waitButton, cancelButton
+local tutorialContinue, tutorialMark, markStroke, markPulse
 local forecast = {}
 local terrainFrame, terrainLabel
 local tools = {}
@@ -69,8 +70,14 @@ local function buildTop(callbacks)
 	corner(hintLabel, 6)
 	padding(hintLabel, 8)
 
+	tutorialContinue = button("Weiter", hints, "primary", 2)
+	tutorialContinue.Size, tutorialContinue.TextSize = UDim2.fromOffset(220, 56), 22
+	tutorialContinue.Visible = false
+	tutorialContinue.Activated:Connect(callbacks.onTutorialContinue)
+
 	-- Aufgeben mit Bestätigung
-	local forfeit = button("Aufgeben", hints, "muted", 2)
+	local forfeit = button("Aufgeben", hints, "muted", 3)
+	tools.forfeit = forfeit
 	forfeit.Size = UDim2.fromOffset(220, 52)
 	forfeit.TextSize = 18
 	local armed = false
@@ -182,8 +189,8 @@ local function buildMenu()
 		Text = "Aktion", LayoutOrder = 0,
 	}, content)
 	attackButton = button("⚔  Angriff", content, "danger", 1)
-	local waitButton = button("Warten", content, "default", 2)
-	local cancelButton = button("Abbrechen", content, "muted", 3)
+	waitButton = button("Warten", content, "default", 2)
+	cancelButton = button("Abbrechen", content, "muted", 3)
 	for _, b in { attackButton, waitButton, cancelButton } do
 		b.Size = UDim2.new(1, 0, 0, 46)
 	end
@@ -254,9 +261,11 @@ local function buildForecast()
 	end
 
 	local confirm = button("⚔  Angreifen!", f, "danger")
+	forecast.confirm = confirm
 	confirm.Position = UDim2.new(0, 0, 1, -44)
 	confirm.Size = UDim2.new(0.5, -5, 0, 44)
 	local back = button("Zurück", f, "muted")
+	forecast.back = back
 	back.Position = UDim2.new(0.5, 5, 1, -44)
 	back.Size = UDim2.new(0.5, -5, 0, 44)
 	confirm.Activated:Connect(function()
@@ -330,6 +339,17 @@ local function buildTools(callbacks)
 	tools.back.Activated:Connect(callbacks.onBack)
 end
 
+function UI.isLevelUpActive()
+	return level.gui ~= nil and level.gui.Enabled
+end
+
+function UI.dismissLevelUp()
+	if not UI.isLevelUpActive() then return end
+	levelToken += 1
+	level.gui.Enabled = false
+	level.frame.Visible = false
+end
+
 local function buildPopups()
 	toastFrame = panel({
 		Animated = true,
@@ -338,11 +358,24 @@ local function buildPopups()
 	}, root)
 	toastLabel = label({ Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 17, ZIndex = 5 }, toastFrame)
 
+	level.gui = make("ScreenGui", {
+		Name = "LevelUp", ResetOnSpawn = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None,
+		SafeAreaCompatibility = Enum.SafeAreaCompatibility.None, ClipToDeviceSafeArea = false,
+		DisplayOrder = 1100, Enabled = false,
+	}, Players.LocalPlayer:WaitForChild("PlayerGui"))
+	local levelRoot = UIKit.createRoot(level.gui)
+	-- Liegt auch über dem Fenster: jeder Klick gehört allein zum Schließen.
+	local dismiss = make("TextButton", {
+		Name = "LevelUpSchliessen", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+		Text = "", AutoButtonColor = false, Active = true, Selectable = false, ZIndex = 100,
+	}, level.gui)
+	dismiss.Activated:Connect(UI.dismissLevelUp)
+
 	local lf = panel({
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.fromOffset(320, 250),
 		Visible = false, ZIndex = 6,
-	}, root)
+	}, levelRoot)
 	padding(lf, 14)
 	level.frame = lf
 	label({
@@ -487,23 +520,48 @@ function UI.setHudVisible(visible)
 	hud.Visible = visible
 end
 
-function UI.setHint(text)
+-- Goldener Knopfrahmen; Schrittsperren werden zusätzlich in Client und Server geprüft.
+function UI.setTutorialMark(mark)
+	local target = ({ wait = waitButton, attack = attackButton, confirm = forecast.confirm, continue = tutorialContinue })[mark or ""]
+	if target ~= tutorialMark then
+		if markPulse then markPulse:Cancel(); markPulse = nil end
+		if markStroke then markStroke:Destroy(); markStroke = nil end
+		tutorialMark = target
+		if target then
+			markStroke = UIKit.stroke(target, THEME.gold, 4)
+			markPulse = TweenService:Create(markStroke, TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.65 })
+			markPulse:Play()
+		end
+	end
+	tutorialContinue.Visible = mark == "continue"
+	forecast.confirm.Visible = mark ~= "continue"
+	forecast.back.Visible = mark == nil
+	cancelButton.Visible = mark == nil
+	waitButton.Visible = mark == nil or mark == "wait"
+	attackButton.Visible = mark == nil or mark == "attack"
+end
+
+function UI.setHint(text, tutorial)
+	hintLabel.TextSize = tutorial and Config.TUTORIAL.hintTextSize or 15
+	hintLabel.Size = UDim2.new(1, 0, 0, tutorial and Config.TUTORIAL.hintMinHeight or 66)
 	hintLabel.Text = text
 end
 
 -- flags: { back, undoLeft, canUndo, danger, speed, controllable, owner, battleScenes }
 function UI.setTools(flags)
-	tools.back.Visible = flags.back
-	tools.endTurn.Visible = flags.controllable
-	tools.skip.Visible = flags.enemyPhase
+	tools.forfeit.Visible = not flags.guided
+	tools.danger.Visible, tools.speed.Visible = not flags.tutorial, not flags.tutorial
+	tools.back.Visible = flags.back and not flags.guided
+	tools.endTurn.Visible = flags.controllable and not flags.guided
+	tools.skip.Visible = flags.enemyPhase and not flags.tutorial
 	UIKit.setButtonStyle(tools.skip, flags.speed == 3 and "disabled" or "primary")
-	tools.undo.Visible = not flags.run
+	tools.undo.Visible = not flags.run and not flags.tutorial
 	tools.undo.Text = ("Rückblende %d"):format(flags.undoLeft)
 	UIKit.setButtonStyle(tools.undo, (flags.controllable and flags.canUndo and flags.undoLeft > 0) and "default" or "disabled")
 	UIKit.setButtonStyle(tools.danger, flags.danger and "active" or "default")
 	tools.speed.Text = flags.speed == 3 and "3×" or flags.speed == 2 and "2×" or "1×"
 	UIKit.setButtonStyle(tools.speed, flags.speed == 2 and "active" or "default")
-	tools.scenes.Visible = flags.owner == true
+	tools.scenes.Visible = flags.owner == true and not flags.tutorial
 	tools.scenes.Text = flags.battleScenes == false and "Szenen aus" or "Szenen an"
 	UIKit.setButtonStyle(tools.scenes, flags.battleScenes == false and "default" or "active")
 end
@@ -540,17 +598,16 @@ end
 
 function UI.setPhase(state)
 	local isPlayer = state.phase == "Player"
-	turnLabel.Text = state.run and ("RUNDE %d"):format(state.turn) or ("RUNDE %d  ·  ZIEL ≤ %d"):format(state.turn, state.turnGoal or 0)
+	turnLabel.Text = ("RUNDE %d"):format(state.turn)
 	phaseLabel.Text = isPlayer and "Spielerphase" or "Gegnerphase"
 	phaseLabel.TextColor3 = isPlayer and THEME.player or THEME.enemy
 
 	local stage = Stages.get(state.stageId)
-	local diff = Stages.getDifficulty(state.difficulty)
 	if state.run then
 		local theme = RunConfig.THEMES[state.run.themeId]
 		stageLabel.Text = ("%s · Level %d / %d · %s %s"):format(RunConfig.REGION_NAMES[state.run.region], state.run.depth, state.run.totalLevels, theme.symbol, theme.name)
-	elseif stage and diff then
-		stageLabel.Text = ("%s  ·  <font color='#%s'>%s</font>"):format(stage.name, diff.color:ToHex(), diff.name)
+	elseif stage then
+		stageLabel.Text = stage.name
 	end
 
 	local key = state.phase .. state.turn
@@ -683,10 +740,11 @@ function UI.showLevelUp(e)
 			UIKit.DIM_HEX, UnitData.STAT_NAMES[stat], e.stats[stat],
 			gained and ("<font color='%s'><b>+1</b></font>"):format(UIKit.GOOD_HEX) or "")
 	end
+	level.gui.Enabled = true
 	UIKit.popIn(level.frame)
 	task.delay(3.2, function()
 		if token == levelToken then
-			UIKit.popOut(level.frame)
+			UI.dismissLevelUp()
 		end
 	end)
 end

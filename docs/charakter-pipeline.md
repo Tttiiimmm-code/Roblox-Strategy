@@ -73,7 +73,7 @@ Kurz prüfen: In Studio ein Standard-Animationsskript testweise drauf (oder „P
 
 ## 4. Ins Spiel bringen
 1. Modell in Studio auswählen → Rechtsklick → **Save to File…** → als `assets/characters/<id>.rbxm` im Projektordner speichern.
-   - `<id>` = Helden-ID (`leon`, `aurelia`, `siegfried`, `mira`, `selina`, `tobi`, `greta`, `bruno`, `kai`, `finn`, `ida`) bzw. für Gegner der Klassenname (`Brigand`, `Soldier`, `EnemyArcher`, `EnemyMage`, `Chieftain`).
+   - `<id>` = Helden-ID (`leon`, `starter_mage`, `starter_knight`, `aurelia`, `siegfried`, `mira`, `selina`, `tobi`, `greta`, `bruno`, `kai`, `finn`, `ida`) bzw. für Gegner der Klassenname (`Brigand`, `Soldier`, `EnemyArcher`, `EnemyMage`, `Chieftain`).
 2. Rojo synchronisiert den Ordner automatisch nach `ReplicatedStorage.CharacterModels`.
 3. In `src/shared/Config.luau` `CHARACTER_STYLE = "mesh"` setzen (bzw. lassen). Figuren mit Modell erscheinen im neuen Stil, alle anderen weiter als Chibi.
 4. Kavaliere: Pferd baut das Spiel weiterhin selbst dazu (Reiter wird draufgesetzt). Ein eigenes Pferdemodell kann später als `assets/characters/horse.rbxm` folgen.
@@ -84,6 +84,8 @@ Verbindliche Regeln (Proportionen 1 : 7, Cel-Shading 2-Ton, Gesicht wie Leon, 1 
 | ID | Klasse / ★ | Hauptfarbe / Akzent | Beschreibung (für `[BESCHREIBUNG]`) |
 |---|---|---|---|
 | leon | Fürst ★5 | Königsblau / Gold | **fertig** – blondes Stachelhaar, blaue Augen, Silber-Gold-Rüstung, blauer Schal/Umhang, Wappenrock mit Gold-Raute, Schwert auf dem Rücken |
+| starter_mage | Magierin ★3 | vom Nutzer festzulegen | **Neue Starter-Figur, Platzhalter** – ID `starter_mage`, Mage mit Feuer; Name/Design vom Nutzer, bis zum Mesh-Import Klassen-Chibi; nicht im Gacha |
+| starter_knight | Kavalier ★3 | vom Nutzer festzulegen | **Neue Starter-Figur, Platzhalter** – ID `starter_knight`, Cavalier mit Eisenlanze; Name/Design vom Nutzer, bis zum Mesh-Import Klassen-Chibi; nicht im Gacha |
 | aurelia | Magierin ★5 | Weiß / Gold | *Entwurf – ★5 wird einzeln geplant:* junge Erzmagierin, langes silberweißes Haar, violette Augen, goldenes Diadem, weiße Robe mit hohem Kragen, Sternen-Goldstickerei und Rauten-Emblem, Zauberbuch an der Hüfte |
 | siegfried | Kavalier ★5 | Smaragdgrün / Gold | *Entwurf – ★5 wird einzeln geplant:* erfahrener Ritter, kurzes blondes Haar, grüne Augen, volle Plattenrüstung mit Gold-Ornamenten, smaragdgrüner Umhang, Helm mit goldenem Federbusch am Gürtel, Lanze auf dem Rücken |
 | mira | Kavalierin ★4 | Türkis / Weiß | Anführerin der Grenzreiter (Rangabzeichen am Umhang), lebhaft, roter hoher Pferdeschwanz, volle leichte Rüstung mit Goldkanten, türkisfarbener Umhang und Waffenrock, Metall-Stirnband, Reithandschuhe |

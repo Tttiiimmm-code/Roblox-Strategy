@@ -24,6 +24,8 @@ local CameraController = require(script.Parent:WaitForChild("CameraController"))
 local UnitAnimator = require(script.Parent:WaitForChild("UnitAnimator"))
 local BattleScene = require(script.Parent:WaitForChild("BattleScene"))
 local Hub = require(script.Parent:WaitForChild("Hub"))
+local TutorialGuide = require(script.Parent:WaitForChild("TutorialGuide"))
+local Tutorial = require(Shared.Tutorial)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local StateUpdate = Remotes:WaitForChild("StateUpdate")
@@ -59,7 +61,7 @@ local inspectedId = nil
 local dangerOn = false
 local loadingMission = nil
 local resetSelection -- weiter unten definiert; finishLoading braucht es
-local reopenMissions = false
+
 
 local overlays = {}
 local dangerOverlays = {}
@@ -83,10 +85,7 @@ local function finishLoading(failed)
 	MenuUI.setLoading(false)
 	if failed then
 		if isMine() then
-			reopenMissions = request.run == nil
 			send({ type = "ToLobby" })
-		elseif not request.run then
-			MenuUI.openLobby("missions")
 		end
 		UI.toast(request.run and "Level konnte nicht geladen werden. Bitte erneut versuchen." or "Mission konnte nicht gestartet werden")
 	end
@@ -101,7 +100,7 @@ local function missionReady(request)
 	if not request.receivedState or not isMine() or state.busy or state.result then return false end
 	if request.run then
 		if not state.run or state.run.seed ~= request.run.seed or state.run.depth ~= request.run.depth or state.phase ~= "Player" then return false end
-	elseif state.stageId ~= request.stageId or state.difficulty ~= request.difficulty or state.phase ~= "Prep" then
+	elseif state.stageId ~= request.stageId or state.phase ~= "Player" then
 		return false
 	end
 	local board = workspace:FindFirstChild("Board")
@@ -130,7 +129,7 @@ local function missionReady(request)
 	return true
 end
 
-local function startLoading(stageId, difficulty, runLevel)
+local function startLoading(stageId, runLevel)
 	if loadingMission then return false end
 	local title, subtitle
 	if runLevel then
@@ -146,7 +145,7 @@ local function startLoading(stageId, difficulty, runLevel)
 	MenuUI.closeLobby()
 	MenuUI.setLoading(true)
 	UI.showLoading(title, subtitle)
-	loadingMission = { stageId = stageId, difficulty = difficulty, run = runLevel, started = os.clock(), receivedState = false }
+	loadingMission = { stageId = stageId, run = runLevel, started = os.clock(), receivedState = false }
 	loadingMission.connection = RunService.Heartbeat:Connect(function()
 		local request = loadingMission
 		if missionReady(request) then
@@ -163,7 +162,7 @@ local function requestRunLevel(index, resume)
 	local option = run and run.options[index]
 	if not option then return end
 	local level = { seed = option.seed, depth = run.depth, region = run.region, themeId = option.themeId }
-	if startLoading(nil, nil, level) then
+	if startLoading(nil, level) then
 		send(resume and { type = "ResumeLevel" } or { type = "ChooseLevel", index = index })
 	end
 end
@@ -173,7 +172,7 @@ local function inBattle()
 end
 
 local function canControl()
-	return not loadingMission and inBattle() and state.phase == "Player" and not state.busy and not state.result
+	return not loadingMission and not UI.isLevelUpActive() and inBattle() and state.phase == "Player" and not state.busy and not state.result
 end
 
 local function makeFxPart(size, color, transparency)
@@ -314,6 +313,8 @@ end
 
 -- Kontext-Hinweis für Einsteiger
 local function updateHint()
+	TutorialGuide.render()
+	if TutorialGuide.active() then return end
 	if not inBattle() then
 		return
 	end
@@ -343,6 +344,8 @@ local function updateTools()
 	UI.setTools({
 		back = mode == "Selected" or mode == "Menu" or mode == "Target" or inspectedId ~= nil,
 		run = state.run ~= nil,
+		tutorial = state.tutorial ~= nil,
+		guided = TutorialGuide.guided(),
 		undoLeft = state.undoLeft or 0,
 		canUndo = state.canUndo,
 		danger = dangerOn,
@@ -373,6 +376,8 @@ end
 
 -- Aktionen ------------------------------------------------------------------
 local function sendAct(action, targetId)
+	local data = { unitId = selectedId, x = dest.x, y = dest.y, targetId = targetId }
+	if not TutorialGuide.allow(action == "Wait" and "Wait" or "Confirm", data) then return end
 	send({
 		type = "Act",
 		unitId = selectedId,
@@ -380,17 +385,21 @@ local function sendAct(action, targetId)
 		y = dest.y,
 		action = action,
 		targetId = targetId,
+		tutorialId = state.tutorial and state.tutorial.id,
+		step = state.tutorial and state.tutorial.step,
 	})
 	resetSelection()
 	setMode("Busy")
 end
 
 local function selectUnit(unit)
+	if not TutorialGuide.allow("Select", { unitId = unit.id }) then return end
 	resetSelection()
 	selectedId = unit.id
 	UnitAnimator.select(unit.id)
 	nodes = showRanges(unit, Config.OVERLAY.Move)
 	setMode("Selected")
+	TutorialGuide.checkpoint("Select", { unitId = unit.id })
 end
 
 -- Laufweg + Zielfeld sichtbar lassen, damit vor dem Bestätigen klar ist, wohin die Figur geht
@@ -406,6 +415,11 @@ local function showDestination()
 end
 
 local function startTargeting()
+	if TutorialGuide.guided() then
+		local data = { unitId = selectedId, x = dest.x, y = dest.y }
+		if not TutorialGuide.allow("AttackMenu", data) then return end
+		TutorialGuide.checkpoint("AttackMenu", data)
+	end
 	UI.hideMenu()
 	clearList(overlays)
 	for _, t in targets do
@@ -430,6 +444,7 @@ local function openMenu(x, y)
 			sendAct("Wait")
 		end,
 		onCancel = function()
+			if TutorialGuide.guided() then UI.toast("Folge bitte der goldenen Markierung."); return end
 			selectUnit(unit)
 		end,
 	})
@@ -437,6 +452,8 @@ local function openMenu(x, y)
 end
 
 local function previewAttack(target)
+	local data = { unitId = selectedId, targetId = target.id, x = dest.x, y = dest.y }
+	if not TutorialGuide.allow("Target", data) then return end
 	local unit = state.units[selectedId]
 	pendingTargetId = target.id
 	local forecast = Combat.forecast(unit, target, dest.x, dest.y)
@@ -445,10 +462,12 @@ local function previewAttack(target)
 			sendAct("Attack", target.id)
 		end,
 		onCancel = function()
+			if TutorialGuide.guided() then UI.toast("Folge bitte der goldenen Markierung."); return end
 			pendingTargetId = nil
 			UI.hideForecast()
 		end,
 	})
+	TutorialGuide.checkpoint("Target", data)
 end
 
 local function toggleInspect(enemy)
@@ -496,6 +515,32 @@ local function onClick(x, y)
 		return
 	end
 	local unit = Grid.unitAt(state.units, x, y)
+	if TutorialGuide.guided() then
+		local step = Tutorial.step(state.tutorial)
+		if step.kind == "Select" then
+			if TutorialGuide.allow("Select", { unitId = unit and unit.id }) then selectUnit(unit) end
+		elseif step.kind == "Move" then
+			local data = { unitId = selectedId, x = x, y = y }
+			if TutorialGuide.allow("Move", data) then
+				openMenu(x, y)
+				TutorialGuide.checkpoint("Move", data)
+			end
+		elseif step.kind == "Target" then
+			local pos = Tutorial.position(state, step)
+			local data = { unitId = selectedId, x = pos.x, y = pos.y, targetId = unit and unit.id }
+			if TutorialGuide.allow("Target", data) then
+				dest = { x = pos.x, y = pos.y }
+				UI.hideMenu()
+				setMode("Target")
+				previewAttack(unit)
+			end
+		elseif step.kind == "Confirm" and unit and unit.id == pendingTargetId then
+			sendAct("Attack", unit.id)
+		else
+			UI.toast("Folge bitte der goldenen Markierung.")
+		end
+		return
+	end
 
 	if mode == "Idle" then
 		if unit and unit.team == "Player" and not unit.done then
@@ -554,6 +599,7 @@ local function onClick(x, y)
 end
 
 local function goBack()
+	if TutorialGuide.guided() then UI.toast("Folge bitte der goldenen Markierung."); return end
 	if mode == "Target" then
 		openMenu(dest.x, dest.y)
 	elseif mode == "Menu" then
@@ -659,6 +705,13 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	local t = input.UserInputType
 	if t == Enum.UserInputType.Touch or t == Enum.UserInputType.MouseButton1 then
 		diagnoseInput("Beginn " .. tostring(t), Vector2.new(input.Position.X, input.Position.Y), processed, false)
+	end
+	if UI.isLevelUpActive() then
+		press = nil
+		tapGestureBlocked = true
+		if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.Return
+			or input.KeyCode == Enum.KeyCode.KeypadEnter then UI.dismissLevelUp() end
+		return
 	end
 	if BattleScene.isPlaying() then return end
 	if t == Enum.UserInputType.Touch then
@@ -949,6 +1002,9 @@ BattleEvent.OnClientEvent:Connect(function(payload)
 	elseif payload.exp and isMine() then
 		local e = payload.exp
 		if e.level then
+			press = nil
+			tapGestureBlocked = true
+			for _, touch in touches do touch.blocked = true end
 			UI.showLevelUp(e)
 		elseif e.exp > 0 then
 			UI.toast(("%s erhält <b>%d EP</b>"):format(e.unitName, e.exp), 2)
@@ -963,11 +1019,14 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
+	TutorialGuide.update(isMine() and state or nil)
 	local changedBattle = state.mode == "Battle" and (not previous or previous.mode ~= "Battle"
-		or previous.stageId ~= state.stageId or previous.difficulty ~= state.difficulty
+		or previous.stageId ~= state.stageId
+		or (state.tutorial and (not previous.tutorial or previous.tutorial.id ~= state.tutorial.id))
 		or (state.run and (not previous.run or previous.run.seed ~= state.run.seed or previous.run.depth ~= state.run.depth)))
-	if changedBattle and isMine() and state.run and not state.result and not loadingMission then
-		startLoading(nil, nil, state.run)
+	if changedBattle and isMine() and not state.result and not loadingMission then
+		if state.run then startLoading(nil, state.run)
+		elseif state.tutorial then startLoading(state.stageId) end
 	end
 	if BattleScene.isPlaying() and (not isMine() or state.result or state.phase == "Prep"
 		or changedBattle) then
@@ -979,6 +1038,7 @@ local function applyState(newState)
 	if changedBattle then
 		Grid.setMap(state.map or Stages.get(state.stageId).map)
 		UI.resetPhaseBanner()
+		if state.tutorial then dangerOn = false end
 		local T = Config.TILE_SIZE
 		local size = Vector3.new(Grid.width() * T, 0, Grid.height() * T)
 		CameraController.setBounds(size / 2, size)
@@ -1006,7 +1066,10 @@ local function applyState(newState)
 	end
 	Atmosphere.set(atmosphere)
 	SoundPlayer.playMusic(isMine() and (state.result and (state.result == "Victory" and "musicVictory" or "musicDefeat") or "musicBattle") or "musicHub", { loop = not (isMine() and state.result ~= nil) })
-	resetSelection()
+	local preserveGuide = previous and previous.tutorial and state.tutorial
+		and previous.tutorial.id == state.tutorial.id and not state.busy and not previous.busy
+		and state.phase == "Player" and previous.phase == "Player" and not state.result
+	if not preserveGuide then resetSelection() end
 	UI.setHudVisible(not loadingMission and inBattle() and not state.result and not BattleScene.isPlaying())
 	if inBattle() then
 		UI.setPhase(state)
@@ -1015,10 +1078,7 @@ local function applyState(newState)
 	updateTools()
 	redrawDanger()
 	MenuUI.update(state, profile)
-	if reopenMissions and not isMine() then
-		reopenMissions = false
-		MenuUI.openLobby("missions")
-	end
+
 end
 
 ProfileUpdate.OnClientEvent:Connect(function(newProfile)
@@ -1030,8 +1090,13 @@ ProfileUpdate.OnClientEvent:Connect(function(newProfile)
 end)
 
 local root = UI.init({
+	onTutorialContinue = function()
+		if not canControl() or not dest then return end
+		local data = { unitId = selectedId, x = dest.x, y = dest.y, targetId = pendingTargetId }
+		if TutorialGuide.allow("Forecast", data) then TutorialGuide.checkpoint("Forecast", data) end
+	end,
 	onEndTurn = function()
-		if canControl() then
+		if canControl() and TutorialGuide.allow("EndTurn") then
 			resetSelection()
 			setMode("Busy")
 			send({ type = "EndTurn" })
@@ -1044,44 +1109,46 @@ local root = UI.init({
 		end
 	end,
 	onDanger = function()
+		if state and state.tutorial then return end
 		dangerOn = not dangerOn
 		redrawDanger()
 		updateTools()
 	end,
 	onSpeed = function()
+		if state and state.tutorial then return end
 		send({ type = "SetSpeed", speed = (state and state.speed == 2) and 1 or 2 })
 	end,
 	onBattleScenes = function()
-		if isMine() then send({ type = "SetBattleScenes", on = state.battleScenes == false }) end
+		if isMine() and not state.tutorial then send({ type = "SetBattleScenes", on = state.battleScenes == false }) end
 	end,
 	onSkipEnemy = function()
-		if isMine() and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
+		if isMine() and not state.tutorial and state.phase == "Enemy" then send({ type = "SetSpeed", speed = 3 }) end
 	end,
 	onForfeit = function()
+		if TutorialGuide.guided() then return end
 		send({ type = state and state.run and "AbandonRun" or "ToLobby" })
 	end,
 })
 
+TutorialGuide.init(UI, send, fxFolder)
+
 MenuUI.init(root, {
+	onTutorialChoice = function(play)
+		if play and not startLoading("tutorial1") then return end
+		send({ type = "TutorialChoice", play = play })
+	end,
+	onStartTutorial = function(mission, replay)
+		local stage = Stages.List[mission]
+		if stage and startLoading(stage.id) then send({ type = "StartTutorial", mission = mission, replay = replay }) end
+	end,
 	onStartRun = function(heroes) send({ type = "StartRun", heroes = heroes }) end,
 	onChooseLevel = function(index) requestRunLevel(index, false) end,
 	onResumeLevel = function()
 		if profile and profile.run then requestRunLevel(profile.run.current, true) end
 	end,
 	onAbandonRun = function() send({ type = "AbandonRun" }) end,
-	onStart = function(stageId, difficulty)
-		if startLoading(stageId, difficulty) then
-			send({ type = "StartStage", stageId = stageId, difficulty = difficulty })
-		end
-	end,
-	onBegin = function(heroIds)
-		send({ type = "BeginBattle", heroes = heroIds })
-	end,
 	onRecruit = function(bannerId, count)
 		send({ type = "Recruit", bannerId = bannerId, count = count })
-	end,
-	onRetry = function()
-		if state and startLoading(state.stageId, state.difficulty) then send({ type = "Retry" }) end
 	end,
 	onLobby = function()
 		send({ type = "ToLobby" })

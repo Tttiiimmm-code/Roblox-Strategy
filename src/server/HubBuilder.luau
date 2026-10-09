@@ -261,7 +261,7 @@ local function buildWarTable(x, z)
 			part("TableLeg", Vector3.new(1, 3.5, 1), at(x + dx, 1.75, z + dz), WOOD, { Material = Enum.Material.Wood })
 		end
 	end
-	-- Mini-Lageplan aus der ersten Missionskarte
+	-- Mini-Lageplan als Dekoration am Laufzugang
 	local map = Stages.List[1].map
 	local h, w = #map, #map[1]
 	for row = 1, h do
@@ -273,8 +273,8 @@ local function buildWarTable(x, z)
 	end
 	deco("FigureBlue", Vector3.new(0.6, 0.9, 0.6), at(x - 3.5, 5.1, z + 2.5), Color3.fromRGB(70, 130, 240))
 	deco("FigureRed", Vector3.new(0.6, 0.9, 0.6), at(x + 2.5, 5.1, z - 2.5), RED)
-	label(top, "Kriegstisch", "Missionen", 6)
-	prompt(top, "missions", "Missionen", "Kriegstisch")
+	label(top, "Kriegstisch", "Lauf starten", 6)
+	prompt(top, "run", "Lauf starten", "Kriegstisch")
 end
 
 local function buildBarracks(x, z)
