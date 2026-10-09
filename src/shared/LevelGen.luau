@@ -247,23 +247,40 @@ local function ponds(map, random, reserved)
 	return result
 end
 
-local function cliffs(map, random, riverFeature, reserved, withWaterfall)
+local function cliffs(map, random, reserved, withWaterfall)
 	local lastRow = RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS - 1
-	local waterfall
-	if withWaterfall and riverFeature then
-		local bank = riverFeature.banks[1]
-		local cells = {}
-		local valid = true
-		for y = math.max(1, bank.first - 2), bank.first - 1 do
-			for x = 1, 2 do
-				if reserved[key(x, y)] or map[y]:sub(x, x) == "W" or map[y]:sub(x, x) == "B" then valid = false end
-				table.insert(cells, { x = x, y = y })
+	if withWaterfall then
+		local candidates = {}
+		for y = 1, lastRow do for x = 1, RunConfig.BOARD_WIDTH do
+			if map[y]:sub(x, x) ~= "W" then continue end
+			for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+				local sx, sy = x - d[1], y - d[2]
+				if sx >= 1 and sx <= RunConfig.BOARD_WIDTH and sy >= 1 and sy <= lastRow then
+					local ch = map[sy]:sub(sx, sx)
+					if ch ~= "W" and ch ~= "B" and ch ~= "D" and not reserved[key(sx, sy)] then
+						table.insert(candidates, { x = sx, y = sy, dx = d[1], dy = d[2] })
+					end
+				end
 			end
-		end
-		if valid then
-			for _, cell in ipairs(cells) do setCell(map, cell.x, cell.y, "C") end
-			waterfall = { x = 1, y = bank.first - 1, dx = 0, dy = 1 }
-			return { cells = cells }, waterfall
+		end end
+		shuffle(candidates, random)
+		for i = 1, math.min(#candidates, RunConfig.WATER_PLACEMENT_ATTEMPTS) do
+			local fall = candidates[i]
+			local width = random(RunConfig.CLIFF_WIDTH.min, RunConfig.CLIFF_WIDTH.max)
+			local height = random(RunConfig.CLIFF_HEIGHT.min, RunConfig.CLIFF_HEIGHT.max)
+			local left = fall.dx == 1 and fall.x - width + 1 or fall.dx == -1 and fall.x or fall.x - random(0, width - 1)
+			local top = fall.dy == 1 and fall.y - height + 1 or fall.dy == -1 and fall.y or fall.y - random(0, height - 1)
+			local cells, valid = {}, true
+			if left < 1 or left + width - 1 > RunConfig.BOARD_WIDTH or top < 1 or top + height - 1 > lastRow then continue end
+			for yy = top, top + height - 1 do for xx = left, left + width - 1 do
+				local ch = map[yy]:sub(xx, xx)
+				if reserved[key(xx, yy)] or ch == "W" or ch == "B" or ch == "D" then valid = false end
+				table.insert(cells, { x = xx, y = yy })
+			end end
+			if valid then
+				for _, cell in cells do setCell(map, cell.x, cell.y, "C") end
+				return { cells = cells }, fall
+			end
 		end
 	end
 	for _ = 1, RunConfig.WATER_PLACEMENT_ATTEMPTS do
@@ -416,7 +433,7 @@ function LevelGen.generate(seed, regionId, depth, themeId, teamSize, levelKind)
 		end
 		if withPonds then features.ponds = ponds(map, random, reserved) end
 		if withCliffs then
-			features.cliffs, features.waterfall = cliffs(map, random, features.river, reserved, withWaterfall)
+			features.cliffs, features.waterfall = cliffs(map, random, reserved, withWaterfall)
 			if not features.cliffs then continue end
 		end
 		local stage = populate(map, regionId, depth, themeId, teamSize, random)

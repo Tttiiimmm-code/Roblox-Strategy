@@ -81,7 +81,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - Etwa jedes zweite Wiesenfeld 1–2 Grasbüschel (`deco_grass`), dazu ab und zu Blumen (`deco_flower`, drei Farben) oder Steinchen, selten ein Zaunstück (`deco_fence`). Positionen am Feldrand, die Feldmitte bleibt frei (Zug-Ring/Figur sichtbar). Alle Quoten als WIP-Werte.
   - Start- und Gegnerfelder bleiben gut lesbar, keine Deko auf Feldern mit Figuren beim Start.
 
-- [ ] 8. **Wasserfälle auf etwa jeder 6.–8. Karte** – `LevelGen`, `RunConfig`
+- [x] 8. **Wasserfälle auf etwa jeder 6.–8. Karte** – `LevelGen`, `RunConfig`
   - Wasserfälle auch an Seen und an anderen Flussenden, nicht nur links (Klippe am Ufer, Fall ins Wasser). Ziel-Quote 12–17 % der normalen Laufkarten, im Generatortest messen.
   - Die Bedingungen aus C1 bleiben (Lösbarkeit, Startzone, `BoardBuilder.waterfall` prüft `C` → `W`).
 
@@ -106,6 +106,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 8: Wasserfall-Klippen können an jedem geeigneten W-Ufer entstehen, auch an Seen und in allen vier Richtungen; Startzone, reservierte Brückenufer und bestehende Gewässer bleiben geschützt. Normale Klippenquote/andere Generatorregeln unverändert. Bedingte WIP-Wasserfallchance 0,56 ergibt in 1.000 normalen Grünlandkarten **15,60 %** (Ziel 12–17 %); See-Wasserfälle und alle Richtungen im Test nachgewiesen. 19.000 Level-/5.000 Optionsprüfungen, 96 erzwungene Landschaftskombinationen und 2.400 Boss-/Minibosskarten grün, kein ungewollter Fallback. Brett-/Lauftest ebenfalls grün; endgültige Messung mit 0,56 folgt in Schritt 9.
 
 - Schritt 7: Etwa 50 % der unbesetzten Wiesenfelder bekommen 1–2 Grasbüschel, zusätzlich gelegentlich Blumen/Steinchen und selten Zaun. Alle Quoten in Config; deterministische Eckpositionen mit freier Feldmitte. Server gibt die tatsächlichen Slots/Gegner des Levels an BoardBuilder weiter; dort keine Wiesen-Deko oder Bodenflecken. Ohne Modelle Part-Gras als Ersatz. Stub prüft Dichte/Kategorien/Feldmitte/Starts/Determinismus/Fallback, check/test-run grün. Messung: Mittel 1.839,0 / max. 2.116 Teile; geschätzt Mittel 353.083 / max. 584.448 Dreiecke; Stub-Aufbau 95,14 ms. WIP-Mengen werden in Schritt 9 innerhalb der gewünschten Bereiche auf das typische Dreieckbudget abgestimmt.
 

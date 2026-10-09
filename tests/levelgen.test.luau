@@ -172,11 +172,11 @@ local function validateCliffs(stage)
 	end
 	if features.waterfall then
 		local fall = features.waterfall
-		assert(fall.x == 1 or fall.x == RunConfig.BOARD_WIDTH or fall.y == 1, "Wasserfall nicht am Rand")
+		assert(fall.y < RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS, "Wasserfall in/an Startzone")
 		assert(math.abs(fall.dx) + math.abs(fall.dy) == 1, "Wasserfallrichtung")
 		assert(charAt(stage.map, fall.x, fall.y) == "C", "Wasserfall ohne Klippe")
 		assert(charAt(stage.map, fall.x + fall.dx, fall.y + fall.dy) == "W", "Wasserfall ohne Wasser")
-		assert(features.river, "Wasserfall ohne Quellfluss")
+		assert(features.cliffs, "Wasserfall ohne Klippenfeature")
 	end
 end
 
@@ -255,6 +255,7 @@ local SAMPLE_SEEDS, EXHAUSTIVE_SEEDS = 1000, 200
 local maps, uniqueMaps, terrainCells, sampleRivers = {}, 0, 0, 0
 local sampleLakes, sampleIslands, samplePonds = 0, 0, 0
 local sampleCliffs, sampleFalls = 0, 0
+local lakeFalls, otherFalls, fallDirections = 0, 0, {}
 for seed = 1, SAMPLE_SEEDS do
 	local sample = LevelGen.generate(seed, "greenland", 1, "axe", RunConfig.START_TEAM)
 	validate(sample, "axe", 1, RunConfig.START_TEAM)
@@ -263,7 +264,15 @@ for seed = 1, SAMPLE_SEEDS do
 	local id = table.concat(sample.map, "/")
 	if not maps[id] then maps[id] = true; uniqueMaps += 1 end
 	if sample.features and sample.features.cliffs then sampleCliffs += 1 end
-	if sample.features and sample.features.waterfall then sampleFalls += 1 end
+	if sample.features and sample.features.waterfall then
+		sampleFalls += 1
+		local fall = sample.features.waterfall
+		fallDirections[fall.dx .. "," .. fall.dy] = true
+		if fall.x ~= 1 then otherFalls += 1 end
+		for _, cell in sample.features.lake and sample.features.lake.cells or {} do
+			if cell.x == fall.x + fall.dx and cell.y == fall.y + fall.dy then lakeFalls += 1; break end
+		end
+	end
 	local hasRiver = sample.features and sample.features.river ~= nil
 	if sample.features and sample.features.lake then
 		sampleLakes += 1
@@ -343,6 +352,9 @@ for seed = 1, SAMPLE_SEEDS do
 	assert(not validateRiver(stage), "Fluss trotz Chance 0")
 end
 assert(sampleLakes > 0 and sampleIslands > 0 and samplePonds > 0 and sampleCliffs > 0 and sampleFalls > 0, "Neue Landschaftsvarianten fehlen")
+assert(sampleFalls / SAMPLE_SEEDS >= 0.12 and sampleFalls / SAMPLE_SEEDS <= 0.17, "Wasserfallquote außerhalb 12–17 %: " .. sampleFalls / SAMPLE_SEEDS)
+local directionCount = 0; for _ in fallDirections do directionCount += 1 end
+assert(lakeFalls > 0 and otherFalls > 0 and directionCount == 4, "Wasserfälle ohne Seen/verschiedene Ufer/Richtungen")
 assert(forestJoins > 0 and rockJoins > 0, "Keine Wald-/Felsanschlüsse")
 RunConfig.RIVER_CHANCE = 1
 for _, seed in ipairs({ 0, -1, 2147483646, 987654321 }) do
