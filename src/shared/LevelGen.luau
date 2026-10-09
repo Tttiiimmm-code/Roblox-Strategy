@@ -188,6 +188,13 @@ local function populate(map, regionId, depth, themeId, teamSize, random)
 	shuffle(starts, random)
 	shuffle(forestStarts, random)
 	for _, slot in ipairs(forestStarts) do table.insert(starts, slot) end
+	-- Erst die Mitte belegen; die ganze Startzone bleibt für spätere Teamgrößen nutzbar.
+	table.sort(starts, function(a, b)
+		local center = (RunConfig.BOARD_WIDTH + 1) / 2
+		local scoreA = math.abs(a.x - center) * 10 + RunConfig.BOARD_HEIGHT - a.y
+		local scoreB = math.abs(b.x - center) * 10 + RunConfig.BOARD_HEIGHT - b.y
+		return scoreA < scoreB
+	end)
 	local slots = {}
 	for _, candidate in ipairs(starts) do
 		local free = true

@@ -14,6 +14,9 @@ Config.CHIBI = {
 	riderLift = 2.6, riderHipAngle = -35,
 }
 
+Config.CAMERA = { zoomMin = 30, zoomDefaultMin = 45, zoomDefaultMax = 120, zoomOverviewMin = 140,
+	zoomDefaultScale = 0.85, zoomOverviewScale = 1.6 }
+
 Config.FEEL = {
 	battleSceneIntro = 0.45, battleSceneOutro = 0.5,
 	battleSceneHpTime = 0.25, battleSceneTextTime = 0.4, battleSceneDeathDelay = 0.1,

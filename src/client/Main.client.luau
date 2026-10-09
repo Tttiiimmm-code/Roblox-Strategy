@@ -1075,7 +1075,8 @@ local function applyState(newState)
 		if state.tutorial then dangerOn = false end
 		local T = Config.TILE_SIZE
 		local size = Vector3.new(Grid.width() * T, 0, Grid.height() * T)
-		CameraController.setBounds(size / 2, size)
+		local startFocus = state.run and Vector3.new(size.X / 2, 0, (Grid.height() - 1) * T)
+		CameraController.setBounds(size / 2, size, startFocus)
 	end
 	if state.phase == "Prep" then
 		UI.resetPhaseBanner()

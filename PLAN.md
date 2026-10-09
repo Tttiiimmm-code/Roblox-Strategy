@@ -11,7 +11,7 @@ Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`
 
 ## Schritte
 
-- [ ] 1. **Variable Brettgröße** – `RunConfig`, `LevelGen`, `BoardBuilder`, `CameraController`
+- [x] 1. **Variable Brettgröße** – `RunConfig`, `LevelGen`, `BoardBuilder`, `CameraController`
   - Lauf-Karten **16×12** (Werte zentral, später je Gebiet/Leveltyp änderbar). Bausteingröße so wählen, dass das Brett glatt aufgeht (z. B. 4×4 → 4×3 Stücke, oder 4×3 → 4×4 Stücke – frei, in Notizen begründen); Startzone unten (2 Reihen), Gegnerzone obere Hälfte, Startfelder bis 6 mittig-unten verteilt.
   - Gegnerzahl an die größere Fläche anpassen (WIP-Formel, z. B. Basis + Tiefe, Obergrenze), damit Level nicht leer wirken, aber auf dem Handy nicht ewig dauern.
   - Kamera: Grenzen/Zoom für das große Brett (ganzes Brett erreichbar; Startansicht auf eigene Truppe; Zoom-Obergrenze so, dass man das Brett überblicken kann). Terrain-Freiraum/Randfläche im BoardBuilder auf die neue Größe.
@@ -52,4 +52,5 @@ Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
--
+- Schritt 1: Lauf 16×12, Bausteine 8×4 (2×3 Stücke; 32 statt 20 Felder pro Stück für größere zusammenhängende Gruppen). Bestehenden Katalog/Festung für lauffähige Zwischenstände auf neue Maße portiert; neue Entwürfe folgen in Schritt 2/5. Startfelder bevorzugen mittig die unteren zwei Reihen. Gegner WIP: min(12, 6 + Tiefe), obere sechs Reihen; Bosslogik unverändert. Grid/Brett bereits variabel; Umgebungsrand skaliert zusätzlich mit Größe. Laufkamera startet mittig unten, Zoom bis Brettdiagonale × 1,6 (16×12: 256 Studs); Tutorial bleibt zentriert.
+- Ausgangsmessung: 100 Seeds (1–100), Tiefe 1, sechs Startfelder, Fallback-Deko ohne importierte Assets: 10×8 im Mittel 744,2 Brettteile (633–979), Stub-Aufbau 12,03 ms. Reale Roblox-Aufbauzeit/Bildrate/Figurenaufbau kann nur der Nutzer in Studio/auf Handy bestätigen; hier ungetestet. Nachmessung folgt nach dem finalen Generator.

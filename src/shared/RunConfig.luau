@@ -20,12 +20,12 @@ RunConfig.ENEMY_STAT_PER_LEVEL = { hp = 2, str = 1, def = 1 }
 RunConfig.BOSSES = { greenland = { miniboss = "brigand_captain", boss = "chieftain" } }
 RunConfig.OPTIONS_MIN = 2
 RunConfig.OPTIONS_MAX = 3
-RunConfig.BOARD_WIDTH = 10
-RunConfig.BOARD_HEIGHT = 8
-RunConfig.CHUNK_WIDTH = 5
+RunConfig.BOARD_WIDTH = 16
+RunConfig.BOARD_HEIGHT = 12
+RunConfig.CHUNK_WIDTH = 8
 RunConfig.CHUNK_HEIGHT = 4
 RunConfig.START_ROWS = 2
-RunConfig.ENEMY_ROWS = 4
+RunConfig.ENEMY_ROWS = 6
 RunConfig.MIN_ENEMY_DISTANCE = 4
 RunConfig.MAX_BLOCKED_SHARE = 0.25
 RunConfig.MAX_ATTEMPTS = 50
@@ -34,8 +34,9 @@ RunConfig.RIVER_CHANCE = 0.4
 RunConfig.RIVER_WIDTH = { min = 1, max = 2 }
 RunConfig.BRIDGES_MIN = 1
 RunConfig.BRIDGES_MAX = 2
-RunConfig.ENEMY_COUNT_BASE = 4
+RunConfig.ENEMY_COUNT_BASE = 6
 RunConfig.ENEMY_COUNT_PER_DEPTH = 1
+RunConfig.ENEMY_COUNT_MAX = 12
 RunConfig.ENEMY_LEVEL_BASE = 1
 RunConfig.ENEMY_LEVEL_PER_DEPTH = 1
 RunConfig.REWARDS = {
@@ -85,7 +86,7 @@ function RunConfig.revivePrice(level, currency)
 end
 
 function RunConfig.enemyCount(depth)
-	return RunConfig.ENEMY_COUNT_BASE + depth * RunConfig.ENEMY_COUNT_PER_DEPTH
+	return math.min(RunConfig.ENEMY_COUNT_MAX, RunConfig.ENEMY_COUNT_BASE + depth * RunConfig.ENEMY_COUNT_PER_DEPTH)
 end
 
 function RunConfig.enemyLevel(depth)

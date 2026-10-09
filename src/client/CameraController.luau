@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local GuiService = game:GetService("GuiService")
 
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local CameraController = {}
 
 local active = false -- true = Taktik-Kamera (eigener Kampf), false = normale Avatar-Kamera im Thronsaal
@@ -59,12 +60,17 @@ local function clampFocus()
 	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), focus.Y, math.clamp(focus.Z, 0, bounds.Z))
 end
 
-function CameraController.setBounds(center, size)
+local function maximumZoom()
+	return math.max(Config.CAMERA.zoomOverviewMin, bounds.Magnitude * Config.CAMERA.zoomOverviewScale)
+end
+
+function CameraController.setBounds(center, size, startFocus)
 	saved, transition = nil, nil
 	shakeStrength = 0
-	focus = center
+	focus = startFocus or center
 	bounds = size
-	zoom = math.clamp(math.max(size.X, size.Z) * 0.85, 45, 120)
+	clampFocus()
+	zoom = math.clamp(math.max(size.X, size.Z) * Config.CAMERA.zoomDefaultScale, Config.CAMERA.zoomDefaultMin, Config.CAMERA.zoomDefaultMax)
 end
 
 -- Bildschirm-Verschiebung in Pixeln ("Karte greifen")
@@ -77,7 +83,7 @@ end
 
 function CameraController.zoomBy(factor)
 	if factor > 0 then
-		zoom = math.clamp(zoom / factor, 30, 140)
+		zoom = math.clamp(zoom / factor, Config.CAMERA.zoomMin, maximumZoom())
 	end
 end
 
@@ -115,7 +121,7 @@ function CameraController.start()
 
 	UserInputService.InputChanged:Connect(function(input, processed)
 		if active and not processed and input.UserInputType == Enum.UserInputType.MouseWheel then
-			zoom = math.clamp(zoom - input.Position.Z * 6, 30, 140)
+			zoom = math.clamp(zoom - input.Position.Z * 6, Config.CAMERA.zoomMin, maximumZoom())
 		end
 	end)
 

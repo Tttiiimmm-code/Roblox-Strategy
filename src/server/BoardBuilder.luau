@@ -222,6 +222,8 @@ function BoardBuilder.build(regionId)
 	local T = Config.TILE_SIZE
 	local margin, depth = Config.FEEL.environmentMargin, Config.FEEL.terrainDepth
 	local w, h = Grid.width() * T, Grid.height() * T
+	-- Größere Karten brauchen auch beim Herauszoomen einen größeren Umgebungsrand.
+	margin = math.max(margin, math.max(w, h) * Config.CAMERA.zoomOverviewScale / 2)
 	local size = Vector3.new(w + margin * 2, depth + Config.FEEL.terrainClearTop, h + margin * 2)
 	local cf = CFrame.new(w / 2, (Config.FEEL.terrainClearTop - depth) / 2, h / 2)
 	-- Auch Terrain aus früheren Karten entfernen; der Thronsaal liegt außerhalb.
