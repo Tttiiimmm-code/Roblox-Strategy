@@ -45,7 +45,7 @@ function methods:GetBoundingBox()
 end
 function methods:ScaleTo(scale)for _,p in self:GetDescendants()do if p:IsA('BasePart')then p.Size=p.Size*scale;p.Position=p.Position*scale end end end
 function methods:PivotTo(cf)local delta=cf*self._pivot:Inverse();for _,p in self:GetDescendants()do if p:IsA('BasePart')then p.CFrame=delta*p.CFrame end end;self._pivot=cf end
-local services={ReplicatedStorage=Instance.new('Folder'),ServerStorage=Instance.new('Folder')}
+local services={ReplicatedStorage=Instance.new('Folder'),ServerStorage=Instance.new('Folder'),MaterialService=Instance.new('Folder')}
 local shared=Instance.new('Folder');shared.Name='Shared';shared.Parent=services.ReplicatedStorage
 local models=Instance.new('Folder');models.Name='EnvironmentModels';models.Parent=services.ServerStorage
 local game={GetService=function(_,k)return services[k]end}

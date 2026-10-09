@@ -41,7 +41,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 ## Schritte
 
-- [ ] 0. **Review der Lader-Änderung von Claude** (Commit 18698ea, `EnvironmentAssets.variants`): Ordner-Pakete werden durchsucht, und MaterialVariants landen im MaterialService. Befunde unter Notizen festhalten und kleine Fehler direkt beheben. Ergänze einen Test: Paket-Ordner mit `tree_1`/`tree_2` und ein loses `rock_1` werden erkannt, Namen ohne Muster werden ignoriert.
+- [x] 0. **Review der Lader-Änderung von Claude** (Commit 18698ea, `EnvironmentAssets.variants`): Ordner-Pakete werden durchsucht, und MaterialVariants landen im MaterialService. Befunde unter Notizen festhalten und kleine Fehler direkt beheben. Ergänze einen Test: Paket-Ordner mit `tree_1`/`tree_2` und ein loses `rock_1` werden erkannt, Namen ohne Muster werden ignoriert.
 
 - [ ] 1. **Dichter Wald** – `BoardBuilder.decorate` (Fall `F`), `Config.ENVIRONMENT`
   - Pro Waldfeld **2–3 Bäume** (WIP `treesPerForestTile = {min = 2, max = 3}`). Die Positionen werden deterministisch im Feld gestreut, Kronen dürfen in Nachbarfelder ragen. Baumgröße deutlich größer als bisher (WIP etwa 1,0–1,4 Felder hoch und 0,6–0,9 Felder breit), mit Größenstreuung.
@@ -105,3 +105,5 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 0: Review von Claude-Commit 18698ea: Ordner-Pakete und lose Modelle korrekt, Namensfilter ignoriert unpassende Namen. Nicht klonbare MaterialVariants abgesichert. Neuer Lader-Stub gr?n; test-run gr?n. Ausgangswert ohne Paket, 100 Seeds: 1.848,6 Teile im Mittel, max. 2.305; Stub-Aufbau 61,65 ms im Mittel. Dreiecksch?tzung folgt mit den Kategorie-Stubs in Schritt 1/9.

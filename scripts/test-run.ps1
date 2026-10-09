@@ -37,6 +37,7 @@ foreach ($module in @("Config", "UnitData", "Grid", "Stages", "RunConfig", "MapC
     $source += "`r`n modules.$module = (function()`r`n$moduleSource`r`n end)()`r`n"
 }
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/board.test.luau") -Raw -Encoding UTF8
+$source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment.test.luau") -Raw -Encoding UTF8
 try {
     [System.IO.File]::WriteAllText($runner, $source, (New-Object System.Text.UTF8Encoding($false)))
     & $luau $runner

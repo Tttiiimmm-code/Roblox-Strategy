@@ -96,7 +96,11 @@ function EnvironmentAssets.variants(category)
 		local sources = {}
 		for _, source in current:GetDescendants() do
 			if source:IsA("MaterialVariant") then
-				if not MaterialService:FindFirstChild(source.Name) then source:Clone().Parent = MaterialService end
+				if not MaterialService:FindFirstChild(source.Name) then
+					local ok, material = pcall(function() return source:Clone() end)
+					if ok and material then material.Parent = MaterialService
+					else warnOnce(source.Name, "Materialvorlage ist nicht klonbar") end
+				end
 			elseif source.Parent:IsA("Folder") then
 				table.insert(sources, source)
 			end
