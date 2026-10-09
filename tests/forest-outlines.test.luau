@@ -17,6 +17,16 @@ do
 	local count, players = 0, 0
 	for _, model in figures do if model:FindFirstChild("ForestOutline") then count += 1; if model:GetAttribute("Team") == "Player" then players += 1 end end end
 	expect(count == Config.FOREST_OUTLINES.maxCount and players == 5, "Wald-Budget oder Spielervorrang")
+	for _, model in figures do
+		local outline = model:FindFirstChild("ForestOutline")
+		if not outline then continue end
+		local color = Config.FOREST_OUTLINES.colors[model:GetAttribute("Team")]
+		expect(outline.FillTransparency == 0.8 and outline.FillColor == color and outline.OutlineColor == color, "Wald-Füllung ohne Teamfarbe")
+	end
+	figures[25]:SetAttribute("Team", "Enemy"); update(true)
+	local switched = figures[25]:FindFirstChild("ForestOutline")
+	expect(switched and switched.FillColor == Config.FOREST_OUTLINES.colors.Enemy, "Füllung folgt Teamwechsel nicht")
+	figures[25]:SetAttribute("Team", "Player"); update(true)
 	expect(tutorial.Parent == workspace, "Tutorial-Highlight verdrängt")
 	local reserved = {}
 	for _ = 1, 25 do local h = Instance.new("Highlight"); h.Parent = workspace; table.insert(reserved, h) end

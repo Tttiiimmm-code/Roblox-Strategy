@@ -29,13 +29,13 @@ local function covered(model, look)
 	if not Grid.inBounds(x, y) then return false end
 	if Grid.getMap()[y]:sub(x, x) == "F" then return true end
 	local settings = Config.FOREST_OUTLINES
-	-- Breite Kronen überragen auch seitliche und diagonale Nachbarn.
+	-- Auch kleinere Kronen können durch Eckpositionen direkte Nachbarn überragen.
 	for dy = -settings.canopyNeighborRadius, settings.canopyNeighborRadius do
 		for dx = -settings.canopyNeighborRadius, settings.canopyNeighborRadius do
 			if Grid.inBounds(x + dx, y + dy) and Grid.getMap()[y + dy]:sub(x + dx, x + dx) == "F" then return true end
 		end
 	end
-	-- Hohe Bäume verdecken zusätzlich das übernächste Feld hinter der Blickachse.
+	-- Perspektive und Eckpositionen reichen zusammen bis zum übernächsten Feld.
 	for distance = settings.canopyNeighborRadius + 1, settings.sightDistance do
 		local dx = math.abs(look.X) > math.abs(look.Z) and (look.X > 0 and -distance or distance) or 0
 		local dy = dx == 0 and (look.Z > 0 and -distance or distance) or 0
@@ -82,7 +82,9 @@ function ForestOutlines.update(models, look, dying, enabled)
 			outline.Parent = model
 			outlines[model] = outline
 		end
-		outline.OutlineColor = settings.colors[model:GetAttribute("Team")] or settings.colors.Enemy
+		local color = settings.colors[model:GetAttribute("Team")] or settings.colors.Enemy
+		outline.OutlineColor = color
+		outline.FillColor = color
 	end
 end
 
