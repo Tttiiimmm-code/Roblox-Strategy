@@ -20,6 +20,8 @@ local callbacks
 local profile = nil
 local recruit, barracks, odds, results = {}, {}, {}, {}
 local selectedHero = nil
+local barracksFrame, barracksHome, barracksPosition, barracksSize
+local campRun, campSelect
 
 local function pct(value)
 	local text = (value >= 1 and "%.1f" or "%.3f"):format(value)
@@ -342,6 +344,7 @@ local function updateBarracks()
 			local c = UIKit.heroCard(barracks.list, heroId, { LayoutOrder = i })
 			c.card.Activated:Connect(function()
 				showHeroDetail(heroId)
+				if campSelect then campSelect(heroId) end
 			end)
 			barracks.cards[heroId] = c
 		end
@@ -349,6 +352,10 @@ local function updateBarracks()
 	for heroId, c in barracks.cards do
 		local entry = profile.heroes[heroId]
 		c.badge.Visible = true
+		local member = campRun and campRun.team[heroId]
+		c.sub.Text = campRun and (member and not member.alive and "Gefallen in diesem Lauf"
+			or table.find(campRun.order, heroId) and "Im Laufteam" or "Für Tausch verfügbar")
+			or UnitData.Classes[UnitData.Heroes[heroId].class].name
 		c.badge.Text = ("Lv %d%s"):format(entry.level or 1, (entry.merges or 0) > 0 and ("+" .. entry.merges) or "")
 	end
 	if not selectedHero or not profile.heroes[selectedHero] then
@@ -360,12 +367,32 @@ local function updateBarracks()
 end
 
 -- Öffentliche API ----------------------------------------------------------------------
-function CollectionUI.build(recruitFrame, barracksFrame, overlayRoot, cbs)
+function CollectionUI.build(recruitFrame, collectionFrame, overlayRoot, cbs)
 	callbacks = cbs
+	barracksFrame, barracksHome = collectionFrame, collectionFrame.Parent
+	barracksPosition, barracksSize = collectionFrame.Position, collectionFrame.Size
 	buildRecruit(recruitFrame)
-	buildBarracks(barracksFrame)
+	buildBarracks(collectionFrame)
 	buildOdds(overlayRoot)
 	buildResults(overlayRoot)
+end
+
+function CollectionUI.restoreBarracks()
+	if not campRun then return end
+	campRun, campSelect = nil, nil
+	barracksFrame.Parent = barracksHome
+	barracksFrame.Position, barracksFrame.Size = barracksPosition, barracksSize
+	barracksFrame.Visible = false
+	updateBarracks()
+end
+
+function CollectionUI.mountCamp(parent, newProfile, onSelect)
+	profile, campRun, campSelect = newProfile, newProfile.run, onSelect
+	barracksFrame.Parent = parent
+	barracksFrame.Position, barracksFrame.Size = UDim2.new(), UDim2.fromScale(1, 1)
+	barracksFrame.Visible = true
+	updateBarracks()
+	if selectedHero then onSelect(selectedHero) end
 end
 
 function CollectionUI.update(newProfile)

@@ -6,6 +6,7 @@ local RunConfig = require(Shared.RunConfig)
 local Tutorial = require(Shared.Tutorial)
 local Recruit = require(Shared.Recruit)
 local UIKit = require(script.Parent.UIKit)
+local CollectionUI = require(script.Parent.CollectionUI)
 local THEME = UIKit.THEME
 local make, label, panel, button = UIKit.make, UIKit.label, UIKit.panel, UIKit.button
 local RunUI = {}
@@ -15,12 +16,15 @@ local selecting = false
 local selected, cards = {}, {}
 local counter, beginButton, resultButton
 local renderKey
+local campSlot, campCandidate = 1, nil
+local campBarracks = false
 
 local function maxHp(id, entry)
 	return (entry.stats or UnitData.Heroes[id].stats).hp + (entry.merges or 0) * Recruit.MERGE_HP
 end
 
 local function resetContent()
+	CollectionUI.restoreBarracks()
 	if content then content:Destroy() end
 	content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, frame)
 	cards, resultButton = {}, nil
@@ -155,13 +159,77 @@ local function buildChoice(run, profile)
 	footer("Aufgeben", "danger", RunUI.confirmAbandon, false)
 end
 
+local function buildCamp(run, profile)
+	resetContent()
+	if campBarracks then
+		local outgoing = run.order[campSlot]
+		heading("Kaserne im Lager", ("Platz %d: %s – Held ansehen, dann Teamwechsel bestätigen."):format(campSlot,
+			outgoing and UnitData.Heroes[outgoing].name or "Leer"))
+		local collection = make("Frame", { Position = UDim2.fromOffset(24, 124), Size = UDim2.new(1, -48, 1, -230), BackgroundTransparency = 1 }, content)
+		local swapButton
+		local function refreshSwap(id)
+			campCandidate = id
+			if not swapButton then return end
+			local valid = id and not table.find(run.order, id)
+			UIKit.setButtonStyle(swapButton, valid and "primary" or "disabled")
+			swapButton.Text = valid and ("Einsetzen: " .. UnitData.Heroes[id].name) or "Bereits im Team"
+		end
+		swapButton = footer("Held auswählen", "disabled", function()
+			if campCandidate and not table.find(run.order, campCandidate) and not lastState.busy then
+				callbacks.onCampSwap(campSlot, campCandidate, outgoing)
+				campBarracks, renderKey = false, nil
+			end
+		end, true)
+		CollectionUI.mountCamp(collection, profile, refreshSwap)
+		footer("Zurück zum Lager", "muted", function()
+			campBarracks, renderKey = false, nil
+			callbacks.onChanged()
+		end, false)
+		return
+	end
+	heading(run.campExtra and "Extra-Lager vor Garrick" or "Lager", ("Lebende Teammitglieder vollständig geheilt · %d Teamplätze · 🪙 %d Gold · 💎 %d Edelsteine"):format(run.maxTeam, profile.gold or 0, profile.gems or 0))
+	local scroll = UIKit.textList({ Position = UDim2.fromOffset(24, 124), Size = UDim2.new(1, -48, 1, -230) }, content)
+	for slot = 1, run.maxTeam do
+		local id = run.order[slot]
+		local member = id and run.team[id]
+		local row = make("Frame", { Size = UDim2.new(1, -12, 0, 100), BackgroundTransparency = 1, LayoutOrder = slot }, scroll)
+		label({ Position = UDim2.fromOffset(8, 6), Size = UDim2.new(0.3, -16, 0, 86), TextSize = 22,
+			Text = id and (UnitData.Heroes[id].name .. " · Lv " .. (profile.heroes[id].level or 1) .. "\n"
+				.. (member.alive and (member.hp .. " / " .. maxHp(id, profile.heroes[id]) .. " KP") or "Gefallen")) or ("Platz " .. slot .. " · Leer"),
+			TextWrapped = true, TextScaled = false }, row)
+		if member and not member.alive then
+			for i, currency in ipairs({ "gold", "gems" }) do
+				local price = RunConfig.revivePrice(profile.heroes[id].level or 1, currency)
+				local affordable = (profile[currency] or 0) >= price
+				local revive = button((currency == "gold" and "🪙 " or "💎 ") .. price .. (currency == "gold" and " Gold" or " Edelsteine"), row, affordable and "primary" or "disabled")
+				revive.Position, revive.Size, revive.TextSize = UDim2.new(0.3 + (i - 1) * 0.22, 4, 0, 18), UDim2.new(0.22, -8, 0, 64), 22
+				revive.Activated:Connect(function() if affordable and not lastState.busy then callbacks.onCampRevive(id, currency) end end)
+			end
+		end
+		local change = button("Kaserne · Tausch", row, "default")
+		change.Position, change.Size, change.TextSize = UDim2.new(0.74, 4, 0, 18), UDim2.new(0.26, -8, 0, 64), 22
+		change.Activated:Connect(function()
+			campSlot, campBarracks, renderKey = slot, true, nil
+			callbacks.onChanged()
+		end)
+	end
+	UIKit.flowLabel({ Size = UDim2.new(1, -12, 0, 0), LayoutOrder = run.maxTeam + 1, TextSize = 22, TextColor3 = THEME.dim,
+		Text = "Gefallene können mit Gold ODER Edelsteinen wiederbelebt werden. Ausgewechselte Gefallene bleiben tot. Neue lebende Helden kommen mit vollen KP. Mindestens ein lebender Held muss im Team bleiben." }, scroll)
+	footer("Aufgeben", "danger", RunUI.confirmAbandon, false)
+	local living = false
+	for _, id in ipairs(run.order) do if run.team[id].alive then living = true end end
+	footer(run.campExtra and "Weiter zu Garrick" or "Weiter", living and "primary" or "disabled", function()
+		if living and not lastState.busy then callbacks.onLeaveCamp() end
+	end, true)
+end
+
 local function buildResult(info, profile)
 	resetContent()
 	local title = info.outcome == "Completed" and "Lauf geschafft"
 		or info.outcome == "Abandoned" and "Lauf aufgegeben"
 		or info.victory and "Level geschafft" or "Lauf vorbei"
 	heading(title, info.ended and "Deine verdienten Belohnungen und Helden-Erfahrung bleiben erhalten."
-		or "Belohnung erhalten. Überlebende wurden teilweise geheilt.")
+		or (info.campNext and "Lager erreicht. Überlebende wurden vollständig geheilt." or "Belohnung erhalten. Überlebende wurden teilweise geheilt."))
 	local lines = {}
 	if info.ended then
 		table.insert(lines, ("Geschaffte Level: %d / %d"):format(info.cleared, info.totalLevels))
@@ -229,14 +297,14 @@ function RunUI.update(state, profile, loading)
 	local active = selecting or run ~= nil or activeBattle or info ~= nil
 	local visible = active and not loading and not activeBattle and profile.heroes ~= nil
 	frame.Visible = visible
-	if not visible then confirmation.Visible = false; return active end
+	if not visible then CollectionUI.restoreBarracks(); confirmation.Visible = false; return active end
 	local key
 	if info then
 		key = ("result:%s:%d:%d:%d:%d:%d:%d"):format(info.outcome, info.depth, info.cleared, info.earned.gold, info.earned.gems, profile.gold or 0, profile.gems or 0)
 	elseif run then
 		local team = {}
 		for _, id in ipairs(run.order) do table.insert(team, id .. ":" .. run.team[id].hp .. ":" .. (profile.heroes[id].level or 1)) end
-		key = "choice:" .. run.seed .. ":" .. run.depth .. ":" .. (run.current or 0) .. table.concat(team, ",")
+		key = run.phase .. ":" .. tostring(campBarracks) .. ":" .. (profile.gold or 0) .. ":" .. (profile.gems or 0) .. ":" .. run.seed .. ":" .. run.depth .. ":" .. (run.current or 0) .. table.concat(team, ",")
 	else
 		local owned = {}
 		for id in pairs(profile.heroes) do table.insert(owned, id) end
@@ -247,7 +315,9 @@ function RunUI.update(state, profile, loading)
 		renderKey = key
 		confirmation.Visible = false
 		if info then buildResult(info, profile)
-		elseif run then buildChoice(run, profile)
+		elseif run then
+			if run.phase == "camp" then buildCamp(run, profile)
+			else campBarracks = false; buildChoice(run, profile) end
 		else buildTeam(profile) end
 	end
 	if resultButton then UIKit.setButtonStyle(resultButton, state.busy and "disabled" or "primary") end

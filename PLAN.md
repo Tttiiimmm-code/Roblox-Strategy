@@ -31,7 +31,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
   - In Boss-/Miniboss-Leveln: Boss fällt → sofort Sieg, übrige Gegner „fliehen“ (entfernen mit kurzer Ansage). Höhere Belohnung (WIP). Nach dem **Gebietsboss**: `run.maxTeam += 1` (bis `MAX_TEAM`), Hinweis im Ergebnis. Da aktuell nur das Grasland existiert, endet der Lauf danach wie bisher als „geschafft“ – Teamplatz-Logik muss trotzdem korrekt im Laufstand landen (für spätere Gebiete).
   - Fertig, wenn: Stub-Prüfung Boss-Sieg mit lebenden Gegnern, Miniboss-Sieg, Teamplatz.
 
-- [ ] 5. **Lager** – Server (`RunService`/`Main.server.luau`, neue Befehle) + Client (`RunUI.luau`, Kaserne wiederverwenden)
+- [x] 5. **Lager** – Server (`RunService`/`Main.server.luau`, neue Befehle) + Client (`RunUI.luau`, Kaserne wiederverwenden)
   - Beim Betreten: **volle Heilung** aller lebenden Teammitglieder.
   - **Teamwechsel:** Helden aus der Sammlung gegen Teammitglieder tauschen (bis `run.maxTeam` Plätze; leere Plätze nach Teamplatz-Zuwachs füllen). **Gefallene dürfen ausgewechselt werden, bleiben aber tot** (wer später zurückkommt, ist weiter tot). Neu ins Team geholte Helden starten mit vollen KP.
   - **Wiederbeleben:** gefallener Held → lebendig mit vollen KP; Preis in Gold = `REVIVE_GOLD_BASE + REVIVE_GOLD_PER_LEVEL × Level` **oder** fester Edelsteinpreis `REVIVE_GEMS` (WIP); Spieler wählt die Währung; Server prüft Guthaben.
@@ -68,3 +68,5 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - Schritt 3: Grasland-Festung horizontal gespiegelt, sechs stabile Startfelder, drei Leibwachen und vier freie Randfelder. Normale Generatoraufrufe bleiben unverändert; Bossvarianten werden explizit gewählt. 2000 Lauf-Aufstellungen grün, zusätzliche 12000 Kartenprüfungen im Generatorrunner.
 
 - Schritt 4: Bossfall beendet den Kampf sofort, Leibwache flieht. Gebietsboss schreibt den Teamplatz vor Laufende in den Laufstand und ins Ergebnis. Echte Server-Stubs für beide Bosslevel grün.
+
+- Schritt 5: Lager heilt beim Eintritt, servergeprüfte Aktionen und persistente Todeshistorie. Bestehender Kasernenframe wird im Lager eingehängt und vor jedem Neuaufbau zurückgegeben; kein zusätzlicher Gacha-Zugang. Vollständige Lager-/Profil-Stubs und 13 UI-Anschlussprüfungen grün. Lager ohne lebenden aktiven Helden bleibt offen, Weiter gesperrt.

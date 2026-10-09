@@ -740,13 +740,36 @@ local function handleCommand(player, cmd)
 		if not free or not Tutorial.unlocked(profile) or not RunService.choose(profile.run, cmd.index) then return false end
 		state.ownerUserId = player.UserId
 		state.ownerPlayer = player
+		if profile.run.phase == "camp" then
+			RunService.enterCamp(profile)
+			clearUnits()
+			state = lobbyState(state.speed)
+			state.ownerUserId, state.ownerPlayer = player.UserId, player
+		end
 		state.busy = true
 		ProfileStore.save(player, true) -- Wahl festhalten, bevor das Brett entsteht
 		sendProfile(player)
-		beginRunLevel(player, profile)
+		if profile.run.phase == "camp" then state.busy = false; broadcast()
+		else beginRunLevel(player, profile) end
+		return true
+	elseif t == "CampSwap" or t == "CampRevive" or t == "LeaveCamp" then
+		if not free or not Tutorial.unlocked(profile) or not profile.run or profile.run.phase ~= "camp" then return false end
+		local accepted
+		if t == "CampSwap" then accepted = RunService.swap(profile, cmd.slot, cmd.heroId, cmd.outgoing)
+		elseif t == "CampRevive" then accepted = RunService.revive(profile, cmd.heroId, cmd.currency)
+		else
+			accepted = RunService.leaveCamp(profile.run)
+			if accepted then RunService.enterCamp(profile) end
+		end
+		if not accepted then return false end
+		state.busy = true
+		ProfileStore.save(player, true)
+		state.busy = false
+		sendProfile(player)
+		broadcast()
 		return true
 	elseif t == "ResumeLevel" then
-		if not free or not Tutorial.unlocked(profile) or not profile.run or not profile.run.current then return false end
+		if not free or not Tutorial.unlocked(profile) or not profile.run or profile.run.phase ~= "choice" or not profile.run.current then return false end
 		state.busy = true
 		beginRunLevel(player, profile)
 		return true

@@ -163,3 +163,92 @@ for _, depth in ipairs({ 3, 5 }) do
 	serverProfile.run = nil
 end
 print("OK: Sofortiger Boss-/Miniboss-Sieg mit lebender Leibwache, Belohnung und Teamplatz.")
+
+local campProfile = newRun(77)
+local camp = campProfile.run
+camp.phase, camp.campExtra, camp.depth, camp.cleared = "camp", true, 5, 4
+camp.options = testModules.LevelGen.makeOptions(camp.seed, 5, "greenland")
+camp.team.leon.hp = 1
+camp.team.bruno.hp, camp.team.bruno.alive = 0, false
+campProfile.heroes.starter_mage = Profiles.newHeroEntry()
+expect(Runs.enterCamp(campProfile) and camp.team.leon.hp == Runs.maxHp("leon", campProfile.heroes.leon), "Lager heilt nicht voll")
+expect(camp.team.bruno.hp == 0 and not camp.team.bruno.alive, "Lager belebt kostenlos wieder")
+expect(not Runs.swap(campProfile, 1, "starter_mage", "tobi"), "Veralteter Tausch akzeptiert")
+expect(not Runs.swap(campProfile, 4, "starter_mage", nil), "Teamgrenze überschritten")
+expect(not Runs.swap(campProfile, 0, "starter_mage", nil) and not Runs.swap(campProfile, 1.5, "starter_mage", "leon"), "Ungültiger Platz")
+expect(not Runs.swap(campProfile, 1, "tobi", "leon") and not Runs.swap(campProfile, 1, "unknown", "leon"), "Doppelter/unbekannter Held")
+expect(not Runs.swap(campProfile, 1, "alina", "leon"), "Nicht besessener Held")
+expect(Runs.swap(campProfile, 2, "starter_mage", "bruno"), "Gefallenen austauschen")
+expect(not camp.team.bruno.alive and camp.team.starter_mage.hp == Runs.maxHp("starter_mage", campProfile.heroes.starter_mage), "Todesstatus/neuer Held")
+expect(Runs.swap(campProfile, 2, "bruno", "starter_mage") and not camp.team.bruno.alive, "Gefallener kehrt lebendig zurück")
+local goldPrice = RC.revivePrice(1, "gold")
+campProfile.gold, campProfile.gems = goldPrice - 1, RC.REVIVE_GEMS - 1
+expect(not Runs.revive(campProfile, "bruno", "gold") and not Runs.revive(campProfile, "bruno", "gems"), "Zu wenig Guthaben")
+expect(campProfile.gold == goldPrice - 1 and campProfile.gems == RC.REVIVE_GEMS - 1 and not camp.team.bruno.alive, "Abgelehnter Kauf verändert Profil")
+expect(not Runs.revive(campProfile, "bruno", "earned") and not Runs.revive(campProfile, "unknown", "gold"), "Ungültige Wiederbelebung")
+campProfile.gold = goldPrice
+expect(Runs.revive(campProfile, "bruno", "gold") and campProfile.gold == 0 and camp.team.bruno.hp == Runs.maxHp("bruno", campProfile.heroes.bruno), "Gold-Wiederbelebung")
+expect(not Runs.revive(campProfile, "bruno", "gold"), "Lebenden erneut kaufen")
+camp.team.bruno.alive, camp.team.bruno.hp = false, 0
+campProfile.gems = RC.REVIVE_GEMS
+expect(Runs.revive(campProfile, "bruno", "gems") and campProfile.gems == 0 and camp.team.bruno.alive, "Edelstein-Wiederbelebung")
+expect(RC.revivePrice(7, "gold") == RC.REVIVE_GOLD_BASE + 7 * RC.REVIVE_GOLD_PER_LEVEL, "Levelpreis")
+camp.maxTeam = 4
+expect(Runs.swap(campProfile, 4, "starter_mage", nil) and #camp.order == 4, "Leeren neuen Teamplatz füllen")
+camp.maxTeam = 3
+table.remove(camp.order, 4)
+-- Echte Profilnormalisierung über Save/Load, mit inaktivem gefallenem Helden.
+camp.team.starter_mage.alive, camp.team.starter_mage.hp = false, 0
+local reloadPlayer = { UserId = 88 }
+records.p_88 = copy(campProfile)
+local loaded = Profiles.load(reloadPlayer)
+expect(loaded.run and loaded.run.phase == "camp" and loaded.run.campExtra and not loaded.run.team.starter_mage.alive, "Extra-Lager/Todeshistorie nicht wiederhergestellt")
+expect(Runs.leaveCamp(loaded.run) and loaded.run.depth == 5 and loaded.run.cleared == 4, "Extra-Lager beim Wiederkommen")
+local optionProfile, campIndex
+for seed = 1, 1000 do
+	local candidate = newRun(seed)
+	for i, option in ipairs(candidate.run.options) do
+		if option.kind == "camp" then optionProfile, campIndex = candidate, i; break end
+	end
+	if optionProfile then break end
+end
+expect(optionProfile and Runs.choose(optionProfile.run, campIndex), "Kein Wahllager")
+Runs.enterCamp(optionProfile)
+records.p_89 = copy(optionProfile)
+loaded = Profiles.load({ UserId = 89 })
+expect(loaded.run and loaded.run.phase == "camp" and not loaded.run.campExtra, "Wahllager nicht wiederhergestellt")
+expect(Runs.leaveCamp(loaded.run) and loaded.run.depth == 2 and loaded.run.cleared == 1 and loaded.gold == 0, "Wahllager zählt falsch")
+local broken = copy(campProfile)
+broken.run.version = nil
+records.p_90 = broken
+loaded = Profiles.load({ UserId = 90 })
+expect(not loaded.run and loaded.heroes.bruno and loaded.gems == broken.gems, "Altlauf beschädigt Sammlung")
+broken = copy(campProfile)
+broken.run.maxTeam = RC.MAX_TEAM
+records.p_91 = broken
+expect(not Profiles.load({ UserId = 91 }).run, "Gefälschte Teamgröße bleibt erhalten")
+-- Ein Lager darf vorübergehend nur Tote enthalten, aber ohne lebenden Helden nicht weitergehen.
+for _, id in ipairs(camp.order) do camp.team[id].hp, camp.team[id].alive = 0, false end
+expect(not Runs.leaveCamp(camp), "Nur Tote verlassen das Lager")
+records.p_92 = copy(campProfile)
+expect(Profiles.load({ UserId = 92 }).run ~= nil, "Lager mit ausschließlich Gefallenen verworfen")
+camp.phase = "choice"
+expect(not Runs.swap(campProfile, 1, "starter_mage", "leon") and not Runs.revive(campProfile, "leon", "gold"), "Lageraktion außerhalb Lager")
+-- Serverbefehle: Phase, fremder Spieler, Heilung, kein Brettaufbau und keine Belohnung.
+serverProfile.run = copy(optionProfile.run)
+serverProfile.run.depth, serverProfile.run.cleared, serverProfile.run.phase = 1, 0, "choice"
+serverProfile.run.options = testModules.LevelGen.makeOptions(optionProfile.run.seed, 1, "greenland")
+serverProfile.run.current, serverProfile.run.campExtra = nil, false
+serverProfile.run.team.leon.hp = 1
+expect(testServer.command(player, { type = "ChooseLevel", index = campIndex }), "Server-Lagerwahl")
+expect(testServer.state().mode == "Lobby" and serverProfile.run.phase == "camp" and serverProfile.run.team.leon.hp > 1, "Lager startet Kampf/heilt nicht")
+expect(not testServer.command(player, { type = "ResumeLevel" }), "Kampf im Lager fortsetzen")
+expect(not testServer.command(other, { type = "CampSwap", slot = 1, heroId = "bruno", outgoing = "leon" }), "Fremdes Lager verändert")
+expect(testServer.command(player, { type = "CampSwap", slot = 2, heroId = "starter_mage", outgoing = "bruno" }), "Server-Tausch")
+serverProfile.run.team.starter_mage.hp, serverProfile.run.team.starter_mage.alive = 0, false
+serverProfile.gold = RC.revivePrice(1, "gold")
+expect(testServer.command(player, { type = "CampRevive", heroId = "starter_mage", currency = "gold" }), "Server-Wiederbelebung")
+expect(testServer.command(player, { type = "LeaveCamp" }) and serverProfile.run.depth == 2, "Server-Lager verlassen")
+expect(not testServer.command(player, { type = "CampRevive", heroId = "starter_mage", currency = "gold" }), "Server-Lagerphase umgangen")
+serverProfile.run = nil
+print("OK: Lagerheilung, Wechsel/Todeshistorie, beide Währungen, Guthaben/Preise, Teamgrenze, Wiederkommen und Serverbefehle.")

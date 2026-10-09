@@ -85,7 +85,7 @@ local function normalizeRun(run, heroes)
 		table.insert(order, id)
 		if team[id].alive then alive += 1 end
 	end
-	if alive == 0 then return nil end
+	if alive == 0 and run.phase ~= "camp" then return nil end
 	local expected = LevelGen.makeOptions(run.seed, run.depth, run.region)
 	if arraySize(run.options) ~= #expected then return nil end
 	for i, option in ipairs(expected) do

@@ -160,7 +160,8 @@ end
 local function requestRunLevel(index, resume)
 	local run = profile and profile.run
 	local option = run and run.options[index]
-	if not option then return end
+	if not option or run.phase ~= "choice" then return end
+	if option.kind == "camp" then send({ type = "ChooseLevel", index = index }); return end
 	local level = { seed = option.seed, depth = run.depth, region = run.region, themeId = option.themeId }
 	if startLoading(nil, level) then
 		send(resume and { type = "ResumeLevel" } or { type = "ChooseLevel", index = index })
@@ -1180,6 +1181,9 @@ MenuUI.init(root, {
 	onResumeLevel = function()
 		if profile and profile.run then requestRunLevel(profile.run.current, true) end
 	end,
+	onCampSwap = function(slot, heroId, outgoing) send({ type = "CampSwap", slot = slot, heroId = heroId, outgoing = outgoing }) end,
+	onCampRevive = function(heroId, currency) send({ type = "CampRevive", heroId = heroId, currency = currency }) end,
+	onLeaveCamp = function() send({ type = "LeaveCamp" }) end,
 	onAbandonRun = function() send({ type = "AbandonRun" }) end,
 	onRecruit = function(bannerId, count)
 		send({ type = "Recruit", bannerId = bannerId, count = count })

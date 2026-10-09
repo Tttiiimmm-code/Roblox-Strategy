@@ -61,8 +61,50 @@ function RunService.advance(run)
 	run.phase = run.campExtra and "camp" or "choice"
 end
 
+function RunService.enterCamp(profile)
+	local run = profile and profile.run
+	if not run or run.phase ~= "camp" then return false end
+	for _, id in ipairs(run.order) do
+		local member = run.team[id]
+		if member.alive then member.hp = RunService.maxHp(id, profile.heroes[id]) end
+	end
+	return true
+end
+
+function RunService.swap(profile, slot, id, outgoing)
+	local run = profile and profile.run
+	if not run or run.phase ~= "camp" or type(slot) ~= "number" or slot % 1 ~= 0
+		or slot < 1 or slot > run.maxTeam or slot > #run.order + 1
+		or type(id) ~= "string" or not UnitData.Heroes[id] or type(profile.heroes[id]) ~= "table"
+		or table.find(run.order, id) or outgoing ~= run.order[slot] then return false end
+	local member = run.team[id]
+	if not member then
+		member = { alive = true, hp = RunService.maxHp(id, profile.heroes[id]) }
+		run.team[id] = member
+	elseif member.alive then
+		member.hp = RunService.maxHp(id, profile.heroes[id])
+	end
+	run.order[slot] = id
+	return true
+end
+
+function RunService.revive(profile, id, currency)
+	local run = profile and profile.run
+	if not run or run.phase ~= "camp" or type(id) ~= "string" or not run.team[id]
+		or run.team[id].alive or type(profile.heroes[id]) ~= "table" then return false end
+	local price = RunConfig.revivePrice(profile.heroes[id].level or 1, currency)
+	if not price or type(profile[currency]) ~= "number" or profile[currency] < price then return false end
+	profile[currency] -= price
+	run.team[id].alive = true
+	run.team[id].hp = RunService.maxHp(id, profile.heroes[id])
+	return true
+end
+
 function RunService.leaveCamp(run)
 	if not run or run.phase ~= "camp" then return false end
+	local alive = false
+	for _, id in ipairs(run.order) do if run.team[id].alive then alive = true end end
+	if not alive then return false end
 	if run.campExtra then
 		run.campExtra = false
 		run.phase = "choice"
@@ -122,6 +164,13 @@ function RunService.finish(profile, heroUnits, victory)
 			profile.run = nil
 		else
 			RunService.advance(run)
+			if RunService.enterCamp(profile) then
+				info.campNext = true
+				for id, healed in pairs(info.healed) do
+					healed.after = run.team[id].hp
+					healed.amount = healed.after - healed.before
+				end
+			end
 		end
 	else
 		profile.run = nil
