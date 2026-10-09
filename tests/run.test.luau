@@ -1,7 +1,8 @@
 local Runs = testModules.RunService
 local Profiles = testModules.ProfileStore
 local RC = testModules.RunConfig
-local function expect(value, message) assert(value, message) end
+local checks = 0
+local function expect(value, message) checks += 1; assert(value, message) end
 local function newRun(seed)
 	local profile = { heroes = {}, gold = 0, gems = 0 }
 	for _, id in ipairs({ "leon", "bruno", "tobi" }) do profile.heroes[id] = Profiles.newHeroEntry() end
@@ -248,7 +249,26 @@ expect(testServer.command(player, { type = "CampSwap", slot = 2, heroId = "start
 serverProfile.run.team.starter_mage.hp, serverProfile.run.team.starter_mage.alive = 0, false
 serverProfile.gold = RC.revivePrice(1, "gold")
 expect(testServer.command(player, { type = "CampRevive", heroId = "starter_mage", currency = "gold" }), "Server-Wiederbelebung")
+expect(records.p_1.run.phase == "camp" and records.p_1.run.team.starter_mage.alive and records.p_1.gold == 0, "Lagerkauf nicht gespeichert")
+Profiles.release(player)
+serverProfile = Profiles.load(player)
+expect(serverProfile.run and serverProfile.run.phase == "camp" and serverProfile.run.team.starter_mage.alive, "Gespeichertes Lager nach Release/Load")
 expect(testServer.command(player, { type = "LeaveCamp" }) and serverProfile.run.depth == 2, "Server-Lager verlassen")
 expect(not testServer.command(player, { type = "CampRevive", heroId = "starter_mage", currency = "gold" }), "Server-Lagerphase umgangen")
 serverProfile.run = nil
 print("OK: Lagerheilung, Wechsel/Todeshistorie, beide Währungen, Guthaben/Preise, Teamgrenze, Wiederkommen und Serverbefehle.")
+
+local wounded = newRun(11)
+wounded.run.depth, wounded.run.cleared = 4, 3
+wounded.run.options = testModules.LevelGen.makeOptions(wounded.run.seed, 4, "greenland")
+local battleIndex
+for index, option in ipairs(wounded.run.options) do if option.kind == "battle" then battleIndex = index; break end end
+expect(battleIndex and Runs.choose(wounded.run, battleIndex), "L4-Kampf fehlt")
+local units = {}
+for _, id in ipairs(wounded.run.order) do units[id] = { hp = 1, maxHp = Runs.maxHp(id, wounded.heroes[id]) } end
+units.bruno.hp = 0
+local info = Runs.finish(wounded, units, true)
+expect(info.campNext and wounded.run.phase == "camp" and wounded.run.campExtra, "L4 öffnet Extra-Lager nicht")
+expect(wounded.run.team.leon.hp == units.leon.maxHp and info.healed.leon.after == units.leon.maxHp, "Extra-Lager nach Sieg heilt nicht voll")
+expect(not wounded.run.team.bruno.alive and wounded.run.team.bruno.hp == 0, "Extra-Lager nach Sieg belebt Tote wieder")
+print("OK: " .. checks .. " gesamte Lauf-/Boss-/Lager-Stubs. Studio/Handy ungetestet.")

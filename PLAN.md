@@ -42,7 +42,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 
 - [x] 6. **Wahl-Bildschirm** – `RunUI.luau`: Lager-Option mit eigenem Symbol; L3/L5 als Boss-Karte mit Namen („Miniboss: Banditenhauptmann“, „Boss: Garrick“) statt Wahl; Extra-Lager vor dem Boss klar erkennbar.
 
-- [ ] 7. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 3 umgesetzt, Platzhalter/Werte), Charakter-Pipeline: Miniboss `brigand_captain` als neue Figur in der Liste. Prüfskripte erweitern (`test-levelgen` für Abfolge/Karten, neues oder bestehendes Stub-Skript für Fähigkeiten/Lager). `scripts/check.ps1`, alle Prüfskripte, Rojo-Build. Devlog **#32** „Roguelike Phase 3 – Bosse und Lager“. Committen, pushen, `.handoff/status` = `fertig`.
+- [x] 7. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 3 umgesetzt, Platzhalter/Werte), Charakter-Pipeline: Miniboss `brigand_captain` als neue Figur in der Liste. Prüfskripte erweitern (`test-levelgen` für Abfolge/Karten, neues oder bestehendes Stub-Skript für Fähigkeiten/Lager). `scripts/check.ps1`, alle Prüfskripte, Rojo-Build. Devlog **#32** „Roguelike Phase 3 – Bosse und Lager“. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Lauf: L1/L2 Wahl (manchmal mit Lager-Option), L3 Miniboss, L4 Wahl, Extra-Lager, L5 Garrick
@@ -61,7 +61,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-- Schritt 1: Laufversion 2; alte Phase-1-Laufst?nde werden verworfen, Sammlung/W?hrungen bleiben erhalten. WIP-Werte zentral. Neuer Stub-Runner `scripts/test-run.ps1` pr?ft 1000 vollst?ndige Abfolgen.
+- Schritt 1: Laufversion 2; alte Phase-1-Laufstände werden verworfen, Sammlung/Währungen bleiben erhalten. WIP-Werte zentral. Neuer Stub-Runner `scripts/test-run.ps1` prüft 1000 vollständige Abfolgen.
 
 - Schritt 2: Bewegungsweite als Einheitenwert (Grid mit erweitert); Bossereignisse, Randmarkierungen und Kriegsschrei-Symbol angebunden. Besetzte angekündigte Felder warten auf eine spätere freie Gegnerphase. Fähigkeiten- und KI-Stubs grün; Darstellung in Studio ungetestet.
 
@@ -72,3 +72,5 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - Schritt 5: Lager heilt beim Eintritt, servergeprüfte Aktionen und persistente Todeshistorie. Bestehender Kasernenframe wird im Lager eingehängt und vor jedem Neuaufbau zurückgegeben; kein zusätzlicher Gacha-Zugang. Vollständige Lager-/Profil-Stubs und 13 UI-Anschlussprüfungen grün. Lager ohne lebenden aktiven Helden bleibt offen, Weiter gesperrt.
 
 - Schritt 6: Lager mit Zelt-Symbol und Hinweis auf ersetzten Kampf; Bosskarten mit Namen statt freier Wahl. Bewegungsanzeige in UI zeigt auch die reduzierte Hauptmann-Reichweite. 109 Lauf-UI-Anschlussprüfungen grün; echtes Rendering bleibt Nutzer-Test.
+
+- Schritt 7: Phase-3-Doku/WIP-Werte und Charakter-Pipeline aktualisiert, Devlog #32 und nächste Schritte ergänzt. Abschluss: Pflichtcheck OK (36 Dateien), Generator OK (90000 normale Level, 5000 Optionen, 12000 Bosskarten), Tutorial OK (168), Lauf-Stubs OK (34006), Lauf-UI OK (109), Rojo-Build erfolgreich. Studio/Handy ungetestet; manuelle Checkboxen und unabhängiger Claude-Review offen.

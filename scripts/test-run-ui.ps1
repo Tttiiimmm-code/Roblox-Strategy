@@ -12,6 +12,12 @@ foreach ($name in @('Config', 'UnitData', 'Stages', 'Grid', 'Tutorial', 'RunConf
 }
 $source += "`nVector3.new = function(x,y,z) return setmetatable({X=x,Y=y,Z=z}, {__add=function(a,b) return Vector3.new(a.X+b.X,a.Y+b.Y,a.Z+b.Z) end}) end`n"
 $source += Get-Content "$taskRoot/tests/run-ui.test.luau" -Raw -Encoding UTF8
-[System.IO.File]::WriteAllText("$taskRoot/tools/run-ui.runner.luau", $source, (New-Object System.Text.UTF8Encoding($false)))
-& "$taskRoot/tools/luau/luau.exe" "$taskRoot/tools/run-ui.runner.luau"
-exit $LASTEXITCODE
+$runner = Join-Path $taskRoot "tools/run-ui.runner.luau"
+try {
+    [System.IO.File]::WriteAllText($runner, $source, (New-Object System.Text.UTF8Encoding($false)))
+    & "$taskRoot/tools/luau/luau.exe" $runner
+    $result = $LASTEXITCODE
+} finally {
+    if (Test-Path -LiteralPath $runner) { Remove-Item -LiteralPath $runner }
+}
+exit $result
