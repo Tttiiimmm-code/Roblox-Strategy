@@ -44,6 +44,7 @@ $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/shore.test.lu
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment-pack.fixture.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/outer.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment-metrics.test.luau") -Raw -Encoding UTF8
+$source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/walls.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/meadow.test.luau") -Raw -Encoding UTF8
 try {
     [System.IO.File]::WriteAllText($runner, $source, (New-Object System.Text.UTF8Encoding($false)))

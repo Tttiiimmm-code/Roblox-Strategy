@@ -248,25 +248,29 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 				Color = Color3.fromRGB(55, 45, 35), Material = Enum.Material.Wood }, parent)
 		end
 	elseif ch == "M" then
+		local corner = Config.TILE_SIZE / 2 - Config.ENVIRONMENT.rocks.centerEdgeInset
 		if #EnvironmentAssets.variants("rock") > 0 then
 			local random = Random.new(hash(key .. ":rocks"))
 			local settings = Config.ENVIRONMENT.rocks
-			local offsets = { Vector3.new(-c, 0, -c), Vector3.new(c, 0, c), Vector3.new(c, 0, -c) }
+			local offsets = { Vector3.new(-corner, 0, -corner), Vector3.new(corner, 0, corner), Vector3.new(corner, 0, -corner) }
 			local smallCount = random:NextNumber(0, 1) < settings.secondSmallChance and settings.smallCount.max or settings.smallCount.min
 			for i = 1, 1 + smallCount do
 				local span = i == 1 and settings.largeScale or settings.smallScale
 				local scale = random:NextNumber(span.min, span.max)
-				place("rock", center + offsets[i], parent, key .. ":rock:" .. i, {
-					height = settings.mountain.height * scale, width = settings.mountain.width * scale, rotationMode = "free",
+				local asset = place("rock", center + offsets[i], parent, key .. ":rock:" .. i, {
+					height = settings.mountain.height * scale,
+					width = math.min(settings.mountain.width * scale, (corner - settings.centerClearance) * 2 / Config.TILE_SIZE), rotationMode = "free",
 				})
+				if asset then asset:SetAttribute("TopRockX", x); asset:SetAttribute("TopRockY", y) end
 			end
 			return
 		end
-		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, -c), Vector3.new(-c, 0, c) } do
+		for _, off in { Vector3.new(-corner, 0, -corner), Vector3.new(corner, 0, -corner), Vector3.new(-corner, 0, corner) } do
 			if place(category, center + off, parent, key .. tostring(off)) then continue end
-			deco({ Size = Vector3.new(2.4, 2.2, 2.4),
+			local asset = deco({ Size = Vector3.new(2.4, 2.2, 2.4),
 				CFrame = CFrame.new(center + off + Vector3.new(0, 1.1, 0)) * CFrame.Angles(0, math.rad(45), 0),
 				Color = Color3.fromRGB(120, 110, 100), Material = Enum.Material.Rock }, parent)
+			asset:SetAttribute("TopRockX", x); asset:SetAttribute("TopRockY", y)
 		end
 	elseif ch == "C" then
 		local random = Random.new(hash(key .. ":cliff"))
@@ -319,6 +323,46 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 		if random:NextNumber(0, 1) < settings.flowerChance then meadow("deco_flower", 2) end
 		if random:NextNumber(0, 1) < settings.stoneChance then meadow("deco_stone", 3) end
 		if random:NextNumber(0, 1) < settings.fenceChance then meadow("deco_fence", 0) end
+	end
+end
+
+local function rockyWalls(ch, x, y, parent, mapKey)
+	local settings, T = Config.ENVIRONMENT.rocks.walls, Config.TILE_SIZE
+	if not settings.enabled or (ch ~= "M" and ch ~= "C") then return end
+	local center = Grid.toWorld(x, y)
+	for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+		local nx, ny = x + d[1], y + d[2]
+		local neighbour = Grid.inBounds(nx, ny) and Grid.getMap()[ny]:sub(nx, nx) or ""
+		-- Auch C/M-Höhenstufen sind Innenkanten des Felsmassivs.
+		if neighbour == "M" or neighbour == "C" then continue end
+		local bottom = neighbour == "" and Config.FEEL.surroundHeight or Grid.tileHeight(nx, ny)
+		if bottom >= center.Y then continue end
+		local key = mapKey .. ":wall:" .. Grid.key(x, y) .. ":" .. d[1] .. ":" .. d[2]
+		local random = Random.new(hash(key))
+		local normal, along = Vector3.new(d[1], 0, d[2]), Vector3.new(-d[2], 0, d[1])
+		local thickness = settings.thickness * T
+		local edge = center + normal * (T / 2 - thickness * settings.embedded)
+		local function mark(asset)
+			asset:SetAttribute("WallX", x); asset:SetAttribute("WallY", y)
+			asset:SetAttribute("WallDX", d[1]); asset:SetAttribute("WallDY", d[2])
+		end
+		for i = 1, settings.facetsPerEdge do
+			local top = center.Y + random:NextNumber(0, settings.topJitter * T)
+			local height = top - bottom
+			local span = T / settings.facetsPerEdge
+			local position = edge + along * ((i - 0.5) * span - T / 2)
+			local asset = deco({ Name = "WallFacet", Size = Vector3.new(span * 1.08, height, thickness),
+				CFrame = CFrame.new(position.X, bottom + height / 2, position.Z)
+					* CFrame.Angles(0, math.atan2(d[1], d[2]) + math.rad(random:NextNumber(-settings.angleJitter, settings.angleJitter)), 0),
+				Color = settings.color:Lerp(Color3.fromRGB(0, 0, 0), random:NextNumber(0, settings.shadeVariation)),
+				Material = Enum.Material.Rock }, parent, "WedgePart")
+			mark(asset)
+		end
+		if random:NextNumber(0, 1) < settings.meshChance then
+			local asset = place("rock", Vector3.new(edge.X, bottom + (center.Y - bottom) / 4, edge.Z), parent, key,
+				{ height = settings.meshHeight, width = settings.meshWidth, rotationMode = "free" })
+			if asset then mark(asset) end
+		end
 	end
 end
 
@@ -466,8 +510,9 @@ function BoardBuilder.build(regionId, features, stage)
 			local width, length = (right - x + 1) * T, (bottom - y + 1) * T
 			local side = deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
 				Position = Vector3.new(cx, (height - cap - Config.FEEL.groundDepth) / 2, cz),
-				Color = color:Lerp(Color3.fromRGB(0, 0, 0), ch == "C" and Config.FEEL.cliffSideShade or Config.FEEL.groundSideShade),
-				Material = Enum.Material.SmoothPlastic }, ground)
+				Color = (ch == "C" or ch == "M") and Config.ENVIRONMENT.rocks.walls.color
+					or color:Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.groundSideShade),
+				Material = (ch == "C" or ch == "M") and Enum.Material.Rock or Enum.Material.SmoothPlastic }, ground)
 			local surface = deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
 				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
 				Transparency = (groundCh == "W" or groundCh == "D") and Config.FEEL.waterTransparency or 0,
@@ -508,6 +553,7 @@ function BoardBuilder.build(regionId, features, stage)
 			tile.Parent = board
 			if not bridgeTiles[Grid.key(x, y)] and not occupied[Grid.key(x, y)] then groundFlecks(ch, x, y, ground, mapKey, colorFor(ch)) end
 			decorate(ch, x, y, board, mapKey, region and region.treePalette, bridgeTiles, occupied)
+			rockyWalls(ch, x, y, board, mapKey)
 			local center = Grid.toWorld(x, y)
 			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
 			-- Gemeinsame Kanten nur einmal; an Höhenstufen bleibt jede Oberkante sichtbar.

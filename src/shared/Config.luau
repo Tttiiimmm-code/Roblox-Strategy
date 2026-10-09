@@ -145,9 +145,13 @@ Config.ENVIRONMENT = {
 		thirdTreeChance = 0.1, understoryChance = 0.2, positionJitter = 0.1, -- WIP: Mengen für Handy-Budget
 	},
 	rocks = { -- WIP: große Felsen und kleine Begleiter
+		centerClearance = 1.4, centerEdgeInset = 0.2,
 		mountain = { height = 0.6, width = 0.55 }, largeScale = { min = 1, max = 1.6 },
 		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 }, secondSmallChance = 0.35,
 		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
+		walls = { enabled = true, facetsPerEdge = 3, thickness = 0.13, embedded = 0.3,
+			topJitter = 0.05, angleJitter = 10, shadeVariation = 0.14,
+			color = Color3.fromRGB(77, 82, 82), meshChance = 0.12, meshWidth = 0.55, meshHeight = 0.7 },
 	},
 	estimatedTriangleBudget = 350000, -- WIP: C3 inklusive dichtem Rand; Ferne aus günstigen Parts
 	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3 }, -- WIP: Überstand in Uferfelder
