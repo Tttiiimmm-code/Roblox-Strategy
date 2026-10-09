@@ -26,7 +26,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C6)
 
 ## Schritte
 
-- [ ] 1. **Helles, passendes Spielfeld** – `Config.TERRAIN`, `Stages`, `BoardBuilder`
+- [x] 1. **Helles, passendes Spielfeld** – `Config.TERRAIN`, `Stages`, `BoardBuilder`
   - Die Bodenfarben der Felder so wählen, dass sie im Spiel **gleich hell oder etwas heller als das umgebende Terrain-Gras** wirken; das Material-Abdunkeln auf Parts ausgleichen. Wiese, Wald (etwas dunkler), Erde/Weg und Fels bleiben klar unterscheidbar; Rasterlinien gut sichtbar, aber nicht schwarz. Werte pro Region.
   - Studio: Vergleichsbild Spielfeldrand ↔ Terrain bei Normalzoom; das Spielfeld darf nicht dunkler als die Umgebung wirken.
 
@@ -69,3 +69,5 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C6)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1: Regionale Part-Aufhellung (Gras 0,4; Sumpf/Vulkan 0,42; Eis 0,12; Erde 0,2), regionale Farb-Overrides vor Terrainpalette; Rasterabdunklung 0,22. Studio-Bilder C7_Schritt1_Ausgangsansicht/Nachher: gleiche Laufkarte und Kamera; vorher dunkelgr?nes, schwer lesbares Brett, nachher heller als das angrenzende Terrain mit sichtbarem Raster und dunklerem Wald. Lighting-Effekte unver?ndert. check.ps1 und test-run.ps1 OK. Bildtest durch Codex, Nutzer-/Handytest offen.

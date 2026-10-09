@@ -427,8 +427,14 @@ function BoardBuilder.build(regionId, features, stage)
 	local function colorFor(ch)
 		local terrain = Config.TERRAIN[ch]
 		local palette = region and region.landscape or Config.LANDSCAPE.palette
-		local color = terrain.paletteKey and palette.colors[palette[terrain.paletteKey]]
-			or (region and region.terrainColors and region.terrainColors[ch]) or terrain.color
+		local color = (region and region.terrainColors and region.terrainColors[ch])
+			or (terrain.paletteKey and palette.colors[palette[terrain.paletteKey]]) or terrain.color
+		local correction = region and region.groundColors or Config.GROUND_COLORS
+		if terrain.paletteKey == "grass" then
+			color = color:Lerp(Color3.fromRGB(255, 255, 255), correction.grassLighten)
+		elseif terrain.material == Enum.Material.Ground then
+			color = color:Lerp(Color3.fromRGB(255, 255, 255), correction.groundLighten)
+		end
 		return ch == "F" and color:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade) or color
 	end
 	local landscape = LandscapeBuilder.build(board, mapKey, region, features)

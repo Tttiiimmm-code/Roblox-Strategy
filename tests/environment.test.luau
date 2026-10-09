@@ -100,7 +100,8 @@ do
 		end end
 		local ground = board:FindFirstChild("Ground"):FindFirstChild("Ground_1")
 		local region = modules.Stages.getRegion(regionId)
-		local baseColor = region.landscape.colors[region.landscape.grass]
+		local baseColor = (region.terrainColors and region.terrainColors.F) or region.landscape.colors[region.landscape.grass]
+		baseColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), region.groundColors.grassLighten)
 		local expected = baseColor:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade)
 		expect(math.abs(ground.Color.R - expected.R) < 0.000001 and math.abs(ground.Color.G - expected.G) < 0.000001
 			and math.abs(ground.Color.B - expected.B) < 0.000001, "Waldboden nicht regional abgedunkelt")

@@ -12,11 +12,15 @@ Stages.Regions = {
 }
 
 for _, region in Stages.Regions do
+	region.groundColors = table.clone(Config.GROUND_COLORS)
 	region.treePalette = Config.TREE_PALETTES[region.id]
 	region.landscape = table.clone(Config.LANDSCAPE.palette)
 	region.landscape.colors = table.clone(Config.LANDSCAPE.palette.colors)
 	region.landscape.colors[Enum.Material.Grass] = region.surroundColor
 end
+Stages.Regions[2].groundColors.grassLighten = 0.42
+Stages.Regions[3].groundColors.grassLighten = 0.12
+Stages.Regions[4].groundColors.grassLighten = 0.42
 Stages.Regions[2].landscape.ground = Enum.Material.Mud
 Stages.Regions[2].landscape.colors[Enum.Material.Mud] = Color3.fromRGB(62, 59, 43)
 Stages.Regions[3].landscape.grass = Enum.Material.Snow

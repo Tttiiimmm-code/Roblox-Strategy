@@ -1,4 +1,4 @@
--- Materialfarben kommen vom selben regionalen Terrain wie die Landschaft.
+-- Regionale Partfarben gleichen die Materialabdunklung aus.
 do
 	freshAssets()
 	local function same(a, b) return math.abs(a.R-b.R)<0.000001 and math.abs(a.G-b.G)<0.000001 and math.abs(a.B-b.B)<0.000001 end
@@ -10,7 +10,9 @@ do
 			local x = math.floor(part.Position.X / Config.TILE_SIZE) + 1
 			local ch = Grid.getMap()[1]:sub(x,x)
 			local terrain, palette = Config.TERRAIN[ch], region.landscape
-			local expected = terrain.paletteKey and palette.colors[palette[terrain.paletteKey]] or (region.terrainColors and region.terrainColors[ch]) or terrain.color
+			local expected = (region.terrainColors and region.terrainColors[ch]) or (terrain.paletteKey and palette.colors[palette[terrain.paletteKey]]) or terrain.color
+			if terrain.paletteKey == "grass" then expected = expected:Lerp(Color3.fromRGB(255,255,255), region.groundColors.grassLighten)
+			elseif terrain.material == Enum.Material.Ground then expected = expected:Lerp(Color3.fromRGB(255,255,255), region.groundColors.groundLighten) end
 			if ch == "F" then expected = expected:Lerp(Color3.fromRGB(0,0,0), Config.ENVIRONMENT.forest.groundShade) end
 			expect(same(part.Color, expected), "Bodenfarbe passt nicht zur Regionspalette: " .. region.id .. "/" .. ch)
 			expect(part.Material == ((ch=="." or ch=="F") and palette.grass or terrain.material), "Bodenmaterial: " .. ch)

@@ -59,7 +59,7 @@ Config.FEEL = {
 	unitShadowSurfaceOffset = 0.022, unitShadowThickness = 0.003, -- über den Bodenflecken (bis 0,015), Schichten mit Abstand gegen Flackern
 	unitShadowLayers = { { size = 0.65, transparency = 0.70 }, { size = 0.82, transparency = 0.84 }, { size = 1, transparency = 0.93 } },
 	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.045, gridTransparency = 0.5,
-	gridSurfaceOffset = 0.005, gridShade = 0.3, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
+	gridSurfaceOffset = 0.005, gridShade = 0.22, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
 	surroundHeight = -0.4, waterTransparency = 0.18,
 	cliffSideShade = 0.42,
 	shore = { enabled = true, width = 0.1, maxPartsPerTile = 4,
@@ -230,6 +230,9 @@ Config.MAX_LEVEL = 20
 -- cost: Bewegungskosten je Bewegungstyp (fehlt = unpassierbar)
 -- avoid: Ausweich-Bonus, def: Verteidigungs-Bonus, heal: Heilung pro Runde (Anteil der Max-KP)
 -- Werte WIP: Bodenfarben in HSV um etwa 30 % entsättigt und 25 % abgedunkelt.
+-- Parts ben?tigen hellere Farben als Terrain mit demselben Material.
+Config.GROUND_COLORS = { grassLighten = 0.4, groundLighten = 0.2 }
+
 Config.TERRAIN = {
 	["."] = {
 		height = 0, terrainMaterial = Enum.Material.Grass,
