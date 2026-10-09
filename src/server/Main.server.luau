@@ -13,6 +13,7 @@ local Tutorial = require(Shared.Tutorial)
 local Recruit = require(Shared.Recruit)
 local RunConfig = require(Shared.RunConfig)
 local RunService = require(script.Parent.RunService)
+local BossAbilities = require(script.Parent.BossAbilities)
 
 local BoardBuilder = require(script.Parent.BoardBuilder)
 local UnitVisuals = require(script.Parent.UnitVisuals)
@@ -81,6 +82,7 @@ local function snapshot()
 		ownerName = state.ownerName,
 		run = state.run,
 		map = state.map,
+		reinforcementMarks = state.reinforcementMarks,
 	}
 end
 
@@ -148,6 +150,8 @@ local function makeUnit(def, x, y, team, level, bonus)
 		rarity = def.rarity or 1,
 		isLord = def.isLord or false,
 		ai = def.ai or "aggressive",
+		mov = def.mov, family = def.family,
+		abilities = def.abilities,
 		done = false,
 		deployed = true,
 		maxHp = def.stats.hp,
@@ -189,6 +193,7 @@ local function setupBattle(stage, opts)
 		run = opts.run,
 		tutorial = opts.tutorial,
 		map = stage.map,
+		reinforcementFields = stage.reinforcementFields, reinforcementMarks = {},
 		units = {},
 		heroUnits = {}, -- heroId -> Einheit (auch gefallene), für das Zurückschreiben des Fortschritts
 		phase = "Prep",
@@ -204,7 +209,7 @@ local function setupBattle(stage, opts)
 	local unitsStart = os.clock()
 	local enemies = table.clone(stage.enemies)
 	for _, e in enemies do
-		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level)
+		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level, opts.run and RunConfig.enemyBonus(opts.run.depth))
 		if opts.tutorial then
 			unit.tutorial = true
 			unit.tutorialTarget = e.tutorialTarget
@@ -213,6 +218,7 @@ local function setupBattle(stage, opts)
 				if stat == "hp" then unit.hp, unit.maxHp = value, value else unit[stat] = value end
 			end
 		end
+		unit.enemyKind = e.kind
 		state.units[unit.id] = unit
 		UnitVisuals.create(unit)
 	end
@@ -403,6 +409,7 @@ local function battle(attacker, defender)
 	end
 
 	for _, u in { attacker, defender } do
+		if u.ai == "hold_until_hurt" and u.hp < u.maxHp then u.awakened = true end
 		if u.hp <= 0 then
 			if u.team == "Player" then
 				state.lost += 1
@@ -431,6 +438,18 @@ local function runEnemyPhase()
 	for _, u in state.units do
 		u.done = false
 		UnitVisuals.update(u)
+	end
+	if state.run then
+		BossAbilities.process(state, function(kind, cell)
+			local unit = makeUnit(UnitData.Enemies[kind], cell.x, cell.y, "Enemy",
+				RunConfig.enemyLevel(state.run.depth), RunConfig.enemyBonus(state.run.depth))
+			unit.enemyKind = kind
+			state.units[unit.id] = unit
+			UnitVisuals.create(unit)
+		end, function(event)
+			BattleEvent:FireAllClients({ ability = event })
+		end, rng)
+		for _, unit in pairs(state.units) do UnitVisuals.update(unit) end
 	end
 	healOnForts("Enemy")
 	broadcast()

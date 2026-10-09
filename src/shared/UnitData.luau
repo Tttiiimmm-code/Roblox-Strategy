@@ -174,7 +174,7 @@ UnitData.Enemies = {
 		stats = { hp = 16, str = 0, mag = 5, skl = 5, spd = 5, lck = 2, def = 1, res = 5 } },
 	morwen = { name = "Morwen", class = "EnemyMage", weapon = "Fire", rarity = 4, ai = "stationary",
 		stats = { hp = 26, str = 0, mag = 8, skl = 7, spd = 6, lck = 4, def = 3, res = 7 } },
-	brigand = { name = "Bandit", class = "Brigand", weapon = "IronAxe",
+	brigand = { name = "Bandit", family = "bandit", class = "Brigand", weapon = "IronAxe",
 		stats = { hp = 18, str = 5, mag = 0, skl = 2, spd = 3, lck = 0, def = 2, res = 0 } },
 	soldier = { name = "Soldat", class = "Soldier", weapon = "IronLance",
 		stats = { hp = 17, str = 5, mag = 0, skl = 3, spd = 3, lck = 1, def = 4, res = 1 } },
@@ -182,8 +182,16 @@ UnitData.Enemies = {
 		stats = { hp = 18, str = 5, mag = 0, skl = 3, spd = 3, lck = 1, def = 4, res = 1 } },
 	archer = { name = "Schütze", class = "EnemyArcher", weapon = "IronBow",
 		stats = { hp = 16, str = 4, mag = 0, skl = 4, spd = 4, lck = 1, def = 2, res = 1 } },
-	chieftain = { name = "Garrick", class = "Chieftain", weapon = "SteelAxe", rarity = 4, ai = "stationary",
-		stats = { hp = 28, str = 8, mag = 0, skl = 5, spd = 5, lck = 2, def = 7, res = 3 } },
+	brigand_captain = { name = "Banditenhauptmann", class = "Brigand", family = "bandit", weapon = "IronAxe",
+		mov = 3, ai = "aggressive", rarity = 3,
+		stats = { hp = 30, str = 8, mag = 0, skl = 5, spd = 4, lck = 1, def = 4, res = 1 },
+		abilities = { { type = "summon", name = "Verstärkung rufen", threshold = 0.4, count = { min = 1, max = 2 }, radius = 2, kind = "brigand" } } },
+	chieftain = { name = "Garrick", class = "Chieftain", family = "bandit", weapon = "SteelAxe", rarity = 4, ai = "hold_until_hurt",
+		stats = { hp = 40, str = 11, mag = 0, skl = 7, spd = 5, lck = 2, def = 8, res = 3 },
+		abilities = {
+			{ type = "warcry", name = "Kriegsschrei", interval = 3, radius = 3, strength = 3, duration = 1, family = "bandit" },
+			{ type = "reinforce", name = "Verstärkung naht!", threshold = 0.5, delay = 1, count = { min = 2, max = 3 }, kind = "brigand" },
+		} },
 }
 
 return UnitData

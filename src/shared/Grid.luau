@@ -73,8 +73,8 @@ end
 -- Dijkstra: alle erreichbaren Felder. Verbündete dürfen durchquert, aber nicht als Ziel gewählt werden;
 -- Feinde blockieren. Ergebnis: key -> { x, y, cost, prev, canStop }
 function Grid.reachable(unit, units, movOverride)
-	local mov = movOverride or UnitData.Classes[unit.class].mov
-	if unit.ai == "stationary" and not movOverride then
+	local mov = movOverride or unit.mov or UnitData.Classes[unit.class].mov
+	if (unit.ai == "stationary" or (unit.ai == "hold_until_hurt" and not unit.awakened and unit.hp == unit.maxHp)) and not movOverride then
 		mov = 0
 	end
 

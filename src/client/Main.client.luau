@@ -911,10 +911,43 @@ local function impactHaptic(critical, speed)
 	end)
 end
 
+local reinforcementFx = Instance.new("Folder")
+reinforcementFx.Name = "Verstärkung"
+reinforcementFx.Parent = fxFolder
+local reinforcementKey
+local function showReinforcementMarks()
+	local cells = isMine() and not state.result and (state.reinforcementMarks or {}) or {}
+	local keys = {}
+	for _, cell in ipairs(cells) do table.insert(keys, Grid.key(cell.x, cell.y)) end
+	local key = table.concat(keys, ";")
+	if key == reinforcementKey then return end
+	reinforcementKey = key
+	reinforcementFx:ClearAllChildren()
+	for _, cell in ipairs(cells) do
+		local marker = Instance.new("Part")
+		marker.Name = "Ankunft"
+		marker.Anchored, marker.CanCollide, marker.CanTouch, marker.CanQuery = true, false, false, false
+		marker.Material = Enum.Material.Neon
+		marker.Color, marker.Transparency = Color3.fromRGB(255, 180, 40), 0.3
+		marker.Size = Vector3.new(Config.TILE_SIZE * 0.8, 0.12, Config.TILE_SIZE * 0.8)
+		marker.Position = Grid.toWorld(cell.x, cell.y) + Vector3.new(0, 0.2, 0)
+		marker.Parent = reinforcementFx
+		local billboard = Instance.new("BillboardGui")
+		billboard.Size, billboard.StudsOffset, billboard.AlwaysOnTop = UDim2.fromOffset(100, 48), Vector3.new(0, 2, 0), true
+		billboard.Parent = marker
+		local text = Instance.new("TextLabel")
+		text.Size, text.BackgroundTransparency = UDim2.fromScale(1, 1), 1
+		text.Text, text.TextSize, text.TextColor3, text.TextStrokeTransparency = "⚠", 32, marker.Color, 0.2
+		text.Parent = billboard
+	end
+end
+
 local cameraEvent = 0
 BattleEvent.OnClientEvent:Connect(function(payload)
 	if not isMine() then return end
-	if payload.enemyMove then
+	if payload.ability then
+		UI.toast(payload.ability.text, 4)
+	elseif payload.enemyMove then
 		cameraEvent += 1
 		local move = payload.enemyMove
 		CameraController.focusOn(Grid.toWorld(move.x, move.y), Config.FEEL.battleZoom, Config.FEEL.cameraFocusTime / (state.speed or 1))
@@ -1050,6 +1083,7 @@ local function applyState(newState)
 		end
 	end
 
+	showReinforcementMarks()
 	UnitAnimator.setSpeed(state.speed or 1)
 	if previous and previous.phase == "Enemy" and state.phase ~= "Enemy" then
 		cameraEvent += 1

@@ -175,6 +175,12 @@ function UnitVisuals.update(unit)
 			p.Color = p:GetAttribute("BaseColor") or Config.TEAM_COLORS[unit.team]
 		end
 	end
+	local root = model.PrimaryPart
+	if root and root:FindFirstChild("Info") then
+		root.Info.NameLabel.Text = unit.name .. (unit.warcry and ("  ⚔ +" .. unit.warcry.amount) or "")
+		root.Info.NameLabel.TextColor3 = unit.warcry and Color3.fromRGB(255, 210, 60)
+			or (unit.team == "Player" and UnitData.Rarities[unit.rarity or 1].color or Color3.fromRGB(255, 150, 150))
+	end
 	UnitVisuals.setHp(unit.id, unit.hp, unit.maxHp)
 end
 

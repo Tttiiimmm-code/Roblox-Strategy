@@ -16,7 +16,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
   - Laufstand erweitern (z. B. `run.phase = "choice" | "camp"`, `run.campExtra = bool`, `run.maxTeam`), normalize anpassen.
   - Fertig, wenn: Prüfskript erzeugt für viele Seeds die richtige Abfolge (L3/L5 einzige Option, Extra-Lager vor L5, Lager-Optionen nur in L1/L2/L4).
 
-- [ ] 2. **Bossdaten + Fähigkeiten** – `UnitData.luau` (Gegner), neues Modul `src/server/BossAbilities.luau`, `EnemyAI.luau`, `Main.server.luau`
+- [x] 2. **Bossdaten + Fähigkeiten** – `UnitData.luau` (Gegner), neues Modul `src/server/BossAbilities.luau`, `EnemyAI.luau`, `Main.server.luau`
   - **Miniboss** (Platzhalter-ID `brigand_captain`, Name „Banditenhauptmann“, Klasse `Brigand` o. ä., höhere Werte, Bewegungsweite unter normalen Gegnern, `ai` aktiv): Fähigkeit **„Verstärkung rufen“**: einmalig, wenn KP ≤ Schwelle (WIP, z. B. 40 %), erscheinen 1–2 Banditen auf freien Feldern nahe dem Miniboss.
   - **Garrick** (Boss): höhere Werte; KI **„Festung halten bis verletzt“** (stationär, solange KP = Max-KP; danach normal bewegend). **„Kriegsschrei“**: alle X Runden (WIP) erhalten Banditen im Umkreis (WIP) +Stärke für 1 Runde (sichtbar: Ansage + Effekt/Symbol an betroffenen Einheiten). **Phase 2** bei ≤ 50 % KP (einmalig): Ankündigung „Verstärkung naht!“ und markierte Randfelder; **in der nächsten Gegnerphase** erscheinen dort 2–3 Banditen.
   - Allgemein: Fähigkeiten als Daten (`abilities = { { type = "summon", ... }, { type = "warcry", ... }, { type = "reinforce", ... } }`), Ausführung serverseitig in der Gegnerphase, Ereignisse an Clients für Ansagen/Effekte. Beschworene Einheiten skalieren mit der Tiefe (RunConfig).
@@ -62,3 +62,5 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 
 ## Notizen (Codex)
 - Schritt 1: Laufversion 2; alte Phase-1-Laufst?nde werden verworfen, Sammlung/W?hrungen bleiben erhalten. WIP-Werte zentral. Neuer Stub-Runner `scripts/test-run.ps1` pr?ft 1000 vollst?ndige Abfolgen.
+
+- Schritt 2: Bewegungsweite als Einheitenwert (Grid mit erweitert); Bossereignisse, Randmarkierungen und Kriegsschrei-Symbol angebunden. Besetzte angekündigte Felder warten auf eine spätere freie Gegnerphase. Fähigkeiten- und KI-Stubs grün; Darstellung in Studio ungetestet.

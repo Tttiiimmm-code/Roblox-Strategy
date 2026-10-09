@@ -50,7 +50,7 @@ end
 
 -- Unbekannte/kaputte Läufe verwerfen; nur geprüfte Felder weiterführen.
 local function normalizeRun(run, heroes)
-	-- Phase-1-L?ufe haben andere feste Optionen; sie werden ohne Profilverlust verworfen.
+	-- Phase-1-Läufe haben andere feste Optionen; sie werden ohne Profilverlust verworfen.
 	if type(run) ~= "table" or run.version ~= RunConfig.VERSION or not integer(run.seed, 1, 2147483646)
 		or not integer(run.depth, 1, RunConfig.totalLevels()) or run.region ~= RunConfig.regionAt(run.depth)
 		or not integer(run.cleared, 0, RunConfig.totalLevels() - 1) or run.cleared ~= run.depth - 1
