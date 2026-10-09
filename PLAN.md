@@ -1,49 +1,64 @@
-# PLAN: Phase 2 Feinschliff – Tutorial-Lesbarkeit, PC-Textgröße, Level-Up wegtippen
+# PLAN: Roguelike Phase 3 – Bosse und Lager
 
-Ziel: Vier Wünsche des Nutzers nach dem Tutorial-Test (09.10.2026) umsetzen. Tutorial selbst funktioniert (Willkommensfenster, beide Missionen, 150 Gold).
-Branch: `feature/lauf-phase2` (weiter)
+Ziel: Das Grasland bekommt einen **Miniboss in Level 3** und **Garrick als Gebietsboss in Level 5**, dazu das **Lager** (volle Heilung, Teamwechsel, Wiederbeleben) als Wahloption und als garantierten Extra-Halt vor dem Boss. Nach dem Gebietsboss +1 Teamplatz.
+Branch: `feature/lauf-phase3` (existiert, von `main`)
+Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 – Bosse + Lager“ – dort stehen alle Nutzerentscheidungen. **Alle Zahlen WIP** → zentral in `RunConfig` bzw. Gegnerdaten.
 
-**Nutzerwünsche:**
-1. „Die Tutorialnachrichten in den Missionen können etwas größer sein.“
-2. „Die Felder, auf die man sich bewegen soll, können komplett gelb gefärbt werden, damit man es besser erkennt.“
-3. „Der Text im Thronsaal ist auf PC ziemlich klein – kann man den nur auf PC etwas vergrößern?“ (Screenshot PC ~1590×660 Fenster: Thronsaal-Kopf „Thronsaal / 150 Gold / 300 Edelsteine“ und Bedienhinweis unten sehr klein.)
-4. „Level-Up-Nachrichten von Helden durch Tippen sofort wegklicken, sonst bleiben sie immer ein paar Sekunden.“
+**Bestehender Code:** `src/shared/RunConfig.luau`, `src/shared/LevelGen.luau` (`generate`, `makeOptions`), `src/shared/MapChunks.luau`, `src/server/RunService.luau` (`start/choose/stage/finish/abandon`), `src/server/Main.server.luau` (`beginRunLevel`, `finishRunBattle`, `checkResult`, Gegnerphase `runEnemyPhase`, `makeUnit`), `src/server/EnemyAI.luau` (`ai = "stationary"` usw.), `src/shared/UnitData.luau` (`Enemies.chieftain` = Garrick, Klasse `Chieftain`, `ai = "stationary"`), `src/server/ProfileStore.luau` (`normalize` des Laufs), Client `src/client/RunUI.luau` (Wahl-Bildschirm), `MenuUI.luau`/`CollectionUI.luau` (Kaserne), `UI.luau` (Ansagen/Toasts), Prüfskripte `scripts/test-levelgen.ps1`, `scripts/test-tutorial.ps1`.
 
-**Bestehender Code:** `src/client/TutorialGuide.luau` (Markierung `marker` als Part, `ui.setTutorialMark`), `src/client/UI.luau` (Hinweis-Kasten, `UI.showLevelUp` ab Zeile ~707), `src/client/UIKit.luau` (`createRoot`, Skalierung `math.min(available.X / 1280, available.Y / 720, maximumScale or 1.15)` ~543), `src/client/MenuUI.luau` (Thronsaal-HUD/-Menü), `src/client/Main.client.luau` (Ablauf Kampf-Ereignisse, wartet ggf. auf Level-Up).
+**Leitlinien:** Server autoritativ (Lager-Aktionen, Preise, Teamwechsel prüfen). Profil nur ergänzen; alte Lauf-Stände ohne neue Felder sauber weiterführen oder verwerfen. Fähigkeiten/Phasen **datengetrieben** an Gegnerdefinitionen (wiederverwendbar für spätere Gebietsbosse), nicht Garrick-spezifisch fest verdrahtet. Ein Commit pro Schritt, alle drei Prüfskripte grün.
 
 ## Schritte
 
-- [x] 1. **Tutorial-Texte größer** – Tutorial-Hinweis deutlich größer (Richtwert Schrift ~1,4× der bisherigen Hinweisgröße, Kasten wächst mit, Umbruch erlaubt), gut lesbar auf Handy und PC; kein Überdecken der Spielfläche über das Nötige hinaus (Position so, dass Ziel-Feld/Figur sichtbar bleibt). Werte in Config (WIP).
+- [ ] 1. **Ablauf je Gebiet** – `RunConfig`, `LevelGen.makeOptions`, `RunService`
+  - Schritte eines Gebiets: L1 Wahl · L2 Wahl · L3 **Miniboss** (einzige Option) · L4 Wahl · **Extra-Lager** (garantiert, zählt nicht als Level) · L5 **Boss** (einzige Option).
+  - In den Wahlen L1/L2/L4 kann mit `CAMP_CHANCE` (WIP) eine Option „Lager“ erscheinen (max. 1 je Wahl). Wird sie gewählt: kein Kampf, keine Kampfbelohnung, Lager öffnen, danach `depth += 1`.
+  - Laufstand erweitern (z. B. `run.phase = "choice" | "camp"`, `run.campExtra = bool`, `run.maxTeam`), normalize anpassen.
+  - Fertig, wenn: Prüfskript erzeugt für viele Seeds die richtige Abfolge (L3/L5 einzige Option, Extra-Lager vor L5, Lager-Optionen nur in L1/L2/L4).
 
-- [x] 2. **Ziel-Felder komplett gelb** – Bewegungsziel im Tutorial als **vollflächig gelb gefülltes Feld** (deckend bzw. kaum transparent, kräftiges Gelb, leichtes Pulsieren erlaubt) statt nur Rahmen/Pfeil; liegt über Bewegungs-Overlays, unter Figuren; Klicks treffen weiterhin das Feld (`CanQuery = false`, `CanCollide = false`). Ziel-Figuren/Gegner weiterhin klar markiert (bestehende Markierung oder gelber Ring). Farbe/Transparenz in Config.
+- [ ] 2. **Bossdaten + Fähigkeiten** – `UnitData.luau` (Gegner), neues Modul `src/server/BossAbilities.luau`, `EnemyAI.luau`, `Main.server.luau`
+  - **Miniboss** (Platzhalter-ID `brigand_captain`, Name „Banditenhauptmann“, Klasse `Brigand` o. ä., höhere Werte, Bewegungsweite unter normalen Gegnern, `ai` aktiv): Fähigkeit **„Verstärkung rufen“**: einmalig, wenn KP ≤ Schwelle (WIP, z. B. 40 %), erscheinen 1–2 Banditen auf freien Feldern nahe dem Miniboss.
+  - **Garrick** (Boss): höhere Werte; KI **„Festung halten bis verletzt“** (stationär, solange KP = Max-KP; danach normal bewegend). **„Kriegsschrei“**: alle X Runden (WIP) erhalten Banditen im Umkreis (WIP) +Stärke für 1 Runde (sichtbar: Ansage + Effekt/Symbol an betroffenen Einheiten). **Phase 2** bei ≤ 50 % KP (einmalig): Ankündigung „Verstärkung naht!“ und markierte Randfelder; **in der nächsten Gegnerphase** erscheinen dort 2–3 Banditen.
+  - Allgemein: Fähigkeiten als Daten (`abilities = { { type = "summon", ... }, { type = "warcry", ... }, { type = "reinforce", ... } }`), Ausführung serverseitig in der Gegnerphase, Ereignisse an Clients für Ansagen/Effekte. Beschworene Einheiten skalieren mit der Tiefe (RunConfig).
+  - Fertig, wenn: Stub-Prüfungen für alle drei Fähigkeiten (Auslöser, Einmaligkeit, freie Felder, Ankündigung eine Runde vorher, Kriegsschrei-Dauer).
 
-- [x] 3. **Größere Oberfläche nur auf PC** – in `UIKit.createRoot` zusätzlicher Faktor für Maus-/Tastatur-Geräte ohne Touch (z. B. `UserInputService.TouchEnabled == false` bzw. `MouseEnabled and not TouchEnabled`), Wert in Config (Richtwert 1,25, WIP); Obergrenze so, dass auf typischen PC-Fenstern (1280×720 bis 1920×1080, auch kleine Studio-Fenster) nichts aus dem Bildschirm läuft oder sich überlappt. Gilt für Thronsaal-HUD, Menüs und Kampf-HUD gleichermaßen (nicht nur Thronsaal-Text). Handy/Tablet unverändert.
+- [ ] 3. **Boss-Karten** – `MapChunks.luau`/`LevelGen.luau`
+  - **Boss-Level:** handgemachte Grasland-Boss-Karte mit **Festung (`H`) für Garrick** im oberen Teil, Leibwache davor, Startfelder unten (bis 6), Randfelder für die Verstärkung definiert. Leichte Variation per Seed erlaubt (Spiegelung), Lösbarkeit wie bisher prüfen.
+  - **Miniboss-Level:** erzeugte Karte wie normale Level + Miniboss + kleine Leibwache.
+  - Fertig, wenn: Prüfskript prüft Boss-/Miniboss-Karten (Erreichbarkeit, Startfelder, Verstärkungsfelder frei).
 
-- [x] 4. **Level-Up wegtippen** – Level-Up-Fenster schließt sofort bei Tippen/Klick irgendwo auf das Fenster oder den Bildschirm (und Leertaste/Enter am PC); automatisches Schließen nach Zeit bleibt als Rückfall. Wartet der Kampfablauf auf das Ende des Fensters, muss er beim Wegtippen sofort weiterlaufen; der Tipp darf keine Spielaktion auslösen (kein Feld/keine Figur anwählen).
+- [ ] 4. **Sieg bei Bossfall** – `Main.server.luau` (`checkResult`), `RunService.finish`
+  - In Boss-/Miniboss-Leveln: Boss fällt → sofort Sieg, übrige Gegner „fliehen“ (entfernen mit kurzer Ansage). Höhere Belohnung (WIP). Nach dem **Gebietsboss**: `run.maxTeam += 1` (bis `MAX_TEAM`), Hinweis im Ergebnis. Da aktuell nur das Grasland existiert, endet der Lauf danach wie bisher als „geschafft“ – Teamplatz-Logik muss trotzdem korrekt im Laufstand landen (für spätere Gebiete).
+  - Fertig, wenn: Stub-Prüfung Boss-Sieg mit lebenden Gegnern, Miniboss-Sieg, Teamplatz.
 
-- [x] 5. Abschluss: `scripts/check.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` = OK, Rojo-Build. Devlog-Nachtrag zu #30 (oder #31). Ein Commit pro Schritt, pushen, `.handoff/status` = `fertig`.
+- [ ] 5. **Lager** – Server (`RunService`/`Main.server.luau`, neue Befehle) + Client (`RunUI.luau`, Kaserne wiederverwenden)
+  - Beim Betreten: **volle Heilung** aller lebenden Teammitglieder.
+  - **Teamwechsel:** Helden aus der Sammlung gegen Teammitglieder tauschen (bis `run.maxTeam` Plätze; leere Plätze nach Teamplatz-Zuwachs füllen). **Gefallene dürfen ausgewechselt werden, bleiben aber tot** (wer später zurückkommt, ist weiter tot). Neu ins Team geholte Helden starten mit vollen KP.
+  - **Wiederbeleben:** gefallener Held → lebendig mit vollen KP; Preis in Gold = `REVIVE_GOLD_BASE + REVIVE_GOLD_PER_LEVEL × Level` **oder** fester Edelsteinpreis `REVIVE_GEMS` (WIP); Spieler wählt die Währung; Server prüft Guthaben.
+  - **Kaserne** im Lager ansehen (bestehende Kaserne-Ansicht wiederverwenden, nur lesen + Teamwechsel).
+  - „Weiter“ verlässt das Lager → nächste Wahl bzw. Boss. Verlassen des Spiels im Lager → beim Wiederkommen wieder im Lager.
+  - Oberfläche handytauglich (UIKit-Regeln), Preise sichtbar vor dem Kauf.
+  - Fertig, wenn: Stub-Prüfungen für Heilung, Tausch (inkl. Toter), Wiederbeleben beider Währungen, zu wenig Guthaben, Teamgröße, Wiederkommen ins Lager.
+
+- [ ] 6. **Wahl-Bildschirm** – `RunUI.luau`: Lager-Option mit eigenem Symbol; L3/L5 als Boss-Karte mit Namen („Miniboss: Banditenhauptmann“, „Boss: Garrick“) statt Wahl; Extra-Lager vor dem Boss klar erkennbar.
+
+- [ ] 7. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 3 umgesetzt, Platzhalter/Werte), Charakter-Pipeline: Miniboss `brigand_captain` als neue Figur in der Liste. Prüfskripte erweitern (`test-levelgen` für Abfolge/Karten, neues oder bestehendes Stub-Skript für Fähigkeiten/Lager). `scripts/check.ps1`, alle Prüfskripte, Rojo-Build. Devlog **#32** „Roguelike Phase 3 – Bosse und Lager“. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Tutorial: Hinweise größer und gut lesbar; Zielfeld komplett gelb
-- [ ] PC: Thronsaal-Text, Menüs und Kampf-HUD größer, nichts abgeschnitten; Handy unverändert
-- [ ] Level-Up-Fenster per Tippen/Klick sofort weg, ohne versehentlich etwas anzuwählen
+- [ ] Lauf: L1/L2 Wahl (manchmal mit Lager-Option), L3 Miniboss, L4 Wahl, Extra-Lager, L5 Garrick
+- [ ] Miniboss bewegt sich (kürzer als normale Gegner), ruft bei niedrigen KP 1–2 Banditen
+- [ ] Garrick bleibt in der Festung bis zum ersten Treffer; Kriegsschrei sichtbar; bei halben KP Ankündigung, eine Runde später Verstärkung vom Rand
+- [ ] Boss fällt → sofort Sieg, Rest flieht
+- [ ] Lager: volle Heilung, Tausch mit Sammlungs-Helden (Gefallene bleiben tot), Wiederbeleben mit Gold oder Edelsteinen, Preise sichtbar
+- [ ] Lager als Option in L1/L2/L4 ersetzt den Kampf
+- [ ] Spiel im Lager verlassen → beim Wiederkommen wieder im Lager
+- [ ] Handy: alles lesbar und bedienbar
 
 ## Nicht anfassen
-- Tutorial-Schrittlogik/Serverprüfung, Lauf, Generator, Brett
+- Tutorial, Brettoptik, Generator-Grundlogik normaler Level (nur erweitern), Gacha im Hub
 
 ## Offene Fragen
-- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – Geschmacksfragen nicht selbst entscheiden.)
+- (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-- Schritt 1: Tutorial-Hinweise mit 31 Designpunkten (vorher geführte Schritte 22), Mindesthöhe 92 und automatischem Umbruch/Höhenwachstum. Gilt auch für freie Tutorial-Schritte; links oben bleibt die bisherige schmale Spalte erhalten. Darstellung in Studio/auf Handy noch ungetestet.
-
-- Schritt 2: Bewegungsziel mit voller Feldgröße, kräftigem Gelb und 3 % Transparenz. Dünne Fläche oberhalb von Bewegungsflächen/Cursor; keine Kollision, Touch- oder Raycast-Abfrage. Figuren-/Gegnermarkierungen bleiben erhalten.
-
-- Schritt 3: PC-Faktor 1,25 nur bei MouseEnabled ohne TouchEnabled. Mindestfläche 1184 × 664 Designpunkte schützt die drei oberen HUD-Spalten und das 1000 × 640 große Kasernenfenster mit Randabstand. Deshalb in kleinen/höhenbegrenzten Fenstern weniger als 25 % Vergrößerung (z. B. etwa 8 % bei 1590 × 660); bei 1920 × 1080 bis zu 25 %. Touch-Geräte behalten die bisherige Skalierung.
-
-- Schritt 4: Eigenes Level-Up-ScreenGui mit vollflächiger transparenter Schließtaste über Fenster und Bildschirm. Klick/Tipp schließt sofort; Leertaste/Enter/Nummernblock-Enter im Client ebenfalls. Weltsteuerung während der Meldung gesperrt, begonnene Maus-/Touchgesten verworfen. Alte 3,2-Sekunden-Timer können neue Meldungen nicht schließen. Kein Kampf-Wartepfad im bestehenden Client vorhanden.
-- Die Schritt-3-Checkbox/Notiz wird mit Schritt 4 nachgetragen; UTF-8-Übertragung der neuen deutschen Kommentare und Notizen korrigiert.
-
-- Lokale Prüfung: 180 bestehende UI-Anschlüsse, 99 Feinschliff-Prüfungen und 14 bestehende Eingabeprüfungen mit aktuellen Main.client-Callbacks bestanden. Prüfhilfe unter ignoriertem tools/; prüft sichere Flächen/HUD-Abstände/Timer/Schließgesten, ersetzt keine Roblox-Schriftmessung, den Eingaberouter oder Studio-/Handytests.
-
-- Abschluss: Pflichtcheck OK (35 Dateien), Tutorialprüfung OK (168), Generatorprüfung OK (90.000 Level- und 5.000 Optionsprüfungen, 0 Rückfälle, erzwungener Rückfall OK), Rojo-Build erfolgreich. Devlog #31 ergänzt, nächste Schritte aktualisiert. Manuelle Tests und unabhängiger Claude-Review bleiben offen. Abschluss-Commit und Push auf feature/lauf-phase2; danach Handoff-Signal fertig.
+-
