@@ -1,6 +1,12 @@
 do
 	local Landscape = modules.LandscapeBuilder
 	local s, hub = Config.LANDSCAPE, Config.HUB_ORIGIN
+	expect(RC.BOARD_WIDTH <= Config.HUB_BOARD_TILES.X and RC.BOARD_HEIGHT <= Config.HUB_BOARD_TILES.Z, "Hub-Abstand f?r Laufbrett zu klein")
+	for _, stage in modules.Stages.List do
+		expect(#stage.map[1] <= Config.HUB_BOARD_TILES.X and #stage.map <= Config.HUB_BOARD_TILES.Z, "Hub-Abstand f?r feste Karte zu klein")
+	end
+	local maxSize = Config.HUB_BOARD_TILES * Config.TILE_SIZE
+	expect(hub.Z - s.hubHalfDepth > maxSize.Z + Config.landscapeMargin(maxSize), "Hub schneidet Sicht-/Landschaftsbereich")
 	local function signature(board)
 		local rows = {}
 		for key, column in terrainColumns do
@@ -23,6 +29,7 @@ do
 		Grid.setMap({ "......", "......", "......" })
 		local first = Board.build("greenland")
 		validateOuter(first)
+		validateZoomGround(first)
 		validateMetrics(first)
 		local original = signature(first)
 		expect(original == signature(Board.build("greenland")), "Terrain/Modelle nicht deterministisch")
@@ -41,6 +48,7 @@ do
 		Grid.setMap(stage.map)
 		local board = Board.build(stage.region)
 		validateOuter(board)
+		validateZoomGround(board)
 		validateMetrics(board)
 	end
 	Grid.setMap({ "." })

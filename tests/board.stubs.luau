@@ -143,7 +143,7 @@ services.GuiService = {}
 modules.PlayerModule = { GetControls = function() return { Disable = function() end, Enable = function() end } end }
 services.Players = { LocalPlayer = { PlayerScripts = { WaitForChild = function() return "PlayerModule" end } } }
 local task = { spawn = function(fn) fn() end }
-workspace.CurrentCamera = {}
+workspace.CurrentCamera = { FieldOfView = 70, ViewportSize = { X = 1280, Y = 720 } }
 local terrainClears, terrainBlocks, terrainColumns = {}, {}, {}
 local terrainSerial = 0
 local terrainVoxelWrites = 0

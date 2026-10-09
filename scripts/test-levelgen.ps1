@@ -6,7 +6,7 @@ $runner = Join-Path $projectRoot "tools/levelgen.runner.luau"
 if (-not (Test-Path $luau)) { Write-Host "tools/luau/luau.exe fehlt."; exit 1 }
 $source = @'
 local Color3 = { fromRGB = function(...) return { ... } end }
-local Vector3 = { new = function(...) return { ... } end }
+local Vector3 = { new = function(x, y, z) return { x, y, z, X = x, Y = y, Z = z } end }
 local Vector2 = { new = function(...) return { ... } end }
 local Enum = { Material = setmetatable({}, { __index = function(_, key) return key end }) }
 local testModules = {}

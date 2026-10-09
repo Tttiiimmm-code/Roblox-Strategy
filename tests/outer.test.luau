@@ -33,20 +33,28 @@ local function validateOuter(board)
 end
 local function validateZoomGround(_board)
 	local w, h = Grid.width() * Config.TILE_SIZE, Grid.height() * Config.TILE_SIZE
-	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
-	for _, aspect in { 4 / 3, 16 / 9, 21 / 9 } do for yaw = 0, 7 do
-		local angle, tangent = yaw * math.pi / 4, math.tan(math.rad(35))
+	local size, c = Vector3.new(w, 0, h), Config.CAMERA
+	local up, back = 1 / math.sqrt(1 + c.tilt ^ 2), c.tilt / math.sqrt(1 + c.tilt ^ 2)
+	for _, fov in { 60, 70, 75 } do for _, aspect in { 4 / 3, 16 / 9, 21 / 9 } do for yaw = 0, 7 do
+		local overview = Config.overviewZoom(size, fov, aspect)
+		local angle, tangent = yaw * math.pi / 4, math.tan(math.rad(fov / 2))
 		for _, fx in { 0, w } do for _, fz in { 0, h } do
-			for _, sx in { -1, 1 } do for _, sy in { -1, 1 } do
-				local dy = -0.8 + 0.6 * sy * tangent
-				local time = (overview * 0.8 - Config.LANDSCAPE.foundationTop) / -dy
-				local dx, dz = sx * aspect * tangent * time, overview * 0.6 + (-0.6 - 0.8 * sy * tangent) * time
+			for _, sx in { -1, 0, 1 } do for _, sy in { -1, 0, 1 } do
+				local dy = -up + back * sy * tangent
+				local time = (overview * up + c.focusHeightReserve - Config.LANDSCAPE.foundationTop) / -dy
+				local dx, dz = sx * aspect * tangent * time, overview * back + (-back - up * sy * tangent) * time
 				local x, z = fx + dx * math.cos(angle) + dz * math.sin(angle), fz - dx * math.sin(angle) + dz * math.cos(angle)
-				local hub = Config.HUB_ORIGIN
-				local inHub = math.abs(x - hub.X) < Config.LANDSCAPE.hubHalfWidth and math.abs(z - hub.Z) < Config.LANDSCAPE.hubHalfDepth
 				local covered = x >= 0 and x <= w and z >= 0 and z <= h
-				expect(covered or inHub or terrainHeightAt(x, z) ~= nil, "Leerer Terrainrand bei Maximalzoom")
+				expect(covered or terrainHeightAt(x, z) ~= nil, string.format("Leerer Terrainrand: Brett %dx%d FOV %d Format %.2f Zoom %.2f Strahl %.2f/%.2f Margin %.2f", w, h, fov, aspect, overview, x, z, Config.landscapeMargin(size)))
 			end end
 		end end
-	end end
+		-- Projektion aller Brett-Ecken bei zentralem Fokus: bequem im Bild.
+		for _, x in { -w / 2, w / 2 } do for _, z in { -h / 2, h / 2 } do
+			local right = x * math.cos(angle) - z * math.sin(angle)
+			local along = x * math.sin(angle) + z * math.cos(angle)
+			local depth = overview - along * back
+			expect(math.abs(right) < depth * tangent * aspect and math.abs(along * up) < depth * tangent,
+				"Ganzes Brett passt bei ?bersichtszoom nicht ins Bild")
+		end end
+	end end end
 end

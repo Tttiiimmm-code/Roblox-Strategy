@@ -61,7 +61,10 @@ local function clampFocus()
 end
 
 local function maximumZoom()
-	return math.max(Config.CAMERA.zoomOverviewMin, bounds.Magnitude * Config.CAMERA.zoomOverviewScale)
+	local camera, c = workspace.CurrentCamera, Config.CAMERA
+	local viewport = camera.ViewportSize
+	local aspect = viewport.Y > 0 and viewport.X / viewport.Y or c.aspectMin
+	return Config.overviewZoom(bounds, camera.FieldOfView, aspect)
 end
 
 function CameraController.setBounds(center, size, startFocus)
@@ -70,7 +73,7 @@ function CameraController.setBounds(center, size, startFocus)
 	focus = startFocus or center
 	bounds = size
 	clampFocus()
-	zoom = math.clamp(math.max(size.X, size.Z) * Config.CAMERA.zoomDefaultScale, Config.CAMERA.zoomDefaultMin, Config.CAMERA.zoomDefaultMax)
+	zoom = math.clamp(math.max(size.X, size.Z) * Config.CAMERA.zoomDefaultScale, Config.CAMERA.zoomDefaultMin, math.min(Config.CAMERA.zoomDefaultMax, maximumZoom()))
 end
 
 -- Bildschirm-Verschiebung in Pixeln ("Karte greifen")
@@ -155,7 +158,10 @@ function CameraController.start()
 		focus += rotation:VectorToWorldSpace(move) * dt * 45
 		clampFocus()
 
-		local offset = rotation:VectorToWorldSpace(Vector3.new(0, 1, 0.75).Unit * zoom)
+		-- Auch nach Fensterwechseln und Kamerafahrten gilt derselbe sichtbare Ausschnitt.
+		camera.FieldOfView = math.clamp(camera.FieldOfView, Config.CAMERA.fovMin, Config.CAMERA.fovMax)
+		zoom = math.clamp(zoom, Config.CAMERA.zoomMin, maximumZoom())
+		local offset = rotation:VectorToWorldSpace(Vector3.new(0, 1, Config.CAMERA.tilt).Unit * zoom)
 		local shakeOffset = Vector3.zero
 		if shakeStrength > 0 then
 			shakeTime += dt

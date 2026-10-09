@@ -56,11 +56,10 @@ end
 function LandscapeBuilder.prepare(mapKey, region, features)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local w, h = Grid.width() * T, Grid.height() * T
-	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
-	local margin = aligned(overview * s.zoomMargin, true)
+	local margin = aligned(Config.landscapeMargin(Vector3.new(w, 0, h)), true)
 	local random = Random.new(hash(mapKey .. ":landscape"))
 	local state = { w = w, h = h, region = region, key = mapKey, waterfall = features and features.waterfall, phase = random:NextNumber(0, math.pi * 2),
-		margin = margin, sculptMargin = aligned(s.sculptDistance * T, true),
+		margin = margin, sculptMargin = math.min(margin, aligned(s.sculptDistance * T, true)),
 		palette = region and region.landscape or s.palette }
 	state.rects = withoutHub({ x0 = -margin, x1 = w + margin, z0 = -margin, z1 = h + margin })
 	return state

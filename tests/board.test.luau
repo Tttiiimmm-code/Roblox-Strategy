@@ -73,7 +73,7 @@ expect(workspace.CurrentCamera.CFrame.target.Z == size.Z - Config.TILE_SIZE, "St
 Camera.zoomBy(0.0001)
 render(0)
 local overview = (workspace.CurrentCamera.CFrame.Position - workspace.CurrentCamera.CFrame.target).Magnitude
-expect(math.abs(overview - size.Magnitude * Config.CAMERA.zoomOverviewScale) < 0.001, "Großes Brett ohne Übersichtszoom")
+expect(math.abs(overview - Config.overviewZoom(size, 70, 16 / 9)) < 0.001, "Großes Brett ohne Übersichtszoom")
 for _, corner in ipairs({ { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } }) do
 	Camera.panBy({ X = corner[1] * 100000, Y = corner[2] * 100000 })
 	render(0)

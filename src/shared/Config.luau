@@ -16,8 +16,34 @@ Config.CHIBI = {
 	riderLift = 2.6, riderHipAngle = -35,
 }
 
-Config.CAMERA = { zoomMin = 30, zoomDefaultMin = 45, zoomDefaultMax = 120, zoomOverviewMin = 140,
-	zoomDefaultScale = 0.85, zoomOverviewScale = 1.6 }
+Config.CAMERA = { zoomMin = 30, zoomDefaultMin = 45, zoomDefaultMax = 120,
+	zoomDefaultScale = 0.85, overviewPadding = 1.08, tilt = 0.75,
+	fovMin = 60, fovMax = 75, aspectMin = 4 / 3, aspectMax = 21 / 9, focusHeightReserve = 12 }
+
+-- Die Brettdiagonale als Umkreis passt bei jeder Drehung in beide Bildachsen.
+function Config.overviewZoom(size, fov, aspect)
+	local c = Config.CAMERA
+	local vertical = math.rad(math.clamp(fov, c.fovMin, c.fovMax)) / 2
+	local horizontal = math.atan(math.tan(vertical) * aspect)
+	return math.max(c.zoomMin, math.sqrt(size.X ^ 2 + size.Z ^ 2) / 2
+		/ math.sin(math.min(vertical, horizontal)) * c.overviewPadding)
+end
+
+-- Reichweite des fernsten unteren Sichtstrahls auf dem flachen Fernboden.
+function Config.viewReach(distance, fov, aspect)
+	local c = Config.CAMERA
+	local up = 1 / math.sqrt(1 + c.tilt ^ 2)
+	local back = c.tilt * up
+	local tangent = math.tan(math.rad(fov) / 2)
+	local time = (distance * up + c.focusHeightReserve - Config.LANDSCAPE.foundationTop) / (up - back * tangent)
+	return math.sqrt((aspect * tangent * time) ^ 2 + (distance * back - (back + up * tangent) * time) ^ 2)
+end
+
+function Config.landscapeMargin(size)
+	local c = Config.CAMERA
+	local distance = Config.overviewZoom(size, c.fovMin, c.aspectMin)
+	return Config.viewReach(distance, c.fovMax, c.aspectMax) + Config.LANDSCAPE.viewSafetyTiles * Config.TILE_SIZE
+end
 
 Config.FEEL = {
 	battleSceneIntro = 0.45, battleSceneOutro = 0.5,
@@ -174,7 +200,7 @@ Config.ENVIRONMENT = {
 }
 -- WIP: Distanzen in Feldern, Höhen/Skalen in Studs; Terrainauflösung von Roblox fest vorgegeben.
 Config.LANDSCAPE = {
-	resolution = 4, chunkCells = 32, zoomMargin = 4.2, sculptDistance = 24,
+	resolution = 4, chunkCells = 32, viewSafetyTiles = 2, sculptDistance = 18,
 	rockFields = { standWidth = 0.55, standThickness = 0.4, surfaceInset = 0.15, mountainRoughness = 0.12, roughnessScale = 7,
 		cliffRoughness = 3, cliffScale = 5, grassChance = 0.16 }, -- Standkappen glätten die grobe Voxelauflösung.
 	hubHalfWidth = 80, hubHalfDepth = 100, foundationTop = -4,
@@ -266,7 +292,12 @@ Config.TEAM_COLORS = {
 }
 
 -- Thronsaal: liegt weit hinter dem Schlachtfeld, damit die Taktik-Kamera ihn nicht sieht
-Config.HUB_ORIGIN = Vector3.new(0, 0, 420)
+-- Gr??tes aktuelles Brett (Lauf: 16?12); Sichtreichweite plus Hub-Halbtiefe und Sicherheitsrand.
+Config.HUB_BOARD_TILES = Vector3.new(16, 0, 12)
+local hubBoardSize = Vector3.new(Config.HUB_BOARD_TILES.X * Config.TILE_SIZE, 0, Config.HUB_BOARD_TILES.Z * Config.TILE_SIZE)
+Config.HUB_ORIGIN = Vector3.new(0, 0, math.ceil((hubBoardSize.Z + Config.landscapeMargin(hubBoardSize)
+	+ Config.LANDSCAPE.hubHalfDepth + Config.LANDSCAPE.viewSafetyTiles * Config.TILE_SIZE) / Config.LANDSCAPE.resolution)
+	* Config.LANDSCAPE.resolution)
 
 Config.OVERLAY = {
 	Move = Color3.fromRGB(60, 140, 255),
