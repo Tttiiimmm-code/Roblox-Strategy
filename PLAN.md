@@ -51,7 +51,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
 
 - [x] 6. **Messung + Prüfskripte** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke (Mittel/Max, 100 Seeds, mit Paket-Fixtures, inklusive Umgebung) sowie Stub-Aufbauzeit vorher/nachher.
 
-- [ ] 7. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#35** „Level-Optik Etappe C3“, „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
+- [x] 7. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#35** „Level-Optik Etappe C3“, „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Ufer: weicher Sandübergang, keine gelben Ringe/Kreise mehr
@@ -96,3 +96,5 @@ Einheitlicher Vergleich (Mittel/Max; Stub-Zeiten schwanken, keine Roblox-Laufzei
 | Schritt 6, final | 2006,2 / 2154 | 344396 / 500220 | 101,71 / 150,11 |
 
 - Abschlusspruefungen: check.ps1 OK (37 Luau-Dateien); test-levelgen.ps1 OK (19000 Level-, 5000 Options-, 2400 Boss-/Minibosspruefungen, 96 Landschaftskombinationen, 0 regulaere Rueckfaelle); test-run.ps1 OK (34458 Laufpruefungen, 523294 bisherige Brett-/Kameraassertionen plus neue C3-Geometrie-/Pakettests); test-tutorial.ps1 OK (168); test-run-ui.ps1 OK (116); Rojo-Build TacticsGame.rbxlx OK. Keine alten Goldsymbole in src; Edelstein-Symbol ausschliesslich zentral. Alle manuellen Tests fuer C3 in Studio/auf Handy ungetestet; unabhaengiger Claude-Review ausstehend.
+
+- Schritt 7: Devlog #35 und naechste Schritte aktualisiert; alle Pflichtpruefungen und Rojo-Build gruen. Abschlusscommit und Push auf feature/level-optik-c; danach als allerletzte Aktion Handoff fertig. Manuelle C3-Tests bleiben offen.
