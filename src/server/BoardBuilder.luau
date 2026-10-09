@@ -392,7 +392,6 @@ end
 function BoardBuilder.build(regionId, features, stage)
 	Grid.setHeights({})
 	local region = Stages.getRegion(regionId)
-	local treeColor = region and region.treeColor or Config.TERRAIN.F.color
 	for _, name in { "Baseplate", "SpawnLocation", "Board" } do
 		local old = workspace:FindFirstChild(name)
 		if old then old:Destroy() end
@@ -427,7 +426,7 @@ function BoardBuilder.build(regionId, features, stage)
 		return region and region.terrainColors and region.terrainColors[ch] or Config.TERRAIN[ch].color
 	end
 	local top = Config.FEEL.surroundHeight
-	local surroundColor = region and region.surroundColor or Config.TERRAIN["."].color
+	local surroundColor = region and region.surroundColor or Config.ENVIRONMENT.outer.groundColor
 	for _, rect in {
 		{ -margin / 2, h / 2, margin, h + margin * 2 },
 		{ w + margin / 2, h / 2, margin, h + margin * 2 },
@@ -436,7 +435,7 @@ function BoardBuilder.build(regionId, features, stage)
 	} do
 		deco({ Name = "Surround", Size = Vector3.new(rect[3], Config.FEEL.groundDepth + top, rect[4]),
 			Position = Vector3.new(rect[1], (top - Config.FEEL.groundDepth) / 2, rect[2]),
-			Color = surroundColor, Material = Enum.Material.SmoothPlastic }, board)
+			Color = surroundColor, Material = region and region.surroundMaterial or Config.ENVIRONMENT.outer.groundMaterial }, board)
 	end
 	-- Gleiche Zeichen bilden einfache Rechtecke statt eines sichtbaren Blocks pro Feld.
 	local used, groundCount = {}, 0
@@ -524,23 +523,47 @@ function BoardBuilder.build(regionId, features, stage)
 	end
 
 	board:SetAttribute("ShoreParts", shoreCount)
-	for i = 1, Config.FEEL.environmentCount do
-		local edge = i % 4
-		local fraction = ((i * 37) % 97) / 97
-		local distance = margin * (0.15 + (i % 3) * 0.15)
-		local x = edge < 2 and -distance or (w + distance)
-		local z = fraction * h
-		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -distance or h + distance end
-		local category = i % 3 == 0 and "rock" or (i % 5 == 0 and "bush" or "tree")
-		local limits = table.clone(Config.ENVIRONMENT.outer[category])
-		limits.palette = region and region.treePalette
-		local asset = place(category, Vector3.new(x, top, z), board, mapKey .. ":outer:" .. i, limits)
-		if asset then continue end
-		if i % 3 == 0 then
-			deco({ Name = "OuterRock", Size = Vector3.new(7, 6, 5), Position = Vector3.new(x, top + 3, z), Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, board)
-		else
-			deco({ Name = "OuterTrunk", Size = Vector3.new(2, 9, 2), Position = Vector3.new(x, top + 4.5, z), Color = Color3.fromRGB(98, 70, 43), Material = Enum.Material.Wood }, board)
-			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, top + 12, z), Color = treeColor, Material = Enum.Material.Grass }, board)
+	local outer = Config.ENVIRONMENT.outer
+	local function markOuter(asset, edge, layer)
+		asset:SetAttribute("OuterEdge", edge); asset:SetAttribute("OuterLayer", layer)
+	end
+	-- Versetzte, unregelm??ige Ringe: nahe Modelle, dahinter g?nstige Kronen.
+	for layer = 1, 2 do
+		local distance = (layer == 1 and outer.tree.crownWidth / 2 + outer.boardClearance or outer.farDistance) * T
+		local spacing = (layer == 1 and outer.nearSpacing or outer.farSpacing) * T
+		for edge = 1, 4 do
+			local horizontal = edge <= 2
+			local length = horizontal and w or h
+			local count = math.ceil((length + distance * 2) / spacing)
+			for i = 1, count do
+				local key = mapKey .. ":outer:" .. layer .. ":" .. edge .. ":" .. i
+				local random = Random.new(hash(key))
+				local jitter = outer.positionJitter * T
+				local along = -distance + (i - 0.5) * (length + distance * 2) / count + random:NextNumber(-jitter, jitter)
+				local away = distance + random:NextNumber(0, jitter)
+				local x = horizontal and along or (edge == 3 and -away or w + away)
+				local z = not horizontal and along or (edge == 1 and -away or h + away)
+				local base = Vector3.new(x, top, z)
+				local asset
+				if layer == 1 then
+					local limits = table.clone(outer.tree); limits.palette = region and region.treePalette
+					asset = place("tree", base, board, key, limits)
+				end
+				if not asset then
+					local diameter = (layer == 1 and outer.tree.crownWidth or outer.farWidth) * T
+					local height = (layer == 1 and outer.tree.height or outer.farHeight) * T
+					asset = deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball,
+						Size = Vector3.new(diameter, height, diameter), Position = base + Vector3.new(0, height / 2, 0),
+						Color = EnvironmentAssets.crownColor(key, region and region.treePalette), Material = Enum.Material.Grass }, board)
+				end
+				markOuter(asset, edge, layer)
+				if layer == 1 and random:NextNumber(0, 1) < outer.detailChance then
+					local category = i % 2 == 0 and "rock" or "bush"
+					local limits = table.clone(outer[category]); limits.palette = region and region.treePalette
+					local detail = place(category, base, board, key .. ":detail", limits)
+					if detail then markOuter(detail, edge, 0) end
+				end
+			end
 		end
 	end
 	waterfall(features and features.waterfall, board)

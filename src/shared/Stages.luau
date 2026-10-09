@@ -3,12 +3,12 @@ local Config = require(script.Parent.Config)
 local Stages = {}
 
 Stages.Regions = {
-	{ id = "greenland", name = "Grünland", color = Color3.fromRGB(110, 170, 90), area = { 0.02, 0.38, 0.42, 0.58 }, atmosphere = "battle", surroundMaterial = Enum.Material.Grass, surroundColor = Config.TERRAIN["."].color, treeColor = Config.TERRAIN.F.color },
+	{ id = "greenland", name = "Grünland", color = Color3.fromRGB(110, 170, 90), area = { 0.02, 0.38, 0.42, 0.58 }, atmosphere = "battle", surroundMaterial = Enum.Material.Grass, surroundColor = Color3.fromRGB(73, 86, 64), treeColor = Config.TERRAIN.F.color },
 	{ id = "swamp", name = "Nebelsumpf", color = Color3.fromRGB(85, 115, 85), area = { 0.40, 0.45, 0.30, 0.50 }, atmosphere = "swamp", surroundMaterial = Enum.Material.Grass, treeColor = Color3.fromRGB(55, 75, 45),
 		grassColor = Color3.fromRGB(62, 69, 48), waterColor = Color3.fromRGB(41, 47, 34),
-		surroundColor = Color3.fromRGB(76, 92, 64), terrainColors = { ["."] = Color3.fromRGB(86, 107, 73), F = Color3.fromRGB(57, 78, 53), W = Color3.fromRGB(63, 88, 98), D = Config.TERRAIN.D.color } },
-	{ id = "ice", name = "Frostgipfel", color = Color3.fromRGB(175, 205, 235), area = { 0.30, 0.02, 0.40, 0.38 }, comingSoon = true },
-	{ id = "volcano", name = "Glutberg", color = Color3.fromRGB(175, 75, 50), area = { 0.70, 0.30, 0.28, 0.65 }, comingSoon = true },
+		surroundColor = Color3.fromRGB(55, 67, 49), terrainColors = { ["."] = Color3.fromRGB(86, 107, 73), F = Color3.fromRGB(57, 78, 53), W = Color3.fromRGB(63, 88, 98), D = Config.TERRAIN.D.color } },
+	{ id = "ice", name = "Frostgipfel", color = Color3.fromRGB(175, 205, 235), area = { 0.30, 0.02, 0.40, 0.38 }, surroundColor = Color3.fromRGB(107, 119, 123), comingSoon = true },
+	{ id = "volcano", name = "Glutberg", color = Color3.fromRGB(175, 75, 50), area = { 0.70, 0.30, 0.28, 0.65 }, surroundColor = Color3.fromRGB(63, 58, 54), comingSoon = true },
 }
 
 for _, region in Stages.Regions do region.treePalette = Config.TREE_PALETTES[region.id] end

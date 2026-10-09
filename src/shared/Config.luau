@@ -68,7 +68,7 @@ Config.FEEL = {
 	flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
 	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
-	environmentMargin = 72, environmentCount = 16, -- klein halten: Rand besteht aus vier Parts; Ferne verdeckt der Dunst
+	environmentMargin = 72, -- Boden reicht weiterhin bis an den C1-Übersichtszoom.
 	atmosphere = {
 		hall = {
 			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },
@@ -149,7 +149,7 @@ Config.ENVIRONMENT = {
 		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 }, secondSmallChance = 0.35,
 		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
 	},
-	estimatedTriangleBudget = 300000, -- WIP: typische Karte; reale Meshes in Studio prüfen
+	estimatedTriangleBudget = 350000, -- WIP: C3 inklusive dichtem Rand; Ferne aus günstigen Parts
 	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3 }, -- WIP: Überstand in Uferfelder
 	meadow = { chance = 0.5, grassCount = { min = 1, max = 2 }, flowerChance = 0.18, stoneChance = 0.16,
 		fenceChance = 0.025, centerClearance = 2.3 }, -- WIP: mittlere Dichte, freie Figurenmitte
@@ -170,9 +170,14 @@ Config.ENVIRONMENT = {
 		deco_fence = { height = 0.12, width = 0.24, rotation = "quarter" },
 	},
 	outer = {
-		tree = { height = 2.25, width = 1.4 },
+		tree = { height = 1.8, crownWidth = 2.4 },
 		rock = { height = 0.75, width = 0.9 },
 		bush = { height = 0.45, width = 0.7 },
+		nearSpacing = 2.2, farSpacing = 2.8, boardClearance = 0.7,
+		maxSideGap = 0.5, -- WIP: höchstens ein halbes Feld zwischen Kronenprojektionen
+		positionJitter = 0.08, detailChance = 0.1,
+		farDistance = 3.4, farWidth = 3.4, farHeight = 1.1,
+		groundColor = Color3.fromRGB(73, 86, 64), groundMaterial = Enum.Material.Grass,
 	},
 }
 Config.TILE_THICKNESS = 1

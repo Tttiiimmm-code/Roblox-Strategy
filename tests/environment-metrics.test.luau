@@ -36,6 +36,7 @@ local function boardMetrics(label)
 		Grid.setMap(stage.map)
 		local start = os.clock()
 		local board = Board.build("greenland", stage.features, stage)
+		validateOuter(board)
 		seconds += os.clock() - start
 		local count, triangles = 0, 0
 		for _, p in board:GetDescendants() do
@@ -142,6 +143,9 @@ do
 	end
 	expect(signature() == signature(), "Brett-Deko mit Originalvarianten nicht deterministisch")
 end
-local _, meanTriangles = boardMetrics("mit Kategorie-Stubs")
+local _, meanTriangles = boardMetrics("mit Paket-Fixtures")
 expect(meanTriangles <= Config.ENVIRONMENT.estimatedTriangleBudget, "Typisches Dreieckbudget überschritten: " .. meanTriangles)
 freshAssets()
+Grid.setMap({ "......", "......", "......" })
+validateOuter(Board.build("greenland"))
+print("OK: Waldrand (100 Paket-Seeds, Part-Fallback, alle Seiten geschlossen, kein Brettueberhang).")
