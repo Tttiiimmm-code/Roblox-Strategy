@@ -115,7 +115,7 @@ local function place(category, base, parent, key, opts)
 end
 
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
-local function decorate(ch, x, y, parent, mapKey)
+local function decorate(ch, x, y, parent, mapKey, palette)
 	local center = Grid.toWorld(x, y)
 	local c = Config.TILE_SIZE / 2 - Config.ENVIRONMENT.edgeInset
 	local key = mapKey .. ":" .. Grid.key(x, y)
@@ -133,6 +133,7 @@ local function decorate(ch, x, y, parent, mapKey)
 				local off = Vector3.new(math.cos(angle) * c + random:NextNumber(-jitter, jitter), 0,
 					math.sin(angle) * c + random:NextNumber(-jitter, jitter))
 				place("tree", center + off, parent, key .. ":tree:" .. i, {
+					palette = palette,
 					height = random:NextNumber(settings.treeHeight.min, settings.treeHeight.max),
 					width = random:NextNumber(settings.treeWidth.min, settings.treeWidth.max),
 				})
@@ -140,7 +141,8 @@ local function decorate(ch, x, y, parent, mapKey)
 			if random:NextNumber(0, 1) < settings.understoryChance then
 				local kind = random:NextInteger(0, 1) == 0 and "bush" or "deco_root"
 				if #EnvironmentAssets.variants(kind) == 0 then kind = kind == "bush" and "deco_root" or "bush" end
-				place(kind, center + Vector3.new(c, 0, -c), parent, key .. ":understory", settings[kind])
+				local limits = table.clone(settings[kind]); limits.palette = palette
+				place(kind, center + Vector3.new(c, 0, -c), parent, key .. ":understory", limits)
 			end
 			return
 		end
@@ -156,7 +158,7 @@ local function decorate(ch, x, y, parent, mapKey)
 			end
 		end
 		if hash(key .. ":bush") % 10000 / 10000 < Config.ENVIRONMENT.bushChance then
-			place("bush", center + Vector3.new(c, 0, -c), parent, key .. ":bush")
+			place("bush", center + Vector3.new(c, 0, -c), parent, key .. ":bush", { palette = palette })
 		end
 	elseif ch == "S" then
 		local puddle = center + Vector3.new(((x * 17 + y * 11) % 5 - 2) * 0.5, 0, ((x * 13 + y * 19) % 5 - 2) * 0.5)
@@ -372,7 +374,7 @@ function BoardBuilder.build(regionId, features)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
 			groundFlecks(ch, x, y, ground, mapKey, colorFor(ch))
-			decorate(ch, x, y, board, mapKey)
+			decorate(ch, x, y, board, mapKey, region and region.treePalette)
 			local center = Grid.toWorld(x, y)
 			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
 			-- Gemeinsame Kanten nur einmal; an Höhenstufen bleibt jede Oberkante sichtbar.
@@ -395,7 +397,8 @@ function BoardBuilder.build(regionId, features)
 		local z = fraction * h
 		if edge % 2 == 1 then x, z = fraction * w, edge == 1 and -distance or h + distance end
 		local category = i % 3 == 0 and "rock" or (i % 5 == 0 and "bush" or "tree")
-		local limits = Config.ENVIRONMENT.outer[category]
+		local limits = table.clone(Config.ENVIRONMENT.outer[category])
+		limits.palette = region and region.treePalette
 		local asset = place(category, Vector3.new(x, top, z), board, mapKey .. ":outer:" .. i, limits)
 		if asset then continue end
 		if i % 3 == 0 then

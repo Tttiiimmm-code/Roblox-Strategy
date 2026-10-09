@@ -34,3 +34,28 @@ tree:Destroy()
 freshAssets()
 expect(#Assets.variants("tree") == 0, "Paketwechsel lässt alte Vorlagen hängen")
 print("OK: Creator-Store-Lader (Ordner, lose Modelle, Namen, Materialien, Klickbarkeit, Cachewechsel).")
+
+do
+	local model, crown = assetModel(workspace, "Kronentest")
+	crown.Material = Enum.Material.LeafyGrass
+	local appearance = Instance.new("SurfaceAppearance")
+	appearance.AlphaMode, appearance.Parent = Enum.AlphaMode.Transparency, crown
+	local trunk = Instance.new("MeshPart"); trunk.Material, trunk.Parent = Enum.Material.Wood, model
+	local bark = Instance.new("SurfaceAppearance"); bark.AlphaMode, bark.Parent = Enum.AlphaMode.Overlay, trunk
+	local oldTrunk = trunk.Color
+	local tint = Assets.crownColor("gleiche Platzierung", Config.TREE_PALETTES.swamp)
+	expect(tint == Assets.crownColor("gleiche Platzierung", Config.TREE_PALETTES.swamp), "Kronenfarbe nicht deterministisch")
+	Assets.tintCrowns(model, tint)
+	expect(appearance.Color == tint and trunk.Color == oldTrunk and bark.Color ~= tint, "Kronen-/Stammfärbung")
+	appearance:SetAttribute("RejectColor", true)
+	Assets.tintCrowns(model, tint)
+	expect(crown.Color == tint and trunk.Color == oldTrunk, "MeshPart-Farbersatz fehlt")
+	model:Destroy()
+	local autumn = 0
+	for i = 1, 1000 do
+		local color = Assets.crownColor(tostring(i), Config.TREE_PALETTES.greenland)
+		if color == Config.TREE_PALETTES.greenland[3].color or color == Config.TREE_PALETTES.greenland[4].color then autumn += 1 end
+	end
+	expect(autumn >= 60 and autumn <= 140, "Herbstmischung ohne ungefähr 10 Prozent")
+	print("OK: Kronenfarben (Region, Determinismus, Stamm unverändert, SurfaceAppearance/Farbersatz, Herbstquote).")
+end

@@ -56,7 +56,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - Der Umriss folgt Bewegung, Tod und Phasenwechsel: kein Umriss bleibt hängen.
   - Fertig, wenn: Ein Test oder Stub prüft Budget, Vorrang und Aufräumen.
 
-- [ ] 3. **Kronenfarbe pro Region** – `Stages`/`Config`, `EnvironmentAssets` oder `BoardBuilder`
+- [x] 3. **Kronenfarbe pro Region** – `Stages`/`Config`, `EnvironmentAssets` oder `BoardBuilder`
   - Pro Region eine gewichtete Farbmischung für Kronen (WIP), zum Beispiel Grasland: meist mittelgrün, etwas hellgrün und etwa 10 % Herbst orange/rot. Für Sumpf, Eis und Vulkan legst du Platzhalterwerte an.
   - Die Farbe gilt nur für Kronen-Teile: MeshParts mit `LeafyGrass` oder mit einer SurfaceAppearance mit `AlphaMode = Transparency`. Der Stamm bleibt unverändert. Setze sie über `SurfaceAppearance.Color` (mit pcall; schlägt das zur Laufzeit fehl, Hinweis in die Notizen und auf `MeshPart.Color` ausweichen). Gilt für Bäume, Büsche und den Umgebungsrand, deterministisch pro Platzierung.
   - Fertig, wenn: Die Farbe ist pro Baum deterministisch und Stämme bleiben unverändert (Test mit Stub-SurfaceAppearance).
@@ -106,6 +106,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 3: Gewichtete regionale Kronenpaletten zentral in Config und über Stages weitergegeben; Grünland 90 % Grün / 10 % Herbst, Platzhalter für Sumpf/Eis/Vulkan. Nur LeafyGrass-MeshParts bzw. transparente SurfaceAppearances gefärbt; Stämme unverändert. `SurfaceAppearance.Color` per pcall, bei fehlender Laufzeitunterstützung einmalige Warnung und `MeshPart.Color`. Stub erzwingt den Fehlerzweig und prüft Determinismus/Stämme/Herbstquote; check/test-run grün. Roblox dokumentiert Laufzeit-Tinting unter https://create.roblox.com/docs/art/modeling/surface-appearance. Das vom Nutzer exportierte Paket wird mit diesem Schritt aufgenommen; Rojo-Import bestätigt. Brett-Geometriebudget unverändert. Laufzeit-Farbersatz nur im Stub ausgelöst, Studio noch ungetestet.
 
 - Fortsetzung: Nutzer hat `grasland_pack.rbxm` bereitgestellt; offene Frage entfernt. Rojo liest einen Paketordner mit 20 Bäumen, 3 Büschen, 5 Wurzeln, 49 Felsen, 3 Blumen, Gras, Zaun und gewölbter Brücke ein.
 - Schritt 2: Waldumrisse zentral in `ForestOutlines`; maximal 20, Gesamtbudget 31 mit mindestens 8 reservierten Slots, zusätzliche fremde Highlights werden berücksichtigt. Spieler vor Gegnern, stabile Reihenfolge nach UnitId. Verdeckung: auf Wald oder direkt hinter Wald entlang der dominanten horizontalen Blickachse; dreht sich mit der Kamera. Bewegung anhand der aktuellen Root-Position, Tod anhand Hp/Todesanimation, Aufräumen bei Kampfende. Stub für Budget/Vorrang/Kameranachbar/Bewegung/Tod/Kampfende und test-run/check grün. Teile-/Dreieckzahl des Bretts unverändert, Umrisse sind keine Meshes.

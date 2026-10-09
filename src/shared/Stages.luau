@@ -11,6 +11,8 @@ Stages.Regions = {
 	{ id = "volcano", name = "Glutberg", color = Color3.fromRGB(175, 75, 50), area = { 0.70, 0.30, 0.28, 0.65 }, comingSoon = true },
 }
 
+for _, region in Stages.Regions do region.treePalette = Config.TREE_PALETTES[region.id] end
+
 Stages.List = {
 	{
 		id = "tutorial1", name = "Tutorial 1 – Leon", region = "greenland",

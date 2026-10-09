@@ -101,6 +101,16 @@ Config.FOREST_OUTLINES = { -- WIP: Reserven für Tutorial/Auswahl/Kampfeffekte
 	colors = { Player = Color3.fromRGB(70, 155, 255), Enemy = Color3.fromRGB(255, 80, 70) },
 }
 
+Config.TREE_PALETTES = { -- WIP: Gewichte pro Region
+	greenland = {
+		{ weight = 65, color = Color3.fromRGB(74, 128, 64) }, { weight = 25, color = Color3.fromRGB(112, 157, 74) },
+		{ weight = 7, color = Color3.fromRGB(192, 115, 49) }, { weight = 3, color = Color3.fromRGB(158, 70, 46) },
+	},
+	swamp = { { weight = 80, color = Color3.fromRGB(44, 78, 48) }, { weight = 20, color = Color3.fromRGB(69, 94, 50) } },
+	ice = { { weight = 85, color = Color3.fromRGB(226, 235, 239) }, { weight = 15, color = Color3.fromRGB(169, 200, 208) } },
+	volcano = { { weight = 85, color = Color3.fromRGB(54, 49, 43) }, { weight = 15, color = Color3.fromRGB(91, 61, 44) } },
+}
+
 -- Werte WIP: Bild-ID leer/nil = prozedurale Flecken; Seitenbilder sind unabhängig.
 Config.GROUND_TEXTURES = {
 	["."] = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },

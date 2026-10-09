@@ -124,6 +124,33 @@ local function randomFor(key)
 	return Random.new(seed)
 end
 
+function EnvironmentAssets.crownColor(key, palette)
+	palette = palette or Config.TREE_PALETTES.greenland
+	local total = 0
+	for _, entry in palette do total += entry.weight end
+	local choice = randomFor(tostring(key) .. ":crown"):NextNumber(0, total)
+	for _, entry in palette do
+		choice -= entry.weight
+		if choice <= 0 then return entry.color end
+	end
+	return palette[#palette].color
+end
+
+function EnvironmentAssets.tintCrowns(model, color)
+	for _, part in model:GetDescendants() do
+		if not part:IsA("MeshPart") then continue end
+		local appearance
+		for _, child in part:GetChildren() do if child:IsA("SurfaceAppearance") then appearance = child; break end end
+		if part.Material == Enum.Material.LeafyGrass or (appearance and appearance.AlphaMode == Enum.AlphaMode.Transparency) then
+			local ok = appearance and pcall(function() appearance.Color = color end)
+			if not ok then
+				if appearance then warnOnce("SurfaceAppearance.Color", "Kronenfärbung nicht verfügbar; MeshPart.Color als Ersatz") end
+				part.Color = color
+			end
+		end
+	end
+end
+
 function EnvironmentAssets.place(category, cframe, opts)
 	opts = opts or {}
 	local variants = EnvironmentAssets.variants(category)
@@ -131,6 +158,9 @@ function EnvironmentAssets.place(category, cframe, opts)
 	if #variants == 0 or not definition then return nil end
 	local random = randomFor(tostring(opts.key or cframe.Position) .. ":" .. category)
 	local model = variants[random:NextInteger(1, #variants)]:Clone()
+	if category == "tree" or category == "bush" then
+		EnvironmentAssets.tintCrowns(model, EnvironmentAssets.crownColor(opts.key or tostring(cframe.Position), opts.palette))
+	end
 	local _, size = model:GetBoundingBox()
 	local height = (opts.height or definition.height) * Config.TILE_SIZE
 	local width = (opts.width or definition.width) * Config.TILE_SIZE

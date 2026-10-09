@@ -26,7 +26,7 @@ local Instance={}
 local function signal()return {Connect=function()return {Disconnect=function()end} end}end
 local mt={__index=function(o,k) if k=='Position' then return o._cf.Position elseif k=='CFrame' then return o._cf elseif k=='Parent' then return o._parent end return methods[k] or o._props[k] end,__newindex=function(o,k,v)
  if k=='Parent' then if o._parent then for i,c in o._parent._children do if c==o then table.remove(o._parent._children,i);break end end end rawset(o,'_parent',v);if v then table.insert(v._children,o)end
- elseif k=='Position' then o._cf=CFrame.new(v) elseif k=='CFrame' then o._cf=v else o._props[k]=v end end}
+ elseif k=='Position' then o._cf=CFrame.new(v) elseif k=='CFrame' then o._cf=v else if k=='Color' and o:GetAttribute('RejectColor') then error('Color nicht verfügbar') end;o._props[k]=v end end}
 function Instance.new(class)return setmetatable({_props={ClassName=class,Name=class,Size=Vector3.new(1,1,1),Archivable=true,Color=Color3.fromRGB(163,162,165),Transparency=0,Material=Enum.Material.Plastic,DescendantAdded=signal(),DescendantRemoving=signal()},_children={},_cf=CFrame.new(),_pivot=CFrame.new(),_attrs={}},mt)end
 function methods:IsA(c)return self.ClassName==c or (c=='BasePart' and (self.ClassName=='Part' or self.ClassName=='MeshPart')) or (c=='BaseScript' and (self.ClassName=='Script' or self.ClassName=='LocalScript')) end
 function methods:GetChildren()return table.clone(self._children)end
