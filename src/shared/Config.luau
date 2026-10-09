@@ -162,6 +162,7 @@ Config.GROUND_FLECKS = {
 
 -- Maximalmaße in Feldern; auf dem Brett bleibt die Figurenmitte frei.
 Config.ENVIRONMENT = {
+	rootFoot = { widthScale = 1.1, sink = 0.12, centerTolerance = 0.05 }, -- WIP: relativ zur Wood-Stammbreite.
 	sizeVariation = 0.1, castShadows = false, shadowHeight = 0.6, -- WIP: alte Höhenschwelle nur bei aktivierten Schatten
 	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
 	treesPerForestTile = { min = 1, max = 2 }, -- WIP: lichter Wald
@@ -293,7 +294,7 @@ Config.TEAM_COLORS = {
 }
 
 -- Thronsaal: liegt weit hinter dem Schlachtfeld, damit die Taktik-Kamera ihn nicht sieht
--- Gr??tes aktuelles Brett (Lauf: 16?12); Sichtreichweite plus Hub-Halbtiefe und Sicherheitsrand.
+-- Größtes aktuelles Brett (Lauf: 16×12); Sichtreichweite plus Hub-Halbtiefe und Sicherheitsrand.
 Config.HUB_BOARD_TILES = Vector3.new(16, 0, 12)
 local hubBoardSize = Vector3.new(Config.HUB_BOARD_TILES.X * Config.TILE_SIZE, 0, Config.HUB_BOARD_TILES.Z * Config.TILE_SIZE)
 Config.HUB_ORIGIN = Vector3.new(0, 0, math.ceil((hubBoardSize.Z + Config.landscapeMargin(hubBoardSize)

@@ -202,10 +202,8 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 				if tree then tree:SetAttribute("ForestTile", Grid.key(x, y)) end
 			end
 			if random:NextNumber(0, 1) < settings.understoryChance then
-				local kind = random:NextInteger(0, 1) == 0 and "bush" or "deco_root"
-				if #EnvironmentAssets.variants(kind) == 0 then kind = kind == "bush" and "deco_root" or "bush" end
-				local limits = table.clone(settings[kind]); limits.palette = palette
-				place(kind, center + Vector3.new(c, 0, -c), parent, key .. ":understory", limits)
+				local limits = table.clone(settings.bush); limits.palette = palette
+				place("bush", center + Vector3.new(c, 0, -c), parent, key .. ":understory", limits)
 			end
 			return
 		end

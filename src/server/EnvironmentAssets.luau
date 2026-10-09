@@ -151,6 +151,24 @@ function EnvironmentAssets.tintCrowns(model, color)
 	end
 end
 
+function EnvironmentAssets.attachRoot(tree, key)
+	local trunk
+	for _, part in tree:GetDescendants() do
+		if part:IsA("MeshPart") and part.Material == Enum.Material.Wood
+			and (not trunk or part.Size.Y > trunk.Size.Y) then trunk = part end
+	end
+	if not trunk then return nil end
+	local settings = Config.ENVIRONMENT.rootFoot
+	local foot = trunk.CFrame:PointToWorldSpace(Vector3.new(0, -trunk.Size.Y / 2, 0))
+	local width = math.max(trunk.Size.X, trunk.Size.Z) * settings.widthScale
+	local root = EnvironmentAssets.place("deco_root", CFrame.new(foot - Vector3.new(0, settings.sink, 0)), {
+		parent = tree, key = tostring(key) .. ":foot", width = width / Config.TILE_SIZE,
+		height = width / Config.TILE_SIZE, sizeVariation = 0,
+	})
+	if root then root:SetAttribute("RootFoot", true) end
+	return root
+end
+
 function EnvironmentAssets.place(category, cframe, opts)
 	opts = opts or {}
 	local variants = EnvironmentAssets.variants(category)
@@ -171,7 +189,7 @@ function EnvironmentAssets.place(category, cframe, opts)
 		angle = mode == "quarter" and random:NextInteger(0, 3) * math.pi / 2
 			or mode == "free" and random:NextNumber(0, math.pi * 2) or 0
 	end
-	local spread = Config.ENVIRONMENT.sizeVariation
+	local spread = opts.sizeVariation or Config.ENVIRONMENT.sizeVariation
 	-- Auch die größte Zufallsvariante bleibt innerhalb der konfigurierten Grenzen.
 	local scale = math.min(height / size.Y, width / math.max(math.abs(math.cos(angle)) * size.X + math.abs(math.sin(angle)) * size.Z,
 			math.abs(math.sin(angle)) * size.X + math.abs(math.cos(angle)) * size.Z))
@@ -202,6 +220,7 @@ function EnvironmentAssets.place(category, cframe, opts)
 		end
 	end
 	model.Parent = opts.parent
+	if category == "tree" then EnvironmentAssets.attachRoot(model, opts.key or tostring(cframe.Position)) end
 	return model
 end
 

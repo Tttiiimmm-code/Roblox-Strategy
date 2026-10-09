@@ -149,7 +149,7 @@ end
 forestCoverage(true)
 local _, minCrown, maxCrown, minTree, maxTree = forestCoverage(false)
 -- Abdeckung nur informativ: AABBs überschätzen runde Kronen; Sichtprüfung in Studio.
-expect(minCrown >= 1.1 and maxCrown <= 1.201 and minTree >= 1.199 and maxTree <= 1.501, "Waldmasse ausserhalb WIP-Ziel")
+expect(minCrown >= 1.1 and maxCrown <= 1.201 and minTree >= 1.199 and maxTree <= 1.501 + Config.ENVIRONMENT.rootFoot.sink / Config.TILE_SIZE, "Waldmasse ausserhalb WIP-Ziel")
 
 do
 	local stage = Gen.generate(17, "greenland", 1, "axe", RC.MAX_TEAM)

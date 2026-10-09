@@ -40,7 +40,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
   - **Standkappen** auf `M` farblich an den Fels anpassen, damit sie nicht als helle Quadrate auffallen.
   - Fertig, wenn: Stub prüft Terrain-Höhe mit Glättungsreserve unter der Standhöhe, keine Terrainbelegung über Overlayhöhe in Nachbarfeldern, alle Felsdetails auf der Oberfläche (kein Abstand > WIP-Toleranz nach unten), geringere Anzahl. Teile/Dreiecke vorher/nachher.
 
-- [ ] 4. **Wurzelfüße an Bäumen** – `BoardBuilder` (Waldfelder), `LandscapeBuilder.details`, `EnvironmentAssets`, `Config`
+- [x] 4. **Wurzelfüße an Bäumen** – `BoardBuilder` (Waldfelder), `LandscapeBuilder.details`, `EnvironmentAssets`, `Config`
   - Jeder Paketbaum (Brett und Landschaft) bekommt ein `deco_root`-Modell am Stammfuß: zentriert auf den Stamm (Wood-MeshPart des Baums), skaliert auf die Stammdicke am unteren Ende, leicht in den Boden eingesunken, zufällig gedreht. So endet der Stamm nicht mehr in einer dünnen Spitze.
   - Die bisherigen losen `deco_root`-Platzierungen als Unterholz entfallen oder werden reduziert, um das Dreieckbudget zu halten.
   - Ohne Paket: keine Änderung am Part-Fallback.
@@ -93,3 +93,9 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
 - Zurückhaltende WIP-Details: ein kleiner Fels auf M, 0–1 auf C, keine kleinen Begleiter. Gedrehte Bounding-Box innerhalb des Felds und außerhalb der M-Figurenmitte. 9 Terrain-Raycast-Auflagen je Detail; niedrigste Auflage minus 0,2 Studs Einsinken. Bei fehlender Auflage Detail weglassen. Felsmaterial/Farbe aus Palette; Paket-Oberflächentextur entfernt, damit der Fels zum Terrain passt.
 - Stub prüft Reserve, Standhöhen, fehlende Belegung in Nachbarfeldern, eingefasste Detailboxen, Auflage, Farbe und geringere Anzahl. Reales Smooth-Terrain-Meshing wird nicht simuliert; Studio-Prüfung bleibt offen.
 - `check.ps1` und `test-run.ps1` OK. 100 Paket-Seeds Schritt 2 → 3: Teile Mittel 1303,4 → 1270,2 (Max 1401 → 1394), Dreiecke 270569 → 243945 (Max 364224 → 349824). Terrain-Dreiecke nicht enthalten.
+
+### Schritt 4
+- Jeder echte Paketbaum bekommt automatisch im gemeinsamen Asset-Platzierer einen `deco_root`-Fuß als Kindmodell. Stammwahl über höchstes Wood-MeshPart, Fußzentrum aus dessen unterer lokaler Mitte, Breite exakt 1,1× Stammbreite (Bounding-Box als verfügbare Näherung), 0,12 Studs Einsinken, deterministische freie Drehung. Brett und Landschaft nutzen dieselbe Funktion; Part-Fallback unverändert.
+- Lose Unterholz-Wurzeln entfernt, dort nur noch bestehende Büsche. Wurzeltextur aus Paket beibehalten. Terrain-Bäume behalten ihr bisheriges zusätzliches Einsinken von 0,8 Studs. Das tatsächliche schmale Mesh-Ende lässt sich aus Roblox-Bounds nicht exakt messen; Breitenfaktor ist zentral WIP und in Studio zu beurteilen.
+- `check.ps1` und `test-run.ps1` OK; Original-Fixtures prüfen genau einen Fuß pro Brett-/Landschaftsbaum, Position, relative Skalierung, Einsinken, Determinismus und Klickfreiheit. Neuer Test nach seiner Fixture-Hilfsfunktion eingeordnet.
+- 100 Paket-Seeds Schritt 3 → 4: Teile Mittel 1270,2 → 1381,0 (Max 1394 → 1576), geschätzte Dreiecke 243945 → 302125 (Max 349824 → 460324). Typisches Budget 350000 eingehalten, Maximalwert gestiegen. Insgesamt gegen C5 weniger Parts, aber mehr Modelldreiecke durch die Pflichtwurzel pro Baum. Keine Terrain-Dreiecke enthalten; Studio/Handy offen.
