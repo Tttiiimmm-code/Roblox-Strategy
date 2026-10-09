@@ -44,7 +44,7 @@ local GetProfile = remote("RemoteFunction", "GetProfile")
 local unitsFolder = BoardBuilder.ensureUnitsFolder()
 UnitVisuals.init(unitsFolder)
 Grid.setMap(Stages.List[1].map) -- Kulisse vor dem ersten Kampf
-BoardBuilder.build()
+BoardBuilder.build(Stages.List[1].region, nil, Stages.List[1])
 HubBuilder.build()
 task.spawn(UnitVisuals.buildHeroTemplates)
 
@@ -179,7 +179,7 @@ local function setupBattle(stage, opts)
 	clearUnits()
 	Grid.setMap(stage.map)
 	local boardStart = os.clock()
-	BoardBuilder.build(stage.region, stage.features)
+	BoardBuilder.build(stage.region, stage.features, stage)
 	local board = workspace:FindFirstChild("Board")
 	if board then board:SetAttribute("RunSeed", opts.run and opts.run.seed) end
 	local boardDuration = os.clock() - boardStart

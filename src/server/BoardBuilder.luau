@@ -174,7 +174,7 @@ local function buildBridges(parent, mapKey)
 end
 
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
-local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles)
+local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied)
 	local center = Grid.toWorld(x, y)
 	local c = Config.TILE_SIZE / 2 - Config.ENVIRONMENT.edgeInset
 	local key = mapKey .. ":" .. Grid.key(x, y)
@@ -296,17 +296,28 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles)
 			deco({ Size = Vector3.new(1.2, 3, 1.2), Position = center + off + Vector3.new(0, 1.5, 0),
 				Color = Color3.fromRGB(150, 140, 130), Material = Enum.Material.Brick }, parent)
 		end
-	elseif ch == "." and hash(key .. ":deco") % 10000 / 10000 < Config.ENVIRONMENT.decoChance then
-		local available = {}
-		for _, kind in Config.ENVIRONMENT.decoCategories do
-			if #EnvironmentAssets.variants(kind) > 0 then table.insert(available, kind) end
+	elseif ch == "." then
+		if occupied[Grid.key(x, y)] then return end
+		local settings = Config.ENVIRONMENT.meadow
+		local random = Random.new(hash(key .. ":meadow"))
+		if random:NextNumber(0, 1) >= settings.chance then return end
+		local corner = random:NextInteger(0, 3)
+		local function meadow(kind, index)
+			local edge = (corner + index) % 4
+			local base = center + Vector3.new(edge < 2 and -c or c, 0, edge % 2 == 0 and -c or c)
+			local asset = place(kind, base, parent, key .. ":meadow:" .. kind .. ":" .. index)
+			if not asset and kind == "deco_grass" then
+				local size = Config.ENVIRONMENT.categories.deco_grass
+				asset = deco({ Name = "MeadowGrass", Size = Vector3.new(size.width, size.height, size.width) * Config.TILE_SIZE,
+					Position = base + Vector3.new(0, size.height * Config.TILE_SIZE / 2, 0),
+					Color = Config.FEEL.grassColor, Material = Enum.Material.Grass }, parent, "WedgePart")
+			end
+			if asset then asset:SetAttribute("MeadowTile", Grid.key(x, y)); asset:SetAttribute("MeadowKind", kind) end
 		end
-		if #available > 0 then
-			local choice = hash(key .. ":kind") % #available + 1
-			local sx = hash(key .. ":x") % 2 == 0 and -1 or 1
-			local sz = hash(key .. ":z") % 2 == 0 and -1 or 1
-			place(available[choice], center + Vector3.new(sx * c, 0, sz * c), parent, key)
-		end
+		for i = 1, random:NextInteger(settings.grassCount.min, settings.grassCount.max) do meadow("deco_grass", i) end
+		if random:NextNumber(0, 1) < settings.flowerChance then meadow("deco_flower", 2) end
+		if random:NextNumber(0, 1) < settings.stoneChance then meadow("deco_stone", 3) end
+		if random:NextNumber(0, 1) < settings.fenceChance then meadow("deco_fence", 0) end
 	end
 end
 
@@ -401,7 +412,7 @@ function BoardBuilder.ensureUnitsFolder()
 end
 
 -- Baut die aktuelle Karte aus Grid.getMap() (vorher Grid.setMap aufrufen)
-function BoardBuilder.build(regionId, features)
+function BoardBuilder.build(regionId, features, stage)
 	Grid.setHeights({})
 	local region = Stages.getRegion(regionId)
 	local treeColor = region and region.treeColor or Config.TERRAIN.F.color
@@ -427,6 +438,10 @@ function BoardBuilder.build(regionId, features)
 	board.Name = "Board"
 	board.Parent = workspace
 	local bridgeTiles = buildBridges(board, mapKey)
+	local occupied = {}
+	for _, cells in { stage and stage.slots or {}, stage and stage.enemies or {} } do
+		for _, cell in cells do occupied[Grid.key(cell.x, cell.y)] = true end
+	end
 
 	local ground = Instance.new("Folder")
 	ground.Name = "Ground"
@@ -515,8 +530,8 @@ function BoardBuilder.build(regionId, features)
 			tile:SetAttribute("X", x)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
-			if not bridgeTiles[Grid.key(x, y)] then groundFlecks(ch, x, y, ground, mapKey, colorFor(ch)) end
-			decorate(ch, x, y, board, mapKey, region and region.treePalette, bridgeTiles)
+			if not bridgeTiles[Grid.key(x, y)] and not occupied[Grid.key(x, y)] then groundFlecks(ch, x, y, ground, mapKey, colorFor(ch)) end
+			decorate(ch, x, y, board, mapKey, region and region.treePalette, bridgeTiles, occupied)
 			local center = Grid.toWorld(x, y)
 			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
 			-- Gemeinsame Kanten nur einmal; an Höhenstufen bleibt jede Oberkante sichtbar.

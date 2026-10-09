@@ -77,7 +77,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - Ufer sollen rund statt rechteckig wirken: an Landfeldern neben Wasser ein schmaler Sand- oder Uferstreifen, an konvexen Ecken abgerundete Übergänge (zum Beispiel Zylinder-Teile), an konkaven Ecken passende Füllstücke. Raster, Klickfelder und Feldfarben bleiben eindeutig erkennbar, Brückenenden bleiben frei.
   - Teilebudget als WIP-Wert; Teilezahl vorher/nachher in den Notizen.
 
-- [ ] 7. **Wiesen-Deko mittel** – `BoardBuilder.decorate` (Fall `.`), `Config.ENVIRONMENT`
+- [x] 7. **Wiesen-Deko mittel** – `BoardBuilder.decorate` (Fall `.`), `Config.ENVIRONMENT`
   - Etwa jedes zweite Wiesenfeld 1–2 Grasbüschel (`deco_grass`), dazu ab und zu Blumen (`deco_flower`, drei Farben) oder Steinchen, selten ein Zaunstück (`deco_fence`). Positionen am Feldrand, die Feldmitte bleibt frei (Zug-Ring/Figur sichtbar). Alle Quoten als WIP-Werte.
   - Start- und Gegnerfelder bleiben gut lesbar, keine Deko auf Feldern mit Figuren beim Start.
 
@@ -106,6 +106,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 7: Etwa 50 % der unbesetzten Wiesenfelder bekommen 1–2 Grasbüschel, zusätzlich gelegentlich Blumen/Steinchen und selten Zaun. Alle Quoten in Config; deterministische Eckpositionen mit freier Feldmitte. Server gibt die tatsächlichen Slots/Gegner des Levels an BoardBuilder weiter; dort keine Wiesen-Deko oder Bodenflecken. Ohne Modelle Part-Gras als Ersatz. Stub prüft Dichte/Kategorien/Feldmitte/Starts/Determinismus/Fallback, check/test-run grün. Messung: Mittel 1.839,0 / max. 2.116 Teile; geschätzt Mittel 353.083 / max. 584.448 Dreiecke; Stub-Aufbau 95,14 ms. WIP-Mengen werden in Schritt 9 innerhalb der gewünschten Bereiche auf das typische Dreieckbudget abgestimmt.
 
 - Schritt 6: Schmale Sandstreifen mit verkürzten Tangenten, runde Sand-/Landkappen an konvexen Ecken, Füllscheiben an konkaven Ecken. Konvexe Boden-Kappen werden optisch durch eine wasserfarbige Maske gerundet; Geländehöhen/Regeln/Klickraster unverändert. WIP-Budget maximal 12 zusätzliche Parts je Feld, abschaltbar; Brückenenden und gemessene Ufer bleiben frei. Stub prüft Formen, Klickbarkeit, Budget und Abschaltung; check/test-run grün. Vorher Mittel 1.747,3 / max. 2.062 Teile, danach Mittel 1.797,5 / max. 2.129; Dreiecke geschätzt Mittel 330.337 / max. 568.430; Stub-Aufbau 108,53 ms. Darstellung der optischen Rundung in Studio noch ungetestet.
 

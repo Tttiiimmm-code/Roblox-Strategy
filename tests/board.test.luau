@@ -6,7 +6,7 @@ local function expect(value, message) checks += 1; assert(value, message) end
 local function checkBoard(stage)
 	Grid.setMap(stage.map)
 	local start = os.clock()
-	local board = Board.build("greenland", stage.features)
+	local board = Board.build("greenland", stage.features, stage)
 	local duration = os.clock() - start
 	local count, tiles, planes, foam, source = 0, 0, 0, 0, 0
 	for _, p in ipairs(board:GetDescendants()) do

@@ -147,6 +147,8 @@ Config.ENVIRONMENT = {
 		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
 	},
 	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3 }, -- WIP: Überstand in Uferfelder
+	meadow = { chance = 0.5, grassCount = { min = 1, max = 2 }, flowerChance = 0.18, stoneChance = 0.16,
+		fenceChance = 0.025, centerClearance = 2.3 }, -- WIP: mittlere Dichte, freie Figurenmitte
 	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
 	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
 	categories = {
