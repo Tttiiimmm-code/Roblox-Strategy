@@ -26,7 +26,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
   - Aus Kamerasicht müssen Ufer wie ein weicher Übergang Land → Sand → Wasser wirken. Kreise oder Ringe auf der Wasserfläche dürfen nicht sichtbar sein. Gelingt eine runde Form nicht ohne Ringwirkung, sind gerade Sandstreifen mit leicht abgeschrägten Ecken vorzuziehen; Entscheidung und Begründung in die Notizen.
   - Fertig, wenn: Ein Stub prüft, dass keine Uferteile über der Wasserfläche liegen, die nicht an Land angrenzen, und dass keine Ringstruktur entsteht (zum Beispiel kein Teil mit Loch oder Masken-Kombination). Teilezahl vorher/nachher.
 
-- [ ] 2. **Gold-Symbol und Hover-Überlappung** – `src/client/RunUI.luau` (und alle weiteren Treffer von `rg "🪙" src`), `UIKit`
+- [x] 2. **Gold-Symbol und Hover-Überlappung** – `src/client/RunUI.luau` (und alle weiteren Treffer von `rg "🪙" src`), `UIKit`
   - 🪙 überall durch **💰** ersetzen. Zentral als Konstante, zum Beispiel `Config.ICONS.gold`; 💎 für Edelsteine ebenfalls zentral.
   - Große Auswahlkarten der Level-Wahl überlappen beim Hover nicht mehr, zum Beispiel ohne Hover-Vergrößerung bei großen Karten oder mit genug Abstand. Kleine Buttons behalten ihr Hover-Feedback.
   - Fertig, wenn: `rg "🪙" src` liefert keine Treffer; ein UI-Stub prüft, dass sich die Auswahlkarten auch bei Hover-Maßstab nicht überschneiden.
@@ -70,4 +70,6 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
 
 ## Notizen (Codex)
 
-- Schritt 1: Gerade, deckende Sandstreifen auf Land statt runder Scheiben mit Land-/Wassermasken; verhindert die beobachtete Ringwirkung, spart Teile und laesst Brueckenenden frei. Farbe WIP in Config (123/119/89), Studio-Beurteilung offen. Ufer-Fixture: vorher 14, nachher 4 Teile. Seeds 1-100 mit Paket-Fixtures: vorher Teile Mittel/Max 1762,2/1971, Dreiecke 296921/453272, Stub 89,62 ms; nachher 1732,4/1925, 293732/453272, 85,49 ms. check.ps1 und test-run.ps1 OK.
+- Schritt 1: Gerade, deckende Sandstreifen auf Land statt runder Scheiben mit Land-/Wassermasken; verhindert die beobachtete Ringwirkung, spart Teile und laesst Brueckenenden frei. Farbe WIP in Config (123/119/89), Studio-Beurteilung offen. Ufer-Fixture: vorher 11, nachher 4 Teile. Seeds 1-100 mit Paket-Fixtures: vorher Teile Mittel/Max 1762,2/1971, Dreiecke 296921/453272, Stub 89,62 ms; nachher 1732,4/1925, 293732/453272, 85,49 ms. check.ps1 und test-run.ps1 OK.
+
+- Schritt 2: Config.ICONS.gold/gems zentral in RunConfig und RunUI; Goldsymbol ersetzt. Auswahlkarten HoverScale=1 mit Quad beim Loslassen (kein Ueberschwingen), kleine Buttons unveraendert. UI-Stub 116 Pruefungen, Hover-/Loslassereignisse fuer 480/900/1600 Breite; check und run OK, keine alten Goldsymbole in src. Paketmessung unveraendert: Teile 1732,4/1925, Dreiecke 293732/453272, Stub vorher 85,49 / nachher 92,21 ms (Messschwankung).

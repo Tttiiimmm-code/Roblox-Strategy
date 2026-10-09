@@ -33,15 +33,15 @@ local function object(text, class, parent)
 end
 render()
 check(object("Extra-Lager vor Garrick", "TextLabel") ~= nil, "Extra-Lager fehlt")
-local gold, gems = object("🪙 125 Gold", "TextButton"), object("💎 15 Edelsteine", "TextButton")
+local gold, gems = object("💰 125 Gold", "TextButton"), object("💎 15 Edelsteine", "TextButton")
 check(gold.Size.Y.Offset >= 64 and gems.Size.Y.Offset >= 64, "Touchflächen zu klein")
 gold.Activated:Fire(); gems.Activated:Fire()
 check(messages[1].id == "bruno" and messages[1].currency == "gold" and messages[2].currency == "gems", "Währungswahl falsch")
 profile.gold, profile.gems = 0, 0
 render()
-check(object("🪙 125 Gold", "TextButton"):GetAttribute("Style") == "disabled", "Fehlendes Guthaben nicht sichtbar")
+check(object("💰 125 Gold", "TextButton"):GetAttribute("Style") == "disabled", "Fehlendes Guthaben nicht sichtbar")
 local before = #messages
-object("🪙 125 Gold", "TextButton").Activated:Fire()
+object("💰 125 Gold", "TextButton").Activated:Fire()
 check(#messages == before, "Unbezahlbaren Kauf gesendet")
 object("Kaserne · Tausch", "TextButton").Activated:Fire()
 check(collection.Parent ~= home and collection:FindFirstAncestorOfClass("Frame") ~= home, "Vorhandene Kaserne nicht wiederverwendet")
@@ -92,6 +92,31 @@ render()
 local campCard = object("Lager", "TextLabel").Parent
 check(object("⛺", "TextLabel").Parent == campCard, "Lagersymbol fehlt")
 check(object("Heilung & Teamwechsel\nKeine Kampfbelohnung", "TextLabel").Parent == campCard, "Lagerinfo fehlt")
+-- Echte Hover-/Loslass-Ereignisse; Geometrie bei schmalen und breiten Auswahlbereichen.
+services.UserInputService.MouseEnabled = true
+local optionCards = {}
+for _, child in campCard.Parent:GetChildren() do
+	if child.ClassName == "TextButton" then table.insert(optionCards, child) end
+end
+table.sort(optionCards, function(a, b) return a.Position.X.Scale < b.Position.X.Scale end)
+for _, width in { 480, 900, 1600 } do
+	local right = -math.huge
+	for _, card in optionCards do
+		card.MouseEnter:Fire()
+		card.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+		card.InputEnded:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+		local scale = card:FindFirstChild("ButtonScale").Scale
+		local size = card.Size.X.Scale * width + card.Size.X.Offset
+		local left = card.Position.X.Scale * width + card.Position.X.Offset - size * (scale - 1) / 2
+		check(left >= right and scale == 1, "Auswahlkarten ueberlappen beim Hover/Loslassen")
+		right = left + size * scale
+		card.MouseLeave:Fire()
+	end
+end
+local small = modules.UIKit.button("Hover-Test", root)
+small.MouseEnter:Fire()
+check(small:FindFirstChild("ButtonScale").Scale == modules.Config.FEEL.buttonHoverScale, "Kleine Buttons ohne Hoverfeedback")
+small:Destroy()
 campCard.Activated:Fire()
 check(messages[#messages].type == "choose" and messages[#messages].index == campOption, "Wahllager falsch angebunden")
 -- Die ausgeliehene Kaserne bleibt im Hub verwendbar und enthält keine Lagerstatus-Texte.

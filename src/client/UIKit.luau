@@ -173,6 +173,7 @@ function UIKit.button(text, parent, style, order, wrap)
 	local scale = make("UIScale", { Name = "ButtonScale" }, b)
 	local scaleTween
 	local hovered = false
+	local function hoverScale() return b:GetAttribute("HoverScale") or Config.FEEL.buttonHoverScale end
 	local function animateScale(value, duration, easing)
 		if scaleTween then scaleTween:Cancel() end
 		scaleTween = TweenService:Create(scale, TweenInfo.new(duration, easing or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = value })
@@ -185,7 +186,8 @@ function UIKit.button(text, parent, style, order, wrap)
 	end)
 	b.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			animateScale(hovered and Config.FEEL.buttonHoverScale or 1, Config.FEEL.buttonReleaseTime, Enum.EasingStyle.Back)
+			animateScale(hovered and hoverScale() or 1, Config.FEEL.buttonReleaseTime,
+				hoverScale() <= 1 and Enum.EasingStyle.Quad or Enum.EasingStyle.Back)
 		end
 	end)
 	b.Activated:Connect(function()
@@ -194,7 +196,7 @@ function UIKit.button(text, parent, style, order, wrap)
 	b.MouseEnter:Connect(function()
 		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" then
 			hovered = true
-			animateScale(Config.FEEL.buttonHoverScale, Config.FEEL.buttonReleaseTime)
+			animateScale(hoverScale(), Config.FEEL.buttonReleaseTime)
 		end
 		local now = os.clock()
 		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" and now - lastHoverSound >= Config.FEEL.hoverSoundCooldown then

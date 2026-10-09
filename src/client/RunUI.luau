@@ -1,6 +1,7 @@
 -- Teamwahl, Levelwahl und Ergebnisse der Grasland-Läufe.
 local Players = game:GetService("Players")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Config = require(Shared.Config)
 local UnitData = require(Shared.UnitData)
 local RunConfig = require(Shared.RunConfig)
 local Tutorial = require(Shared.Tutorial)
@@ -155,6 +156,7 @@ local function buildChoice(run, profile)
 		for i, option in ipairs(run.options) do
 			local symbol, title, detail = optionText(option)
 			local b = button("", options, "default")
+			b:SetAttribute("HoverScale", 1) -- Große Karten behalten Farb-/Randfeedback ohne Überlappung.
 			b.Position = UDim2.new((i - 1) / #run.options, 6, 0, 0)
 			b.Size = UDim2.new(1 / #run.options, -12, 1, 0)
 			label({ Position = UDim2.fromScale(0, 0.04), Size = UDim2.fromScale(1, 0.22), Text = symbol, TextSize = 48 }, b)
@@ -196,7 +198,7 @@ local function buildCamp(run, profile)
 		end, false)
 		return
 	end
-	heading(run.campExtra and "Extra-Lager vor Garrick" or "Lager", ("Lebende Teammitglieder vollständig geheilt · %d Teamplätze · 🪙 %d Gold · 💎 %d Edelsteine"):format(run.maxTeam, profile.gold or 0, profile.gems or 0))
+	heading(run.campExtra and "Extra-Lager vor Garrick" or "Lager", ("Lebende Teammitglieder vollständig geheilt · %d Teamplätze · %s %d Gold · %s %d Edelsteine"):format(run.maxTeam, Config.ICONS.gold, profile.gold or 0, Config.ICONS.gems, profile.gems or 0))
 	local scroll = UIKit.textList({ Position = UDim2.fromOffset(24, 124), Size = UDim2.new(1, -48, 1, -230) }, content)
 	for slot = 1, run.maxTeam do
 		local id = run.order[slot]
@@ -210,7 +212,7 @@ local function buildCamp(run, profile)
 			for i, currency in ipairs({ "gold", "gems" }) do
 				local price = RunConfig.revivePrice(profile.heroes[id].level or 1, currency)
 				local affordable = (profile[currency] or 0) >= price
-				local revive = button((currency == "gold" and "🪙 " or "💎 ") .. price .. (currency == "gold" and " Gold" or " Edelsteine"), row, affordable and "primary" or "disabled")
+				local revive = button(Config.ICONS[currency] .. " " .. price .. (currency == "gold" and " Gold" or " Edelsteine"), row, affordable and "primary" or "disabled")
 				revive.Position, revive.Size, revive.TextSize = UDim2.new(0.3 + (i - 1) * 0.22, 4, 0, 18), UDim2.new(0.22, -8, 0, 64), 22
 				revive.Activated:Connect(function() if affordable and not lastState.busy then callbacks.onCampRevive(id, currency) end end)
 			end
@@ -242,9 +244,9 @@ local function buildResult(info, profile)
 	local lines = {}
 	if info.ended then
 		table.insert(lines, ("Geschaffte Level: %d / %d"):format(info.cleared, info.totalLevels))
-		table.insert(lines, ("🪙 %d Gold     💎 %d Edelsteine verdient"):format(info.earned.gold, info.earned.gems))
+		table.insert(lines, ("%s %d Gold     %s %d Edelsteine verdient"):format(Config.ICONS.gold, info.earned.gold, Config.ICONS.gems, info.earned.gems))
 	else
-		table.insert(lines, ("🪙 +%d Gold     💎 +%d Edelsteine"):format(info.reward.gold, info.reward.gems))
+		table.insert(lines, ("%s +%d Gold     %s +%d Edelsteine"):format(Config.ICONS.gold, info.reward.gold, Config.ICONS.gems, info.reward.gems))
 	end
 	if (info.teamPlaceGained or 0) > 0 then
 		table.insert(lines, ("+%d Teamplatz: jetzt %d Plätze für das nächste Gebiet."):format(info.teamPlaceGained, info.maxTeam))

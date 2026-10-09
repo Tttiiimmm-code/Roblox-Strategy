@@ -1,4 +1,5 @@
 -- Werte WIP: Platzhalter für Phase 1, noch kein finales Balancing.
+local Config = require(script.Parent.Config)
 local RunConfig = {}
 
 RunConfig.START_TEAM = 3
@@ -53,8 +54,8 @@ RunConfig.ENEMY_COUNT_MAX = 12
 RunConfig.ENEMY_LEVEL_BASE = 1
 RunConfig.ENEMY_LEVEL_PER_DEPTH = 1
 RunConfig.REWARDS = {
-	gold = { name = "Gold", symbol = "🪙", base = 80, perDepth = 40 },
-	gems = { name = "Edelsteine", symbol = "💎", base = 4, perDepth = 2 },
+	gold = { name = "Gold", symbol = Config.ICONS.gold, base = 80, perDepth = 40 },
+	gems = { name = "Edelsteine", symbol = Config.ICONS.gems, base = 4, perDepth = 2 },
 }
 RunConfig.REWARD_ORDER = { "gold", "gems" }
 RunConfig.THEME_ORDER = { "axe", "lance", "bow" }
