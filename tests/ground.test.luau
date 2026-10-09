@@ -27,5 +27,12 @@ do
 	end
 	expect(textures==1, "Bodentextur nicht auf Oberfläche")
 	Config.GROUND_TEXTURES["."].top, Config.GROUND_FLECKS.enabled = saved, enabled
+	local mountainTop = Config.GROUND_TEXTURES.M.top
+	Config.GROUND_TEXTURES.M.top = "67890"
+	Grid.setMap({ "M" })
+	local mountain = Board.build("greenland"):FindFirstChild("Ground"):FindFirstChild("MountainStand")
+	local texture = mountain:FindFirstChild("GroundTexture")
+	expect(texture and texture.Texture=="rbxassetid://67890", "Eigene Bergtextur ohne Vorrang auf Standfläche")
+	Config.GROUND_TEXTURES.M.top = mountainTop
 	print("OK: Materialboden (Regionspaletten, Waldkontrast, alle Geländearten, Flecken aus, Texturvorrang).")
 end

@@ -493,6 +493,13 @@ function BoardBuilder.build(regionId, features, stage)
 					Position = Grid.toWorld(x, y) - Vector3.new(0, thickness / 2, 0),
 					Color = (region and region.landscape or Config.LANDSCAPE.palette).colors[Enum.Material.Rock], Material = Enum.Material.Rock }, ground)
 				cap:SetAttribute("StandTile", Grid.key(x, y))
+				local textures = Config.GROUND_TEXTURES.M
+				if textures then
+					groundTexture(cap, Enum.NormalId.Top, textures.top, textures)
+					for _, face in { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right } do
+						groundTexture(cap, face, textures.side, textures)
+					end
+				end
 			end
 			shoreCount += shoreline(ch, x, y, ground, bridgeTiles)
 			local tile = Instance.new("Part")
