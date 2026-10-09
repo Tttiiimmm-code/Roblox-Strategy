@@ -31,6 +31,17 @@ for _, part in tree:GetDescendants() do
 	if part:IsA("BasePart") then expect(part.Anchored and not part.CanCollide and not part.CanQuery and not part.CanTouch, "Asset fängt Eingaben ab") end
 end
 tree:Destroy()
+local invalidMaterial = Instance.new("MaterialVariant")
+invalidMaterial.Name, invalidMaterial.Archivable, invalidMaterial.Parent = "NichtKlonbar", false, package
+local unsafeTree = assetModel(package, "tree_3")
+local scriptPart = Instance.new("Script"); scriptPart.Parent = unsafeTree
+local sound = Instance.new("Sound"); sound.Parent = unsafeTree
+local cleanTree = Assets.place("tree", CFrame.new(), { key = "sauber", parent = workspace })
+for _, variant in Assets.variants("tree") do for _, object in variant:GetDescendants() do
+	expect(not object:IsA("BaseScript") and not object:IsA("Sound"), "Asset nicht bereinigt")
+end end
+expect(cleanTree ~= nil, "Nicht klonbares Material blockiert den Lader")
+cleanTree:Destroy()
 freshAssets()
 expect(#Assets.variants("tree") == 0, "Paketwechsel lässt alte Vorlagen hängen")
 print("OK: Creator-Store-Lader (Ordner, lose Modelle, Namen, Materialien, Klickbarkeit, Cachewechsel).")

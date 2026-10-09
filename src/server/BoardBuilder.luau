@@ -184,7 +184,7 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 			local random = Random.new(hash(key .. ":forest"))
 			local settings = Config.ENVIRONMENT.forest
 			local range = Config.ENVIRONMENT.treesPerForestTile
-			local count = random:NextInteger(range.min, range.max)
+			local count = random:NextNumber(0, 1) < settings.thirdTreeChance and range.max or range.min
 			local startAngle = random:NextNumber(0, math.pi * 2)
 			for i = 1, count do
 				local angle = startAngle + (i - 1) * math.pi * 2 / count
@@ -252,7 +252,8 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 			local random = Random.new(hash(key .. ":rocks"))
 			local settings = Config.ENVIRONMENT.rocks
 			local offsets = { Vector3.new(-c, 0, -c), Vector3.new(c, 0, c), Vector3.new(c, 0, -c) }
-			for i = 1, 1 + random:NextInteger(settings.smallCount.min, settings.smallCount.max) do
+			local smallCount = random:NextNumber(0, 1) < settings.secondSmallChance and settings.smallCount.max or settings.smallCount.min
+			for i = 1, 1 + smallCount do
 				local span = i == 1 and settings.largeScale or settings.smallScale
 				local scale = random:NextNumber(span.min, span.max)
 				place("rock", center + offsets[i], parent, key .. ":rock:" .. i, {

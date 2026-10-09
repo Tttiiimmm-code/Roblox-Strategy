@@ -85,7 +85,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - Wasserfälle auch an Seen und an anderen Flussenden, nicht nur links (Klippe am Ufer, Fall ins Wasser). Ziel-Quote 12–17 % der normalen Laufkarten, im Generatortest messen.
   - Die Bedingungen aus C1 bleiben (Lösbarkeit, Startzone, `BoardBuilder.waterfall` prüft `C` → `W`).
 
-- [ ] 9. **Prüfskripte + Messung** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke je Karte (Mittel/Max über 100 Seeds, mit Stub-Varianten in Originalgröße der Kategorien) und Stub-Aufbauzeit.
+- [x] 9. **Prüfskripte + Messung** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke je Karte (Mittel/Max über 100 Seeds, mit Stub-Varianten in Originalgröße der Kategorien) und Stub-Aufbauzeit.
 
 - [ ] 10. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#34** „Level-Optik Etappe C2“ (inklusive Creator-Store-Import und Credits-Hinweis), „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
@@ -106,6 +106,9 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 9: Tests für sämtliche C2-Schritte in `test-run.ps1` integriert; zusätzliche Fälle für fremde Highlight-Slots, Kameradrehung, entfernte Figuren, Material-Klonfehler, Skript-/Sound-Bereinigung, vollständigen Brettdeterminismus und den echten Server-Höhensnapshot. Aus dem lokalen Rojo-Export maßhaltige Fixtures aller **83 Paketmodelle / 118 Teile** erzeugt (Originalgrößen, Rotationen, Teileklassen und Kronenmerkmale, ohne Mesh-Geometrie). WIP-Mengen auf das typische Budget abgestimmt: weiterhin 2–3 Bäume/Feld (dritter Baum 10 %), Busch/Wurzel 20 %, weiterhin 1–2 kleine Felsen (zweiter 35 %), Wiesenquote unverändert 50 %. Pflichtcheck/test-run grün.
+- Endmessung Schritt 9, gleiche 100 Grünland-Seeds, 16×12, sechs Starts, inklusive Umgebungsrand: mit Original-Paketfixtures **1.762,2 Teile im Mittel / max. 1.971**, Dreiecke geschätzt **296.921 im Mittel / max. 453.272**, **87,87 ms Stub-Aufbau im Mittel**. Ohne Paket **1.936,9 Teile im Mittel / max. 2.350**, **41,77 ms Stub-Aufbau**. Typisches geschätztes Ziel ≤ 300.000 wird im Mittel geprüft; dichte Maximalfälle liegen darüber. Mesh-IDs referenzieren externe Geometrie; die lokale Datei enthält keine brauchbaren Render-Dreieckzahlen (VertexCount/TriangleCount 0). Schätzannahmen aus Schritt 1 unverändert, Zaun mit tatsächlichen 8 Unions/2 Parts genauer. Reale Dreiecke, Asset-Ladezeit, Raycast-Oberfläche und Handy-Bildrate bleiben ausdrücklich ungemessen; kein Studio-/Handy-Ergebnis behauptet.
 
 - Schritt 8: Wasserfall-Klippen können an jedem geeigneten W-Ufer entstehen, auch an Seen und in allen vier Richtungen; Startzone, reservierte Brückenufer und bestehende Gewässer bleiben geschützt. Normale Klippenquote/andere Generatorregeln unverändert. Bedingte WIP-Wasserfallchance 0,56 ergibt in 1.000 normalen Grünlandkarten **15,60 %** (Ziel 12–17 %); See-Wasserfälle und alle Richtungen im Test nachgewiesen. 19.000 Level-/5.000 Optionsprüfungen, 96 erzwungene Landschaftskombinationen und 2.400 Boss-/Minibosskarten grün, kein ungewollter Fallback. Brett-/Lauftest ebenfalls grün; endgültige Messung mit 0,56 folgt in Schritt 9.
 

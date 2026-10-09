@@ -292,3 +292,21 @@ expect(info.campNext and wounded.run.phase == "camp" and wounded.run.campExtra, 
 expect(wounded.run.team.leon.hp == units.leon.maxHp and info.healed.leon.after == units.leon.maxHp, "Extra-Lager nach Sieg heilt nicht voll")
 expect(not wounded.run.team.bruno.alive and wounded.run.team.bruno.hp == 0, "Extra-Lager nach Sieg belebt Tote wieder")
 print("OK: " .. checks .. " gesamte Lauf-/Boss-/Lager-Stubs. Studio/Handy ungetestet.")
+
+do
+	local Grid = testModules.Grid
+	local state = testServer.state()
+	local mode = state.mode
+	state.mode = "Lobby"
+	expect(next(testServer.snapshot().tileHeights) == nil, "Lobby überträgt alte Brückenhöhen")
+	state.mode = "Battle"
+	Grid.setHeights({ ["1,1"] = 3.25 })
+	local snapshot = testServer.snapshot()
+	expect(snapshot.tileHeights["1,1"] == 3.25, "Server-Snapshot ohne gemessene Feldhöhe")
+	snapshot.tileHeights["1,1"] = 9
+	expect(Grid.tileHeight(1, 1) == 3.25, "Snapshot verändert Serverhöhen")
+	Grid.setMap(Grid.getMap())
+	expect(next(Grid.getHeights()) == nil, "Kartenwechsel behält alte Brückenhöhen")
+	state.mode = mode
+	print("OK: Server-Snapshot der Feldhöhen (Übertragung, Kopie, Kartenwechsel).")
+end

@@ -139,13 +139,14 @@ Config.ENVIRONMENT = {
 	forest = {
 		treeHeight = { min = 1, max = 1.4 }, treeWidth = { min = 0.6, max = 0.9 },
 		bush = { height = 0.3, width = 0.45 }, deco_root = { height = 0.2, width = 0.5 },
-		understoryChance = 0.55, positionJitter = 0.1,
+		thirdTreeChance = 0.1, understoryChance = 0.2, positionJitter = 0.1, -- WIP: Mengen für Handy-Budget
 	},
 	rocks = { -- WIP: große Felsen und kleine Begleiter
 		mountain = { height = 0.6, width = 0.55 }, largeScale = { min = 1, max = 1.6 },
-		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 },
+		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 }, secondSmallChance = 0.35,
 		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
 	},
+	estimatedTriangleBudget = 300000, -- WIP: typische Karte; reale Meshes in Studio prüfen
 	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3 }, -- WIP: Überstand in Uferfelder
 	meadow = { chance = 0.5, grassCount = { min = 1, max = 2 }, flowerChance = 0.18, stoneChance = 0.16,
 		fenceChance = 0.025, centerClearance = 2.3 }, -- WIP: mittlere Dichte, freie Figurenmitte

@@ -1,5 +1,6 @@
 -- Originalmaße aus PLAN.md; Mesh-Dreiecke sind ausdrücklich Schätzwerte je Vorlage.
 local function metricAssets()
+	if originalMetricAssets then originalMetricAssets(); return end
 	freshAssets()
 	local function sample(name, size, triangles)
 		local model, part = assetModel(models, name, size)
@@ -47,7 +48,7 @@ local function boardMetrics(label)
 		sumTriangles += triangles; maxTriangles = math.max(maxTriangles, triangles)
 	end
 	print(string.format("C2-Messung %s: 100 Seeds, Teile Mittel %.1f / Max %d; Dreiecke geschaetzt Mittel %.0f / Max %d; Stub-Aufbau Mittel %.2f ms.", label, sumParts / 100, maxParts, sumTriangles / 100, maxTriangles, seconds * 10))
-	return maxTriangles
+	return maxTriangles, sumTriangles / 100
 end
 metricAssets()
 do
@@ -81,5 +82,19 @@ for _, object in forest:GetChildren() do
 		and object:GetPivot().Position.Z >= 0 and object:GetPivot().Position.Z <= Config.TILE_SIZE then forestTrees += 1 end
 end
 expect(forestTrees >= 2 and forestTrees <= 3, "Dichter Wald ohne 2–3 Bäume")
-boardMetrics("mit Kategorie-Stubs")
+do
+	local stage = Gen.generate(17, "greenland", 1, "axe", RC.MAX_TEAM)
+	local function signature()
+		Grid.setMap(stage.map)
+		local board = Board.build("greenland", stage.features, stage)
+		local rows = {}
+		for _, object in board:GetDescendants() do
+			if object:IsA("BasePart") then table.insert(rows, object.Name .. ":" .. tostring(object.Position) .. ":" .. tostring(object.Size)) end
+		end
+		return table.concat(rows, "|")
+	end
+	expect(signature() == signature(), "Brett-Deko mit Originalvarianten nicht deterministisch")
+end
+local _, meanTriangles = boardMetrics("mit Kategorie-Stubs")
+expect(meanTriangles <= Config.ENVIRONMENT.estimatedTriangleBudget, "Typisches Dreieckbudget überschritten: " .. meanTriangles)
 freshAssets()
