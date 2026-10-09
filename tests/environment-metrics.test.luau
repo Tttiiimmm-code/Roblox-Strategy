@@ -110,11 +110,11 @@ do
 end
 -- Union der tatsächlichen Kronen-AABBs: gleichmäßiges 32×32-Sampling je Waldfeld.
 local function forestCoverage(baseline)
-	local oldForest, originalPlace = Config.ENVIRONMENT.forest, Assets.place
+	local oldForest, oldCount = Config.ENVIRONMENT.forest, Config.ENVIRONMENT.treesPerForestTile
 	if baseline then
 		Config.ENVIRONMENT.forest = table.clone(oldForest)
-		Config.ENVIRONMENT.forest.treeHeight = { min = 1.3, max = 1.8 }
-		Config.ENVIRONMENT.forest.treeWidth = { min = 1.35, max = 1.5 }
+		Config.ENVIRONMENT.forest.secondTreeChance = 0.1
+		Config.ENVIRONMENT.treesPerForestTile = { min = 2, max = 3 }
 	end
 	Grid.setMap({ "FFFF", "FFFF", "FFFF", "FFFF" })
 	local board, boxes = Board.build("greenland"), {}
@@ -141,7 +141,7 @@ local function forestCoverage(baseline)
 		local px, pz = (x - 0.5) / 4, (y - 0.5) / 4
 		for _, b in boxes do if px >= b[1] and px <= b[2] and pz >= b[3] and pz <= b[4] then covered += 1; break end end
 	end end
-	Config.ENVIRONMENT.forest, Assets.place = oldForest, originalPlace
+	Config.ENVIRONMENT.forest, Config.ENVIRONMENT.treesPerForestTile = oldForest, oldCount
 	local coverage = covered / (128 * 128)
 	print(string.format("Wald %s: Kronen %.2f-%.2f Felder; Hoehe %.2f-%.2f; AABB-Abdeckung %.2f%%.", baseline and "vorher" or "nachher", minWidth / 8, maxWidth / 8, minHeight / 8, maxHeight / 8, coverage * 100))
 	return coverage, minWidth / 8, maxWidth / 8, minHeight / 8, maxHeight / 8

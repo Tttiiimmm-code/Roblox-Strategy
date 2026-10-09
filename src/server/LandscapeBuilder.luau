@@ -6,7 +6,7 @@ local Grid = require(Shared.Grid)
 local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
 
 local LandscapeBuilder = {}
-local previous = {}
+local previous = { rects = {}, top = 0 }
 
 local function hash(key)
 	local value = 0
@@ -47,7 +47,10 @@ local function fill(rect, bottom, top, material, stats)
 		Vector3.new(rect.x1 - rect.x0, top - bottom, rect.z1 - rect.z0), material)
 	stats.calls += 1
 	local volume = (rect.x1 - rect.x0) * (top - bottom) * (rect.z1 - rect.z0)
-	if material == Enum.Material.Air then stats.clearVolume += volume else stats.volume += volume end
+	if material == Enum.Material.Air then
+		stats.clearVolume += volume
+		stats.clearCalls += 1
+	else stats.volume += volume end
 end
 
 function LandscapeBuilder.prepare(mapKey, region, features)
@@ -116,9 +119,14 @@ local function writeSurface(state, rect, stats)
 		for ix = 1, nx do
 			heights[ix], kinds[ix] = {}, {}
 			for iz = 1, nz do
-				local height, kind = LandscapeBuilder.surface(state, x0 + (ix - 0.5) * R, z0 + (iz - 0.5) * R)
+				local x, z = x0 + (ix - 0.5) * R, z0 + (iz - 0.5) * R
+				local height, kind = LandscapeBuilder.surface(state, x, z)
 				heights[ix][iz], kinds[ix][iz] = height, kind
 				top = math.max(top, height or s.foundationTop)
+				if x < 0 or x >= state.w or z < 0 or z >= state.h then
+					-- Der Nahblock ersetzt diesen Teil des bereits gezählten Fernbodens.
+					stats.volume -= (s.foundationTop + Config.FEEL.terrainDepth) * R * R
+				end
 			end
 		end
 		top = aligned(top, true) + R -- Luft über jeder Oberfläche ist Teil desselben Schreibblocks.
@@ -141,6 +149,7 @@ local function writeSurface(state, rect, stats)
 		end
 		workspace.Terrain:WriteVoxels(Region3.new(Vector3.new(x0, bottom, z0), Vector3.new(x1, top, z1)), R, materials, occupancies)
 		stats.calls += 1
+		stats.voxelCalls += 1
 		stats.voxels += nx * ny * nz
 	end end
 end
@@ -191,12 +200,12 @@ end
 
 function LandscapeBuilder.build(board, mapKey, region, features)
 	local s = Config.LANDSCAPE
-	local stats = { calls = 0, volume = 0, clearVolume = 0, voxels = 0 }
+	local stats = { calls = 0, clearCalls = 0, voxelCalls = 0, volume = 0, clearVolume = 0, voxels = 0 }
 	local state = LandscapeBuilder.prepare(mapKey, region, features)
 	local clearTop = aligned(math.max(Config.FEEL.terrainClearTop, s.hillHeight + s.mountainHeight + s.resolution), true)
-	for _, rect in previous do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end
+	for _, rect in previous.rects do fill(rect, -Config.FEEL.terrainDepth, math.max(previous.top, clearTop), Enum.Material.Air, stats) end
 	for _, rect in state.rects do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end
-	previous = state.rects
+	previous = { rects = state.rects, top = clearTop }
 	for material, color in state.palette.colors do workspace.Terrain:SetMaterialColor(material, color) end
 	-- Fernboden in wenigen großen Blöcken; das Brett selbst bleibt frei.
 	for _, rect in {
@@ -212,6 +221,8 @@ function LandscapeBuilder.build(board, mapKey, region, features)
 	end
 	details(state, board)
 	board:SetAttribute("TerrainWriteCalls", stats.calls)
+	board:SetAttribute("TerrainClearCalls", stats.clearCalls)
+	board:SetAttribute("TerrainVoxelCalls", stats.voxelCalls)
 	board:SetAttribute("TerrainVolume", stats.volume)
 	board:SetAttribute("TerrainClearVolume", stats.clearVolume)
 	board:SetAttribute("TerrainVoxels", stats.voxels)

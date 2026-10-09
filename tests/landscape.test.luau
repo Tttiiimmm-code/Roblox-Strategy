@@ -13,11 +13,17 @@ do
 		table.sort(rows)
 		return table.concat(rows, "|")
 	end
+	local function validateMetrics(board)
+		expect(board:GetAttribute("TerrainVoxelCalls") > 0 and board:GetAttribute("TerrainVoxelCalls") <= 32, "Zu viele Terrain-Schreibblöcke")
+		expect(board:GetAttribute("TerrainWriteCalls") <= 64, "Zu viele Terrain-Aufrufe")
+		expect(board:GetAttribute("TerrainVolume") > 0 and board:GetAttribute("TerrainVoxels") > 0, "Terrain-Messwerte fehlen")
+	end
 	for _, withPackage in { true, false } do
 		if withPackage then metricAssets() else freshAssets() end
 		Grid.setMap({ "......", "......", "......" })
 		local first = Board.build("greenland")
 		validateOuter(first)
+		validateMetrics(first)
 		local original = signature(first)
 		expect(original == signature(Board.build("greenland")), "Terrain/Modelle nicht deterministisch")
 		Grid.setMap({ ".....F", "......", "......" })
@@ -28,11 +34,14 @@ do
 	local start = #terrainBlocks
 	Grid.setMap(Gen.generate(4, "greenland", 1, "axe", RC.MAX_TEAM).map)
 	local large = Board.build("greenland")
+	validateMetrics(large)
 	local oldMargin = Landscape.prepare("Test", nil).margin
 	expect(terrainHeightAt(-oldMargin + 2, -oldMargin + 2) ~= nil, "Großer Fernboden fehlt")
 	for _, stage in modules.Stages.List do
 		Grid.setMap(stage.map)
-		validateOuter(Board.build(stage.region))
+		local board = Board.build(stage.region)
+		validateOuter(board)
+		validateMetrics(board)
 	end
 	Grid.setMap({ "." })
 	validateOuter(Board.build("swamp"))

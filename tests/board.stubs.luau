@@ -146,6 +146,7 @@ local task = { spawn = function(fn) fn() end }
 workspace.CurrentCamera = {}
 local terrainClears, terrainBlocks, terrainColumns = {}, {}, {}
 local terrainSerial = 0
+local terrainVoxelWrites = 0
 local Region3 = { new = function(lo, hi) return { lo = lo, hi = hi } end }
 local function terrainHeightAt(x, z)
 	local column = terrainColumns[math.floor(x / 4) .. ":" .. math.floor(z / 4)]
@@ -174,8 +175,12 @@ workspace.Terrain.FillBlock = function(_, cf, size, material)
 	end
 end
 workspace.Terrain.WriteVoxels = function(_, region, resolution, materials, occupancies)
+	terrainVoxelWrites += 1
 	assert(resolution == 4, "Terrainauflösung muss 4 sein")
 	local lo, hi = region.lo, region.hi
+	local settings, hub = modules.Config.LANDSCAPE, modules.Config.HUB_ORIGIN
+	assert(hi.X <= hub.X - settings.hubHalfWidth or lo.X >= hub.X + settings.hubHalfWidth
+		or hi.Z <= hub.Z - settings.hubHalfDepth or lo.Z >= hub.Z + settings.hubHalfDepth, "Voxelregion berührt Hub-Schutzbereich")
 	local nx, ny, nz = (hi.X - lo.X) / 4, (hi.Y - lo.Y) / 4, (hi.Z - lo.Z) / 4
 	assert(nx * ny * nz <= 4194304, "Schreibblock zu groß")
 	for _, value in { lo.X, lo.Y, lo.Z, hi.X, hi.Y, hi.Z } do assert(value % 4 == 0, "Region nicht ausgerichtet") end

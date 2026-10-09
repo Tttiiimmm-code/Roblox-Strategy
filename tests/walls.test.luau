@@ -4,6 +4,7 @@ local function validateWalls(withPackage)
 	Grid.setMap({ "MM.CC", "M.C.C", ".CW..", "..M.." })
 	local fall = { x = 2, y = 3, dx = 1, dy = 0 }
 	local board, rocks, stands = Board.build("greenland", { waterfall = fall }), {}, {}
+	local minCliff, maxCliff = math.huge, 0
 	for _, asset in board:GetDescendants() do
 		expect(asset.Name ~= "WallFacet" and not asset:GetAttribute("WallX"), "Alte Felsfacetten vorhanden")
 		if asset:GetAttribute("StandTile") then stands[asset:GetAttribute("StandTile")] = asset end
@@ -40,8 +41,12 @@ local function validateWalls(withPackage)
 		else
 			expect(height and height >= Config.TERRAIN.C.height and height > Config.TERRAIN.M.height, "Klippe nicht höher als Berg")
 			expect(next(Config.TERRAIN.C.cost) == nil, "Klippe passierbar")
+			minCliff, maxCliff = math.min(minCliff, height), math.max(maxCliff, height)
 		end
 	end end
+	expect(maxCliff - minCliff > 0.2, "Klippen ohne unregelmäßige Oberkante")
+	expect(terrainHeightAt(Config.TILE_SIZE - 0.01, 4) ~= nil and terrainHeightAt(Config.TILE_SIZE + 0.01, 4) ~= nil,
+		"Zusammenhängender M-Hügel an Feldgrenze unterbrochen")
 	local top = terrainHeightAt((fall.x - 0.5) * Config.TILE_SIZE + fall.dx * (Config.TILE_SIZE / 2 - 2), (fall.y - 0.5) * Config.TILE_SIZE)
 	expect(top == Config.TERRAIN.C.height, "Terrain am Wasserfallanschluss hat andere Höhe")
 	validateOuter(board)
