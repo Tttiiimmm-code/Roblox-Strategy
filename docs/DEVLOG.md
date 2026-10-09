@@ -781,6 +781,30 @@ Geschlossener, unregelmäßiger Waldrand mit großen Paketbäumen in der ersten 
 | Final inklusive Zoom-Boden | 2.006,2 / 2.154 | 344.396 / 500.220 | 101,71 / 150,11 |
 
 ---
+## #36 – Level-Optik Etappe C4
+**Datum:** 09.10.2026 · Branch `feature/level-optik-c`
+
+**Ziel:** Nach dem C3-Studio-Test aufpoppende Umgebungsschatten entfernen, Waldkronen verkleinern, Figuren besser sichtbar machen und den Waldring vorne niedrig und hinten/seitlich natürlicher gestalten.
+
+**Umsetzung:**
+- Umgebungsschatten standardmäßig aus (`ENVIRONMENT.castShadows`); aktivieren stellt die bisherige Modell-Höhenschwelle wieder her. Figuren-Rundschatten bleiben erhalten. Waldboden 10 % dunkler, Fleckkontrast halbiert.
+- Waldkronen 1,1–1,2 Felder, Baumhöhen 1,2–1,5; Baumzahl und Anordnung erhalten. Figurenumriss mit Teamfarben-Füllung (Transparenz 0,8), auch bei Teamwechsel. Highlight-Budget und Spielervorrang erhalten.
+- Waldring vorne (+Z) und an den vorderen Seitenecken (1 Feld) nur Büsche/Felsen bis 0,5 Feld Höhe über dem Umgebungsboden. Hinten/seitlich Gruppen aus 2–4 Bäumen mit wechselnden Höhen, Breiten, Abständen und Tiefen, dazwischen niedrige Büsche/Felsen. Welt-Bounding-Boxen halten Lücken bis 0,5 Feld und Umgebungsteile außerhalb des Bretts. Part-Fallback mit Baumgruppen; günstige Ersatzkronen nur weit hinten ab 4,5 Feldern.
+
+**Entscheidungen:** Kronen-AABB-Abdeckung nur informativ: Claude hat das geschätzte Ziel 70–85 % ausdrücklich zurückgenommen. Gemessen im 4×4-Wald mit 32×32 Stichproben je Feld: 99,99 % vor C4, 99,48 % nach C4; Kronen 1,10–1,20, Höhen 1,20–1,49 Felder. AABBs überschätzen runde Kronen; der Nutzer beurteilt die Lichtheit in Studio. Nachbarradius 1 und Sichtweite 2 bleiben wegen Ecküberhang und perspektivischer Verdeckung erhalten. Kamera frei drehbar; der niedrige Rand bleibt in Grundausrichtung und folgt der Kamera nicht. Alle Gestaltungswerte sind WIP in Config.
+
+**Probleme:** Defekte Sandbox-Prozessstarts gemäß Projekt-Dauerregel über automatisch geprüfte Projektbefehle außerhalb der Sandbox umgangen. Die Ringprüfung zeigte einen Fehler im vorhandenen CFrame-Inverse-Stub bei erneutem PivotTo; vollständige Rotationsmatrix ergänzt. Reales Rendering und Handy-Leistung sind durch Stubs nicht bestätigt.
+
+**Messung:** `scripts/measure-environment.ps1`, identische maßhaltige Paket-Fixtures und 100 Grünland-Seeds; Dreiecke geschätzt, keine GPU-Messung.
+
+| Stand | Teile Mittel / Max | Dreiecke Mittel / Max | Stub-Aufbau ms Mittel / Max |
+|---|---:|---:|---:|
+| Vor C4 (`fb0cb28`) | 2.006,2 / 2.154 | 344.396 / 500.220 | 98,57 / 118,89 |
+| Nach C4 | 1.989,5 / 2.128 | 343.195 / 495.996 | 105,14 / 128,83 |
+
+**Teststatus:** `check.ps1` OK (37 Dateien), `test-run.ps1` OK (34.458 Lauf-/Boss-/Lager-Stubs und 528.020 Brett-/Kameraprüfungen, zusätzliche Umgebungs-/Ring-/Outline-Stubs), `test-tutorial.ps1` OK (168), `test-run-ui.ps1` OK (116), Rojo-Build nach `TacticsGame.rbxlx` OK. `test-levelgen.ps1` OK (19.000 Level-, 5.000 Optionsprüfungen, 96 erzwungene Landschaftskombinationen, 2.400 Boss-/Minibosskarten). Ring-Tests über 100 Paket-Seeds plus Part-Fallback: Vorderhöhe, hohe Rück-/Seitenränder, Ersatzkronenlage, Lücken, Brettfreiheit, Klickbarkeit und Determinismus. Mittelbudget 350.000 eingehalten; Maximalwert und leicht erhöhte Stub-Aufbauzeit bleiben Anlass zur realen Leistungsmessung. **Studio/Handy für C4 ungetestet; Claude-Review ausstehend.**
+
+---
 ## Nächste Schritte (Plan)
 **Stand 09.10.2026:** Grundtutorial (#30) vom Nutzer bestätigt (Willkommensfenster, beide Missionen, 150 Gold). Feinschliff (#31) vom Nutzer bestätigt (größere Tutorial-Hinweise, gelbe Zielfelder, PC-Skalierung, Level-Up wegtippen). Branch `feature/lauf-phase2` nach `main` zusammengeführt. Level-Optik (#24–#29) vom Nutzer auf dem Handy bestätigt („geht jetzt“): Banner/Hinweis/Gelände vollständig, Antippen funktioniert, Karten und Rundschatten ok, Seltenheits-Effekte aus. Branch `feature/level-optik` nach `main` zusammengeführt. Bei künftigen Darstellungsfehlern `Config.INPUT_DIAGNOSTICS` einschalten und `[Eingabe]`/`[UI-Diagnose]`-Zeilen liefern.
 
@@ -789,7 +813,7 @@ Geschlossener, unregelmäßiger Waldrand mit großen Paketbäumen in der ersten 
 3. **Offene Tests:** neue Leon-FBX normal/Cel in Studio importieren, Textur, Haltung, Blickrichtung und Dreieckszahl prüfen, Avatar Auto Setup ausführen und Gesicht aus Brett-Entfernung auf PC/Handy vergleichen. Bevorzugte Variante erst danach als `assets/characters/leon.rbxm` speichern. Eigenes Waffenmodell (`leon_waffe`) importieren und prüfen; weitere Mesh-Modelle testen. Kampfszenen, Missionsstart, Umgebungsrand/Erstaufbau, Lade-/Retry-Pfade, Handy-Kamera und Tutorial/Terrain/Chibis sind noch nicht gezielt in Studio geprüft.
 4. **Roguelike Phase 2 – Feinschliff testen/reviewen:** Claude-Review von #31; Tutorialtexte/Zielfeld auf PC und Handy, vergrößerte PC-HUDs/Menüs bei Fensterwechsel ohne Überlappung/Abschneiden, unveränderte Touch-Skalierung und Level-Up-Schließen per Klick/Tipp/Leertaste/Enter ohne Weltaktion gemäß PLAN.md prüfen. Grundtutorial bestätigt; zusätzliche Profil-/Skip-/Fehltipp-/Neustart-/Wiederholungstests und Laufzugang aus #30 bleiben sinnvoll. Starter-Magierin/-Ritter entwirft der Nutzer; IDs stehen in `docs/charakter-pipeline.md`.
 5. **Roguelike Phase 3 testen/reviewen, danach Phase 4:** Claude-Review von #32 und manuelle PLAN.md-Tests in Studio/auf Handy: Laufabfolge, Hauptmann-Verstärkung, Garricks Bewegung/Kriegsschrei/angekündigte Randverstärkung, sofortiger Bosssieg, Lagerheilung/Tausch/Todeshistorie, beide Wiederbelebungswährungen und Wiederkommen im Lager. Hauptmann-Name/Entwurf vom Nutzer. Danach Waffenbeute, Händler, Rückblenden und Notfall-Beschwörung planen.
-6. **Level-Optik Etappen C1/C2/C3 testen/reviewen:** Claude-Review von #33-#35 und manuelle PLAN.md-Tests in Studio/auf Handy: Sandufer ohne Ringe, Goldsymbol und Hover der Levelkarten, geschlossenes Kronendach, Figurenumrisse im Wald sowie an seitlichen/diagonalen Nachbarn, dichter Waldrand und regionale Bodenfarben, kein leerer Rand beim maximalen Zoom, felsige Berg-/Klippenwaende und freie Klickfelder. Aus C2 besonders Brueckenfuesse auf dem Bogen und Kronenfaerbung ohne Output-Warnung pruefen. Dazu C1-Kamera/Startansicht/alle Ecken, Starts/Erreichbarkeit/Boss-Verstaerkungen. Reale Dreiecke, Missionsaufbau-Zeiten, Asset-Downloads und Handy-Bildrate messen, besonders dichte Karten (finaler Schaetz-Maximalwert 500220 gegen mittleres Ziel 350000). Eigene Bodentexturen setzt der Nutzer anschliessend.
+6. **Level-Optik Etappen C1–C4 testen/reviewen:** Claude-Review von #33–#36 und manuelle PLAN.md-Tests in Studio/auf Handy. C4: keine aufpoppenden Umgebungsschatten beim Drehen/Zoomen; Figuren-Rundschatten erhalten; kleinere Waldkronen und Teamfarben-Füllung verbessern Raster-/Figurensicht; niedriger +Z-Rand und vordere Ecken ohne verdecktes Brettende, hohe unregelmäßige Gruppen hinten/seitlich, keine Ersatzkroneneier vorne. Bei Kameradrehung die festgelegte Grundausrichtung prüfen. Aus C1–C3 weiter Sandufer, Symbole/Hover, regionale Böden, Zoomränder, Felswände, freie Klickfelder und besonders Brückenfüße auf dem Bogen sowie Kronenfärbung ohne Output-Warnung prüfen. Reale Dreiecke, Aufbauzeiten, Asset-Downloads und Handy-Bildrate messen (C4-Schätz-Maximum 495.996, mittleres Ziel 350.000). Eigene Bodentexturen setzt der Nutzer anschließend.
 7. **Roguelike Phase 5–7:** Sumpf/Gefahren/Leveltypen, Eis/Vulkan, danach Punktzahl/Ränge/Bestenlisten. Detailentscheidungen vorher klären.
 8. Sounds probehören, Output und Bildrate beobachten; gemeldete Avatar-/Asset-Ladefehler mit ID dokumentieren und gesondert beheben.
 9. Ausrüstung/Items als reine Werte (Aussehen bleibt die eigene Waffe der Figur).
