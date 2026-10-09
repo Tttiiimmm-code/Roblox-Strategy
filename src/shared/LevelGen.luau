@@ -203,10 +203,13 @@ local function lake(map, random, riverFeature, reserved)
 		end
 		if not valid then continue end
 		local cells = {}
+		-- Nur eine Ecke ausschneiden, damit auch kleine Seen um Inseln verbunden bleiben.
+		local cutCorner = random(1, 4)
 		for y = top, top + height - 1 do
 			for x = left, left + width - 1 do
 				local corner = (x == left or x == left + width - 1) and (y == top or y == top + height - 1)
-				if not corner or random(0, 1) == 1 then
+				local cornerId = (x == left and 1 or 2) + (y == top and 0 or 2)
+				if not corner or cornerId ~= cutCorner then
 					setCell(map, x, y, "W")
 					table.insert(cells, { x = x, y = y })
 				end

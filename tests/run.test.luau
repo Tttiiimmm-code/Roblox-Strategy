@@ -41,6 +41,26 @@ for seed = 1, 1000 do
 end
 print("OK: 1000 Laufabfolgen mit festen Bossen, Wahllagern und Extra-Lager.")
 
+for seed = 1, 50 do
+	for _, depth in ipairs({ 1, 3, 5 }) do
+		local profile = newRun(seed)
+		local run = profile.run
+		run.depth, run.region = depth, "greenland"
+		run.options = testModules.LevelGen.makeOptions(seed, depth, "greenland")
+		for i, option in ipairs(run.options) do
+			if option.kind ~= "camp" then
+				expect(Runs.choose(run, i), "Kartenwahl nach Größenänderung")
+				local stage = Runs.stage(run)
+				expect(#stage.map == 12 and #stage.map[1] == 16, "Laufkarte nicht 16×12")
+				break
+			end
+		end
+	end
+end
+expect(#testModules.Stages.List[1].map == 5 and #testModules.Stages.List[1].map[1] == 6, "Tutorial 1 vergrößert")
+expect(#testModules.Stages.List[2].map == 6 and #testModules.Stages.List[2].map[1] == 10, "Tutorial 2 vergrößert")
+print("OK: Variable Größe über RunService; Tutorialkarten bleiben klein.")
+
 local Abilities = testModules.BossAbilities
 local Grid = testModules.Grid
 local Data = testModules.UnitData
