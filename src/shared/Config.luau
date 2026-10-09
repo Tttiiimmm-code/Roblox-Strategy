@@ -144,6 +144,7 @@ Config.ENVIRONMENT = {
 		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 },
 		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
 	},
+	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3 }, -- WIP: Überstand in Uferfelder
 	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
 	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
 	categories = {
@@ -153,6 +154,7 @@ Config.ENVIRONMENT = {
 		rock = { height = 0.28, width = 0.22, rotation = "quarter" },
 		fortress = { height = 0.38, width = 0.2, rotation = "quarter" },
 		bridge = { height = 0.16, width = 1, rotation = "none" },
+		archbridge = { height = 1, width = 1, rotation = "none" },
 		ruins = { height = 0.38, width = 0.2, rotation = "quarter" },
 		deco_flower = { height = 0.08, width = 0.14, rotation = "free" },
 		deco_stone = { height = 0.08, width = 0.14, rotation = "free" },

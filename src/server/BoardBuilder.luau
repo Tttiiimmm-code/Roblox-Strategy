@@ -114,8 +114,67 @@ local function place(category, base, parent, key, opts)
 	return EnvironmentAssets.place(category, CFrame.new(base), opts)
 end
 
+local bridgeWarning = false
+local function buildBridges(parent, mapKey)
+	local bridgeTiles, heights, count = {}, {}, 0
+	if #EnvironmentAssets.variants("archbridge") == 0 then return bridgeTiles end
+	local T, settings = Config.TILE_SIZE, Config.ENVIRONMENT.bridge
+	for i, crossing in Grid.bridgeCrossings() do
+		local base = math.huge
+		for _, bank in crossing.banks do
+			local terrain = Grid.terrainAt(bank.x, bank.y)
+			if terrain and terrain.cost.foot then base = math.min(base, terrain.height) end
+		end
+		if base == math.huge then continue end
+		local length = crossing.length + 2 * settings.bankOverlap
+		local model = place("archbridge", Vector3.new((crossing.x - 0.5) * T, base, (crossing.y - 0.5) * T), parent,
+			mapKey .. ":crossing:" .. i, { length = length, rotation = crossing.angle })
+		if not model then continue end
+		model:SetAttribute("BridgeLength", length * T)
+		model:SetAttribute("BridgeAlongX", crossing.alongX)
+		local parts = {}
+		for _, object in model:GetDescendants() do
+			if object:IsA("BasePart") then
+				table.insert(parts, object)
+				object.CanQuery = true -- Nur während der synchronen Höhenmessung.
+				if object:IsA("MeshPart") then pcall(function() object.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition end) end
+			end
+		end
+		local box, size = model:GetBoundingBox()
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = { model }
+		local top = box.Position.Y + size.Y / 2 + settings.rayMargin
+		local drop = size.Y + settings.rayMargin * 2
+		local samples, valid = {}, true
+		local function sample(cell, required)
+			if not Grid.inBounds(cell.x, cell.y) then return end
+			local ray = workspace:Raycast(Vector3.new((cell.x - 0.5) * T, top, (cell.y - 0.5) * T), Vector3.new(0, -drop, 0), params)
+			if ray then samples[Grid.key(cell.x, cell.y)] = ray.Position.Y
+			elseif required then valid = false end
+		end
+		for _, cell in crossing.cells do sample(cell, true) end
+		for _, bank in crossing.banks do
+			local terrain = Grid.terrainAt(bank.x, bank.y)
+			if terrain and terrain.cost.foot then sample(bank, false) end
+		end
+		for _, object in parts do object.CanQuery = false end
+		if not valid then
+			model:Destroy()
+			if not bridgeWarning then bridgeWarning = true; warn("Brückenboden nicht messbar; bisherige Part-Brücke als Ersatz") end
+			continue
+		end
+		for key, value in samples do heights[key] = value end
+		for _, cell in crossing.cells do bridgeTiles[Grid.key(cell.x, cell.y)] = true end
+		count += 1
+	end
+	Grid.setHeights(heights)
+	parent:SetAttribute("BridgeCount", count)
+	return bridgeTiles
+end
+
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
-local function decorate(ch, x, y, parent, mapKey, palette)
+local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles)
 	local center = Grid.toWorld(x, y)
 	local c = Config.TILE_SIZE / 2 - Config.ENVIRONMENT.edgeInset
 	local key = mapKey .. ":" .. Grid.key(x, y)
@@ -222,6 +281,7 @@ local function decorate(ch, x, y, parent, mapKey, palette)
 			end
 		end
 	elseif ch == "B" then
+		if bridgeTiles[Grid.key(x, y)] then return end
 		local angle = bridgeAngle(x, y)
 		if place(category, center, parent, key, { rotation = angle }) then return end
 		for _, side in { -1, 1 } do
@@ -292,6 +352,7 @@ end
 
 -- Baut die aktuelle Karte aus Grid.getMap() (vorher Grid.setMap aufrufen)
 function BoardBuilder.build(regionId, features)
+	Grid.setHeights({})
 	local region = Stages.getRegion(regionId)
 	local treeColor = region and region.treeColor or Config.TERRAIN.F.color
 	for _, name in { "Baseplate", "SpawnLocation", "Board" } do
@@ -314,6 +375,8 @@ function BoardBuilder.build(regionId, features)
 	end
 	local board = Instance.new("Folder")
 	board.Name = "Board"
+	board.Parent = workspace
+	local bridgeTiles = buildBridges(board, mapKey)
 
 	local ground = Instance.new("Folder")
 	ground.Name = "Ground"
@@ -353,9 +416,10 @@ function BoardBuilder.build(regionId, features)
 			end
 			for yy = y, bottom do for xx = x, right do used[Grid.key(xx, yy)] = true end end
 			groundCount += 1
-			local height = Config.TERRAIN[ch].height
+			local groundCh = ch == "B" and bridgeTiles[key] and "W" or ch
+			local height = Config.TERRAIN[groundCh].height
 			local cap = Config.FEEL.groundCapHeight
-			local color = colorFor(ch)
+			local color = colorFor(groundCh)
 			local cx, cz = (x + right - 1) * T / 2, (y + bottom - 1) * T / 2
 			local width, length = (right - x + 1) * T, (bottom - y + 1) * T
 			local side = deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
@@ -364,9 +428,9 @@ function BoardBuilder.build(regionId, features)
 				Material = Enum.Material.SmoothPlastic }, ground)
 			local surface = deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
 				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
-				Transparency = (ch == "W" or ch == "D") and Config.FEEL.waterTransparency or 0,
+				Transparency = (groundCh == "W" or groundCh == "D") and Config.FEEL.waterTransparency or 0,
 				Material = Enum.Material.SmoothPlastic }, ground)
-			local textures = Config.GROUND_TEXTURES[ch]
+			local textures = Config.GROUND_TEXTURES[groundCh]
 			if textures then
 				groundTexture(surface, Enum.NormalId.Top, textures.top, textures)
 				for _, face in { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right } do
@@ -399,8 +463,8 @@ function BoardBuilder.build(regionId, features)
 			tile:SetAttribute("X", x)
 			tile:SetAttribute("Y", y)
 			tile.Parent = board
-			groundFlecks(ch, x, y, ground, mapKey, colorFor(ch))
-			decorate(ch, x, y, board, mapKey, region and region.treePalette)
+			if not bridgeTiles[Grid.key(x, y)] then groundFlecks(ch, x, y, ground, mapKey, colorFor(ch)) end
+			decorate(ch, x, y, board, mapKey, region and region.treePalette, bridgeTiles)
 			local center = Grid.toWorld(x, y)
 			local offsets = { Vector3.new(-T / 2, 0, 0), Vector3.new(0, 0, -T / 2) }
 			-- Gemeinsame Kanten nur einmal; an Höhenstufen bleibt jede Oberkante sichtbar.

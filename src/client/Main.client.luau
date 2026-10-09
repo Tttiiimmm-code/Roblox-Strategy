@@ -1053,7 +1053,6 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
-	TutorialGuide.update(isMine() and state or nil)
 	local changedBattle = state.mode == "Battle" and (not previous or previous.mode ~= "Battle"
 		or previous.stageId ~= state.stageId
 		or (state.tutorial and (not previous.tutorial or previous.tutorial.id ~= state.tutorial.id))
@@ -1085,7 +1084,9 @@ local function applyState(newState)
 		end
 	end
 
+	Grid.setHeights(state.tileHeights)
 	showReinforcementMarks()
+	TutorialGuide.update(isMine() and state or nil)
 	UnitAnimator.setSpeed(state.speed or 1)
 	if previous and previous.phase == "Enemy" and state.phase ~= "Enemy" then
 		cameraEvent += 1

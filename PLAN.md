@@ -67,7 +67,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - `deco_stone`: Gibt es keine eigenen `deco_stone_*`-Varianten, werden Felsvarianten in Deko-Größe genutzt.
   - Fertig, wenn: In einer Testkarte wird eine sichtbare Größenstreuung geprüft (Stub-Maße).
 
-- [ ] 5. **Gewölbte Brücken** – `BoardBuilder`, `Grid`, Client-Overlays, `Config`
+- [x] 5. **Gewölbte Brücken** – `BoardBuilder`, `Grid`, Client-Overlays, `Config`
   - Für jede Querung (zusammenhängende `B`-Felder quer zum Fluss) **ein** `archbridge`-Modell, das von Ufer zu Ufer über die ganze Querung reicht. Ausrichtung je nach Flussrichtung; achte darauf, dass die Längsachse der Vorlage stimmt.
   - Unter der Brücke sieht man Wasser: `B`-Felder zeigen bei vorhandenem Modell Wasserboden statt Holzboden, die Wasserhöhe bleibt wie bei `W`.
   - **Figuren stehen auf dem Bogen:** Höhe pro `B`-Feld (und, falls die Brücke darauf aufliegt, pro Uferfeld), zum Beispiel einmalig beim Aufbau per Raycast auf das Brückenmodell gemessen oder aus einem Profil berechnet. Die Höhe muss Server **und** Client bekannt sein: Figurenposition, Bewegungs-Overlays, Auswahlring, Blob-Schatten (`UnitShadow`), Kampfkamera. Zentral über `Grid` lösen (zum Beispiel eine Höhenkorrektur pro Feld, die `toWorld` berücksichtigt), statt an jeder Stelle einzeln.
@@ -106,6 +106,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 5: `Grid.bridgeCrossings` erkennt zusammenhängende B-Querungen und ihre Längsachse. Originalpaket geprüft: `archbridge_1` ist 8,0 × 2,1277 × 2,2514 Studs, X-Längsachse ohne Rotation. Je Querung ein proportional skaliertes Modell mit 0,65 Feldern Uferüberstand; Wasserboden unter B-Feldern. Synchroner Include-Raycast entlang der Mitte misst Brücken- und bedeckte Uferfelder; danach alle Modelle wieder nicht abfragbar. Ist ein B-Feld nicht messbar, sichere bisherige Part-Brücke statt einer geratenen Fußhöhe. Absolute Feldhöhen zentral in Grid; Server-Snapshot überträgt sie vor Client-Markierungen/Tutorial. Damit profitieren Figuren, Overlays, Ringe, UnitShadow und Kampfkamera. Stub prüft 1/2 Felder, beide Achsen, Spannweite, Wasser, Ufer, Höhenübertragung und beide Fallbacks; check/test-run grün. ±0,3 Studs gegenüber Stub-Raycast bestätigt; reale Kollisionsoberfläche/Fußstellung bleibt Studio-Test. Messung: Mittel 1.747,3 / max. 2.062 Teile, geschätzt Mittel 326.872 / max. 568.430 Dreiecke, Aufbau 78,46 ms.
 
 - Schritt 4: Ein großer Fels plus 1–2 kleine je Bergfeld, freie Drehung und getrennte WIP-Größen; 1–2 Felsen je Klippenoberkante. `deco_stone` nutzt bei fehlender eigener Kategorie Felsvarianten in Steinchengröße. Größenstreuung/Klickbarkeit/Ersatz im Stub geprüft; check/test-run grün. Messung nach Schritt 4: 1.748,8 Teile im Mittel / max. 2.062, geschätzt 324.891 Dreiecke im Mittel / max. 568.430, Stub-Aufbau 74,03 ms (100 Seeds). Part-Fallback bleibt aktiv; neue Klippenfelsen erhöhen dessen Teilezahl leicht auf Mittel 1.852,9.
 

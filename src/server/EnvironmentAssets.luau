@@ -176,6 +176,8 @@ function EnvironmentAssets.place(category, cframe, opts)
 	local scale = math.min(height / size.Y, width / math.max(math.abs(math.cos(angle)) * size.X + math.abs(math.sin(angle)) * size.Z,
 			math.abs(math.sin(angle)) * size.X + math.abs(math.cos(angle)) * size.Z))
 		* random:NextNumber(1 - spread, 1 + spread) / (1 + spread)
+	-- Die Vorlage verläuft entlang X; jede Querung bekommt exakt ihre Spannweite.
+	if category == "archbridge" and opts.length then scale = opts.length * Config.TILE_SIZE / size.X end
 	model:ScaleTo(scale)
 	local box, scaledSize = model:GetBoundingBox()
 	local transform = cframe * CFrame.Angles(0, angle, 0) * CFrame.new(0, scaledSize.Y / 2, 0) * box:Inverse()

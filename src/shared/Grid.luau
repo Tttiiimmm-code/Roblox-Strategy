@@ -6,9 +6,19 @@ local Grid = {}
 
 local DIRS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 local map = { "." } -- aktuelle Karte (Zeilen aus Stages), wird per Grid.setMap gesetzt
+local heights = {}
 
 function Grid.setMap(rows)
 	map = rows
+	heights = {}
+end
+
+function Grid.setHeights(values)
+	heights = table.clone(values or {})
+end
+
+function Grid.getHeights()
+	return table.clone(heights)
 end
 
 function Grid.getMap()
@@ -40,8 +50,53 @@ end
 
 -- Mittelpunkt der Feld-Oberseite in Weltkoordinaten
 function Grid.tileHeight(x, y)
+	local override = heights[Grid.key(x, y)]
+	if override ~= nil then return override end
 	local terrain = Grid.terrainAt(x, y)
 	return terrain and terrain.height or 0
+end
+
+function Grid.bridgeCrossings()
+	local crossings, seen = {}, {}
+	local function char(x, y) return Grid.inBounds(x, y) and map[y]:sub(x, x) or "" end
+	for y = 1, Grid.height() do for x = 1, Grid.width() do
+		if char(x, y) ~= "B" or seen[Grid.key(x, y)] then continue end
+		local cells = { { x = x, y = y } }
+		local minX, maxX, minY, maxY = x, x, y, y
+		seen[Grid.key(x, y)] = true
+		local index = 1
+		while index <= #cells do
+			local cell = cells[index]; index += 1
+			for _, d in DIRS do
+				local nx, ny = cell.x + d[1], cell.y + d[2]
+				if char(nx, ny) == "B" and not seen[Grid.key(nx, ny)] then
+					seen[Grid.key(nx, ny)] = true
+					table.insert(cells, { x = nx, y = ny })
+					minX, maxX, minY, maxY = math.min(minX, nx), math.max(maxX, nx), math.min(minY, ny), math.max(maxY, ny)
+				end
+			end
+		end
+		local alongX = maxX - minX > maxY - minY
+		if maxX - minX == maxY - minY then
+			local sideX, sideY = 0, 0
+			for _, cell in cells do
+				for _, d in DIRS do
+					local ch = char(cell.x + d[1], cell.y + d[2])
+					if ch == "W" or ch == "D" then if d[1] ~= 0 then sideX += 1 else sideY += 1 end end
+				end
+			end
+			alongX = sideY > sideX
+		end
+		local banks = {}
+		if alongX then
+			for yy = minY, maxY do table.insert(banks, { x = minX - 1, y = yy }); table.insert(banks, { x = maxX + 1, y = yy }) end
+		else
+			for xx = minX, maxX do table.insert(banks, { x = xx, y = minY - 1 }); table.insert(banks, { x = xx, y = maxY + 1 }) end
+		end
+		table.insert(crossings, { cells = cells, banks = banks, x = (minX + maxX) / 2, y = (minY + maxY) / 2,
+			length = alongX and maxX - minX + 1 or maxY - minY + 1, alongX = alongX, angle = alongX and 0 or math.pi / 2 })
+	end end
+	return crossings
 end
 
 function Grid.toWorld(x, y)

@@ -82,6 +82,7 @@ local function snapshot()
 		ownerName = state.ownerName,
 		run = state.run,
 		map = state.map,
+		tileHeights = state.mode == "Battle" and Grid.getHeights() or {},
 		reinforcementMarks = state.reinforcementMarks,
 	}
 end

@@ -51,7 +51,22 @@ local models=Instance.new('Folder');models.Name='EnvironmentModels';models.Paren
 local game={GetService=function(_,k)return services[k]end}
 local workspace=Instance.new('Folder');workspace.Terrain={FillBlock=function()end,FillBall=function()end,SetMaterialColor=function()end}
 local RaycastParams={new=function()return {} end}
-function workspace:Raycast(v)return {Position=Vector3.new(v.X,0,v.Z)}end
+local bridgeRayMiss = false
+local bridgeSamples = {}
+function workspace:Raycast(v, _, params)
+	local model = params and params.FilterDescendantsInstances and params.FilterDescendantsInstances[1]
+	if model and model:GetAttribute("BridgeLength") then
+		if bridgeRayMiss then return nil end
+		local box, size = model:GetBoundingBox()
+		local delta = model:GetAttribute("BridgeAlongX") and v.X - box.Position.X or v.Z - box.Position.Z
+		local half = model:GetAttribute("BridgeLength") / 2
+		if math.abs(delta) > half then return nil end
+		local height = box.Position.Y - size.Y / 2 + size.Y * (1 - (delta / half) ^ 2)
+		table.insert(bridgeSamples, { x = v.X, z = v.Z, height = height })
+		return { Position = Vector3.new(v.X, height, v.Z) }
+	end
+	return { Position = Vector3.new(v.X, 0, v.Z) }
+end
 local modules={}
 local function require(m)return modules[m]end
 
