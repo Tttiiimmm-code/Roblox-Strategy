@@ -50,7 +50,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - Fallback ohne Varianten: bisherige Part-Bäume.
   - Fertig, wenn: Waldfelder wirken geschlossen; Teile/Dreiecke vorher/nachher in den Notizen.
 
-- [ ] 2. **Umriss für Figuren im Wald** – Client (Figuren-Darstellung, z. B. `UnitAnimator`), `Config`
+- [x] 2. **Umriss für Figuren im Wald** – Client (Figuren-Darstellung, z. B. `UnitAnimator`), `Config`
   - Figuren auf Waldfeldern bekommen einen `Highlight`-Umriss, der durch Bäume sichtbar ist (`DepthMode = AlwaysOnTop`, Füllung unsichtbar oder sehr schwach). Teamfarbe: Spieler blau, Gegner rot (Werte in Config). Dasselbe gilt für Figuren auf Feldern, die von Kronen verdeckt werden: das Feld direkt hinter einem Waldfeld aus Kamerasicht. Wie du diese Felder bestimmst, entscheidest du; nenne die Regel in den Notizen.
   - **Highlight-Budget:** Bestehende Highlights (Auswahl, Tutorial) dürfen nicht verdrängt werden. Begrenze die Wald-Umrisse auf einen Config-Wert (z. B. 20). Ist das Budget voll, haben die Figuren des Spielers Vorrang.
   - Der Umriss folgt Bewegung, Tod und Phasenwechsel: kein Umriss bleibt hängen.
@@ -104,11 +104,13 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
-- **09.10.2026, Codex – fehlendes Modellpaket:** `assets/environment/grasland_pack.rbxm` ist im Arbeitsverzeichnis nicht vorhanden, obwohl der Plan es als vorhanden beschreibt. Es gibt die Importanleitung und Credits, aber kein lokales Paket. Wird das exportierte Paket unter diesem Pfad bereitgestellt, oder darf ich die verbleibenden C2-Schritte zunächst ausschließlich mit maßhaltigen Stubs und Part-Fallbacks umsetzen? Die realen Meshes, Texturfärbung und Brückenoberflächen können so noch nicht geprüft werden. Arbeit nach Schritt 1 angehalten; `.handoff/status` = `frage`.
 
 ## Notizen (Codex)
+
+- Fortsetzung: Nutzer hat `grasland_pack.rbxm` bereitgestellt; offene Frage entfernt. Rojo liest einen Paketordner mit 20 Bäumen, 3 Büschen, 5 Wurzeln, 49 Felsen, 3 Blumen, Gras, Zaun und gewölbter Brücke ein.
+- Schritt 2: Waldumrisse zentral in `ForestOutlines`; maximal 20, Gesamtbudget 31 mit mindestens 8 reservierten Slots, zusätzliche fremde Highlights werden berücksichtigt. Spieler vor Gegnern, stabile Reihenfolge nach UnitId. Verdeckung: auf Wald oder direkt hinter Wald entlang der dominanten horizontalen Blickachse; dreht sich mit der Kamera. Bewegung anhand der aktuellen Root-Position, Tod anhand Hp/Todesanimation, Aufräumen bei Kampfende. Stub für Budget/Vorrang/Kameranachbar/Bewegung/Tod/Kampfende und test-run/check grün. Teile-/Dreieckzahl des Bretts unverändert, Umrisse sind keine Meshes.
 
 - Schritt 1: Mit Baumvarianten deterministisch 2–3 größere Bäume je Waldfeld und optional Busch/Wurzel. Eigene Waldgrößen in Config; Eck- und Randgrößen unverändert. Ohne Varianten weiterhin die ursprünglichen zwei Part-Bäume. Stub prüft Baumanzahl; alle bisherigen Brett-/Laufprüfungen grün. Darstellung in Studio/auf Handy ungetestet.
 - Messung Schritt 1, jeweils 100 Grünland-Seeds, 16×12 inklusive Rand, mit maßhaltigen Kategorie-Stubs: vorher 1.682,4 Teile im Mittel / max. 1.923, geschätzt 279.005 Dreiecke im Mittel / max. 457.530, Stub-Aufbau 69,07 ms; danach 1.755,9 Teile im Mittel / max. 2.068, geschätzt 330.515 Dreiecke im Mittel / max. 574.030, Stub-Aufbau 84,79 ms. Annahmen je Modell: Baum/Busch 1.500, Fels 800, Wurzel 500, Gras 300, Blume 350, Zaun 2.000 Dreiecke; primitive Teile separat geschätzt. Keine gemessenen Mesh-Dreieckzahlen, da das reale Paket fehlt. Die Schätzung überschreitet das Ziel; reale Dreiecke und Handy-Leistung müssen vor einer Leistungsfreigabe geprüft werden. Aufbauzeiten sind Stub-Zeiten ohne Roblox/Rendering/Asset-Download.
 
-- Schritt 0: Review von Claude-Commit 18698ea: Ordner-Pakete und lose Modelle korrekt, Namensfilter ignoriert unpassende Namen. Nicht klonbare MaterialVariants abgesichert. Neuer Lader-Stub gr?n; test-run gr?n. Ausgangswert ohne Paket, 100 Seeds: 1.848,6 Teile im Mittel, max. 2.305; Stub-Aufbau 61,65 ms im Mittel. Dreiecksch?tzung folgt mit den Kategorie-Stubs in Schritt 1/9.
+- Schritt 0: Review von Claude-Commit 18698ea: Ordner-Pakete und lose Modelle korrekt, Namensfilter ignoriert unpassende Namen. Nicht klonbare MaterialVariants abgesichert. Neuer Lader-Stub grün; test-run grün. Ausgangswert ohne Paket, 100 Seeds: 1.848,6 Teile im Mittel, max. 2.305; Stub-Aufbau 61,65 ms im Mittel. Dreieckschätzung folgt mit den Kategorie-Stubs in Schritt 1/9.

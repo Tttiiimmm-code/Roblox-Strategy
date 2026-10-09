@@ -146,7 +146,8 @@ function UnitVisuals.create(unit)
 end
 
 function UnitVisuals.setHp(id, hp, maxHp)
-	local _, root = getModel(id)
+	local model, root = getModel(id)
+	if model then model:SetAttribute("Hp", hp) end
 	if not root then
 		return
 	end

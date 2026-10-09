@@ -95,6 +95,12 @@ Config.FEEL = {
 
 Config.TILE_SIZE = 8
 
+Config.FOREST_OUTLINES = { -- WIP: Reserven für Tutorial/Auswahl/Kampfeffekte
+	maxCount = 20, totalBudget = 31, reserved = 8, updateInterval = 0.1,
+	fillTransparency = 1, outlineTransparency = 0,
+	colors = { Player = Color3.fromRGB(70, 155, 255), Enemy = Color3.fromRGB(255, 80, 70) },
+}
+
 -- Werte WIP: Bild-ID leer/nil = prozedurale Flecken; Seitenbilder sind unabhängig.
 Config.GROUND_TEXTURES = {
 	["."] = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
