@@ -178,7 +178,7 @@ local function setupBattle(stage, opts)
 	clearUnits()
 	Grid.setMap(stage.map)
 	local boardStart = os.clock()
-	BoardBuilder.build(stage.region)
+	BoardBuilder.build(stage.region, stage.features)
 	local board = workspace:FindFirstChild("Board")
 	if board then board:SetAttribute("RunSeed", opts.run and opts.run.seed) end
 	local boardDuration = os.clock() - boardStart

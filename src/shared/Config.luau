@@ -33,6 +33,10 @@ Config.FEEL = {
 	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.045, gridTransparency = 0.5,
 	gridSurfaceOffset = 0.005, gridShade = 0.3, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
 	surroundHeight = -0.4, waterTransparency = 0.18,
+	cliffSideShade = 0.42,
+	waterfallsEnabled = true, waterfallWidth = 0.62, waterfallThickness = 0.12,
+	waterfallColor = Color3.fromRGB(161, 207, 235), waterfallFoamColor = Color3.fromRGB(230, 242, 250),
+	waterfallTransparency = 0.15, waterfallFoamCount = 3, waterfallFoamSize = 0.65,
 	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,
 	hallWhite = Color3.fromRGB(225, 218, 205), hallMarble = Color3.fromRGB(205, 198, 186),
 	hoverSoundCooldown = 0.08,
@@ -161,6 +165,12 @@ Config.TERRAIN = {
 		name = "Berg", avoid = 30, def = 2,
 		cost = { foot = 4 },
 		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.SmoothPlastic,
+	},
+	C = {
+		height = 8, terrainMaterial = Enum.Material.Rock,
+		name = "Klippe", avoid = 0, def = 0,
+		cost = {},
+		color = Color3.fromRGB(99, 96, 91), material = Enum.Material.SmoothPlastic,
 	},
 	W = {
 		height = -1.2, terrainMaterial = Enum.Material.Water,

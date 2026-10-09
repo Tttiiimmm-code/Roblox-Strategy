@@ -40,6 +40,10 @@ RunConfig.ISLAND_CHANCE = 0.5
 RunConfig.POND_CHANCE = 0.35
 RunConfig.POND_COUNT = { min = 1, max = 2 }
 RunConfig.WATER_PLACEMENT_ATTEMPTS = 40
+RunConfig.CLIFF_CHANCE = 0.4
+RunConfig.CLIFF_WIDTH = { min = 2, max = 4 }
+RunConfig.CLIFF_HEIGHT = { min = 2, max = 3 }
+RunConfig.WATERFALL_CHANCE = 0.5
 RunConfig.RIVER_WIDTH = { min = 1, max = 2 }
 RunConfig.BRIDGES_MIN = 2
 RunConfig.BRIDGES_MAX = 3

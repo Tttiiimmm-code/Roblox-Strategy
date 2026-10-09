@@ -199,6 +199,35 @@ local function decorate(ch, x, y, parent, mapKey)
 	end
 end
 
+local function waterfall(feature, parent)
+	if not feature or not Config.FEEL.waterfallsEnabled then return end
+	local x, y = feature.x, feature.y
+	local nx, ny = x + feature.dx, y + feature.dy
+	if not Grid.inBounds(x, y) or not Grid.inBounds(nx, ny)
+		or Grid.getMap()[y]:sub(x, x) ~= "C" or Grid.getMap()[ny]:sub(nx, nx) ~= "W" then return end
+	local feel, T = Config.FEEL, Config.TILE_SIZE
+	local top, bottom = Grid.tileHeight(x, y), Grid.tileHeight(nx, ny)
+	local center = Grid.toWorld(x, y)
+	local normal = Vector3.new(feature.dx, 0, feature.dy)
+	local along = Vector3.new(-feature.dy, 0, feature.dx)
+	local edge = center + normal * (T / 2 + feel.waterfallThickness)
+	local width = T * feel.waterfallWidth
+	local horizontal = feature.dx ~= 0
+	deco({ Name = "WaterfallSource", Size = Vector3.new(horizontal and T or width, feel.waterfallThickness, horizontal and width or T),
+		Position = center + Vector3.new(0, feel.waterfallThickness / 2, 0), Color = feel.waterfallColor,
+		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
+	deco({ Name = "Waterfall", Size = Vector3.new(horizontal and feel.waterfallThickness or width, top - bottom, horizontal and width or feel.waterfallThickness),
+		Position = Vector3.new(edge.X, (top + bottom) / 2, edge.Z), Color = feel.waterfallColor,
+		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
+	for i = 1, feel.waterfallFoamCount do
+		local offset = (i - (feel.waterfallFoamCount + 1) / 2) * width / feel.waterfallFoamCount
+		deco({ Name = "WaterfallFoam", Shape = Enum.PartType.Ball,
+			Size = Vector3.new(feel.waterfallFoamSize * 2, feel.waterfallFoamSize, feel.waterfallFoamSize * 2),
+			Position = Vector3.new(edge.X, bottom + feel.waterfallFoamSize / 2, edge.Z) + along * offset + normal * feel.waterfallFoamSize,
+			Color = feel.waterfallFoamColor, Material = Enum.Material.SmoothPlastic }, parent)
+	end
+end
+
 -- Einmal anlegen und behalten: Clients halten eine Referenz auf diesen Ordner
 function BoardBuilder.ensureUnitsFolder()
 	local units = workspace:FindFirstChild("Units")
@@ -211,7 +240,7 @@ function BoardBuilder.ensureUnitsFolder()
 end
 
 -- Baut die aktuelle Karte aus Grid.getMap() (vorher Grid.setMap aufrufen)
-function BoardBuilder.build(regionId)
+function BoardBuilder.build(regionId, features)
 	local region = Stages.getRegion(regionId)
 	local treeColor = region and region.treeColor or Config.TERRAIN.F.color
 	for _, name in { "Baseplate", "SpawnLocation", "Board" } do
@@ -280,7 +309,7 @@ function BoardBuilder.build(regionId)
 			local width, length = (right - x + 1) * T, (bottom - y + 1) * T
 			local side = deco({ Name = "Side_" .. groundCount, Size = Vector3.new(width, Config.FEEL.groundDepth + height - cap, length),
 				Position = Vector3.new(cx, (height - cap - Config.FEEL.groundDepth) / 2, cz),
-				Color = color:Lerp(Color3.fromRGB(0, 0, 0), Config.FEEL.groundSideShade),
+				Color = color:Lerp(Color3.fromRGB(0, 0, 0), ch == "C" and Config.FEEL.cliffSideShade or Config.FEEL.groundSideShade),
 				Material = Enum.Material.SmoothPlastic }, ground)
 			local surface = deco({ Name = "Ground_" .. groundCount, Size = Vector3.new(width, cap, length),
 				Position = Vector3.new(cx, height - cap / 2, cz), Color = color,
@@ -353,6 +382,7 @@ function BoardBuilder.build(regionId)
 			deco({ Name = "OuterLeaves", Shape = Enum.PartType.Ball, Size = Vector3.new(11, 12, 11), Position = Vector3.new(x, top + 12, z), Color = treeColor, Material = Enum.Material.Grass }, board)
 		end
 	end
+	waterfall(features and features.waterfall, board)
 	board.Parent = workspace
 	return board
 end

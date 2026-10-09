@@ -139,12 +139,32 @@ local function validateLakes(stage, floods)
 	end
 end
 
+local function validateCliffs(stage)
+	local features = stage.features or {}
+	if features.cliffs then
+		assert(#features.cliffs.cells >= 2, "Einzelklippe")
+		for _, cell in ipairs(features.cliffs.cells) do
+			assert(charAt(stage.map, cell.x, cell.y) == "C", "Klippe überschrieben")
+			assert(cell.y < RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS, "Klippe in/an Startzone")
+			assert(not canWalk(stage.map, cell.x, cell.y), "Klippe passierbar")
+		end
+	end
+	if features.waterfall then
+		local fall = features.waterfall
+		assert(fall.x == 1 or fall.x == RunConfig.BOARD_WIDTH or fall.y == 1, "Wasserfall nicht am Rand")
+		assert(math.abs(fall.dx) + math.abs(fall.dy) == 1, "Wasserfallrichtung")
+		assert(charAt(stage.map, fall.x, fall.y) == "C", "Wasserfall ohne Klippe")
+		assert(charAt(stage.map, fall.x + fall.dx, fall.y + fall.dy) == "W", "Wasserfall ohne Wasser")
+		assert(features.river, "Wasserfall ohne Quellfluss")
+	end
+end
+
 local function validate(stage, themeId, depth, teamSize)
 	assert(#stage.map == RunConfig.BOARD_HEIGHT, "Kartenhöhe")
 	local blocked = 0
 	for _, row in ipairs(stage.map) do
 		assert(#row == RunConfig.BOARD_WIDTH, "Kartenbreite")
-		assert(not string.find(row, "[^.FMW HB]"), "Unbekanntes Gelände")
+		assert(not string.find(row, "[^.FMW HBC]"), "Unbekanntes Gelände")
 		assert(not string.find(row, " "), "Leerzeichen im Gelände")
 		for x = 1, #row do
 			if not Config.TERRAIN[string.sub(row, x, x)].cost.foot then blocked += 1 end
@@ -186,6 +206,7 @@ local function validate(stage, themeId, depth, teamSize)
 	assert(math.abs(focusCount - #stage.enemies * theme.share) < 1, "Schwerpunktanteil")
 	if validateRiver(stage) then riverChecks += 1 end
 	validateLakes(stage, floods)
+	validateCliffs(stage)
 end
 
 for region, chunks in pairs(testModules.MapChunks) do
@@ -211,10 +232,13 @@ end
 
 local maps, uniqueMaps, terrainCells, sampleRivers = {}, 0, 0, 0
 local sampleLakes, sampleIslands, samplePonds = 0, 0, 0
+local sampleCliffs, sampleFalls = 0, 0
 for seed = 1, 200 do
 	local sample = LevelGen.generate(seed, "greenland", 1, "axe", RunConfig.START_TEAM)
 	local id = table.concat(sample.map, "/")
 	if not maps[id] then maps[id] = true; uniqueMaps += 1 end
+	if sample.features and sample.features.cliffs then sampleCliffs += 1 end
+	if sample.features and sample.features.waterfall then sampleFalls += 1 end
 	local hasRiver = sample.features and sample.features.river ~= nil
 	if sample.features and sample.features.lake then
 		sampleLakes += 1
@@ -270,7 +294,8 @@ assert(bridgeCounts[2] and bridgeCounts[3] and riverWidths[1] and riverWidths[2]
 
 -- Ohne Fluss müssen alle gespiegelten Nachbarn exakt gleiche Anschlussprofile haben.
 local chance = RunConfig.RIVER_CHANCE
-local lakeChance, pondChance = RunConfig.LAKE_CHANCE, RunConfig.POND_CHANCE
+local lakeChance, pondChance, cliffChance = RunConfig.LAKE_CHANCE, RunConfig.POND_CHANCE, RunConfig.CLIFF_CHANCE
+RunConfig.CLIFF_CHANCE = 0
 RunConfig.LAKE_CHANCE, RunConfig.POND_CHANCE = 0, 0
 RunConfig.RIVER_CHANCE = 0
 local forestJoins, rockJoins = 0, 0
@@ -300,6 +325,7 @@ for _, seed in ipairs({ 0, -1, 2147483646, 987654321 }) do
 end
 RunConfig.RIVER_CHANCE = chance
 RunConfig.LAKE_CHANCE, RunConfig.POND_CHANCE = lakeChance, pondChance
+RunConfig.CLIFF_CHANCE = cliffChance
 
 local attempts = RunConfig.MAX_ATTEMPTS
 RunConfig.MAX_ATTEMPTS = 0
@@ -311,6 +337,8 @@ print(string.format("OK: %d Levelpruefungen, 1000 Optionspruefungen; Rueckfall-L
 print(string.format("Vielfalt: %d/200 verschiedene Karten; Gelaendeanteil %.2f%%; Flussquote %.2f%%; %d Flusspruefungen; Anschluesse Wald/Fels: %d/%d.", uniqueMaps, terrainCells / (200 * RunConfig.BOARD_WIDTH * RunConfig.BOARD_HEIGHT) * 100, sampleRivers / 2, riverChecks, forestJoins, rockJoins))
 
 print(string.format("Wasser: Seen %.2f%%; Inselkarten %.2f%%; Teiche %.2f%%.", sampleLakes / 2, sampleIslands / 2, samplePonds / 2))
+
+print(string.format("Hoehen: Klippen %.2f%%; Wasserfall %.2f%%.", sampleCliffs / 2, sampleFalls / 2))
 
 local bossChecks = 0
 for seed = 1, 200 do

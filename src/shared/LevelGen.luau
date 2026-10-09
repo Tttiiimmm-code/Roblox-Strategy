@@ -244,6 +244,48 @@ local function ponds(map, random, reserved)
 	return result
 end
 
+local function cliffs(map, random, riverFeature, reserved, withWaterfall)
+	local lastRow = RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS - 1
+	local waterfall
+	if withWaterfall and riverFeature then
+		local bank = riverFeature.banks[1]
+		local cells = {}
+		local valid = true
+		for y = math.max(1, bank.first - 2), bank.first - 1 do
+			for x = 1, 2 do
+				if reserved[key(x, y)] or map[y]:sub(x, x) == "W" or map[y]:sub(x, x) == "B" then valid = false end
+				table.insert(cells, { x = x, y = y })
+			end
+		end
+		if valid then
+			for _, cell in ipairs(cells) do setCell(map, cell.x, cell.y, "C") end
+			waterfall = { x = 1, y = bank.first - 1, dx = 0, dy = 1 }
+			return { cells = cells }, waterfall
+		end
+	end
+	for _ = 1, RunConfig.WATER_PLACEMENT_ATTEMPTS do
+		local width = random(RunConfig.CLIFF_WIDTH.min, RunConfig.CLIFF_WIDTH.max)
+		local height = random(RunConfig.CLIFF_HEIGHT.min, RunConfig.CLIFF_HEIGHT.max)
+		local edge = random(1, 3)
+		local left = edge == 1 and 1 or edge == 2 and RunConfig.BOARD_WIDTH - width + 1
+			or random(1, RunConfig.BOARD_WIDTH - width + 1)
+		local top = edge == 3 and 1 or random(1, lastRow - height + 1)
+		local cells, valid = {}, true
+		for y = top, top + height - 1 do
+			for x = left, left + width - 1 do
+				local char = map[y]:sub(x, x)
+				if reserved[key(x, y)] or char == "W" or char == "B" then valid = false end
+				table.insert(cells, { x = x, y = y })
+			end
+		end
+		if valid then
+			for _, cell in ipairs(cells) do setCell(map, cell.x, cell.y, "C") end
+			return { cells = cells }, nil
+		end
+	end
+	return nil, nil
+end
+
 local function populate(map, regionId, depth, themeId, teamSize, random)
 	local starts, forestStarts = {}, {}
 	local blocked = 0
@@ -355,6 +397,8 @@ function LevelGen.generate(seed, regionId, depth, themeId, teamSize, levelKind)
 	local withRiver = featuresRandom(1, 10000) <= RunConfig.RIVER_CHANCE * 10000
 	local withLake = featuresRandom(1, 10000) <= RunConfig.LAKE_CHANCE * 10000
 	local withPonds = featuresRandom(1, 10000) <= RunConfig.POND_CHANCE * 10000
+	local withCliffs = featuresRandom(1, 10000) <= RunConfig.CLIFF_CHANCE * 10000
+	local withWaterfall = featuresRandom(1, 10000) <= RunConfig.WATERFALL_CHANCE * 10000
 	for attempt = 1, RunConfig.MAX_ATTEMPTS do
 		local random = randomSource(seed + (attempt - 1) * 7919)
 		local map = compose(regionId, random)
@@ -368,6 +412,10 @@ function LevelGen.generate(seed, regionId, depth, themeId, teamSize, levelKind)
 			if not features.lake then continue end
 		end
 		if withPonds then features.ponds = ponds(map, random, reserved) end
+		if withCliffs then
+			features.cliffs, features.waterfall = cliffs(map, random, features.river, reserved, withWaterfall)
+			if not features.cliffs then continue end
+		end
 		local stage = populate(map, regionId, depth, themeId, teamSize, random)
 		if stage then
 			stage.features = features
