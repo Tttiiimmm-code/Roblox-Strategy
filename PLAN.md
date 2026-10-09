@@ -43,7 +43,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 - [x] 0. **Review der Lader-Änderung von Claude** (Commit 18698ea, `EnvironmentAssets.variants`): Ordner-Pakete werden durchsucht, und MaterialVariants landen im MaterialService. Befunde unter Notizen festhalten und kleine Fehler direkt beheben. Ergänze einen Test: Paket-Ordner mit `tree_1`/`tree_2` und ein loses `rock_1` werden erkannt, Namen ohne Muster werden ignoriert.
 
-- [ ] 1. **Dichter Wald** – `BoardBuilder.decorate` (Fall `F`), `Config.ENVIRONMENT`
+- [x] 1. **Dichter Wald** – `BoardBuilder.decorate` (Fall `F`), `Config.ENVIRONMENT`
   - Pro Waldfeld **2–3 Bäume** (WIP `treesPerForestTile = {min = 2, max = 3}`). Die Positionen werden deterministisch im Feld gestreut, Kronen dürfen in Nachbarfelder ragen. Baumgröße deutlich größer als bisher (WIP etwa 1,0–1,4 Felder hoch und 0,6–0,9 Felder breit), mit Größenstreuung.
   - Dazu mit WIP-Wahrscheinlichkeit ein Busch (`bush`) oder eine Wurzel (`deco_root`) am Feldrand.
   - Eigene Platzierungsgrößen für Baum/Busch/Wurzel im Wald, damit Eck-Deko und Umgebungsrand (`outer`) ihre eigenen Werte behalten.
@@ -104,6 +104,11 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
+- **09.10.2026, Codex – fehlendes Modellpaket:** `assets/environment/grasland_pack.rbxm` ist im Arbeitsverzeichnis nicht vorhanden, obwohl der Plan es als vorhanden beschreibt. Es gibt die Importanleitung und Credits, aber kein lokales Paket. Wird das exportierte Paket unter diesem Pfad bereitgestellt, oder darf ich die verbleibenden C2-Schritte zunächst ausschließlich mit maßhaltigen Stubs und Part-Fallbacks umsetzen? Die realen Meshes, Texturfärbung und Brückenoberflächen können so noch nicht geprüft werden. Arbeit nach Schritt 1 angehalten; `.handoff/status` = `frage`.
+
 ## Notizen (Codex)
+
+- Schritt 1: Mit Baumvarianten deterministisch 2–3 größere Bäume je Waldfeld und optional Busch/Wurzel. Eigene Waldgrößen in Config; Eck- und Randgrößen unverändert. Ohne Varianten weiterhin die ursprünglichen zwei Part-Bäume. Stub prüft Baumanzahl; alle bisherigen Brett-/Laufprüfungen grün. Darstellung in Studio/auf Handy ungetestet.
+- Messung Schritt 1, jeweils 100 Grünland-Seeds, 16×12 inklusive Rand, mit maßhaltigen Kategorie-Stubs: vorher 1.682,4 Teile im Mittel / max. 1.923, geschätzt 279.005 Dreiecke im Mittel / max. 457.530, Stub-Aufbau 69,07 ms; danach 1.755,9 Teile im Mittel / max. 2.068, geschätzt 330.515 Dreiecke im Mittel / max. 574.030, Stub-Aufbau 84,79 ms. Annahmen je Modell: Baum/Busch 1.500, Fels 800, Wurzel 500, Gras 300, Blume 350, Zaun 2.000 Dreiecke; primitive Teile separat geschätzt. Keine gemessenen Mesh-Dreieckzahlen, da das reale Paket fehlt. Die Schätzung überschreitet das Ziel; reale Dreiecke und Handy-Leistung müssen vor einer Leistungsfreigabe geprüft werden. Aufbauzeiten sind Stub-Zeiten ohne Roblox/Rendering/Asset-Download.
 
 - Schritt 0: Review von Claude-Commit 18698ea: Ordner-Pakete und lose Modelle korrekt, Namensfilter ignoriert unpassende Namen. Nicht klonbare MaterialVariants abgesichert. Neuer Lader-Stub gr?n; test-run gr?n. Ausgangswert ohne Paket, 100 Seeds: 1.848,6 Teile im Mittel, max. 2.305; Stub-Aufbau 61,65 ms im Mittel. Dreiecksch?tzung folgt mit den Kategorie-Stubs in Schritt 1/9.

@@ -117,11 +117,18 @@ Config.GROUND_FLECKS = {
 Config.ENVIRONMENT = {
 	sizeVariation = 0.1, shadowHeight = 0.6,
 	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
+	treesPerForestTile = { min = 2, max = 3 }, -- WIP: dichter Wald
+	forest = {
+		treeHeight = { min = 1, max = 1.4 }, treeWidth = { min = 0.6, max = 0.9 },
+		bush = { height = 0.3, width = 0.45 }, deco_root = { height = 0.2, width = 0.5 },
+		understoryChance = 0.55, positionJitter = 0.1,
+	},
 	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
 	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
 	categories = {
 		tree = { height = 0.55, width = 0.22, rotation = "free" },
 		bush = { height = 0.16, width = 0.2, rotation = "free" },
+		deco_root = { height = 0.2, width = 0.4, rotation = "free" },
 		rock = { height = 0.28, width = 0.22, rotation = "quarter" },
 		fortress = { height = 0.38, width = 0.2, rotation = "quarter" },
 		bridge = { height = 0.16, width = 1, rotation = "none" },

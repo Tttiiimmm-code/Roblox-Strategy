@@ -121,6 +121,29 @@ local function decorate(ch, x, y, parent, mapKey)
 	local key = mapKey .. ":" .. Grid.key(x, y)
 	local category = Config.ENVIRONMENT.terrainCategories[ch]
 	if ch == "F" then
+		if #EnvironmentAssets.variants("tree") > 0 then
+			local random = Random.new(hash(key .. ":forest"))
+			local settings = Config.ENVIRONMENT.forest
+			local range = Config.ENVIRONMENT.treesPerForestTile
+			local count = random:NextInteger(range.min, range.max)
+			local startAngle = random:NextNumber(0, math.pi * 2)
+			for i = 1, count do
+				local angle = startAngle + (i - 1) * math.pi * 2 / count
+				local jitter = settings.positionJitter * Config.TILE_SIZE
+				local off = Vector3.new(math.cos(angle) * c + random:NextNumber(-jitter, jitter), 0,
+					math.sin(angle) * c + random:NextNumber(-jitter, jitter))
+				place("tree", center + off, parent, key .. ":tree:" .. i, {
+					height = random:NextNumber(settings.treeHeight.min, settings.treeHeight.max),
+					width = random:NextNumber(settings.treeWidth.min, settings.treeWidth.max),
+				})
+			end
+			if random:NextNumber(0, 1) < settings.understoryChance then
+				local kind = random:NextInteger(0, 1) == 0 and "bush" or "deco_root"
+				if #EnvironmentAssets.variants(kind) == 0 then kind = kind == "bush" and "deco_root" or "bush" end
+				place(kind, center + Vector3.new(c, 0, -c), parent, key .. ":understory", settings[kind])
+			end
+			return
+		end
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, c) } do
 			local base = center + off
 			if place(category, base, parent, key .. tostring(off)) then continue end

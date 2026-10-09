@@ -36,7 +36,7 @@ methods.WaitForChild=methods.FindFirstChild
 function methods:Destroy()self.Parent=nil;self._children={}end
 function methods:SetAttribute(k,v)self._attrs[k]=v end
 function methods:GetAttribute(k)return self._attrs[k]end
-function methods:Clone()if not self.Archivable then return nil end local c=Instance.new(self.ClassName);for k,v in self._props do c[k]=v end;c.CFrame=self.CFrame;c._pivot=self._pivot;for _,ch in self._children do local cp=ch:Clone();if cp then cp.Parent=c end end;return c end
+function methods:Clone()if not self.Archivable then return nil end local c=Instance.new(self.ClassName);for k,v in self._props do c[k]=v end;c.CFrame=self.CFrame;c._pivot=self._pivot;c._attrs=table.clone(self._attrs);for _,ch in self._children do local cp=ch:Clone();if cp then cp.Parent=c end end;return c end
 function methods:GetPivot()return self._pivot end
 function methods:GetBoundingBox()
  local lo=Vector3.new(math.huge,math.huge,math.huge);local hi=Vector3.new(-math.huge,-math.huge,-math.huge)
