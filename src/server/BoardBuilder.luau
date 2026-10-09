@@ -261,34 +261,40 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 				CFrame = CFrame.new(center + off) * CFrame.Angles(math.rad(15), 0, math.rad(65)),
 				Color = Color3.fromRGB(55, 45, 35), Material = Enum.Material.Wood }, parent)
 		end
-	elseif ch == "M" then
-		local corner = Config.TILE_SIZE / 2 - Config.ENVIRONMENT.rocks.centerEdgeInset
-		if #EnvironmentAssets.variants("rock") > 0 then
-			local random = Random.new(hash(key .. ":rocks"))
-			local settings = Config.ENVIRONMENT.rocks
-			local offsets = { Vector3.new(-corner, 0, -corner), Vector3.new(corner, 0, corner), Vector3.new(corner, 0, -corner) }
-			local smallCount = random:NextNumber(0, 1) < settings.secondSmallChance and settings.smallCount.max or settings.smallCount.min
-			for i = 1, 1 + smallCount do
-				local span = i == 1 and settings.largeScale or settings.smallScale
-				local scale = random:NextNumber(span.min, span.max)
-				local asset = place("rock", center + offsets[i], parent, key .. ":rock:" .. i, {
-					height = settings.mountain.height * scale,
-					width = math.min(settings.mountain.width, (corner - settings.centerClearance) * 2 / Config.TILE_SIZE) * math.min(scale, 1), rotationMode = "free",
-				})
-				if asset then asset:SetAttribute("TopRockX", x); asset:SetAttribute("TopRockY", y) end
-			end
-			return
-		end
-	elseif ch == "C" then
-		local random = Random.new(hash(key .. ":cliff"))
+	elseif ch == "M" or ch == "C" then
 		local settings = Config.ENVIRONMENT.rocks
-		for i = 1, random:NextInteger(settings.cliffCount.min, settings.cliffCount.max) do
-			local base = center + Vector3.new(i == 1 and -c or c, 0, -c)
-			local height = LandscapeBuilder.surface(landscape, base.X, base.Z)
-			base = Vector3.new(base.X, height, base.Z)
-			place("rock", base, parent, key .. ":cliff:" .. i, {
-				height = settings.cliff.height, width = settings.cliff.width, rotationMode = "free",
+		local random = Random.new(hash(key .. ":rocks"))
+		local count = ch == "M" and (1 + random:NextInteger(settings.smallCount.min, settings.smallCount.max))
+			or random:NextInteger(settings.cliffCount.min, settings.cliffCount.max)
+		local corner = Config.TILE_SIZE / 2 - settings.centerEdgeInset
+		for i = 1, count do
+			local base = center + Vector3.new(i % 2 == 1 and -corner or corner, 0, -corner)
+			local limits = ch == "M" and settings.mountain or settings.cliff
+			local scale = random:NextNumber(settings.largeScale.min, settings.largeScale.max)
+			local asset = place("rock", base, parent, key .. ":rock:" .. i, {
+				height = limits.height * scale, width = limits.width * scale, rotationMode = "free",
 			})
+			if not asset then continue end
+			local box, size = asset:GetBoundingBox()
+			local surface, valid = math.huge, true
+			-- Niedrigste Auflage unter dem Modell: auch auf schrägen Klippen kein Schweben.
+			for _, dx in { -1, 0, 1 } do for _, dz in { -1, 0, 1 } do
+				local height = LandscapeBuilder.groundHeight(landscape, box.Position.X + dx * size.X / 2, box.Position.Z + dz * size.Z / 2)
+				if height then surface = math.min(surface, height) else valid = false end
+			end end
+			if not valid then asset:Destroy(); continue end
+			local offset = surface - settings.surfaceSink - (box.Position.Y - size.Y / 2)
+			asset:PivotTo(CFrame.new(0, offset, 0) * asset:GetPivot())
+			local material = ch == "M" and landscape.palette.rock or landscape.palette.slate
+			for _, part in asset:GetDescendants() do if part:IsA("BasePart") then
+				part.Material, part.Color = material, landscape.palette.colors[material]
+				part.MaterialVariant = ""
+				if part:IsA("MeshPart") then part.TextureID = "" end
+				local appearance = part:FindFirstChildOfClass("SurfaceAppearance")
+				if appearance then appearance:Destroy() end
+			end end
+			asset:SetAttribute("TopRockX", x); asset:SetAttribute("TopRockY", y)
+			asset:SetAttribute("RockSurface", surface)
 		end
 	elseif ch == "B" then
 		if bridgeTiles[Grid.key(x, y)] then return end

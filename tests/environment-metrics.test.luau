@@ -68,7 +68,7 @@ do
 			end
 		end
 	end
-	expect(count >= 12 and maxWidth / minWidth > 1.7, "Felsen ohne sichtbare Größenstreuung")
+	expect(count >= 4 and count <= 8 and maxWidth / minWidth > 1.05, "Felsen nicht reduziert oder ohne Größenstreuung")
 	local stone = Assets.place("deco_stone", CFrame.new(), { key = "Steinchen", parent = workspace })
 	local _, size = stone:GetBoundingBox()
 	expect(size.X <= Config.ENVIRONMENT.categories.deco_stone.width * Config.TILE_SIZE * 1.01, "Felsersatz ist kein Steinchen")

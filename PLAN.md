@@ -33,7 +33,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
   - `GROUND_TEXTURES` mit eigener Bild-ID hat weiterhin Vorrang (spätere Nutzertexturen).
   - Fertig, wenn: Stub prüft Material/Farbe pro Gelände aus der Regionspalette und den Vorrang von `GROUND_TEXTURES`.
 
-- [ ] 3. **Saubere Felshügel** – `LandscapeBuilder.surface` (`M`/`C`), `BoardBuilder` (Standkappen, Felsmodelle an `M`/`C`), `Config.LANDSCAPE.rockFields`, `ENVIRONMENT.rocks`
+- [x] 3. **Saubere Felshügel** – `LandscapeBuilder.surface` (`M`/`C`), `BoardBuilder` (Standkappen, Felsmodelle an `M`/`C`), `Config.LANDSCAPE.rockFields`, `ENVIRONMENT.rocks`
   - **Keine clippenden Füße:** Die *gerenderte* Terrain-Oberfläche auf `M`-Feldern liegt im Standbereich unter der Figuren-/Overlayhöhe. Achtung: Roblox-Smooth-Terrain glättet zwischen 4-Stud-Voxeln und kann dadurch über die Belegungshöhe hinausragen; dafür Sicherheitsabstand einplanen. Alternative: Die Standhöhe der Figur auf `M` an die sichtbare Felsoberfläche anpassen (zentral über `Grid`-Höhen wie bei Brücken). Wähle die robustere Variante und begründe sie.
   - **Nachbarfelder frei:** Der Felshügel bleibt innerhalb der `M`/`C`-Felder (plus höchstens kleinem Überhang unterhalb der Overlayhöhe). Overlays und Zielfelder auf Nachbarfeldern werden nicht verdeckt.
   - **Kleine Steine:** keine schwebenden Steine. Platzierung auf der tatsächlichen Hügeloberfläche (z. B. Höhe aus `LandscapeBuilder.surface`), leicht eingesunken. Deutlich weniger (WIP), und eingefärbt bzw. abgestimmt auf Farbe und Material des Terrain-Felsens (Rock/Slate-Palette). Wirkt ein Paketfels neben dem glatten Terrain zu detailreich, lieber größere, ruhigere Felsen oder gar keine.
@@ -87,3 +87,9 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
 - Roblox-Materialien und gemeinsame Regionspalette für Wiese/Wald, Morast, Fels und Festung; Wald 10 % dunkler. Bestehende Regionsmaterialien (Snow/Ground) bleiben wirksam. Brückenholz und Wasserfarbe erhalten.
 - Zurückhaltende WIP-Variante: prozedurale Bodenflecken per `GROUND_FLECKS.enabled = false` abgeschaltet, um Materialdetails ruhig zu halten. Sandfarbe gedämpft und Material Ground; Ufergeometrie unverändert. Eigene `GROUND_TEXTURES` bleiben sichtbar und unterdrücken auch bei eingeschalteten Flecken deren Erzeugung.
 - `check.ps1` und `test-run.ps1` OK. Neue Prüfung aller vier Regionen/Geländearten und Texturvorrang. 100 gleiche Paket-Seeds nach Schritt 2: Teile Mittel 1303,4 / Max 1401; Dreiecke Mittel 270569 / Max 364224 (vorher 1657,3 / 1787 und 273495 / 367368). Studio ungetestet.
+
+### Schritt 3
+- Robustere Variante: Spiel-/Overlayhöhen unverändert, M-Terrain mit 2 Studs Glättungsreserve (halber Voxel) plus 0,15 Studs Abstand abgesenkt. Rock-Standkappen reichen bis zur Basis, damit kein Luftspalt unter der Figurenplattform bleibt; gleiche regionale Felsfarbe.
+- Zurückhaltende WIP-Details: ein kleiner Fels auf M, 0–1 auf C, keine kleinen Begleiter. Gedrehte Bounding-Box innerhalb des Felds und außerhalb der M-Figurenmitte. 9 Terrain-Raycast-Auflagen je Detail; niedrigste Auflage minus 0,2 Studs Einsinken. Bei fehlender Auflage Detail weglassen. Felsmaterial/Farbe aus Palette; Paket-Oberflächentextur entfernt, damit der Fels zum Terrain passt.
+- Stub prüft Reserve, Standhöhen, fehlende Belegung in Nachbarfeldern, eingefasste Detailboxen, Auflage, Farbe und geringere Anzahl. Reales Smooth-Terrain-Meshing wird nicht simuliert; Studio-Prüfung bleibt offen.
+- `check.ps1` und `test-run.ps1` OK. 100 Paket-Seeds Schritt 2 → 3: Teile Mittel 1303,4 → 1270,2 (Max 1401 → 1394), Dreiecke 270569 → 243945 (Max 364224 → 349824). Terrain-Dreiecke nicht enthalten.

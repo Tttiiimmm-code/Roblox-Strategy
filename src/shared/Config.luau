@@ -172,10 +172,10 @@ Config.ENVIRONMENT = {
 		secondTreeChance = 0.35, singleTreeOffset = 0.22, understoryChance = 0.2, positionJitter = 0.1, -- WIP: Mengen für Handy-Budget
 	},
 	rocks = { -- WIP: große Felsen und kleine Begleiter
-		centerClearance = 2.3, centerEdgeInset = 0.2,
-		mountain = { height = 0.85, width = 0.65 }, largeScale = { min = 1, max = 1.6 },
-		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 }, secondSmallChance = 0.35,
-		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
+		centerClearance = 2.3, centerEdgeInset = 0.8, surfaceSink = 0.2,
+		mountain = { height = 0.2, width = 0.175 }, largeScale = { min = 0.8, max = 1 },
+		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 0, max = 0 }, secondSmallChance = 0,
+		cliff = { height = 0.2, width = 0.175 }, cliffCount = { min = 0, max = 1 },
 
 	},
 	estimatedTriangleBudget = 350000, -- WIP: C3 inklusive dichtem Rand; Ferne aus günstigen Parts
@@ -202,7 +202,7 @@ Config.ENVIRONMENT = {
 -- WIP: Distanzen in Feldern, Höhen/Skalen in Studs; Terrainauflösung von Roblox fest vorgegeben.
 Config.LANDSCAPE = {
 	resolution = 4, chunkCells = 32, viewSafetyTiles = 2, sculptDistance = 18,
-	rockFields = { standWidth = 0.55, standThickness = 0.4, surfaceInset = 0.15, mountainRoughness = 0.12, roughnessScale = 7,
+	rockFields = { standWidth = 0.55, standThickness = 4, surfaceInset = 0.15, smoothingReserve = 2, mountainRoughness = 0.12, roughnessScale = 7,
 		cliffRoughness = 3, cliffScale = 5, grassChance = 0.16 }, -- Standkappen glätten die grobe Voxelauflösung.
 	hubHalfWidth = 80, hubHalfDepth = 100, foundationTop = -4,
 	rimWidth = 1.5, hillRise = 7, hillHeight = 28, valleyFloor = 0.2,

@@ -75,7 +75,7 @@ function LandscapeBuilder.surface(state, x, z)
 		if ch == "M" then
 			-- Gemeinsame Voxeloberfläche verschmilzt auch über M-Feldgrenzen.
 			local wave = (math.sin(x / settings.roughnessScale + state.phase) * math.cos(z / settings.roughnessScale - state.phase) + 1) / 2
-			return Config.TERRAIN.M.height - settings.surfaceInset - wave * settings.mountainRoughness,
+			return Config.TERRAIN.M.height - settings.smoothingReserve - settings.surfaceInset - wave * settings.mountainRoughness,
 				wave < settings.grassChance and state.palette.grass or state.palette.rock
 		end
 		local wave = (math.sin(x / settings.cliffScale + state.phase) * math.sin(z / settings.cliffScale - state.phase) + 1) / 2
@@ -106,6 +106,19 @@ function LandscapeBuilder.surface(state, x, z)
 	local material = height > s.rockHeight and (detail > s.slateThreshold and state.palette.slate or state.palette.rock)
 		or (broad < s.groundThreshold and state.palette.ground or state.palette.grass)
 	return height, material
+end
+
+-- Detailunterkante auf dem von Roblox gerenderten Terrain, nicht nur der Sollhöhe.
+function LandscapeBuilder.groundHeight(state, x, z)
+	local height = LandscapeBuilder.surface(state, x, z)
+	if not height then return nil end
+	local reserve = Config.LANDSCAPE.resolution
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace.Terrain }
+	local top = height + reserve
+	local hit = workspace:Raycast(Vector3.new(x, top, z), Vector3.new(0, -Config.FEEL.terrainDepth - top - reserve, 0), params)
+	return hit and hit.Position.Y
 end
 
 local function writeSurface(state, rect, stats)

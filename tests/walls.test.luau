@@ -13,6 +13,15 @@ local function validateWalls(withPackage)
 		if asset:GetAttribute("TopRockX") then
 			local box, size = asset:GetBoundingBox()
 			table.insert(rocks, { box.Position, size })
+			local surface = asset:GetAttribute("RockSurface")
+			expect(surface and math.abs(box.Position.Y - size.Y/2 - surface + Config.ENVIRONMENT.rocks.surfaceSink) < 0.001, "Fels schwebt")
+			local rx, ry = asset:GetAttribute("TopRockX"), asset:GetAttribute("TopRockY")
+			expect(box.Position.X-size.X/2 >= (rx-1)*Config.TILE_SIZE and box.Position.X+size.X/2 <= rx*Config.TILE_SIZE
+				and box.Position.Z-size.Z/2 >= (ry-1)*Config.TILE_SIZE and box.Position.Z+size.Z/2 <= ry*Config.TILE_SIZE, "Felsdetail verdeckt Nachbarfeld")
+			local ch = Grid.getMap()[ry]:sub(rx,rx)
+			local palette = modules.Stages.getRegion("greenland").landscape
+			local material = ch=="M" and palette.rock or palette.slate
+			for _, p in asset:GetDescendants() do if p:IsA("BasePart") then expect(p.Material==material and p.Color==palette.colors[material], "Felsfarbe/Material") end end
 		end
 		if asset.Name == "Waterfall" then
 			expect(asset.Position.Y + asset.Size.Y / 2 == Config.TERRAIN.C.height, "Wasserfall nicht an Klippenoberkante")
@@ -28,10 +37,10 @@ local function validateWalls(withPackage)
 		if ch == "M" then
 			local stand = stands[Grid.key(x, y)]
 			expect(stand and stand.Position.Y + stand.Size.Y / 2 == center.Y, "Ebene Standfläche fehlt")
-			expect(height and height <= center.Y and height >= center.Y - 0.3, "Terrain-Bergmitte nicht in Feldhöhe")
+			expect(height and height + Config.LANDSCAPE.rockFields.smoothingReserve < center.Y, "Terrain-Bergmitte nicht in Feldhöhe")
 			for _, dx in { -2, 0, 2 } do for _, dz in { -2, 0, 2 } do
 				local top = terrainHeightAt(center.X + dx, center.Z + dz)
-				expect(top and top <= center.Y, "Terrain durchdringt Overlay auf M")
+				expect(top and top + Config.LANDSCAPE.rockFields.smoothingReserve < center.Y, "Terrain durchdringt Overlay auf M")
 			end end
 			for _, rock in rocks do
 				local p, size = rock[1], rock[2]
@@ -49,6 +58,16 @@ local function validateWalls(withPackage)
 		"Zusammenhängender M-Hügel an Feldgrenze unterbrochen")
 	local top = terrainHeightAt((fall.x - 0.5) * Config.TILE_SIZE + fall.dx * (Config.TILE_SIZE / 2 - 2), (fall.y - 0.5) * Config.TILE_SIZE)
 	expect(top == Config.TERRAIN.C.height, "Terrain am Wasserfallanschluss hat andere Höhe")
+	local cells = 0
+	for y, row in Grid.getMap() do for x=1,#row do
+		local ch=row:sub(x,x)
+		if ch=="M" or ch=="C" then cells+=1 else
+			for dx=0.5,Config.TILE_SIZE-0.5,1 do for dz=0.5,Config.TILE_SIZE-0.5,1 do
+				expect(terrainHeightAt((x-1)*Config.TILE_SIZE+dx,(y-1)*Config.TILE_SIZE+dz)==nil, "Terrainbelegung im Nachbarfeld")
+			end end
+		end
+	end end
+	expect(#rocks <= cells, "Zu viele Felsdetails")
 	validateOuter(board)
 	Grid.setMap({ ".....", ".....", ".....", "....." })
 	Board.build("greenland")

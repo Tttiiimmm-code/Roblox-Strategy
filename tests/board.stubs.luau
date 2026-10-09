@@ -163,6 +163,15 @@ local function terrainHeightAt(x, z)
 	end
 	return height, material
 end
+local previousRaycast = workspace.Raycast
+function workspace:Raycast(origin, direction, params)
+	if params and params.FilterDescendantsInstances and params.FilterDescendantsInstances[1] == self.Terrain then
+		local height = terrainHeightAt(origin.X, origin.Z)
+		if height and height <= origin.Y and height >= origin.Y + direction.Y then return { Position = Vector3.new(origin.X, height, origin.Z) } end
+		return nil
+	end
+	return previousRaycast(self, origin, direction, params)
+end
 workspace.Terrain.FillBlock = function(_, cf, size, material)
 	terrainSerial += 1
 	local lo, hi = cf.Position - size * 0.5, cf.Position + size * 0.5
