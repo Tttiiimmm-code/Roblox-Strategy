@@ -1,100 +1,52 @@
-# PLAN: Level-Optik Etappe C3 – geschlossener Wald, Umgebung, felsige Klippen, Ufer- und UI-Korrekturen
+# PLAN: Level-Optik Etappe C4 – keine Baumschatten, lichterer Wald, natürlicher Waldring
 
-Ziel: Korrekturen nach dem ersten Studio-Test von C2 (Nutzer-Screenshots vom 09.10.2026). Die Karten sollen der Vorlage näherkommen: geschlossene Waldflächen, ein Brett, das in eine Landschaft eingebettet ist statt wie eine Insel zu wirken, felsige Berge und Klippen, natürliche Ufer.
-Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
+Ziel: Feinschliff nach dem Studio-Test von C3 (Nutzer-Screenshots vom 09.10.2026).
+Branch: `feature/level-optik-c` (enthält Phase 3, C1–C3)
 
-**Befunde aus dem Test (Claude, anhand der Screenshots):**
-1. **Ufer:** Die runden Sandkappen und Füllscheiben (`Config.FEEL.shore`, BoardBuilder) sehen aus wie **gelbe Ringe/Kreise** auf dem Wasser. Sie wirken wie UI-Zielmarkierungen, nicht wie ein Ufer.
-2. **Wald:** Die Bäume wirken klein, wie junge Bäume, etwa ein halbes bis 0,8 Feld hoch. Die Waldfelder sehen licht aus, nicht geschlossen. Vermutete Ursache: `forest.treeWidth` 0,6–0,9 begrenzt die Skalierung (Yasu-Kronen sind breit, `place` nimmt das Minimum aus Höhe und Breite). Meist stehen nur 2 Bäume (`thirdTreeChance = 0.1`).
-3. **Gold-Symbol:** 🪙 (U+1FA99) zeigt die Roblox-Schrift als „▯“ an: in der Level-Auswahl, im Lager und auf dem Abschlussbildschirm (5 Stellen, `rg "🪙" src`). 💎 funktioniert.
-4. **Level-Auswahl:** Große Auswahlkarten (`RunUI`, UIKit-Hover `buttonHoverScale = 1.04`) überlappen beim Hover die Nachbarkarte.
-5. **Umgebung:** Rund ums Brett liegt eine flache, knallgrüne Fläche (`surroundColor`, SmoothPlastic) mit einzelnen schiefen Bäumen und Felsen. Das Brett wirkt wie eine Insel.
-6. **Berge (`M`) / Klippen (`C`):** kahle braune Kisten mit glatten Seiten, nur oben Felsen.
+**Befunde aus dem Test:**
+1. **Schatten poppen auf und verschwinden** (Nutzer). Ursache: Seit C3 werfen über 100 große Bäume echte Schatten (`EnvironmentAssets.place`: `CastShadow = scaledSize.Y >= shadowHeight · TILE_SIZE`). Roblox rendert Schatten nur in begrenzter Reichweite/Auflösung, deshalb springen sie beim Kamerabewegen/Zoomen. Das kostet außerdem Leistung auf dem Handy.
+2. **Der Wald verdeckt zu viel:** Kronen 1,35–1,5 Felder verdecken Raster und Figuren; Leon im Wald ist nur über einen schwachen Umriss zu erkennen.
+3. **Der Waldring wirkt wie eine Hecke:** gleichmäßige Reihen rundum. Auf der Kameraseite (unten im Bild, +Z) verdecken große Bäume und die günstigen Kronen-Ersatzteile („grüne Eier“) das untere Brettende.
 
-**Nutzerentscheidung (09.10.2026):** Alle vier Punktgruppen beheben: Ufer + Gold-Symbol (+ Hover), Wald dichter/größer, Umgebung ums Brett, Berge/Klippen schöner.
+**Nutzerentscheidungen (09.10.2026):**
+- **Baumschatten aus:** Bäume und Umgebung werfen keine echten Schatten; dafür ein dunklerer, ruhiger Waldboden für Tiefe. Figuren behalten ihre Rundschatten (`UnitShadow`).
+- **Wald etwas lichter:** Kronen etwa 1,1–1,2 Felder statt 1,35–1,5; Raster und Figuren scheinen stärker durch. Umriss für Figuren im und am Wald **kräftiger**.
+- **Waldring vorne niedrig, natürlicher:** Auf der Kameraseite nur niedrige Büsche und Felsen, hinten und an den Seiten hohe Bäume, unregelmäßig statt als Hecke. Kronen-Ersatzteile weg oder nur ganz hinten (außerhalb des normalen Sichtbereichs).
 
-**Leitlinien:**
-- Handy-Leistung: Geschätzte Dreiecke einer typischen Karte inklusive Umgebung im Mittel ≤ 350.000 (WIP, `estimatedTriangleBudget` anpassen und begründen). Mittel- und Maximalwerte vor/nach jedem Schritt in den Notizen, mit den maßhaltigen Paket-Fixtures (`tests/environment-pack.fixture.luau`). Lieber größere Modelle als mehr Modelle.
-- Klickbarkeit, Figurenmitte, Umrisse (`ForestOutlines`), Brückenhöhen und Determinismus bleiben erhalten. Der Part-Fallback ohne Paket bleibt funktionsfähig.
-- Alle Mengen und Farben als WIP-Werte in `Config`. Ein Commit pro Schritt, alle Prüfskripte grün.
-- **Geschmacksfragen nicht selbst entscheiden:** Gibt es mehrere sinnvolle Varianten (zum Beispiel Farbe des Umgebungsbodens), wähle eine zurückhaltende Variante, mache sie über Config umstellbar und nenne sie in den Notizen, damit der Nutzer sie im Test beurteilt.
+**Bestehender Code:** `src/server/EnvironmentAssets.luau` (`place`, CastShadow-Regel), `src/shared/Config.luau` (`ENVIRONMENT.shadowHeight`, `ENVIRONMENT.forest.treeWidth/treeHeight`, `ENVIRONMENT.outer` mit `tree.crownWidth`, `nearSpacing`, `farDistance/farWidth/farHeight`, `FOREST_OUTLINES`), `src/server/BoardBuilder.luau` (Waldfelder, Umgebungsring, Bodenfarben), `src/client/ForestOutlines.luau`, `src/client/CameraController.luau` (Kamerarichtung aus +Z, `rotation`), Tests `tests/outer.test.luau`, `tests/environment-metrics.test.luau`, `tests/forest-outlines.test.luau`, Messung `scripts/measure-environment.ps1`.
+
+**Leitlinien:** Klickbarkeit, Figurenmitte, Brückenhöhen, Determinismus und Part-Fallback bleiben erhalten. Alle Werte WIP in `Config`. Teile/Dreiecke vorher/nachher mit `scripts/measure-environment.ps1` in den Notizen. Ein Commit pro Schritt, alle Prüfskripte grün. Geschmacksfragen: zurückhaltende Variante wählen, über Config umstellbar machen und in den Notizen nennen.
 
 ## Schritte
 
-- [x] 1. **Ufer ohne Ringe** – `BoardBuilder` (Uferaufbau), `Config.FEEL.shore`
-  - Uferkappen, Füllstücke und Streifen sind **ausgefüllte** Flächen ohne kontrastierenden Rand. Keine wasserfarbene Maske, die eine Ringform erzeugt. Die Sandfarbe ist gedämpft und nah an Boden- und Erdtönen (WIP), nicht leuchtend gelb oder beige.
-  - Aus Kamerasicht müssen Ufer wie ein weicher Übergang Land → Sand → Wasser wirken. Kreise oder Ringe auf der Wasserfläche dürfen nicht sichtbar sein. Gelingt eine runde Form nicht ohne Ringwirkung, sind gerade Sandstreifen mit leicht abgeschrägten Ecken vorzuziehen; Entscheidung und Begründung in die Notizen.
-  - Fertig, wenn: Ein Stub prüft, dass keine Uferteile über der Wasserfläche liegen, die nicht an Land angrenzen, und dass keine Ringstruktur entsteht (zum Beispiel kein Teil mit Loch oder Masken-Kombination). Teilezahl vorher/nachher.
+- [ ] 1. **Keine Baum- und Umgebungsschatten** – `EnvironmentAssets.place`, `BoardBuilder`, `Config`
+  - Umgebungsmodelle und Ersatz-Parts (Bäume, Büsche, Felsen, Ring, Wurzeln, Deko) werfen keine Schatten mehr. Ein Config-Schalter (z. B. `ENVIRONMENT.castShadows = false`) stellt das alte Verhalten wieder her.
+  - Waldfelder bekommen einen etwas dunkleren, ruhigen Bodenton (WIP, Config), damit der Wald ohne Schatten Tiefe hat. Raster und Feldfarben bleiben lesbar.
+  - Fertig, wenn: Ein Stub prüft, dass kein Umgebungsteil `CastShadow = true` hat (Schalter aus) und mit Schalter an das alte Verhalten gilt; Figuren-Rundschatten bleiben unverändert.
 
-- [x] 2. **Gold-Symbol und Hover-Überlappung** – `src/client/RunUI.luau` (und alle weiteren Treffer von `rg "🪙" src`), `UIKit`
-  - 🪙 überall durch **💰** ersetzen. Zentral als Konstante, zum Beispiel `Config.ICONS.gold`; 💎 für Edelsteine ebenfalls zentral.
-  - Große Auswahlkarten der Level-Wahl überlappen beim Hover nicht mehr, zum Beispiel ohne Hover-Vergrößerung bei großen Karten oder mit genug Abstand. Kleine Buttons behalten ihr Hover-Feedback.
-  - Fertig, wenn: `rg "🪙" src` liefert keine Treffer; ein UI-Stub prüft, dass sich die Auswahlkarten auch bei Hover-Maßstab nicht überschneiden.
+- [ ] 2. **Lichterer Wald + kräftigerer Umriss** – `Config.ENVIRONMENT.forest`, `BoardBuilder.decorate` (Fall `F`), `ForestOutlines`, `Config.FOREST_OUTLINES`
+  - Kronenbreite auf etwa 1,1–1,2 Felder, Höhe passend etwa 1,2–1,5 Felder (WIP). Kronen nicht mehr stärker in die Breite ziehen als nötig, damit nichts gestreckt wirkt.
+  - Umriss kräftiger: zum Beispiel eine schwache Füllung in Teamfarbe (WIP etwa `fillTransparency` 0,75–0,8) zusätzlich zum Umriss, damit Figuren unter Kronen klar erkennbar sind. Prüfe die Verdeckungsregel für die kleineren Kronen und passe Nachbarradius/Sichtweite an (Regel in den Notizen).
+  - Fertig, wenn: Fixture-Messung zeigt Kronenmaße im Zielbereich und eine Waldabdeckung von oben von etwa 70–85 % (Methode wie C3). Outline-Stub mit neuer Füllung grün; Budget und Vorrang unverändert.
 
-- [x] 3. **Geschlossener Wald** – `BoardBuilder.decorate` (Fall `F`), `Config.ENVIRONMENT.forest`
-  - Die Bäume werden deutlich größer: Kronen etwa 1,1–1,5 Felder breit, Höhe etwa 1,3–1,8 Felder (WIP). Die Größe darf nicht mehr durch eine zu kleine Breitengrenze gedeckelt werden; prüfe die Skalierungslogik in `EnvironmentAssets.place`.
-  - Kronen benachbarter Waldfelder überlappen, sodass Waldflächen von oben wie ein **zusammenhängendes Kronendach** wirken; Ränder zu Wiesen bleiben leicht unregelmäßig. Baumanzahl dafür nicht stark erhöhen, sondern mit Größe und Streuung arbeiten; den dritten Baum nur, wenn das Budget es zulässt.
-  - Umrisse (`ForestOutlines`) müssen weiter greifen. Prüfe, ob größere Kronen jetzt auch Figuren auf Feldern **neben** dem Wald verdecken, und passe die Verdeckungsregel an (Regel in den Notizen).
-  - Fertig, wenn: Fixture-Messung zeigt größere Kronenmaße und eine Abdeckung der Waldfläche von oben (zum Beispiel ≥ 85 % der Waldfelder-Fläche von Kronen-Bounding-Boxen überdeckt; Methode in den Notizen); Dreiecke im Budget.
+- [ ] 3. **Natürlicher Waldring, vorne niedrig** – `BoardBuilder` (Umgebungsring), `Config.ENVIRONMENT.outer`
+  - **Kameraseite** (in Grundausrichtung +Z, unteres Bildende): nur niedrige Büsche, Felsen und vereinzelt kleine Bäume, die das Brett aus der Start- und Normalansicht nicht verdecken (WIP Höchsthöhe, z. B. ≤ 0,5 Feld nah am Brett). **Hinten und an den Seiten**: hohe Bäume, unregelmäßig gruppiert (Cluster und Lücken statt gleichmäßiger Reihen), gemischt mit Büschen und Felsen.
+  - Kronen-Ersatzteile („Eier“) nur noch ganz hinten bzw. weit außen, wo sie von Bäumen davor teilweise verdeckt sind; auf der Kameraseite gar nicht.
+  - Kamera dreht sich (`rotation`): Prüfe, ob die Rotation in der Normalansicht fest ist oder frei drehbar. Bei freier Drehung nenne die gewählte Lösung in den Notizen (z. B. Seiten nach Grundausrichtung oder überall mittelhoch).
+  - Fertig, wenn: Ein Stub prüft, dass auf der Kameraseite keine Objekte über der Höchsthöhe nahe am Brett stehen, der Ring hinten/seitlich weiterhin lückenarm ist, keine Objekte auf Brettfeldern stehen und alles deterministisch bleibt. Teile/Dreiecke vorher/nachher.
 
-- [x] 4. **Umgebung ums Brett** – `BoardBuilder` (Umgebungsrand, `surroundColor`, `outer`-Platzierung), `Stages`/`Config`
-  - Ein **dichter Waldrand** umschließt das Brett, etwa 2–4 Felder tief, mit großen Bäumen, Büschen und Felsen, unregelmäßig und nicht in Reihen. Weiter außen geht er in ruhigeren, **gedämpften Boden** über (dunkler und weniger gesättigt als das aktuelle Knallgrün). Farbe pro Region in `Stages` (WIP, umstellbar).
-  - Leistung: Die erste Reihe am Brett aus echten Modellen. Weiter entfernte Bereiche dürfen günstiger sein, zum Beispiel größere Modelle mit weniger Stück oder einfache Kronenblobs, die von weitem gleich wirken. Kamera-Zoom-Grenzen aus C1 beachten: Beim maximalen Herauszoomen soll kein harter, leerer Rand sichtbar sein.
-  - Der Rand darf das Brett nicht verdecken; keine Objekte auf Brettfeldern; die Kamera erreicht alle Ecken weiterhin.
-  - Fertig, wenn: Ein Stub prüft, dass der Ring geschlossen ist (keine großen Lücken pro Seite), dass keine Objekte auf Brettfeldern stehen und dass alles deterministisch ist. Dreiecke/Teile vorher/nachher.
-
-- [x] 5. **Felsige Berge und Klippen** – `BoardBuilder` (Bodenaufbau `M`/`C`, Felsplatzierung), `Config`
-  - Die Seitenwände von Berg- und Klippenfeldern wirken felsig statt glatt, zum Beispiel durch Felsmodelle, die an freiliegenden Außenkanten an die Wand gelehnt bzw. halb eingelassen sind, und leicht unregelmäßige Oberkanten. Die Oberseite bleibt als Feld erkennbar und anklickbar. Die Figurenmitte bleibt frei auf `M` (begehbar).
-  - Farbe der Seitenwände dunkler und kühler als die Oberseite (WIP), passend zu den Felsmodellen.
-  - Nur Außenkanten, die an niedrigeres Gelände grenzen, bekommen Felsen, nicht Innenkanten zwischen zwei `C`/`M`-Feldern.
-  - Fertig, wenn: Ein Stub prüft, dass freie Außenkanten Felsen bekommen, Innenkanten nicht, und dass die Klickbarkeit erhalten bleibt. Dreiecke im Budget.
-
-- [x] 6. **Messung + Prüfskripte** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke (Mittel/Max, 100 Seeds, mit Paket-Fixtures, inklusive Umgebung) sowie Stub-Aufbauzeit vorher/nachher.
-
-- [x] 7. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#35** „Level-Optik Etappe C3“, „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
+- [ ] 4. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#36** „Level-Optik Etappe C4“, „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Ufer: weicher Sandübergang, keine gelben Ringe/Kreise mehr
-- [ ] Gold zeigt 💰 in Level-Wahl, Lager und Abschluss; Auswahlkarten überlappen beim Hover nicht
-- [ ] Waldflächen wirken geschlossen (Kronendach), Figuren im und am Wald haben gut sichtbare Umrisse
-- [ ] Brett ist von dichtem Wald umgeben, außen ruhiger, gedämpfter Boden; auch ganz herausgezoomt kein leerer Rand
-- [ ] Berge/Klippen mit felsigen Wänden; alle Felder anklickbar
-- [ ] Noch aus C2 offen: Figuren stehen auf dem Brückenbogen (nicht schwebend); Kronenfarbe ohne Warnung im Output
-- [ ] Handy flüssig, Aufbauzeit („Missionsaufbau …“) im Rahmen
+- [ ] Keine aufpoppenden Schatten mehr beim Drehen/Zoomen; Figuren haben weiter Rundschatten
+- [ ] Wald dicht, aber Raster und Figuren scheinen durch; Figuren im/am Wald klar erkennbar (Umriss + leichte Füllung)
+- [ ] Waldring: vorne niedrig, nichts verdeckt das untere Brettende; hinten/seitlich hohe, unregelmäßige Bäume; keine „grünen Eier“ im Vordergrund
+- [ ] Noch offen aus C2/C3: Figuren stehen auf dem Brückenbogen; keine Warnung zur Kronenfarbe; Thronsaal unverändert; Handy flüssig, Aufbauzeit („Missionsaufbau …“)
 
 ## Nicht anfassen
-- Spielregeln, Generator, Tutorial-Karten, Lager-/Boss-Logik, Brückenlogik (außer falls nötig für Uferanschluss), Bodentexturen (`GROUND_TEXTURES`-Werte setzt der Nutzer)
+- Spielregeln, Generator, Tutorial-Karten, Lager-/Boss-Logik, Brücken, Ufer, Felswände, UI außer Umriss-Darstellung
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-
-- Schritt 1: Gerade, deckende Sandstreifen auf Land statt runder Scheiben mit Land-/Wassermasken; verhindert die beobachtete Ringwirkung, spart Teile und laesst Brueckenenden frei. Farbe WIP in Config (123/119/89), Studio-Beurteilung offen. Ufer-Fixture: vorher 11, nachher 4 Teile. Seeds 1-100 mit Paket-Fixtures: vorher Teile Mittel/Max 1762,2/1971, Dreiecke 296921/453272, Stub 89,62 ms; nachher 1732,4/1925, 293732/453272, 85,49 ms. check.ps1 und test-run.ps1 OK.
-
-- Schritt 2: Config.ICONS.gold/gems zentral in RunConfig und RunUI; Goldsymbol ersetzt. Auswahlkarten HoverScale=1 mit Quad beim Loslassen (kein Ueberschwingen), kleine Buttons unveraendert. UI-Stub 116 Pruefungen, Hover-/Loslassereignisse fuer 480/900/1600 Breite; check und run OK, keine alten Goldsymbole in src. Paketmessung unveraendert: Teile 1732,4/1925, Dreiecke 293732/453272, Stub vorher 85,49 / nachher 92,21 ms (Messschwankung).
-
-- Schritt 3: Baumhoehe 1,3-1,8 Felder bestimmt die Skalierung; Kronen separat horizontal auf 1,35-1,5 verbreitert, damit schmale Paketvarianten nicht als Jungbaeume erscheinen. Zwei bis drei Baeume unveraendert. Masshaltige 4x4-Wald-Fixture: vorher Kronen 0,41-0,87 / Hoehe 0,38-1,32 Felder, nachher 1,35-1,50 / 1,30-1,78. Union der Kronen-AABBs mit 32x32 Stichproben pro Feld: 68,03 -> 99,99 % Abdeckung (Bounding-Box-Naeherung, keine Aussage ueber echte Mesh-Luecken). Umrisse auf allen acht direkten Nachbarn sowie bis zwei Felder hinter der dominanten Kamerablickachse inkl. seitlichem Nachbarn; entfernte Felder vor Wald ohne Umriss. Highlightbudget unveraendert. Paketmessung vorher/nachher Teile 1732,4/1925, Dreiecke 293732/453272; Stub 92,21 -> 88,29 ms. check und run OK.
-
-- Schritt 4: Unregelmaessiger Ring aus grossen Paketbaeumen (Hoehe 1,8 / Krone 2,4 Felder), wenigen Bueschen/Felsen und versetzten guenstigen Kronen-Parts dahinter. Tiefe etwa 2-5 Felder inkl. Kronen, Config-WIP; innerer Kronenabstand mindestens 0,7 Feld, damit Randfelder auch aus schraeger Kamera sichtbar bleiben. Weiter aussen ruhiger Boden bis zum bisherigen C1-Zoomrand. Gruenland 73/86/64, Sumpf 55/67/49, Eis/Vulkan zurueckhaltende Platzhalter in Stages; Material Grass statt SmoothPlastic. Nutzer beurteilt Farbwahl/Zoomrand in Studio. Rand-Stubs fuer 100 Paket-Seeds und Fallback: alle vier Seiten ohne Luecken >0,5 Feld, alle Objekt-AABBs vollstaendig ausserhalb des Bretts, keine Klickblocker, deterministisch. Paketmessung vorher Teile 1732,4/1925 und Dreiecke 293732/453272, nachher 1810,4/2003 und 337318/496188; Stub 88,29 -> 100,53 ms. Typisches Budget auf 350000 angehoben fuer Nahmodelle plus guenstige Ferne; Maximalfaelle bleiben hoeher. check und run OK.
-
-- Schritt 5: Freiliegende M/C-Aussenwaende mit je drei unterschiedlich geneigten Rock-Wedge-Facetten, variabler Oberkante und 12 % zusaetzlichen halb eingelassenen Paketfelsen. Kuehler/dunkler Seitenfarbton 77/82/82 in Config, Oberseite und Klickfeld erhalten. Keine Felsen an M/M, C/C oder M/C-Innenkanten. Berg-Oberfelsen weiter an Ecken und Breite begrenzt, sodass 1,4 Studs Figurenmitte frei bleiben. Geometrie-Stubs fuer alle Kanten/Oberkanten/Klickhoehen/Innenkanten, Paket/Fallback und Abschaltung gruen. Facetten gewaehlt, weil komplette Mesh-Verkleidung das Handy-Budget sprengen wuerde. Paketmessung vorher Teile 1810,4/2003 und Dreiecke 337318/496188, nachher 1972,2/2120 und 343436/499260; Stub 100,53 -> 104,55 ms. Mittleres Budget 350000 eingehalten; dichte Maximalfaelle in Studio/Handy gesondert pruefen. check und run OK.
-
-- Schritt 6: Wiederholbare Vergleichsmessung ueber `scripts/measure-environment.ps1 -Revision ...` ohne Checkout; gleiche masshaltige Paket-Fixtures und Seeds 1-100, Gruenland/Tiefe 1/sechs Starts/16x12 inkl. Umgebung. Aufbauzeit ohne Assertionen/Teilezaehlung, Mesh-Dreiecke weiterhin Schaetzwerte. Determinismus-Signatur umfasst Modellnamen, Positionen, Groessen, Rotationen und Farben.
-- Zoom-Korrektur bei der geometrischen Abnahme: Der C1-Terrain-Rand reicht bei maximalem Zoom nicht fuer den gesamten Sichtboden. Sichtboden separat auf Zoom x 4,2 erweitert, in Parts bis 512 Studs aufgeteilt; Terrain-Freiraum bleibt unveraendert und erreicht den Hub nicht neu. Strahl-/Bodenpruefung fuer alle vier Brettecken, acht Kameradrehungen, Seitenverhaeltnisse 4:3/16:9/21:9, C1-Neigung und 70 Grad FOV. Aeuessere Kronen auf knapp vier Felder Randtiefe abgestimmt (Config farDistance/farWidth 2,6). Gegenueber Schritt 5 zusaetzlich 34 Teile / 960 Dreiecke. Optischer Dunst-/Rand-/Hub-Eindruck bleibt Studio-Pruefung.
-
-Einheitlicher Vergleich (Mittel/Max; Stub-Zeiten schwanken, keine Roblox-Laufzeitmessung):
-
-| Stand | Teile Mittel / Max | Dreiecke Mittel / Max | Stub ms Mittel / Max |
-|---|---:|---:|---:|
-| Vor C3 (`5998a1b`) | 1762,2 / 1971 | 296921 / 453272 | 85,13 / 104,69 |
-| Schritt 1 (`3c73b52`) | 1732,4 / 1925 | 293732 / 453272 | 88,06 / 109,61 |
-| Schritt 2 (`355a6b0`) | 1732,4 / 1925 | 293732 / 453272 | 87,88 / 120,45 |
-| Schritt 3 (`612ed32`) | 1732,4 / 1925 | 293732 / 453272 | 88,34 / 146,52 |
-| Schritt 4 (`9b5d674`) | 1810,4 / 2003 | 337318 / 496188 | 92,63 / 120,85 |
-| Schritt 5 (`54f9e2a`) | 1972,2 / 2120 | 343436 / 499260 | 98,58 / 124,48 |
-| Schritt 6, final | 2006,2 / 2154 | 344396 / 500220 | 101,71 / 150,11 |
-
-- Abschlusspruefungen: check.ps1 OK (37 Luau-Dateien); test-levelgen.ps1 OK (19000 Level-, 5000 Options-, 2400 Boss-/Minibosspruefungen, 96 Landschaftskombinationen, 0 regulaere Rueckfaelle); test-run.ps1 OK (34458 Laufpruefungen, 523294 bisherige Brett-/Kameraassertionen plus neue C3-Geometrie-/Pakettests); test-tutorial.ps1 OK (168); test-run-ui.ps1 OK (116); Rojo-Build TacticsGame.rbxlx OK. Keine alten Goldsymbole in src; Edelstein-Symbol ausschliesslich zentral. Alle manuellen Tests fuer C3 in Studio/auf Handy ungetestet; unabhaengiger Claude-Review ausstehend.
-
-- Schritt 7: Devlog #35 und naechste Schritte aktualisiert; alle Pflichtpruefungen und Rojo-Build gruen. Abschlusscommit und Push auf feature/level-optik-c; danach als allerletzte Aktion Handoff fertig. Manuelle C3-Tests bleiben offen.
