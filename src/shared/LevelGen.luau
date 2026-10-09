@@ -231,9 +231,44 @@ local function populate(map, regionId, depth, themeId, teamSize, random)
 	return { map = map, slots = slots, enemies = enemies, region = regionId, theme = themeId }
 end
 
-function LevelGen.generate(seed, regionId, depth, themeId, teamSize)
+local function bossStage(seed, regionId, depth, teamSize)
+	local source = assert(MapChunks.bossMaps[regionId], "Bosskarte fehlt")
+	local flipped = randomSource(seed)(0, 1) == 1
+	local function cell(pos)
+		return { x = flipped and RunConfig.BOARD_WIDTH + 1 - pos.x or pos.x, y = pos.y }
+	end
+	local map, slots, fields, enemies = {}, {}, {}, {}
+	for y, row in ipairs(source.map) do map[y] = flipped and row:reverse() or row end
+	for i = 1, teamSize do table.insert(slots, cell(source.slots[i])) end
+	for _, pos in ipairs(source.reinforcementFields) do table.insert(fields, cell(pos)) end
+	local boss = cell(source.boss)
+	boss.kind, boss.level = RunConfig.BOSSES[regionId].boss, RunConfig.enemyLevel(depth)
+	table.insert(enemies, boss)
+	for _, pos in ipairs(source.guards) do
+		local guard = cell(pos)
+		guard.kind, guard.level = "brigand", RunConfig.enemyLevel(depth)
+		table.insert(enemies, guard)
+	end
+	local visited = reachable(map, slots[1])
+	for _, list in ipairs({ slots, fields, enemies }) do
+		for _, pos in ipairs(list) do assert(visited[key(pos.x, pos.y)], "Bosskarte nicht erreichbar") end
+	end
+	return { map = map, slots = slots, enemies = enemies, region = regionId, theme = "axe", kind = "boss",
+		bossId = boss.kind, reinforcementFields = fields, fallback = false }
+end
+
+local function withMiniboss(stage, regionId)
+	stage.kind, stage.bossId = "miniboss", RunConfig.BOSSES[regionId].miniboss
+	stage.enemies[1].kind = stage.bossId
+	for i = #stage.enemies, RunConfig.MINIBOSS_GUARDS + 2, -1 do table.remove(stage.enemies, i) end
+	for i = 2, #stage.enemies do stage.enemies[i].kind = "brigand" end
+	return stage
+end
+
+function LevelGen.generate(seed, regionId, depth, themeId, teamSize, levelKind)
 	assert(MapChunks[regionId] and RunConfig.THEMES[themeId], "Unbekanntes Gebiet oder Thema")
 	assert(teamSize >= 1 and teamSize <= RunConfig.MAX_TEAM and teamSize % 1 == 0, "Ungültige Teamgröße")
+	if levelKind == "boss" then return bossStage(seed, regionId, depth, teamSize) end
 	-- Die Flussentscheidung bleibt bei Neuversuchen erhalten, damit die Quote nicht absinkt.
 	local withRiver = randomSource(seed)(1, 10000) <= RunConfig.RIVER_CHANCE * 10000
 	for attempt = 1, RunConfig.MAX_ATTEMPTS do
@@ -243,7 +278,7 @@ function LevelGen.generate(seed, regionId, depth, themeId, teamSize)
 		local stage = populate(map, regionId, depth, themeId, teamSize, random)
 		if stage then
 			stage.fallback = false
-			return stage
+			return levelKind == "miniboss" and withMiniboss(stage, regionId) or stage
 		end
 	end
 	local map = {}
@@ -251,7 +286,7 @@ function LevelGen.generate(seed, regionId, depth, themeId, teamSize)
 	local stage = populate(map, regionId, depth, themeId, teamSize, randomSource(seed))
 	assert(stage, "Rückfall-Level konnte nicht erzeugt werden")
 	stage.fallback = true
-	return stage
+	return levelKind == "miniboss" and withMiniboss(stage, regionId) or stage
 end
 
 function LevelGen.makeOptions(runSeed, depth, regionId)

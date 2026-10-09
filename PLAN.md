@@ -22,7 +22,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
   - Allgemein: Fähigkeiten als Daten (`abilities = { { type = "summon", ... }, { type = "warcry", ... }, { type = "reinforce", ... } }`), Ausführung serverseitig in der Gegnerphase, Ereignisse an Clients für Ansagen/Effekte. Beschworene Einheiten skalieren mit der Tiefe (RunConfig).
   - Fertig, wenn: Stub-Prüfungen für alle drei Fähigkeiten (Auslöser, Einmaligkeit, freie Felder, Ankündigung eine Runde vorher, Kriegsschrei-Dauer).
 
-- [ ] 3. **Boss-Karten** – `MapChunks.luau`/`LevelGen.luau`
+- [x] 3. **Boss-Karten** – `MapChunks.luau`/`LevelGen.luau`
   - **Boss-Level:** handgemachte Grasland-Boss-Karte mit **Festung (`H`) für Garrick** im oberen Teil, Leibwache davor, Startfelder unten (bis 6), Randfelder für die Verstärkung definiert. Leichte Variation per Seed erlaubt (Spiegelung), Lösbarkeit wie bisher prüfen.
   - **Miniboss-Level:** erzeugte Karte wie normale Level + Miniboss + kleine Leibwache.
   - Fertig, wenn: Prüfskript prüft Boss-/Miniboss-Karten (Erreichbarkeit, Startfelder, Verstärkungsfelder frei).
@@ -64,3 +64,5 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - Schritt 1: Laufversion 2; alte Phase-1-Laufst?nde werden verworfen, Sammlung/W?hrungen bleiben erhalten. WIP-Werte zentral. Neuer Stub-Runner `scripts/test-run.ps1` pr?ft 1000 vollst?ndige Abfolgen.
 
 - Schritt 2: Bewegungsweite als Einheitenwert (Grid mit erweitert); Bossereignisse, Randmarkierungen und Kriegsschrei-Symbol angebunden. Besetzte angekündigte Felder warten auf eine spätere freie Gegnerphase. Fähigkeiten- und KI-Stubs grün; Darstellung in Studio ungetestet.
+
+- Schritt 3: Grasland-Festung horizontal gespiegelt, sechs stabile Startfelder, drei Leibwachen und vier freie Randfelder. Normale Generatoraufrufe bleiben unverändert; Bossvarianten werden explizit gewählt. 2000 Lauf-Aufstellungen grün, zusätzliche 12000 Kartenprüfungen im Generatorrunner.

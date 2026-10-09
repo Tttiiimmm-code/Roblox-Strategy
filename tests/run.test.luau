@@ -121,3 +121,17 @@ expect(testModules.EnemyAI.plan(boss, { boss = boss, hero = target }) ~= nil, "G
 local nodes = Grid.reachable(captain, { captain = captain })
 for _, node in pairs(nodes) do expect(node.cost <= 3, "Hauptmann bewegt sich zu weit") end
 print("OK: Bossfähigkeiten (Schwellen, Einmaligkeit, freie Felder, Vorwarnung, Buffdauer) und Boss-KI.")
+
+for seed = 1, 1000 do
+	for _, depth in ipairs({ 3, 5 }) do
+		local profile = newRun(seed)
+		local run = profile.run
+		run.depth, run.region = depth, "greenland"
+		run.options = testModules.LevelGen.makeOptions(seed, depth, "greenland")
+		expect(Runs.choose(run, 1), "Bosswahl")
+		local stage, living = Runs.stage(run)
+		expect(#living == 3 and #stage.slots == RC.MAX_TEAM, "Boss-Aufstellung")
+		expect(stage.enemies[1].kind == (depth == 3 and "brigand_captain" or "chieftain"), "Bosskarte über RunService")
+	end
+end
+print("OK: 2000 Bosskarten über die echte Laufanbindung.")

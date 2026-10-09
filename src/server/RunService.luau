@@ -49,7 +49,7 @@ function RunService.stage(run)
 	local living = {}
 	for _, id in ipairs(run.order) do if run.team[id].alive then table.insert(living, id) end end
 	-- Immer mit voller Startfeldzahl erzeugen, damit ein Neustart nach Todesfällen dasselbe Level ergibt.
-	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, RunConfig.MAX_TEAM), living
+	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, RunConfig.MAX_TEAM, option.kind), living
 end
 
 function RunService.advance(run)

@@ -8,7 +8,7 @@ local function chunk(rows)
 	return { rows = rows, edges = { north = rows[1], south = rows[#rows], west = west, east = east } }
 end
 
-return {
+local MapChunks = {
 	greenland = {
 		-- Lichtungen, Gehölze und kleine Gehöfte mit offenen Anschlüssen.
 		chunk({ ".....", ".FF..", "..F..", "....." }),
@@ -43,3 +43,15 @@ return {
 		chunk({ ".....", "FFFFF", "FFHFF", "....." }),
 	},
 }
+
+-- Garricks Festung: Leibwache davor, freie Ankunftsfelder am Rand, sechs Starts unten.
+MapChunks.bossMaps = {
+	greenland = {
+		map = { "..MM..MM..", ".F..H...F.", "....FF....", ".F......F.", "..F....F..", "..........", "..........", ".........." },
+		boss = { x = 5, y = 2 },
+		guards = { { x = 4, y = 3 }, { x = 6, y = 3 }, { x = 5, y = 4 } },
+		slots = { { x = 2, y = 8 }, { x = 3, y = 8 }, { x = 4, y = 8 }, { x = 6, y = 8 }, { x = 7, y = 8 }, { x = 8, y = 8 } },
+		reinforcementFields = { { x = 1, y = 2 }, { x = 10, y = 2 }, { x = 1, y = 4 }, { x = 10, y = 4 } },
+	},
+}
+return MapChunks

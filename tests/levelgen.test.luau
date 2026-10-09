@@ -161,7 +161,8 @@ local function validate(stage, themeId, depth, teamSize)
 	if validateRiver(stage.map) then riverChecks += 1 end
 end
 
-for _, chunks in pairs(testModules.MapChunks) do
+for region, chunks in pairs(testModules.MapChunks) do
+	if region == "bossMaps" then continue end
 	assert(#chunks >= 24, "Zu wenige Bausteine")
 	local distinct = {}
 	for _, chunk in ipairs(chunks) do
@@ -272,3 +273,42 @@ validate(fallback, "bow", 5, RunConfig.MAX_TEAM)
 RunConfig.MAX_ATTEMPTS = attempts
 print(string.format("OK: %d Levelpruefungen, 5000 Optionspruefungen; Rueckfall-Level: %d (%.2f%%); erzwungener Rueckfall OK.", checks, fallbacks, fallbacks / checks * 100))
 print(string.format("Vielfalt: %d/1000 verschiedene Karten; Gelaendeanteil %.2f%%; Flussquote %.2f%%; %d Flusspruefungen; Anschluesse Wald/Fels: %d/%d.", uniqueMaps, terrainCells / (1000 * RunConfig.BOARD_WIDTH * RunConfig.BOARD_HEIGHT) * 100, sampleRivers / 10, riverChecks, forestJoins, rockJoins))
+
+local bossChecks = 0
+for seed = 1, 1000 do
+	for _, kind in ipairs({ "miniboss", "boss" }) do
+		local depth = kind == "miniboss" and 3 or 5
+		for size = 1, RunConfig.MAX_TEAM do
+			local stage = LevelGen.generate(seed, "greenland", depth, "axe", size, kind)
+			assert(same(stage, LevelGen.generate(seed, "greenland", depth, "axe", size, kind)), "Bosskarte nicht deterministisch")
+			assert(#stage.slots == size and stage.enemies[1].kind == RunConfig.BOSSES.greenland[kind], "Boss/Startzahl")
+			assert(stage.kind == kind and stage.bossId == stage.enemies[1].kind, "Bossmetadaten")
+			assert(#stage.enemies == (kind == "boss" and 4 or RunConfig.MINIBOSS_GUARDS + 1), "Leibwache")
+			local occupied = {}
+			for _, pos in ipairs(stage.slots) do
+				assert(pos.y >= 7 and canWalk(stage.map, pos.x, pos.y - 1), "Bossstart ohne Weg")
+				assert(not occupied[cellKey(pos)], "Doppelter Bossstart")
+				occupied[cellKey(pos)] = true
+				local seen = flood(stage.map, pos)
+				for _, enemy in ipairs(stage.enemies) do assert(seen[cellKey(enemy)], "Boss/Leibwache nicht erreichbar") end
+				for _, field in ipairs(stage.reinforcementFields or {}) do assert(seen[cellKey(field)], "Ankunft nicht erreichbar") end
+			end
+			for _, enemy in ipairs(stage.enemies) do
+				assert(not occupied[cellKey(enemy)], "Doppeltes Bossgegnerfeld")
+				occupied[cellKey(enemy)] = true
+			end
+			if kind == "boss" then
+				local boss = stage.enemies[1]
+				assert(charAt(stage.map, boss.x, boss.y) == "H", "Garrick ohne Festung")
+				assert(#stage.reinforcementFields >= 3, "Zu wenig Randfelder")
+				for _, field in ipairs(stage.reinforcementFields) do
+					assert(field.x == 1 or field.x == RunConfig.BOARD_WIDTH, "Ankunft nicht am Rand")
+					assert(canWalk(stage.map, field.x, field.y) and not occupied[cellKey(field)], "Ankunft belegt")
+					occupied[cellKey(field)] = true
+				end
+			end
+			bossChecks += 1
+		end
+	end
+end
+print("OK: " .. bossChecks .. " Boss-/Minibosskarten (Festung, Starts, Erreichbarkeit, freie Randfelder).")
