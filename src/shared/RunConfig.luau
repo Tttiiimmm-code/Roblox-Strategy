@@ -27,13 +27,22 @@ RunConfig.CHUNK_HEIGHT = 4
 RunConfig.START_ROWS = 2
 RunConfig.ENEMY_ROWS = 6
 RunConfig.MIN_ENEMY_DISTANCE = 4
-RunConfig.MAX_BLOCKED_SHARE = 0.25
+RunConfig.MAX_BLOCKED_SHARE = 0.32
 RunConfig.MAX_ATTEMPTS = 50
 -- WIP: Flüsse liegen vor der Startzone, Querungen umfassen die volle Breite.
 RunConfig.RIVER_CHANCE = 0.4
+RunConfig.RIVER_MIN_SWING = 3
+RunConfig.RIVER_BEND_LENGTH = { min = 2, max = 4 }
+RunConfig.LAKE_CHANCE = 0.3
+RunConfig.LAKE_WIDTH = { min = 3, max = 5 }
+RunConfig.LAKE_HEIGHT = { min = 3, max = 4 }
+RunConfig.ISLAND_CHANCE = 0.5
+RunConfig.POND_CHANCE = 0.35
+RunConfig.POND_COUNT = { min = 1, max = 2 }
+RunConfig.WATER_PLACEMENT_ATTEMPTS = 40
 RunConfig.RIVER_WIDTH = { min = 1, max = 2 }
-RunConfig.BRIDGES_MIN = 1
-RunConfig.BRIDGES_MAX = 2
+RunConfig.BRIDGES_MIN = 2
+RunConfig.BRIDGES_MAX = 3
 RunConfig.ENEMY_COUNT_BASE = 6
 RunConfig.ENEMY_COUNT_PER_DEPTH = 1
 RunConfig.ENEMY_COUNT_MAX = 12

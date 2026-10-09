@@ -21,7 +21,7 @@ Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`
   - Bausteinsatz für die neue Größe neu anlegen (mind. 30 Stücke), im Stil der Vorlage: große zusammenhängende Waldflächen, Felsgruppen, Lichtungen, kleine Festungen/Ruinen, gemischte Wald-Fels-Ränder. Rand-Profile wie bisher (Anschlüsse passend). Bausteine weiterhin ohne Wasser.
   - Fertig, wenn: Vielfalt-Kennzahlen (verschiedene Karten, Geländeanteil, Anschlüsse) in den Notizen.
 
-- [ ] 3. **Flüsse, Seen, Inseln** – `LevelGen.luau`, `RunConfig`
+- [x] 3. **Flüsse, Seen, Inseln** – `LevelGen.luau`, `RunConfig`
   - **Flüsse stärker geschwungen** (Mäander mit Kurven über mehrere Reihen, Breite 1–2), weiterhin von Rand zu Rand, nicht durch die Startzone; **2–3 Brücken** je nach Länge, jede über die volle Breite, Ufer frei.
   - **Seen/Teiche**: gelegentlich ein See (z. B. 3×3 bis 5×4, unregelmäßige Form), auf Wunsch mit **Insel** (1–2 Felder Land/Wald darin, nicht zwingend erreichbar – dann darf dort kein Gegner/Ziel stehen); ein Fluss darf in einen See münden bzw. aus ihm herausfließen. Zusätzlich kleine Teiche (1–2 Felder) als Hindernis.
   - Lösbarkeit: alle Gegner von allen Startfeldern erreichbar; Hindernisanteil begrenzt (Grenze ggf. für große Karten anpassen).
@@ -56,3 +56,6 @@ Branch: `feature/level-optik-c` (existiert, abgezweigt von `feature/lauf-phase3`
 - Ausgangsmessung: 100 Seeds (1–100), Tiefe 1, sechs Startfelder, Fallback-Deko ohne importierte Assets: 10×8 im Mittel 744,2 Brettteile (633–979), Stub-Aufbau 12,03 ms. Reale Roblox-Aufbauzeit/Bildrate/Figurenaufbau kann nur der Nutzer in Studio/auf Handy bestätigen; hier ungetestet. Nachmessung folgt nach dem finalen Generator.
 
 - Schritt 2: 36 Bausteine aus vier handgezeichneten Wald-/Fels-/Ruinenkernen und neun exakten Randkombinationen. Alle Nord-/Westprofile vorhanden; kein Notanschluss nötig. 1.000 Seeds ohne Fluss: 1.000 verschiedene Karten, Gelände 46,10 %, 7.554 Wald- und 3.522 Felsanschlüsse (alle inneren Nähte geprüft), 0 Rückfälle. Pflichtcheck OK (36 Dateien).
+
+- Schritt 3: Flüsse 1–2 Felder breit mit mindestens drei Reihen Mäander-Spanne und 2–3 Querungen; geschützte volle Brücken/Ufer. Seen 3×3–5×4 mit unregelmäßigen Ecken, optional 1–2 Insel-Land-/Waldfeldern; Fluss/See dürfen zusammenfließen. Teiche 1–2 Felder. Hindernisgrenze WIP 32 %. Unabhängige Flutsuchen prüfen alle Gegner von jedem Start, einschließlich Inseln. Features als Serverdaten für gezielte Prüfungen.
+- Schritt 3 geprüft: 18.000 normale Level, 1.000 Optionen, 2.400 Boss-/Minibosskarten; 0 Rückfälle. 200/200 verschiedene Karten, Gelände 49,47 %, Flüsse 40,50 %, Seen 30,00 %, Inselkarten 14,00 %, Teiche 30,50 %. Prüflauf vorläufig auf 200 Seeds verkürzt (alle fünf Tiefen, drei Themen, sechs Teamgrößen bleiben); finale Erweiterung/Begründung in Schritt 6. Größenport-Korrektur: Verstärkungsfelder wieder an echten Rand verschoben. Pflichtcheck und 34.006 Laufprüfungen OK.

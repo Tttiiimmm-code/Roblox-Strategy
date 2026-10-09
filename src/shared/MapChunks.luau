@@ -38,7 +38,7 @@ MapChunks.bossMaps = {
 		boss = { x = 8, y = 2 },
 		guards = { { x = 7, y = 3 }, { x = 9, y = 3 }, { x = 8, y = 4 } },
 		slots = { { x = 5, y = 12 }, { x = 6, y = 12 }, { x = 7, y = 12 }, { x = 9, y = 12 }, { x = 10, y = 12 }, { x = 11, y = 12 } },
-		reinforcementFields = { { x = 4, y = 2 }, { x = 13, y = 2 }, { x = 4, y = 4 }, { x = 13, y = 4 } },
+		reinforcementFields = { { x = 1, y = 2 }, { x = 16, y = 2 }, { x = 1, y = 4 }, { x = 16, y = 4 } },
 	},
 }
 return MapChunks

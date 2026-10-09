@@ -132,42 +132,116 @@ end
 local function river(map, random)
 	local width = random(RunConfig.RIVER_WIDTH.min, RunConfig.RIVER_WIDTH.max)
 	local crossings, protected = {}, {}
-	local possible = {}
-	for x = 2, RunConfig.BOARD_WIDTH - 1 do table.insert(possible, x) end
-	shuffle(possible, random)
 	local count = random(RunConfig.BRIDGES_MIN, RunConfig.BRIDGES_MAX)
-	for _, x in ipairs(possible) do
-		local spaced = true
-		for _, crossing in ipairs(crossings) do
-			if math.abs(x - crossing) < 3 then spaced = false end
-		end
-		if spaced then
-			table.insert(crossings, x)
-			protected[x - 1], protected[x], protected[x + 1] = true, true, true
-			if #crossings == count then break end
-		end
+	-- Gleichmäßig verteilte Querungen lassen zwischen ihren geraden Ufern Kurven frei.
+	for i = 1, count do
+		local x = math.floor(i * RunConfig.BOARD_WIDTH / (count + 1))
+		table.insert(crossings, x)
+		protected[x - 1], protected[x], protected[x + 1] = true, true, true
 	end
-	-- Ein Längsfluss würde die unteren Startreihen schneiden: daher links nach rechts.
 	local lastRow = RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS - 1
 	local top = random(2, lastRow - width + 1)
-	local banks = {}
+	local direction = random(0, 1) == 0 and -1 or 1
+	local length = random(RunConfig.RIVER_BEND_LENGTH.min, RunConfig.RIVER_BEND_LENGTH.max)
+	local banks, cells, reserved = {}, {}, {}
+	local low, high = top, top
 	for x = 1, RunConfig.BOARD_WIDTH do
 		local previous = top
 		if x > 1 and not protected[x] then
-			top = math.clamp(top + random(-1, 1), 2, lastRow - width + 1)
+			if top + direction < 2 or top + direction > lastRow - width + 1 or length == 0 then
+				direction = -direction
+				length = random(RunConfig.RIVER_BEND_LENGTH.min, RunConfig.RIVER_BEND_LENGTH.max)
+			end
+			top = math.clamp(top + direction, 2, lastRow - width + 1)
+			length -= 1
 		end
-		-- Ein einfeldbreiter Knick braucht eine zweite Zelle für orthogonalen Anschluss.
+		low, high = math.min(low, top), math.max(high, top)
+		-- Ein schmaler Knick erhält eine zweite Zelle für den orthogonalen Anschluss.
 		local first = width == 1 and math.min(previous, top) or top
 		local last = width == 1 and math.max(previous, top) or top + width - 1
 		banks[x] = { first = first, last = last }
-		for y = first, last do setCell(map, x, y, "W") end
+		for y = first, last do
+			setCell(map, x, y, "W")
+			table.insert(cells, { x = x, y = y })
+		end
 	end
+	if high - low < RunConfig.RIVER_MIN_SWING then return nil end
 	for _, x in ipairs(crossings) do
 		local bank = banks[x]
 		for y = bank.first, bank.last do setCell(map, x, y, "B") end
 		setCell(map, x, bank.first - 1, ".")
 		setCell(map, x, bank.last + 1, ".")
+		-- Seen/Teiche dürfen Brücken, Ufer und seitliches Wasser nicht überschreiben.
+		for xx = x - 1, x + 1 do
+			for y = bank.first - 1, bank.last + 1 do reserved[key(xx, y)] = true end
+		end
 	end
+	return { width = width, banks = banks, crossings = crossings, cells = cells }, reserved
+end
+
+local function lake(map, random, riverFeature, reserved)
+	local width = random(RunConfig.LAKE_WIDTH.min, RunConfig.LAKE_WIDTH.max)
+	local height = random(RunConfig.LAKE_HEIGHT.min, RunConfig.LAKE_HEIGHT.max)
+	local withIsland = random(1, 10000) <= RunConfig.ISLAND_CHANCE * 10000
+	local riverCells = {}
+	for _, cell in ipairs(riverFeature and riverFeature.cells or {}) do riverCells[key(cell.x, cell.y)] = true end
+	for _ = 1, RunConfig.WATER_PLACEMENT_ATTEMPTS do
+		local left = random(2, RunConfig.BOARD_WIDTH - width)
+		local top = random(1, RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS - height)
+		local valid = true
+		for y = top, top + height - 1 do
+			for x = left, left + width - 1 do
+				if reserved[key(x, y)] then valid = false end
+			end
+		end
+		local island = {}
+		if withIsland then
+			local x, y = left + math.floor((width - 1) / 2), top + 1
+			table.insert(island, { x = x, y = y })
+			if width >= 4 and random(0, 1) == 1 then table.insert(island, { x = x + 1, y = y }) end
+			for _, cell in ipairs(island) do if riverCells[key(cell.x, cell.y)] then valid = false end end
+		end
+		if not valid then continue end
+		local cells = {}
+		for y = top, top + height - 1 do
+			for x = left, left + width - 1 do
+				local corner = (x == left or x == left + width - 1) and (y == top or y == top + height - 1)
+				if not corner or random(0, 1) == 1 then
+					setCell(map, x, y, "W")
+					table.insert(cells, { x = x, y = y })
+				end
+				reserved[key(x, y)] = true
+			end
+		end
+		for _, cell in ipairs(island) do setCell(map, cell.x, cell.y, random(0, 1) == 0 and "." or "F") end
+		return { x = left, y = top, width = width, height = height, cells = cells, island = island }
+	end
+	return nil
+end
+
+local function ponds(map, random, reserved)
+	local result = {}
+	for _ = 1, random(RunConfig.POND_COUNT.min, RunConfig.POND_COUNT.max) do
+		for _ = 1, RunConfig.WATER_PLACEMENT_ATTEMPTS do
+			local x = random(2, RunConfig.BOARD_WIDTH - 2)
+			local y = random(1, RunConfig.BOARD_HEIGHT - RunConfig.START_ROWS - 1)
+			local count = random(1, 2)
+			local valid = true
+			for xx = x, x + count - 1 do
+				if reserved[key(xx, y)] or not passable(map, xx, y, "foot") then valid = false end
+			end
+			if not valid then continue end
+			local cells = {}
+			for xx = x, x + count - 1 do
+				setCell(map, xx, y, "W")
+				reserved[key(xx, y)] = true
+				table.insert(cells, { x = xx, y = y })
+			end
+			table.insert(result, { cells = cells })
+			break
+		end
+	end
+	return result
 end
 
 local function populate(map, regionId, depth, themeId, teamSize, random)
@@ -277,13 +351,26 @@ function LevelGen.generate(seed, regionId, depth, themeId, teamSize, levelKind)
 	assert(teamSize >= 1 and teamSize <= RunConfig.MAX_TEAM and teamSize % 1 == 0, "Ungültige Teamgröße")
 	if levelKind == "boss" then return bossStage(seed, regionId, depth, teamSize) end
 	-- Die Flussentscheidung bleibt bei Neuversuchen erhalten, damit die Quote nicht absinkt.
-	local withRiver = randomSource(seed)(1, 10000) <= RunConfig.RIVER_CHANCE * 10000
+	local featuresRandom = randomSource(seed)
+	local withRiver = featuresRandom(1, 10000) <= RunConfig.RIVER_CHANCE * 10000
+	local withLake = featuresRandom(1, 10000) <= RunConfig.LAKE_CHANCE * 10000
+	local withPonds = featuresRandom(1, 10000) <= RunConfig.POND_CHANCE * 10000
 	for attempt = 1, RunConfig.MAX_ATTEMPTS do
 		local random = randomSource(seed + (attempt - 1) * 7919)
 		local map = compose(regionId, random)
-		if withRiver then river(map, random) end
+		local features, reserved = {}, {}
+		if withRiver then
+			features.river, reserved = river(map, random)
+			if not features.river then continue end
+		end
+		if withLake then
+			features.lake = lake(map, random, features.river, reserved)
+			if not features.lake then continue end
+		end
+		if withPonds then features.ponds = ponds(map, random, reserved) end
 		local stage = populate(map, regionId, depth, themeId, teamSize, random)
 		if stage then
+			stage.features = features
 			stage.fallback = false
 			return levelKind == "miniboss" and withMiniboss(stage, regionId) or stage
 		end
