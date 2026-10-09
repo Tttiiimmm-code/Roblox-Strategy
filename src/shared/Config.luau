@@ -139,6 +139,11 @@ Config.ENVIRONMENT = {
 		bush = { height = 0.3, width = 0.45 }, deco_root = { height = 0.2, width = 0.5 },
 		understoryChance = 0.55, positionJitter = 0.1,
 	},
+	rocks = { -- WIP: große Felsen und kleine Begleiter
+		mountain = { height = 0.6, width = 0.55 }, largeScale = { min = 1, max = 1.6 },
+		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 1, max = 2 },
+		cliff = { height = 0.45, width = 0.6 }, cliffCount = { min = 1, max = 2 },
+	},
 	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
 	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
 	categories = {

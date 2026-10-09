@@ -50,6 +50,29 @@ local function boardMetrics(label)
 	return maxTriangles
 end
 metricAssets()
+do
+	freshAssets()
+	assetModel(models, "rock_1", Vector3.new(8, 8, 8))
+	Grid.setMap({ "MMMM", "CCCC" })
+	local rocks = Board.build("greenland")
+	local minWidth, maxWidth, count = math.huge, 0, 0
+	for _, object in rocks:GetChildren() do
+		if object:IsA("Model") and object.Name == "rock_1" then
+			local box, size = object:GetBoundingBox()
+			if box.Position.X >= 0 and box.Position.X <= 32 and box.Position.Z >= 0 and box.Position.Z <= 16 then
+				minWidth, maxWidth, count = math.min(minWidth, size.X), math.max(maxWidth, size.X), count + 1
+				for _, p in object:GetDescendants() do if p:IsA("BasePart") then expect(not p.CanQuery, "Fels blockiert Feldklick") end end
+			end
+		end
+	end
+	expect(count >= 12 and maxWidth / minWidth > 1.7, "Felsen ohne sichtbare Größenstreuung")
+	local stone = Assets.place("deco_stone", CFrame.new(), { key = "Steinchen", parent = workspace })
+	local _, size = stone:GetBoundingBox()
+	expect(size.X <= Config.ENVIRONMENT.categories.deco_stone.width * Config.TILE_SIZE * 1.01, "Felsersatz ist kein Steinchen")
+	stone:Destroy()
+	print("OK: Felsen (Größenstreuung, Klippen, Klickbarkeit, Steinchen aus Felsvarianten).")
+end
+metricAssets()
 Grid.setMap({ "F" })
 local forest = Board.build("greenland")
 local forestTrees = 0

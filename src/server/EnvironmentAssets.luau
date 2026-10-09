@@ -154,6 +154,7 @@ end
 function EnvironmentAssets.place(category, cframe, opts)
 	opts = opts or {}
 	local variants = EnvironmentAssets.variants(category)
+	if category == "deco_stone" and #variants == 0 then variants = EnvironmentAssets.variants("rock") end
 	local definition = Config.ENVIRONMENT.categories[category]
 	if #variants == 0 or not definition then return nil end
 	local random = randomFor(tostring(opts.key or cframe.Position) .. ":" .. category)

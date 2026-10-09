@@ -189,11 +189,37 @@ local function decorate(ch, x, y, parent, mapKey, palette)
 				Color = Color3.fromRGB(55, 45, 35), Material = Enum.Material.Wood }, parent)
 		end
 	elseif ch == "M" then
+		if #EnvironmentAssets.variants("rock") > 0 then
+			local random = Random.new(hash(key .. ":rocks"))
+			local settings = Config.ENVIRONMENT.rocks
+			local offsets = { Vector3.new(-c, 0, -c), Vector3.new(c, 0, c), Vector3.new(c, 0, -c) }
+			for i = 1, 1 + random:NextInteger(settings.smallCount.min, settings.smallCount.max) do
+				local span = i == 1 and settings.largeScale or settings.smallScale
+				local scale = random:NextNumber(span.min, span.max)
+				place("rock", center + offsets[i], parent, key .. ":rock:" .. i, {
+					height = settings.mountain.height * scale, width = settings.mountain.width * scale, rotationMode = "free",
+				})
+			end
+			return
+		end
 		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, -c), Vector3.new(-c, 0, c) } do
 			if place(category, center + off, parent, key .. tostring(off)) then continue end
 			deco({ Size = Vector3.new(2.4, 2.2, 2.4),
 				CFrame = CFrame.new(center + off + Vector3.new(0, 1.1, 0)) * CFrame.Angles(0, math.rad(45), 0),
 				Color = Color3.fromRGB(120, 110, 100), Material = Enum.Material.Rock }, parent)
+		end
+	elseif ch == "C" then
+		local random = Random.new(hash(key .. ":cliff"))
+		local settings = Config.ENVIRONMENT.rocks
+		for i = 1, random:NextInteger(settings.cliffCount.min, settings.cliffCount.max) do
+			local base = center + Vector3.new(i == 1 and -c or c, 0, -c)
+			if not place("rock", base, parent, key .. ":cliff:" .. i, {
+				height = settings.cliff.height, width = settings.cliff.width, rotationMode = "free",
+			}) then
+				local size = Vector3.new(settings.cliff.width, settings.cliff.height, settings.cliff.width) * Config.TILE_SIZE
+				deco({ Name = "CliffRock", Size = size, Position = base + Vector3.new(0, size.Y / 2, 0),
+					Color = Config.TERRAIN.M.color, Material = Enum.Material.Rock }, parent)
+			end
 		end
 	elseif ch == "B" then
 		local angle = bridgeAngle(x, y)

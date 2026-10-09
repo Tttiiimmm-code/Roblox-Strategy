@@ -61,7 +61,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
   - Die Farbe gilt nur für Kronen-Teile: MeshParts mit `LeafyGrass` oder mit einer SurfaceAppearance mit `AlphaMode = Transparency`. Der Stamm bleibt unverändert. Setze sie über `SurfaceAppearance.Color` (mit pcall; schlägt das zur Laufzeit fehl, Hinweis in die Notizen und auf `MeshPart.Color` ausweichen). Gilt für Bäume, Büsche und den Umgebungsrand, deterministisch pro Platzierung.
   - Fertig, wenn: Die Farbe ist pro Baum deterministisch und Stämme bleiben unverändert (Test mit Stub-SurfaceAppearance).
 
-- [ ] 4. **Felsen in verschiedenen Größen + Deko-Steinchen** – `BoardBuilder.decorate` (Fall `M`, Klippen `C`), `Config`
+- [x] 4. **Felsen in verschiedenen Größen + Deko-Steinchen** – `BoardBuilder.decorate` (Fall `M`, Klippen `C`), `Config`
   - Bergfelder: zum Beispiel ein großer Fels und 1–2 kleinere, Größenspanne als WIP-Wert (etwa 0,5×–1,6× der Grundgröße), freie Drehung.
   - Klippen (`C`): ein paar große Felsen auf der Oberkante, damit die Blöcke weniger glatt wirken. Klickbarkeit bleibt erhalten, weil die Modelle nicht abfragbar sind.
   - `deco_stone`: Gibt es keine eigenen `deco_stone_*`-Varianten, werden Felsvarianten in Deko-Größe genutzt.
@@ -106,6 +106,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 4: Ein großer Fels plus 1–2 kleine je Bergfeld, freie Drehung und getrennte WIP-Größen; 1–2 Felsen je Klippenoberkante. `deco_stone` nutzt bei fehlender eigener Kategorie Felsvarianten in Steinchengröße. Größenstreuung/Klickbarkeit/Ersatz im Stub geprüft; check/test-run grün. Messung nach Schritt 4: 1.748,8 Teile im Mittel / max. 2.062, geschätzt 324.891 Dreiecke im Mittel / max. 568.430, Stub-Aufbau 74,03 ms (100 Seeds). Part-Fallback bleibt aktiv; neue Klippenfelsen erhöhen dessen Teilezahl leicht auf Mittel 1.852,9.
 
 - Schritt 3: Gewichtete regionale Kronenpaletten zentral in Config und über Stages weitergegeben; Grünland 90 % Grün / 10 % Herbst, Platzhalter für Sumpf/Eis/Vulkan. Nur LeafyGrass-MeshParts bzw. transparente SurfaceAppearances gefärbt; Stämme unverändert. `SurfaceAppearance.Color` per pcall, bei fehlender Laufzeitunterstützung einmalige Warnung und `MeshPart.Color`. Stub erzwingt den Fehlerzweig und prüft Determinismus/Stämme/Herbstquote; check/test-run grün. Roblox dokumentiert Laufzeit-Tinting unter https://create.roblox.com/docs/art/modeling/surface-appearance. Das vom Nutzer exportierte Paket wird mit diesem Schritt aufgenommen; Rojo-Import bestätigt. Brett-Geometriebudget unverändert. Laufzeit-Farbersatz nur im Stub ausgelöst, Studio noch ungetestet.
 
