@@ -63,3 +63,41 @@ for _, id in ipairs(run.order) do run.team[id].alive, run.team[id].hp = false, 0
 render()
 check(object("Weiter zu Garrick", "TextButton"):GetAttribute("Style") == "disabled", "Team ohne Lebende kann fortsetzen")
 print("OK: " .. count .. " Lager-UI-Prüfungen (Preise, Touchflächen, Währungen, Kasernenwiederverwendung und Tausch). Studio/Handy ungetestet.")
+
+run.phase, run.campExtra, run.current = "choice", false, nil
+for _, id in ipairs(run.order) do run.team[id].hp, run.team[id].alive = 20, true end
+for _, depth in ipairs({ 3, 5 }) do
+	run.depth = depth
+	run.options = modules.LevelGen.makeOptions(run.seed, depth, "greenland")
+	render()
+	local title = depth == 3 and "Miniboss: Banditenhauptmann" or "Boss: Garrick"
+	local card = object(title, "TextLabel").Parent
+	check(#run.options == 1 and card.ClassName == "TextButton", "Bosskarte fehlt")
+	card.Activated:Fire()
+	check(messages[#messages].type == "choose" and messages[#messages].index == 1, "Bossstart falsch")
+	run.current = 1
+	render()
+	object("Level erneut starten", "TextButton").Activated:Fire()
+	check(messages[#messages].type == "resume", "Bossneustart falsch")
+	run.current = nil
+end
+local campOption
+for seed = 1, 1000 do
+	run.seed, run.depth = seed, 1
+	run.options = modules.LevelGen.makeOptions(seed, 1, "greenland")
+	for i, option in ipairs(run.options) do if option.kind == "camp" then campOption = i; break end end
+	if campOption then break end
+end
+render()
+local campCard = object("Lager", "TextLabel").Parent
+check(object("⛺", "TextLabel").Parent == campCard, "Lagersymbol fehlt")
+check(object("Heilung & Teamwechsel\nKeine Kampfbelohnung", "TextLabel").Parent == campCard, "Lagerinfo fehlt")
+campCard.Activated:Fire()
+check(messages[#messages].type == "choose" and messages[#messages].index == campOption, "Wahllager falsch angebunden")
+-- Die ausgeliehene Kaserne bleibt im Hub verwendbar und enthält keine Lagerstatus-Texte.
+profile.run = nil
+render()
+modules.CollectionUI.update(profile)
+check(collection.Parent == home, "Kaserne nach Lauf verloren")
+for _, label in collection:GetDescendants() do check(label.Text ~= "Im Laufteam", "Lagerstatus im Hub") end
+print("OK: " .. count .. " gesamte Lauf-UI-Prüfungen (Lager, Kaserne, Boss-/Lagerkarten, Neustart, Rückkehr). Studio/Handy ungetestet.")

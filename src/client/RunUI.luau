@@ -120,19 +120,28 @@ function RunUI.confirmAbandon()
 	confirmation.Visible = true
 end
 
+local function optionText(option)
+	if option.kind == "camp" then return "⛺", "Lager", "Heilung & Teamwechsel\nKeine Kampfbelohnung" end
+	local theme = RunConfig.THEMES[option.themeId]
+	local reward = RunConfig.REWARDS[option.reward.kind]
+	local title = option.bossId and ((option.kind == "miniboss" and "Miniboss: " or "Boss: ") .. UnitData.Enemies[option.bossId].name) or theme.name
+	local symbol = option.bossId and "⚔" or theme.symbol
+	return symbol, title, ("%s  %d %s"):format(reward.symbol, option.reward.amount, reward.name)
+end
+
 local function buildChoice(run, profile)
 	resetContent()
 	local region = RunConfig.REGION_NAMES[run.region] or run.region
 	heading(("%s – Level %d / %d"):format(region, run.depth, RunConfig.totalLevels()),
 		run.current and "Das abgebrochene Level beginnt von vorne, mit deinen KP vor dem Level."
-			or "Wähle deinen nächsten Kampf. Gefallene Helden bleiben in diesem Lauf tot.")
+			or (RunConfig.levelKind(run.depth) ~= "battle" and "Besiege den Anführer – danach fliehen die übrigen Gegner."
+				or "Wähle Kampf oder Lager. Ein Wahllager ersetzt den Kampf dieses Levels."))
 	teamStrip(run, profile)
 	if run.current then
 		local option = run.options[run.current]
-		local theme = RunConfig.THEMES[option.themeId]
-		local reward = RunConfig.REWARDS[option.reward.kind]
+		local symbol, title, detail = optionText(option)
 		label({ Position = UDim2.fromOffset(24, 270), Size = UDim2.new(1, -48, 0, 60),
-			Text = theme.symbol .. "  " .. theme.name .. "     " .. reward.symbol .. " " .. option.reward.amount .. " " .. reward.name,
+			Text = symbol .. "  " .. title .. "     " .. detail,
 			TextSize = 30 }, content)
 		local resume = button("Level erneut starten", content, "primary")
 		resume.AnchorPoint = Vector2.new(0.5, 0)
@@ -144,15 +153,15 @@ local function buildChoice(run, profile)
 		local options = make("Frame", { Position = UDim2.fromOffset(24, 254), Size = UDim2.new(1, -48, 1, -360),
 			BackgroundTransparency = 1 }, content)
 		for i, option in ipairs(run.options) do
-			local theme, reward = RunConfig.THEMES[option.themeId], RunConfig.REWARDS[option.reward.kind]
+			local symbol, title, detail = optionText(option)
 			local b = button("", options, "default")
 			b.Position = UDim2.new((i - 1) / #run.options, 6, 0, 0)
 			b.Size = UDim2.new(1 / #run.options, -12, 1, 0)
-			label({ Position = UDim2.fromScale(0, 0.06), Size = UDim2.fromScale(1, 0.27), Text = theme.symbol, TextSize = 48 }, b)
-			label({ Position = UDim2.fromScale(0, 0.34), Size = UDim2.fromScale(1, 0.22), Text = theme.name,
-				Font = THEME.title, TextSize = 28 }, b)
-			label({ Position = UDim2.fromScale(0, 0.62), Size = UDim2.fromScale(1, 0.2),
-				Text = ("%s  %d %s"):format(reward.symbol, option.reward.amount, reward.name), TextSize = 23, TextColor3 = THEME.gold }, b)
+			label({ Position = UDim2.fromScale(0, 0.04), Size = UDim2.fromScale(1, 0.22), Text = symbol, TextSize = 48 }, b)
+			label({ Position = UDim2.fromScale(0.03, 0.28), Size = UDim2.fromScale(0.94, 0.26), Text = title,
+				Font = THEME.title, TextSize = 28, TextWrapped = true, TextScaled = false }, b)
+			label({ Position = UDim2.fromScale(0.03, 0.58), Size = UDim2.fromScale(0.94, 0.34),
+				Text = detail, TextWrapped = true, TextScaled = false, TextSize = 23, TextColor3 = THEME.gold }, b)
 			b.Activated:Connect(function() if not lastState.busy then callbacks.onChooseLevel(i) end end)
 		end
 	end

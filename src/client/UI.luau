@@ -640,7 +640,7 @@ function UI.showInfo(unit, terrain)
 	info.hp.fill.BackgroundColor3 = UIKit.hpColor(unit.hp / unit.maxHp)
 	UIKit.setBar(info.exp, unit.xp, 100)
 	for stat, lbl in info.stats do
-		local value = stat == "mov" and cls.mov or unit[stat]
+		local value = stat == "mov" and (unit.mov or cls.mov) or unit[stat]
 		local name = stat == "mov" and "Bew" or UnitData.STAT_NAMES[stat]
 		lbl.Text = ("<font color='%s'>%s</font> <b>%d</b>"):format(UIKit.DIM_HEX, name, value)
 	end

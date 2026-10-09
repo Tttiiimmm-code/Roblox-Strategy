@@ -40,7 +40,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
   - Oberfläche handytauglich (UIKit-Regeln), Preise sichtbar vor dem Kauf.
   - Fertig, wenn: Stub-Prüfungen für Heilung, Tausch (inkl. Toter), Wiederbeleben beider Währungen, zu wenig Guthaben, Teamgröße, Wiederkommen ins Lager.
 
-- [ ] 6. **Wahl-Bildschirm** – `RunUI.luau`: Lager-Option mit eigenem Symbol; L3/L5 als Boss-Karte mit Namen („Miniboss: Banditenhauptmann“, „Boss: Garrick“) statt Wahl; Extra-Lager vor dem Boss klar erkennbar.
+- [x] 6. **Wahl-Bildschirm** – `RunUI.luau`: Lager-Option mit eigenem Symbol; L3/L5 als Boss-Karte mit Namen („Miniboss: Banditenhauptmann“, „Boss: Garrick“) statt Wahl; Extra-Lager vor dem Boss klar erkennbar.
 
 - [ ] 7. **Doku + Abschluss** – `docs/roguelike-design.md` (Phase 3 umgesetzt, Platzhalter/Werte), Charakter-Pipeline: Miniboss `brigand_captain` als neue Figur in der Liste. Prüfskripte erweitern (`test-levelgen` für Abfolge/Karten, neues oder bestehendes Stub-Skript für Fähigkeiten/Lager). `scripts/check.ps1`, alle Prüfskripte, Rojo-Build. Devlog **#32** „Roguelike Phase 3 – Bosse und Lager“. Committen, pushen, `.handoff/status` = `fertig`.
 
@@ -70,3 +70,5 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - Schritt 4: Bossfall beendet den Kampf sofort, Leibwache flieht. Gebietsboss schreibt den Teamplatz vor Laufende in den Laufstand und ins Ergebnis. Echte Server-Stubs für beide Bosslevel grün.
 
 - Schritt 5: Lager heilt beim Eintritt, servergeprüfte Aktionen und persistente Todeshistorie. Bestehender Kasernenframe wird im Lager eingehängt und vor jedem Neuaufbau zurückgegeben; kein zusätzlicher Gacha-Zugang. Vollständige Lager-/Profil-Stubs und 13 UI-Anschlussprüfungen grün. Lager ohne lebenden aktiven Helden bleibt offen, Weiter gesperrt.
+
+- Schritt 6: Lager mit Zelt-Symbol und Hinweis auf ersetzten Kampf; Bosskarten mit Namen statt freier Wahl. Bewegungsanzeige in UI zeigt auch die reduzierte Hauptmann-Reichweite. 109 Lauf-UI-Anschlussprüfungen grün; echtes Rendering bleibt Nutzer-Test.
