@@ -1,6 +1,7 @@
 -- Geprüfte Umgebungs-Vorlagen bleiben serverseitig; fehlende Kategorien liefern nil.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local MaterialService = game:GetService("MaterialService")
 local Config = require(ReplicatedStorage:WaitForChild("Shared").Config)
 
 local EnvironmentAssets = {}
@@ -91,7 +92,15 @@ function EnvironmentAssets.variants(category)
 	if cache[category] then return cache[category] end
 	local result = {}
 	if current then
-		local sources = current:GetChildren()
+		-- Pakete dürfen als Ordner in einer Datei liegen; Materialien (z. B. Rinde) wirken nur im MaterialService.
+		local sources = {}
+		for _, source in current:GetDescendants() do
+			if source:IsA("MaterialVariant") then
+				if not MaterialService:FindFirstChild(source.Name) then source:Clone().Parent = MaterialService end
+			elseif source.Parent:IsA("Folder") then
+				table.insert(sources, source)
+			end
+		end
 		table.sort(sources, function(a, b) return a.Name < b.Name end)
 		for _, source in sources do
 			local kind, number = source.Name:match("^([%l_]+)_(%d+)$")
