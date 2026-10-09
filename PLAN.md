@@ -49,7 +49,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
   - Nur Außenkanten, die an niedrigeres Gelände grenzen, bekommen Felsen, nicht Innenkanten zwischen zwei `C`/`M`-Feldern.
   - Fertig, wenn: Ein Stub prüft, dass freie Außenkanten Felsen bekommen, Innenkanten nicht, und dass die Klickbarkeit erhalten bleibt. Dreiecke im Budget.
 
-- [ ] 6. **Messung + Prüfskripte** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke (Mittel/Max, 100 Seeds, mit Paket-Fixtures, inklusive Umgebung) sowie Stub-Aufbauzeit vorher/nachher.
+- [x] 6. **Messung + Prüfskripte** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke (Mittel/Max, 100 Seeds, mit Paket-Fixtures, inklusive Umgebung) sowie Stub-Aufbauzeit vorher/nachher.
 
 - [ ] 7. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#35** „Level-Optik Etappe C3“, „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
@@ -79,3 +79,20 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
 - Schritt 4: Unregelmaessiger Ring aus grossen Paketbaeumen (Hoehe 1,8 / Krone 2,4 Felder), wenigen Bueschen/Felsen und versetzten guenstigen Kronen-Parts dahinter. Tiefe etwa 2-5 Felder inkl. Kronen, Config-WIP; innerer Kronenabstand mindestens 0,7 Feld, damit Randfelder auch aus schraeger Kamera sichtbar bleiben. Weiter aussen ruhiger Boden bis zum bisherigen C1-Zoomrand. Gruenland 73/86/64, Sumpf 55/67/49, Eis/Vulkan zurueckhaltende Platzhalter in Stages; Material Grass statt SmoothPlastic. Nutzer beurteilt Farbwahl/Zoomrand in Studio. Rand-Stubs fuer 100 Paket-Seeds und Fallback: alle vier Seiten ohne Luecken >0,5 Feld, alle Objekt-AABBs vollstaendig ausserhalb des Bretts, keine Klickblocker, deterministisch. Paketmessung vorher Teile 1732,4/1925 und Dreiecke 293732/453272, nachher 1810,4/2003 und 337318/496188; Stub 88,29 -> 100,53 ms. Typisches Budget auf 350000 angehoben fuer Nahmodelle plus guenstige Ferne; Maximalfaelle bleiben hoeher. check und run OK.
 
 - Schritt 5: Freiliegende M/C-Aussenwaende mit je drei unterschiedlich geneigten Rock-Wedge-Facetten, variabler Oberkante und 12 % zusaetzlichen halb eingelassenen Paketfelsen. Kuehler/dunkler Seitenfarbton 77/82/82 in Config, Oberseite und Klickfeld erhalten. Keine Felsen an M/M, C/C oder M/C-Innenkanten. Berg-Oberfelsen weiter an Ecken und Breite begrenzt, sodass 1,4 Studs Figurenmitte frei bleiben. Geometrie-Stubs fuer alle Kanten/Oberkanten/Klickhoehen/Innenkanten, Paket/Fallback und Abschaltung gruen. Facetten gewaehlt, weil komplette Mesh-Verkleidung das Handy-Budget sprengen wuerde. Paketmessung vorher Teile 1810,4/2003 und Dreiecke 337318/496188, nachher 1972,2/2120 und 343436/499260; Stub 100,53 -> 104,55 ms. Mittleres Budget 350000 eingehalten; dichte Maximalfaelle in Studio/Handy gesondert pruefen. check und run OK.
+
+- Schritt 6: Wiederholbare Vergleichsmessung ueber `scripts/measure-environment.ps1 -Revision ...` ohne Checkout; gleiche masshaltige Paket-Fixtures und Seeds 1-100, Gruenland/Tiefe 1/sechs Starts/16x12 inkl. Umgebung. Aufbauzeit ohne Assertionen/Teilezaehlung, Mesh-Dreiecke weiterhin Schaetzwerte. Determinismus-Signatur umfasst Modellnamen, Positionen, Groessen, Rotationen und Farben.
+- Zoom-Korrektur bei der geometrischen Abnahme: Der C1-Terrain-Rand reicht bei maximalem Zoom nicht fuer den gesamten Sichtboden. Sichtboden separat auf Zoom x 4,2 erweitert, in Parts bis 512 Studs aufgeteilt; Terrain-Freiraum bleibt unveraendert und erreicht den Hub nicht neu. Strahl-/Bodenpruefung fuer alle vier Brettecken, acht Kameradrehungen, Seitenverhaeltnisse 4:3/16:9/21:9, C1-Neigung und 70 Grad FOV. Aeuessere Kronen auf knapp vier Felder Randtiefe abgestimmt (Config farDistance/farWidth 2,6). Gegenueber Schritt 5 zusaetzlich 34 Teile / 960 Dreiecke. Optischer Dunst-/Rand-/Hub-Eindruck bleibt Studio-Pruefung.
+
+Einheitlicher Vergleich (Mittel/Max; Stub-Zeiten schwanken, keine Roblox-Laufzeitmessung):
+
+| Stand | Teile Mittel / Max | Dreiecke Mittel / Max | Stub ms Mittel / Max |
+|---|---:|---:|---:|
+| Vor C3 (`5998a1b`) | 1762,2 / 1971 | 296921 / 453272 | 85,13 / 104,69 |
+| Schritt 1 (`3c73b52`) | 1732,4 / 1925 | 293732 / 453272 | 88,06 / 109,61 |
+| Schritt 2 (`355a6b0`) | 1732,4 / 1925 | 293732 / 453272 | 87,88 / 120,45 |
+| Schritt 3 (`612ed32`) | 1732,4 / 1925 | 293732 / 453272 | 88,34 / 146,52 |
+| Schritt 4 (`9b5d674`) | 1810,4 / 2003 | 337318 / 496188 | 92,63 / 120,85 |
+| Schritt 5 (`54f9e2a`) | 1972,2 / 2120 | 343436 / 499260 | 98,58 / 124,48 |
+| Schritt 6, final | 2006,2 / 2154 | 344396 / 500220 | 101,71 / 150,11 |
+
+- Abschlusspruefungen: check.ps1 OK (37 Luau-Dateien); test-levelgen.ps1 OK (19000 Level-, 5000 Options-, 2400 Boss-/Minibosspruefungen, 96 Landschaftskombinationen, 0 regulaere Rueckfaelle); test-run.ps1 OK (34458 Laufpruefungen, 523294 bisherige Brett-/Kameraassertionen plus neue C3-Geometrie-/Pakettests); test-tutorial.ps1 OK (168); test-run-ui.ps1 OK (116); Rojo-Build TacticsGame.rbxlx OK. Keine alten Goldsymbole in src; Edelstein-Symbol ausschliesslich zentral. Alle manuellen Tests fuer C3 in Studio/auf Handy ungetestet; unabhaengiger Claude-Review ausstehend.

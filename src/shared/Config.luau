@@ -67,8 +67,7 @@ Config.FEEL = {
 	rarityEffects = false, -- Nutzer 08.10.2026: Seltenheits-Leuchten/-Partikel (Waffe ★4, Bodenaura ★5) vorerst aus
 	flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
-	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
-	environmentMargin = 72, -- Boden reicht weiterhin bis an den C1-Übersichtszoom.
+	environmentMargin = 72, -- Terrain-Freiraum; sichtbarer Boden separat bis zum Übersichtszoom.
 	atmosphere = {
 		hall = {
 			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },
@@ -177,10 +176,11 @@ Config.ENVIRONMENT = {
 		tree = { height = 1.8, crownWidth = 2.4 },
 		rock = { height = 0.75, width = 0.9 },
 		bush = { height = 0.45, width = 0.7 },
-		nearSpacing = 2.2, farSpacing = 2.8, boardClearance = 0.7,
+		nearSpacing = 2.2, farSpacing = 2.4, boardClearance = 0.7,
 		maxSideGap = 0.5, -- WIP: höchstens ein halbes Feld zwischen Kronenprojektionen
 		positionJitter = 0.08, detailChance = 0.1,
-		farDistance = 3.4, farWidth = 3.4, farHeight = 1.1,
+		farDistance = 2.6, farWidth = 2.6, farHeight = 1.1,
+		groundZoomMargin = 4.2, maxGroundPartSpan = 512, -- WIP: C1-Neigung, 70° FOV, bis 21:9, alle Drehungen/Ecken
 		groundColor = Color3.fromRGB(73, 86, 64), groundMaterial = Enum.Material.Grass,
 	},
 }

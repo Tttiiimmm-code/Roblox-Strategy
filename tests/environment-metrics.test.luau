@@ -36,8 +36,9 @@ local function boardMetrics(label)
 		Grid.setMap(stage.map)
 		local start = os.clock()
 		local board = Board.build("greenland", stage.features, stage)
-		validateOuter(board)
 		seconds += os.clock() - start
+		validateOuter(board)
+		if seed == 1 then validateZoomGround(board) end
 		local count, triangles = 0, 0
 		for _, p in board:GetDescendants() do
 			if p:IsA("BasePart") then
@@ -48,7 +49,7 @@ local function boardMetrics(label)
 		sumParts += count; maxParts = math.max(maxParts, count)
 		sumTriangles += triangles; maxTriangles = math.max(maxTriangles, triangles)
 	end
-	print(string.format("C2-Messung %s: 100 Seeds, Teile Mittel %.1f / Max %d; Dreiecke geschaetzt Mittel %.0f / Max %d; Stub-Aufbau Mittel %.2f ms.", label, sumParts / 100, maxParts, sumTriangles / 100, maxTriangles, seconds * 10))
+	print(string.format("C3-Messung %s: 100 Seeds, Teile Mittel %.1f / Max %d; Dreiecke geschaetzt Mittel %.0f / Max %d; Stub-Aufbau Mittel %.2f ms.", label, sumParts / 100, maxParts, sumTriangles / 100, maxTriangles, seconds * 10))
 	return maxTriangles, sumTriangles / 100
 end
 metricAssets()
@@ -137,7 +138,12 @@ do
 		local board = Board.build("greenland", stage.features, stage)
 		local rows = {}
 		for _, object in board:GetDescendants() do
-			if object:IsA("BasePart") then table.insert(rows, object.Name .. ":" .. tostring(object.Position) .. ":" .. tostring(object.Size)) end
+			if object:IsA("BasePart") then
+				local cf, color = object.CFrame, object.Color
+				table.insert(rows, object.Parent.Name .. ":" .. object.Name .. ":" .. tostring(object.Position) .. ":" .. tostring(object.Size)
+					.. ":" .. tostring(cf:PointToWorldSpace(Vector3.new(1, 0, 0))) .. ":" .. tostring(cf:PointToWorldSpace(Vector3.new(0, 1, 0)))
+					.. ":" .. color.R .. ":" .. color.G .. ":" .. color.B)
+			end
 		end
 		return table.concat(rows, "|")
 	end
@@ -148,4 +154,5 @@ expect(meanTriangles <= Config.ENVIRONMENT.estimatedTriangleBudget, "Typisches D
 freshAssets()
 Grid.setMap({ "......", "......", "......" })
 validateOuter(Board.build("greenland"))
+validateZoomGround(Board.build("greenland"))
 print("OK: Waldrand (100 Paket-Seeds, Part-Fallback, alle Seiten geschlossen, kein Brettueberhang).")

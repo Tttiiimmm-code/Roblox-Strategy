@@ -31,3 +31,31 @@ local function validateOuter(board)
 		expect(finish >= length, "Waldrand reicht nicht bis zur Ecke")
 	end
 end
+
+local function validateZoomGround(board)
+	local w, h = Grid.width() * Config.TILE_SIZE, Grid.height() * Config.TILE_SIZE
+	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
+	local floor = {}
+	for _, part in board:GetChildren() do if part.Name == "Surround" then
+		expect(part.Size.X <= Config.ENVIRONMENT.outer.maxGroundPartSpan and part.Size.Z <= Config.ENVIRONMENT.outer.maxGroundPartSpan,
+			"Umgebungsboden mit uebergrossem Part")
+		table.insert(floor, part)
+	end end
+	-- Strahl/Schnitt mit y=surroundHeight: tatsächliche C1-Neigung (0,1,0.75), Standard-FOV 70°.
+	for _, aspect in { 4 / 3, 16 / 9, 21 / 9 } do for yaw = 0, 7 do
+		local angle, tangent = yaw * math.pi / 4, math.tan(math.rad(35))
+		for _, fx in { 0, w } do for _, fz in { 0, h } do
+			for _, sx in { -1, 1 } do for _, sy in { -1, 1 } do
+				local dy = -0.8 + 0.6 * sy * tangent
+				local time = (overview * 0.8 - Config.FEEL.surroundHeight) / -dy
+				local dx, dz = sx * aspect * tangent * time, overview * 0.6 + (-0.6 - 0.8 * sy * tangent) * time
+				local x, z = fx + dx * math.cos(angle) + dz * math.sin(angle), fz - dx * math.sin(angle) + dz * math.cos(angle)
+				local covered = x >= 0 and x <= w and z >= 0 and z <= h
+				for _, part in floor do
+					if math.abs(x - part.Position.X) <= part.Size.X / 2 and math.abs(z - part.Position.Z) <= part.Size.Z / 2 then covered = true; break end
+				end
+				expect(covered, "Leerer Bodenrand bei C1-Maximalzoom")
+			end end
+		end end
+	end end
+end

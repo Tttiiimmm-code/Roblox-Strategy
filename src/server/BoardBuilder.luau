@@ -471,15 +471,23 @@ function BoardBuilder.build(regionId, features, stage)
 	end
 	local top = Config.FEEL.surroundHeight
 	local surroundColor = region and region.surroundColor or Config.ENVIRONMENT.outer.groundColor
+	local overview = math.max(Config.CAMERA.zoomOverviewMin, math.sqrt(w * w + h * h) * Config.CAMERA.zoomOverviewScale)
+	local groundMargin = math.max(margin, overview * Config.ENVIRONMENT.outer.groundZoomMargin)
 	for _, rect in {
-		{ -margin / 2, h / 2, margin, h + margin * 2 },
-		{ w + margin / 2, h / 2, margin, h + margin * 2 },
-		{ w / 2, -margin / 2, w, margin },
-		{ w / 2, h + margin / 2, w, margin },
+		{ -groundMargin / 2, h / 2, groundMargin, h + groundMargin * 2 },
+		{ w + groundMargin / 2, h / 2, groundMargin, h + groundMargin * 2 },
+		{ w / 2, -groundMargin / 2, w, groundMargin },
+		{ w / 2, h + groundMargin / 2, w, groundMargin },
 	} do
-		deco({ Name = "Surround", Size = Vector3.new(rect[3], Config.FEEL.groundDepth + top, rect[4]),
-			Position = Vector3.new(rect[1], (top - Config.FEEL.groundDepth) / 2, rect[2]),
-			Color = surroundColor, Material = region and region.surroundMaterial or Config.ENVIRONMENT.outer.groundMaterial }, board)
+		local columns = math.ceil(rect[3] / Config.ENVIRONMENT.outer.maxGroundPartSpan)
+		local rows = math.ceil(rect[4] / Config.ENVIRONMENT.outer.maxGroundPartSpan)
+		for yy = 1, rows do for xx = 1, columns do
+			local width, length = rect[3] / columns, rect[4] / rows
+			deco({ Name = "Surround", Size = Vector3.new(width, Config.FEEL.groundDepth + top, length),
+				Position = Vector3.new(rect[1] - rect[3] / 2 + (xx - 0.5) * width,
+					(top - Config.FEEL.groundDepth) / 2, rect[2] - rect[4] / 2 + (yy - 0.5) * length),
+				Color = surroundColor, Material = region and region.surroundMaterial or Config.ENVIRONMENT.outer.groundMaterial }, board)
+		end end
 	end
 	-- Gleiche Zeichen bilden einfache Rechtecke statt eines sichtbaren Blocks pro Feld.
 	local used, groundCount = {}, 0
