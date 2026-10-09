@@ -64,7 +64,7 @@ Config.FEEL = {
 	cliffSideShade = 0.42,
 	shore = { enabled = true, width = 0.1, maxPartsPerTile = 4,
 		thickness = 0.01, surfaceOffset = 0.018, color = Color3.fromRGB(104, 95, 75) }, -- WIP: gedämpfter Erdton
-	waterfallsEnabled = true, waterfallWidth = 0.62, waterfallThickness = 0.12,
+	waterfallsEnabled = true, waterfallWidth = 0.62, waterfallThickness = 0.12, waterfallSurfaceClearance = 0.05,
 	waterfallColor = Color3.fromRGB(161, 207, 235), waterfallFoamColor = Color3.fromRGB(230, 242, 250),
 	waterfallTransparency = 0.15, waterfallFoamCount = 3, waterfallFoamSize = 0.65,
 	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,

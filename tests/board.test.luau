@@ -17,7 +17,7 @@ local function checkBoard(stage)
 		end
 		if p.Name == "Waterfall" then
 			planes += 1
-			expect(p.Size.Y == Config.TERRAIN.C.height - Config.TERRAIN.W.height, "Fallhöhe")
+			expect(math.abs(p.Size.Y - (Config.TERRAIN.C.height + Config.FEEL.waterfallSurfaceClearance + Config.FEEL.waterfallThickness - Config.TERRAIN.W.height)) < 0.001, "Fallhöhe")
 			expect(not p.CanQuery, "Wasserfall fängt Klick ab")
 		elseif p.Name == "WaterfallFoam" then foam += 1
 		elseif p.Name == "WaterfallSource" then source += 1 end

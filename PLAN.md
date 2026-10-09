@@ -46,7 +46,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
   - Ohne Paket: keine Änderung am Part-Fallback.
   - Fertig, wenn: Stub prüft: pro Paketbaum genau ein Wurzelfuß, Mittelpunkt innerhalb einer WIP-Toleranz um den Stammfuß, Skalierung relativ zur Stammbreite, deterministisch. Teile/Dreiecke vorher/nachher.
 
-- [ ] 5. **Wasserfälle sichtbar + häufiger** – `LevelGen`, `RunConfig`, `BoardBuilder.waterfall`, `LandscapeBuilder` (Klippenkanal)
+- [x] 5. **Wasserfälle sichtbar + häufiger** – `LevelGen`, `RunConfig`, `BoardBuilder.waterfall`, `LandscapeBuilder` (Klippenkanal)
   - Prüfe, ob Wasserfälle mit den Terrain-Klippen aus C5 noch sichtbar sind (Quellstreifen, Fallfläche und Gischt nicht im Terrain versteckt, Kanal in der Klippenoberkante frei, Fallfläche sitzt an der sichtbaren Klippenkante). Reparieren, falls nötig.
   - Häufigkeit auf **20–25 %** der normalen Laufkarten anheben (WIP), im Generatortest messen. Lösbarkeit und Startzone unverändert.
   - Fertig, wenn: Generatortest zeigt 20–25 %, und ein Brett-Stub prüft, dass alle Wasserfallteile außerhalb des Terrain-Volumens liegen und an der Klippenkante anschließen.
@@ -99,3 +99,8 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C5)
 - Lose Unterholz-Wurzeln entfernt, dort nur noch bestehende Büsche. Wurzeltextur aus Paket beibehalten. Terrain-Bäume behalten ihr bisheriges zusätzliches Einsinken von 0,8 Studs. Das tatsächliche schmale Mesh-Ende lässt sich aus Roblox-Bounds nicht exakt messen; Breitenfaktor ist zentral WIP und in Studio zu beurteilen.
 - `check.ps1` und `test-run.ps1` OK; Original-Fixtures prüfen genau einen Fuß pro Brett-/Landschaftsbaum, Position, relative Skalierung, Einsinken, Determinismus und Klickfreiheit. Neuer Test nach seiner Fixture-Hilfsfunktion eingeordnet.
 - 100 Paket-Seeds Schritt 3 → 4: Teile Mittel 1270,2 → 1381,0 (Max 1394 → 1576), geschätzte Dreiecke 243945 → 302125 (Max 349824 → 460324). Typisches Budget 350000 eingehalten, Maximalwert gestiegen. Insgesamt gegen C5 weniger Parts, aber mehr Modelldreiecke durch die Pflichtwurzel pro Baum. Keine Terrain-Dreiecke enthalten; Studio/Handy offen.
+
+### Schritt 5
+- Quellstreifen um 0,05 Studs über Klippensollhöhe, bis zur Außenseite der Fallfläche verlängert. Fall beginnt an Quelloberkante, innere Seite direkt an der Klippenkante (vorher 0,06 Studs Spalt). Kanal inklusive einer Voxelreserve auch in benachbarten C-Feldern stromaufwärts/seitlich flach; Gischt vollständig im Wasserfeld.
+- `WATERFALL_CHANCE` bedingt von 0,56 auf 0,8. Generatormessung 1000 normale Laufkarten: **21,60 %**, Ziel 20–25 % erfüllt, alle vier Richtungen, Seen und andere Ufer vorhanden. 19000 Level-/5000 Optionsprüfungen, 96 Kombinationen und 2400 Boss-/Minibosskarten OK; keine regulären Rückfälle. Startzone und Lösbarkeitsprüfungen unverändert.
+- `check.ps1` und `test-run.ps1` OK. Zusätzliche Wasserfall-Stubs in allen vier Richtungen, mit/ohne Paket: Quelle oberhalb Terrain, Fall-/Gischt-Innenvolumen außerhalb Terrain, bündige Quelle/Fall/Klippe. Volumenprüfung mit offener Box (0,0001 Studs vom Rand), damit erlaubter Grenzflächenkontakt bei negativer Richtung nicht als Durchdringung gilt; Anschluss separat exakt geprüft.

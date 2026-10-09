@@ -44,7 +44,7 @@ RunConfig.WATER_PLACEMENT_ATTEMPTS = 40
 RunConfig.CLIFF_CHANCE = 0.4
 RunConfig.CLIFF_WIDTH = { min = 2, max = 4 }
 RunConfig.CLIFF_HEIGHT = { min = 2, max = 3 }
-RunConfig.WATERFALL_CHANCE = 0.56 -- WIP: bedingt durch Klippe und erreichbares Wasser; Ziel insgesamt 12–17 %
+RunConfig.WATERFALL_CHANCE = 0.8 -- WIP: bedingt durch Klippe und erreichbares Wasser; Ziel insgesamt 20–25 %
 RunConfig.RIVER_WIDTH = { min = 1, max = 2 }
 RunConfig.BRIDGES_MIN = 2
 RunConfig.BRIDGES_MAX = 3

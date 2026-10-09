@@ -24,7 +24,7 @@ local function validateWalls(withPackage)
 			for _, p in asset:GetDescendants() do if p:IsA("BasePart") then expect(p.Material==material and p.Color==palette.colors[material], "Felsfarbe/Material") end end
 		end
 		if asset.Name == "Waterfall" then
-			expect(asset.Position.Y + asset.Size.Y / 2 == Config.TERRAIN.C.height, "Wasserfall nicht an Klippenoberkante")
+			expect(math.abs(asset.Position.Y + asset.Size.Y / 2 - Config.TERRAIN.C.height - Config.FEEL.waterfallSurfaceClearance - Config.FEEL.waterfallThickness) < 0.001, "Wasserfall nicht an Klippenoberkante")
 		end
 	end
 	for y, row in Grid.getMap() do for x = 1, #row do

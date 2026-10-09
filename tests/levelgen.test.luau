@@ -352,7 +352,7 @@ for seed = 1, SAMPLE_SEEDS do
 	assert(not validateRiver(stage), "Fluss trotz Chance 0")
 end
 assert(sampleLakes > 0 and sampleIslands > 0 and samplePonds > 0 and sampleCliffs > 0 and sampleFalls > 0, "Neue Landschaftsvarianten fehlen")
-assert(sampleFalls / SAMPLE_SEEDS >= 0.12 and sampleFalls / SAMPLE_SEEDS <= 0.17, "Wasserfallquote außerhalb 12–17 %: " .. sampleFalls / SAMPLE_SEEDS)
+assert(sampleFalls / SAMPLE_SEEDS >= 0.20 and sampleFalls / SAMPLE_SEEDS <= 0.25, "Wasserfallquote außerhalb 20–25 %: " .. sampleFalls / SAMPLE_SEEDS)
 local directionCount = 0; for _ in fallDirections do directionCount += 1 end
 assert(lakeFalls > 0 and otherFalls > 0 and directionCount == 4, "Wasserfälle ohne Seen/verschiedene Ufer/Richtungen")
 assert(forestJoins > 0 and rockJoins > 0, "Keine Wald-/Felsanschlüsse")

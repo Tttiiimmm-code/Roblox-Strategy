@@ -81,9 +81,13 @@ function LandscapeBuilder.surface(state, x, z)
 		local wave = (math.sin(x / settings.cliffScale + state.phase) * math.sin(z / settings.cliffScale - state.phase) + 1) / 2
 		local height = Config.TERRAIN.C.height + wave * settings.cliffRoughness
 		local fall = state.waterfall
-		if fall and fall.x == tx and fall.y == ty then
-			local lateral = fall.dx ~= 0 and math.abs(z - (ty - 0.5) * T) or math.abs(x - (tx - 0.5) * T)
-			if lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height end
+		if fall then
+			local fx, fz = (fall.x - 0.5) * T, (fall.y - 0.5) * T
+			local longitudinal = (x - fx) * fall.dx + (z - fz) * fall.dy
+			local lateral = math.abs((x - fx) * fall.dy - (z - fz) * fall.dx)
+			-- Reserve auch im stromaufwärtigen/seitlichen C-Nachbarvoxel gegen Glättung.
+			if longitudinal >= -T / 2 - s.resolution and longitudinal <= T / 2
+				and lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height end
 		end
 		return height, state.palette.slate
 	end

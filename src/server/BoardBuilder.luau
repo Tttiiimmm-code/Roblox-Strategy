@@ -368,18 +368,19 @@ local function waterfall(feature, parent)
 	if not Grid.inBounds(x, y) or not Grid.inBounds(nx, ny)
 		or Grid.getMap()[y]:sub(x, x) ~= "C" or Grid.getMap()[ny]:sub(nx, nx) ~= "W" then return end
 	local feel, T = Config.FEEL, Config.TILE_SIZE
-	local top, bottom = Grid.tileHeight(x, y), Grid.tileHeight(nx, ny)
+	local top, bottom = Grid.tileHeight(x, y) + feel.waterfallSurfaceClearance, Grid.tileHeight(nx, ny)
 	local center = Grid.toWorld(x, y)
 	local normal = Vector3.new(feature.dx, 0, feature.dy)
 	local along = Vector3.new(-feature.dy, 0, feature.dx)
-	local edge = center + normal * (T / 2 + feel.waterfallThickness)
+	local edge = center + normal * (T / 2 + feel.waterfallThickness / 2)
 	local width = T * feel.waterfallWidth
 	local horizontal = feature.dx ~= 0
-	deco({ Name = "WaterfallSource", Size = Vector3.new(horizontal and T or width, feel.waterfallThickness, horizontal and width or T),
-		Position = center + Vector3.new(0, feel.waterfallThickness / 2, 0), Color = feel.waterfallColor,
+	local length = T + feel.waterfallThickness
+	deco({ Name = "WaterfallSource", Size = Vector3.new(horizontal and length or width, feel.waterfallThickness, horizontal and width or length),
+		Position = Vector3.new(center.X, top + feel.waterfallThickness / 2, center.Z) + normal * (feel.waterfallThickness / 2), Color = feel.waterfallColor,
 		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
-	deco({ Name = "Waterfall", Size = Vector3.new(horizontal and feel.waterfallThickness or width, top - bottom, horizontal and width or feel.waterfallThickness),
-		Position = Vector3.new(edge.X, (top + bottom) / 2, edge.Z), Color = feel.waterfallColor,
+	deco({ Name = "Waterfall", Size = Vector3.new(horizontal and feel.waterfallThickness or width, top + feel.waterfallThickness - bottom, horizontal and width or feel.waterfallThickness),
+		Position = Vector3.new(edge.X, (top + feel.waterfallThickness + bottom) / 2, edge.Z), Color = feel.waterfallColor,
 		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
 	for i = 1, feel.waterfallFoamCount do
 		local offset = (i - (feel.waterfallFoamCount + 1) / 2) * width / feel.waterfallFoamCount
