@@ -30,7 +30,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C6)
   - Die Bodenfarben der Felder so wählen, dass sie im Spiel **gleich hell oder etwas heller als das umgebende Terrain-Gras** wirken; das Material-Abdunkeln auf Parts ausgleichen. Wiese, Wald (etwas dunkler), Erde/Weg und Fels bleiben klar unterscheidbar; Rasterlinien gut sichtbar, aber nicht schwarz. Werte pro Region.
   - Studio: Vergleichsbild Spielfeldrand ↔ Terrain bei Normalzoom; das Spielfeld darf nicht dunkler als die Umgebung wirken.
 
-- [ ] 2. **Terrain-Wasser** – `BoardBuilder` (Wasserflächen `W`, Wasser unter `B`), `LandscapeBuilder`, `Config`
+- [x] 2. **Terrain-Wasser** – `BoardBuilder` (Wasserflächen `W`, Wasser unter `B`), `LandscapeBuilder`, `Config`
   - `W`-Felder (und das Wasser unter Brücken) bestehen aus Roblox-**Terrain-Wasser** in passender Höhe (Wasseroberfläche ≈ bisherige Wasserhöhe). `Terrain.WaterColor`, `WaterTransparency`, `WaterWaveSize/Speed`, `WaterReflectance` pro Region (WIP, ruhig, nicht zu bunt). Ufer und Sandstreifen schließen sauber an.
   - Klick-Kacheln über Wasser bleiben (unsichtbar/abfragbar), damit Felder anklickbar bleiben; das Raster bleibt über dem Wasser sichtbar.
   - Fluss am Spielfeldrand: Das Terrain-Wasser läuft im Gelände ein Stück weiter, bis in den Dunst bzw. zu einer Senke (WIP-Schalter).
@@ -71,3 +71,5 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C6)
 ## Notizen (Codex)
 
 - Schritt 1: Regionale Part-Aufhellung (Gras 0,4; Sumpf/Vulkan 0,42; Eis 0,12; Erde 0,2), regionale Farb-Overrides vor Terrainpalette; Rasterabdunklung 0,22. Studio-Bilder C7_Schritt1_Ausgangsansicht/Nachher: gleiche Laufkarte und Kamera; vorher dunkelgr?nes, schwer lesbares Brett, nachher heller als das angrenzende Terrain mit sichtbarem Raster und dunklerem Wald. Lighting-Effekte unver?ndert. check.ps1 und test-run.ps1 OK. Bildtest durch Codex, Nutzer-/Handytest offen.
+
+- Schritt 2: W und Wasser unter B als Terrain-Voxel; regionale Wasserfarbe/Transparenz/Reflexion/Wellen in Config/Stages. Randfluss zentral abschaltbar, zehn Felder bis zur auslaufenden Senke. D bleibt bei der bisherigen Mud-/Pfuetzen-Darstellung, da WaterColor global gilt und D optisch schlammig bleiben soll. Studio C7_Schritt2_Terrainwasser/Bruecken_Ufer: statt blauem Rechteck bewegte Wasserstruktur/Spiegelung, beide Bruecken frei, Ufer anschliessend, Fluss laeuft beidseitig ins Tal. Figurenpositionen unveraendert; weitere gezielte Bruecken-Figurenprobe folgt im Abschluss. Kartenwechsel/Fortsetzungsschalter und Wasser unter Bruecken automatisch geprueft.

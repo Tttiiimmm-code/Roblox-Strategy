@@ -26,14 +26,10 @@ do
 		end
 		local heights = Grid.getHeights(); Grid.setMap(case.map); Grid.setHeights(heights)
 		for key, value in heights do local x, y = key:match("(%d+),(%d+)"); expect(Grid.tileHeight(tonumber(x), tonumber(y)) == value, "Höhenübertragung an Client") end
-		local water = false
-		for _, part in board:GetDescendants() do
-			if part.Name:match("^Ground_") and part.Color.R == Config.TERRAIN.W.color.R then
-				expect(math.abs(part.Position.Y + part.Size.Y / 2 - Config.TERRAIN.W.height) < 0.01, "Wasserhöhe unter Brücke")
-				water = true
-			end
-		end
-		expect(water, "Wasser unter Brücke fehlt")
+		for _, crossing in crossings do for _, cell in crossing.cells do
+			local height, material = terrainHeightAt((cell.x - 0.5) * Config.TILE_SIZE, (cell.y - 0.5) * Config.TILE_SIZE)
+			expect(material == Enum.Material.Water and math.abs(height - Config.TERRAIN.W.height) < 0.01, "Terrain-Wasser unter Bruecke fehlt")
+		end end
 	end
 	bridgeRayMiss = true
 	Grid.setMap(maps[1].map)

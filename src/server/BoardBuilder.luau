@@ -445,7 +445,7 @@ function BoardBuilder.build(regionId, features, stage)
 		for x = 1, Grid.width() do
 			local key = Grid.key(x, y)
 			local fieldCh = Grid.getMap()[y]:sub(x, x)
-			if fieldCh == "M" or fieldCh == "C" then continue end
+			if fieldCh == "M" or fieldCh == "C" or fieldCh == "W" or (fieldCh == "B" and bridgeTiles[key]) then continue end
 			if used[key] then continue end
 			local ch = Grid.getMap()[y]:sub(x, x)
 			local right = x

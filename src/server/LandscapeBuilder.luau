@@ -61,6 +61,18 @@ function LandscapeBuilder.prepare(mapKey, region, features)
 	local state = { w = w, h = h, region = region, key = mapKey, waterfall = features and features.waterfall, phase = random:NextNumber(0, math.pi * 2),
 		margin = margin, sculptMargin = math.min(margin, aligned(s.sculptDistance * T, true)),
 		palette = region and region.landscape or s.palette }
+	state.rivers = {}
+	local water = region and region.water or Config.WATER
+	if water.extendRivers then
+		for y, row in Grid.getMap() do for x = 1, #row do
+			local ch = row:sub(x, x)
+			if ch ~= "W" and ch ~= "B" then continue end
+			for _, d in { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } } do
+				if Grid.inBounds(x + d[1], y + d[2]) then continue end
+				table.insert(state.rivers, { x = (x - 0.5) * T + d[1] * T / 2, z = (y - 0.5) * T + d[2] * T / 2, dx = d[1], dz = d[2] })
+			end
+		end end
+	end
 	state.rects = withoutHub({ x0 = -margin, x1 = w + margin, z0 = -margin, z1 = h + margin })
 	return state
 end
@@ -70,6 +82,7 @@ function LandscapeBuilder.surface(state, x, z)
 	if x >= 0 and x < state.w and z >= 0 and z < state.h then
 		local tx, ty = math.floor(x / T) + 1, math.floor(z / T) + 1
 		local ch = Grid.getMap()[ty]:sub(tx, tx)
+		if ch == "W" or ch == "B" then return Config.TERRAIN.W.height, Enum.Material.Water end
 		if ch ~= "M" and ch ~= "C" then return nil end
 		local settings = s.rockFields
 		if ch == "M" then
@@ -90,6 +103,14 @@ function LandscapeBuilder.surface(state, x, z)
 				and lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height end
 		end
 		return height, state.palette.slate
+	end
+	local water = state.region and state.region.water or Config.WATER
+	for _, river in state.rivers do
+		local along = (x - river.x) * river.dx + (z - river.z) * river.dz
+		local across = math.abs((x - river.x) * river.dz - (z - river.z) * river.dx)
+		local length = math.min(water.extensionTiles * T, state.sculptMargin - T)
+		local width = T * water.extensionWidth * math.sqrt(math.clamp((length - along) / T, 0, 1))
+		if along >= 0 and along < length and across < width then return Config.TERRAIN.W.height, Enum.Material.Water end
 	end
 	local dx = math.max(-x, x - state.w, 0)
 	local dz = math.max(-z, z - state.h, 0)
@@ -222,6 +243,12 @@ function LandscapeBuilder.build(board, mapKey, region, features)
 	for _, rect in previous.rects do fill(rect, -Config.FEEL.terrainDepth, math.max(previous.top, clearTop), Enum.Material.Air, stats) end
 	for _, rect in state.rects do fill(rect, -Config.FEEL.terrainDepth, clearTop, Enum.Material.Air, stats) end
 	previous = { rects = state.rects, top = clearTop }
+	local water = region and region.water or Config.WATER
+	workspace.Terrain.WaterColor = water.color
+	workspace.Terrain.WaterTransparency = water.transparency
+	workspace.Terrain.WaterReflectance = water.reflectance
+	workspace.Terrain.WaterWaveSize = water.waveSize
+	workspace.Terrain.WaterWaveSpeed = water.waveSpeed
 	for material, color in state.palette.colors do workspace.Terrain:SetMaterialColor(material, color) end
 	-- Fernboden in wenigen großen Blöcken; das Brett selbst bleibt frei.
 	for _, rect in {

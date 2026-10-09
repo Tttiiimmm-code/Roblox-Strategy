@@ -201,6 +201,11 @@ Config.ENVIRONMENT = {
 	},
 }
 -- WIP: Distanzen in Feldern, Höhen/Skalen in Studs; Terrainauflösung von Roblox fest vorgegeben.
+Config.WATER = { -- WIP: ruhiges Terrain-Wasser, Fortsetzung bis zur Senke.
+	color = Color3.fromRGB(64, 105, 113), transparency = 0.35, reflectance = 0.12, waveSize = 0.08, waveSpeed = 3,
+	extendRivers = true, extensionTiles = 10, extensionWidth = 0.65,
+}
+
 Config.LANDSCAPE = {
 	resolution = 4, chunkCells = 32, viewSafetyTiles = 2, sculptDistance = 18,
 	rockFields = { standWidth = 0.55, standThickness = 4, surfaceInset = 0.15, smoothingReserve = 2, mountainRoughness = 0.12, roughnessScale = 7,

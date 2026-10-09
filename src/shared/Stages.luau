@@ -12,12 +12,16 @@ Stages.Regions = {
 }
 
 for _, region in Stages.Regions do
+	region.water = table.clone(Config.WATER)
 	region.groundColors = table.clone(Config.GROUND_COLORS)
 	region.treePalette = Config.TREE_PALETTES[region.id]
 	region.landscape = table.clone(Config.LANDSCAPE.palette)
 	region.landscape.colors = table.clone(Config.LANDSCAPE.palette.colors)
 	region.landscape.colors[Enum.Material.Grass] = region.surroundColor
 end
+Stages.Regions[2].water.color = Color3.fromRGB(65, 79, 59)
+Stages.Regions[3].water.color = Color3.fromRGB(89, 137, 158)
+Stages.Regions[4].water.color = Color3.fromRGB(87, 82, 76)
 Stages.Regions[2].groundColors.grassLighten = 0.42
 Stages.Regions[3].groundColors.grassLighten = 0.12
 Stages.Regions[4].groundColors.grassLighten = 0.42

@@ -61,7 +61,7 @@ local function validateWalls(withPackage)
 	local cells = 0
 	for y, row in Grid.getMap() do for x=1,#row do
 		local ch=row:sub(x,x)
-		if ch=="M" or ch=="C" then cells+=1 else
+		if ch=="M" or ch=="C" then cells+=1 elseif ch~="W" and ch~="B" then
 			for dx=0.5,Config.TILE_SIZE-0.5,1 do for dz=0.5,Config.TILE_SIZE-0.5,1 do
 				expect(terrainHeightAt((x-1)*Config.TILE_SIZE+dx,(y-1)*Config.TILE_SIZE+dz)==nil, "Terrainbelegung im Nachbarfeld")
 			end end

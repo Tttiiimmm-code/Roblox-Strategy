@@ -7,7 +7,9 @@ local function validateOuter(board)
 		if column.x >= 0 and column.x < w and column.z >= 0 and column.z < h then
 			local x, y = math.floor(column.x / T) + 1, math.floor(column.z / T) + 1
 			local ch = Grid.getMap()[y]:sub(x, x)
-			if ch ~= "M" and ch ~= "C" then expect(not column.height, "Terrain überdeckt Brettfeld") end
+			if ch == "W" or ch == "B" then
+				expect(column.material == Enum.Material.Water and column.height <= Config.TERRAIN.W.height + 0.001, "Wasser ueberdeckt Nachbarfeld")
+			elseif ch ~= "M" and ch ~= "C" then expect(not column.height, "Terrain verdeckt Brettfeld") end
 		elseif column.height then
 			if column.z >= h then expect(column.height <= Config.FEEL.surroundHeight + s.frontMaxHeight, "Vorderes Terrain zu hoch") end
 			highest = math.max(highest, column.height)
