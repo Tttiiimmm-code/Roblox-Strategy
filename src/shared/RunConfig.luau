@@ -7,6 +7,16 @@ RunConfig.LEVELS_PER_REGION = 5
 RunConfig.REGIONS = { "greenland" }
 RunConfig.REGION_NAMES = { greenland = "Grasland" }
 RunConfig.PARTIAL_HEAL = 0.3
+RunConfig.VERSION = 2
+RunConfig.CAMP_CHANCE = 0.3
+RunConfig.MINIBOSS_LEVEL = 3
+RunConfig.MINIBOSS_REWARD_MULTIPLIER = 2
+RunConfig.BOSS_REWARD_MULTIPLIER = 3
+RunConfig.REVIVE_GOLD_BASE = 100
+RunConfig.REVIVE_GOLD_PER_LEVEL = 25
+RunConfig.REVIVE_GEMS = 15
+RunConfig.ENEMY_STAT_PER_LEVEL = { hp = 2, str = 1, def = 1 }
+RunConfig.BOSSES = { greenland = { miniboss = "brigand_captain", boss = "chieftain" } }
 RunConfig.OPTIONS_MIN = 2
 RunConfig.OPTIONS_MAX = 3
 RunConfig.BOARD_WIDTH = 10
@@ -48,6 +58,31 @@ function RunConfig.regionAt(depth)
 	return RunConfig.REGIONS[math.ceil(depth / RunConfig.LEVELS_PER_REGION)]
 end
 
+function RunConfig.levelInRegion(depth)
+	return (depth - 1) % RunConfig.LEVELS_PER_REGION + 1
+end
+
+function RunConfig.levelKind(depth)
+	local level = RunConfig.levelInRegion(depth)
+	if level == RunConfig.MINIBOSS_LEVEL then return "miniboss" end
+	if level == RunConfig.LEVELS_PER_REGION then return "boss" end
+	return "battle"
+end
+
+function RunConfig.enemyBonus(depth)
+	local bonus = {}
+	for stat, amount in pairs(RunConfig.ENEMY_STAT_PER_LEVEL) do
+		bonus[stat] = (RunConfig.enemyLevel(depth) - 1) * amount
+	end
+	return bonus
+end
+
+function RunConfig.revivePrice(level, currency)
+	if currency == "gold" then return RunConfig.REVIVE_GOLD_BASE + RunConfig.REVIVE_GOLD_PER_LEVEL * level end
+	if currency == "gems" then return RunConfig.REVIVE_GEMS end
+	return nil
+end
+
 function RunConfig.enemyCount(depth)
 	return RunConfig.ENEMY_COUNT_BASE + depth * RunConfig.ENEMY_COUNT_PER_DEPTH
 end
@@ -58,7 +93,10 @@ end
 
 function RunConfig.rewardAmount(kind, depth)
 	local reward = RunConfig.REWARDS[kind]
-	return reward.base + reward.perDepth * depth
+	local levelKind = RunConfig.levelKind(depth)
+	local multiplier = levelKind == "boss" and RunConfig.BOSS_REWARD_MULTIPLIER
+		or levelKind == "miniboss" and RunConfig.MINIBOSS_REWARD_MULTIPLIER or 1
+	return (reward.base + reward.perDepth * depth) * multiplier
 end
 
 return RunConfig

@@ -10,7 +10,7 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 
 ## Schritte
 
-- [ ] 1. **Ablauf je Gebiet** – `RunConfig`, `LevelGen.makeOptions`, `RunService`
+- [x] 1. **Ablauf je Gebiet** – `RunConfig`, `LevelGen.makeOptions`, `RunService`
   - Schritte eines Gebiets: L1 Wahl · L2 Wahl · L3 **Miniboss** (einzige Option) · L4 Wahl · **Extra-Lager** (garantiert, zählt nicht als Level) · L5 **Boss** (einzige Option).
   - In den Wahlen L1/L2/L4 kann mit `CAMP_CHANCE` (WIP) eine Option „Lager“ erscheinen (max. 1 je Wahl). Wird sie gewählt: kein Kampf, keine Kampfbelohnung, Lager öffnen, danach `depth += 1`.
   - Laufstand erweitern (z. B. `run.phase = "choice" | "camp"`, `run.campExtra = bool`, `run.maxTeam`), normalize anpassen.
@@ -61,4 +61,4 @@ Kontext: **`docs/roguelike-design.md`**, Abschnitt „Entscheidungen Phase 3 –
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen – **Design-/Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
--
+- Schritt 1: Laufversion 2; alte Phase-1-Laufst?nde werden verworfen, Sammlung/W?hrungen bleiben erhalten. WIP-Werte zentral. Neuer Stub-Runner `scripts/test-run.ps1` pr?ft 1000 vollst?ndige Abfolgen.

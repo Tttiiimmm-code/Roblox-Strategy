@@ -28,6 +28,7 @@ function RunService.start(profile, heroes, seed)
 	end
 	local region = RunConfig.regionAt(1)
 	profile.run = {
+		version = RunConfig.VERSION, phase = "choice", campExtra = false, maxTeam = RunConfig.START_TEAM,
 		seed = seed, region = region, depth = 1, team = team, order = order,
 		options = LevelGen.makeOptions(seed, 1, region), current = nil,
 		earned = { gold = 0, gems = 0 }, cleared = 0,
@@ -36,9 +37,10 @@ function RunService.start(profile, heroes, seed)
 end
 
 function RunService.choose(run, index)
-	if not run or run.current ~= nil or type(index) ~= "number" or index % 1 ~= 0
+	if not run or run.phase ~= "choice" or run.current ~= nil or type(index) ~= "number" or index % 1 ~= 0
 		or index < 1 or index > #run.options then return false end
 	run.current = index
+	if run.options[index].kind == "camp" then run.phase = "camp" end
 	return true
 end
 
@@ -48,6 +50,27 @@ function RunService.stage(run)
 	for _, id in ipairs(run.order) do if run.team[id].alive then table.insert(living, id) end end
 	-- Immer mit voller Startfeldzahl erzeugen, damit ein Neustart nach Todesfällen dasselbe Level ergibt.
 	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, RunConfig.MAX_TEAM), living
+end
+
+function RunService.advance(run)
+	run.depth += 1
+	run.current = nil
+	run.region = RunConfig.regionAt(run.depth)
+	run.options = LevelGen.makeOptions(run.seed, run.depth, run.region)
+	run.campExtra = RunConfig.levelKind(run.depth) == "boss"
+	run.phase = run.campExtra and "camp" or "choice"
+end
+
+function RunService.leaveCamp(run)
+	if not run or run.phase ~= "camp" then return false end
+	if run.campExtra then
+		run.campExtra = false
+		run.phase = "choice"
+	else
+		run.cleared += 1
+		RunService.advance(run)
+	end
+	return true
 end
 
 local function summary(run, outcome)
@@ -87,15 +110,12 @@ function RunService.finish(profile, heroUnits, victory)
 		run.cleared += 1
 		info.cleared = run.cleared
 		info.earned = table.clone(run.earned)
-		run.depth += 1
-		run.current = nil
 		info.ended = run.cleared >= RunConfig.totalLevels()
 		if info.ended then
 			info.outcome = "Completed"
 			profile.run = nil
 		else
-			run.region = RunConfig.regionAt(run.depth)
-			run.options = LevelGen.makeOptions(run.seed, run.depth, run.region)
+			RunService.advance(run)
 		end
 	else
 		profile.run = nil

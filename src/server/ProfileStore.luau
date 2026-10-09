@@ -50,11 +50,15 @@ end
 
 -- Unbekannte/kaputte Läufe verwerfen; nur geprüfte Felder weiterführen.
 local function normalizeRun(run, heroes)
-	if type(run) ~= "table" or not integer(run.seed, 1, 2147483646)
+	-- Phase-1-L?ufe haben andere feste Optionen; sie werden ohne Profilverlust verworfen.
+	if type(run) ~= "table" or run.version ~= RunConfig.VERSION or not integer(run.seed, 1, 2147483646)
 		or not integer(run.depth, 1, RunConfig.totalLevels()) or run.region ~= RunConfig.regionAt(run.depth)
 		or not integer(run.cleared, 0, RunConfig.totalLevels() - 1) or run.cleared ~= run.depth - 1
-		or arraySize(run.order) ~= RunConfig.START_TEAM or type(run.team) ~= "table"
-		or type(run.earned) ~= "table" then return nil end
+		or type(run.team) ~= "table" or type(run.earned) ~= "table"
+		or (run.phase ~= "choice" and run.phase ~= "camp") or type(run.campExtra) ~= "boolean" then return nil end
+	local maxTeam = math.min(RunConfig.MAX_TEAM, RunConfig.START_TEAM + math.floor(run.cleared / RunConfig.LEVELS_PER_REGION))
+	local size = arraySize(run.order)
+	if run.maxTeam ~= maxTeam or not size or size < 1 or size > maxTeam then return nil end
 	local earned = {}
 	for _, kind in ipairs(RunConfig.REWARD_ORDER) do
 		local maximum = 0
@@ -62,33 +66,43 @@ local function normalizeRun(run, heroes)
 		if not integer(run.earned[kind], 0, maximum) then return nil end
 		earned[kind] = run.earned[kind]
 	end
-	local order, team, alive = {}, {}, 0
-	for _, id in ipairs(run.order) do
-		local entry, def, member = heroes[id], UnitData.Heroes[id], run.team[id]
-		if type(id) ~= "string" or not def or type(entry) ~= "table" or team[id]
+	local order, team, seen, alive = {}, {}, {}, 0
+	-- Auch ausgewechselte Helden behalten ihre KP und ihren Todesstatus.
+	for id, member in pairs(run.team) do
+		local entry, def = heroes[id], UnitData.Heroes[id]
+		if type(id) ~= "string" or not def or type(entry) ~= "table"
 			or type(member) ~= "table" or type(member.alive) ~= "boolean" then return nil end
 		local stats = type(entry.stats) == "table" and entry.stats or def.stats
-		local hp = stats.hp
-		local merges = entry.merges or 0
+		local hp, merges = stats.hp, entry.merges or 0
 		if not integer(hp, 1, math.huge) or not integer(merges, 0, Recruit.MAX_MERGES) then return nil end
 		local maximum = hp + merges * Recruit.MERGE_HP
 		if not integer(member.hp, 0, maximum) or member.alive ~= (member.hp > 0) then return nil end
 		team[id] = { hp = member.hp, alive = member.alive }
+	end
+	for _, id in ipairs(run.order) do
+		if not team[id] or seen[id] then return nil end
+		seen[id] = true
 		table.insert(order, id)
-		if member.alive then alive += 1 end
+		if team[id].alive then alive += 1 end
 	end
 	if alive == 0 then return nil end
-	for id in pairs(run.team) do if not team[id] then return nil end end
 	local expected = LevelGen.makeOptions(run.seed, run.depth, run.region)
 	if arraySize(run.options) ~= #expected then return nil end
 	for i, option in ipairs(expected) do
 		local saved = run.options[i]
-		if type(saved) ~= "table" or saved.themeId ~= option.themeId or saved.seed ~= option.seed
-			or type(saved.reward) ~= "table" or saved.reward.kind ~= option.reward.kind
-			or saved.reward.amount ~= option.reward.amount then return nil end
+		if type(saved) ~= "table" or saved.kind ~= option.kind or saved.themeId ~= option.themeId
+			or saved.seed ~= option.seed or saved.bossId ~= option.bossId then return nil end
+		if option.reward and (type(saved.reward) ~= "table" or saved.reward.kind ~= option.reward.kind
+			or saved.reward.amount ~= option.reward.amount) then return nil end
 	end
 	if run.current ~= nil and not integer(run.current, 1, #expected) then return nil end
+	if run.campExtra then
+		if run.phase ~= "camp" or RunConfig.levelKind(run.depth) ~= "boss" or run.current ~= nil then return nil end
+	elseif run.phase == "camp" then
+		if not run.current or expected[run.current].kind ~= "camp" then return nil end
+	elseif run.current and expected[run.current].kind == "camp" then return nil end
 	return {
+		version = RunConfig.VERSION, phase = run.phase, campExtra = run.campExtra, maxTeam = maxTeam,
 		seed = run.seed, region = run.region, depth = run.depth, cleared = run.cleared,
 		order = order, team = team, options = expected, current = run.current, earned = earned,
 	}

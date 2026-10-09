@@ -257,13 +257,21 @@ end
 function LevelGen.makeOptions(runSeed, depth, regionId)
 	assert(MapChunks[regionId], "Unbekanntes Gebiet")
 	local random = randomSource(runSeed + depth * 104729)
+	local levelKind = RunConfig.levelKind(depth)
+	if levelKind ~= "battle" then
+		return { { kind = levelKind, bossId = RunConfig.BOSSES[regionId][levelKind], themeId = "axe",
+			reward = { kind = "gold", amount = RunConfig.rewardAmount("gold", depth) }, seed = random(1, MODULUS - 1) } }
+	end
 	local themes = table.clone(RunConfig.THEME_ORDER)
 	shuffle(themes, random)
 	local count = random(RunConfig.OPTIONS_MIN, math.min(RunConfig.OPTIONS_MAX, #themes))
 	local options = {}
 	for i = 1, count do
 		local kind = RunConfig.REWARD_ORDER[random(1, #RunConfig.REWARD_ORDER)]
-		options[i] = { themeId = themes[i], reward = { kind = kind, amount = RunConfig.rewardAmount(kind, depth) }, seed = random(1, MODULUS - 1) }
+		options[i] = { kind = "battle", themeId = themes[i], reward = { kind = kind, amount = RunConfig.rewardAmount(kind, depth) }, seed = random(1, MODULUS - 1) }
+	end
+	if random(1, 10000) <= RunConfig.CAMP_CHANCE * 10000 then
+		options[random(1, count)] = { kind = "camp", seed = random(1, MODULUS - 1) }
 	end
 	return options
 end

@@ -198,14 +198,25 @@ for seed = 1, 1000 do
 	for depth = 1, RunConfig.LEVELS_PER_REGION do
 		local options = LevelGen.makeOptions(seed, depth, "greenland")
 		assert(same(options, LevelGen.makeOptions(seed, depth, "greenland")), "Optionen nicht deterministisch")
-		assert(#options >= RunConfig.OPTIONS_MIN and #options <= RunConfig.OPTIONS_MAX, "Optionsanzahl")
+		local bossKind = RunConfig.levelKind(depth)
+		assert(bossKind == "battle" and #options >= RunConfig.OPTIONS_MIN and #options <= RunConfig.OPTIONS_MAX
+			or bossKind ~= "battle" and #options == 1, "Optionsanzahl")
+		local camps = 0
 		local themes = {}
 		for _, option in ipairs(options) do
+			if option.kind == "camp" then
+				camps += 1
+				assert(bossKind == "battle" and not option.reward, "Lager an Bosslevel/mit Belohnung")
+				continue
+			end
+			assert(option.kind == bossKind, "Falsche Bossabfolge")
+			if bossKind ~= "battle" then assert(option.bossId == RunConfig.BOSSES.greenland[bossKind], "Boss-ID") end
 			assert(not themes[option.themeId], "Doppeltes Thema")
 			themes[option.themeId] = true
 			assert(RunConfig.THEMES[option.themeId], "Unbekanntes Optionsthema")
 			assert(option.reward.amount == RunConfig.rewardAmount(option.reward.kind, depth), "Belohnungsmenge")
 		end
+		assert(camps <= 1, "Mehrere Lager in einer Wahl")
 		for _, themeId in ipairs(RunConfig.THEME_ORDER) do
 			for teamSize = 1, RunConfig.MAX_TEAM do
 				local stage = LevelGen.generate(seed, "greenland", depth, themeId, teamSize)
