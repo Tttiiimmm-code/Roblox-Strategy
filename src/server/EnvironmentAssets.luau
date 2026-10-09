@@ -198,7 +198,7 @@ function EnvironmentAssets.place(category, cframe, opts)
 				local factor = opts.crownWidth * Config.TILE_SIZE / math.max(hi.X - lo.X, hi.Z - lo.Z)
 				object.Size = Vector3.new(object.Size.X * factor, object.Size.Y, object.Size.Z * factor)
 			end
-			object.CastShadow = scaledSize.Y >= Config.ENVIRONMENT.shadowHeight * Config.TILE_SIZE
+			object.CastShadow = Config.ENVIRONMENT.castShadows and scaledSize.Y >= Config.ENVIRONMENT.shadowHeight * Config.TILE_SIZE
 		end
 	end
 	model.Parent = opts.parent

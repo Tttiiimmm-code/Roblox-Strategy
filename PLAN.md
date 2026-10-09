@@ -19,7 +19,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C3)
 
 ## Schritte
 
-- [ ] 1. **Keine Baum- und Umgebungsschatten** – `EnvironmentAssets.place`, `BoardBuilder`, `Config`
+- [x] 1. **Keine Baum- und Umgebungsschatten** – `EnvironmentAssets.place`, `BoardBuilder`, `Config`
   - Umgebungsmodelle und Ersatz-Parts (Bäume, Büsche, Felsen, Ring, Wurzeln, Deko) werfen keine Schatten mehr. Ein Config-Schalter (z. B. `ENVIRONMENT.castShadows = false`) stellt das alte Verhalten wieder her.
   - Waldfelder bekommen einen etwas dunkleren, ruhigen Bodenton (WIP, Config), damit der Wald ohne Schatten Tiefe hat. Raster und Feldfarben bleiben lesbar.
   - Fertig, wenn: Ein Stub prüft, dass kein Umgebungsteil `CastShadow = true` hat (Schalter aus) und mit Schalter an das alte Verhalten gilt; Figuren-Rundschatten bleiben unverändert.
@@ -50,3 +50,6 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C3)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1: `ENVIRONMENT.castShadows = false`; aktivieren stellt die bisherige Höhenschwelle für Modelle wieder her. Ersatzteile bleiben wie vorher schattenlos. Waldboden regional um 10 % dunkler, Fleckkontrast halbiert (beides WIP/Config). UnitShadow unverändert. Schatten-Stubs mit/ohne Paket sowie Grünland-/Sumpfboden grün; `test-run.ps1` und `check.ps1` OK.
+- Vorher (Git `fb0cb28`): 100 Grünland-Seeds, Teile Mittel 2.006,2 / Max 2.154; geschätzte Dreiecke Mittel 344.396 / Max 500.220; Stub-Aufbau Mittel 97,75 / Max 120,34 ms.

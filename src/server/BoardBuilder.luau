@@ -77,7 +77,8 @@ local function groundFlecks(ch, x, y, parent, mapKey, color)
 		local cf = CFrame.new(center + offset + Vector3.new(0, feel.surfaceOffset + feel.thickness / 2, 0))
 			* CFrame.Angles(0, random(label .. ":angle") * math.pi * 2, 0)
 		local shade = random(label .. ":shade") < 0.5
-		local tint = color:Lerp(shade and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255), shade and feel.shade or feel.light)
+		local contrast = ch == "F" and Config.ENVIRONMENT.forest.groundFleckContrast or 1
+		local tint = color:Lerp(shade and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255), (shade and feel.shade or feel.light) * contrast)
 		local grass = detail and random(label .. ":kind") < 0.5
 		deco({ Name = grass and "GroundGrassFleck" or (detail and "GroundStoneFleck" or "GroundFleck"),
 			Size = grass and Vector3.new(width, feel.thickness, length) or Vector3.new(feel.thickness, width, length),
@@ -467,7 +468,8 @@ function BoardBuilder.build(regionId, features, stage)
 	ground.Name = "Ground"
 	ground.Parent = board
 	local function colorFor(ch)
-		return region and region.terrainColors and region.terrainColors[ch] or Config.TERRAIN[ch].color
+		local color = region and region.terrainColors and region.terrainColors[ch] or Config.TERRAIN[ch].color
+		return ch == "F" and color:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade) or color
 	end
 	local top = Config.FEEL.surroundHeight
 	local surroundColor = region and region.surroundColor or Config.ENVIRONMENT.outer.groundColor

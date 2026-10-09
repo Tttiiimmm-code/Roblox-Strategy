@@ -135,10 +135,11 @@ Config.GROUND_FLECKS = {
 
 -- Maximalmaße in Feldern; auf dem Brett bleibt die Figurenmitte frei.
 Config.ENVIRONMENT = {
-	sizeVariation = 0.1, shadowHeight = 0.6,
+	sizeVariation = 0.1, castShadows = false, shadowHeight = 0.6, -- WIP: alte Höhenschwelle nur bei aktivierten Schatten
 	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
 	treesPerForestTile = { min = 2, max = 3 }, -- WIP: dichter Wald
 	forest = {
+		groundShade = 0.1, groundFleckContrast = 0.5, -- WIP: ruhige Tiefe ohne Baumschatten
 		treeHeight = { min = 1.3, max = 1.8 }, treeWidth = { min = 1.35, max = 1.5 },
 		bush = { height = 0.3, width = 0.45 }, deco_root = { height = 0.2, width = 0.5 },
 		thirdTreeChance = 0.1, understoryChance = 0.2, positionJitter = 0.1, -- WIP: Mengen für Handy-Budget

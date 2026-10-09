@@ -70,3 +70,44 @@ do
 	expect(autumn >= 60 and autumn <= 140, "Herbstmischung ohne ungefähr 10 Prozent")
 	print("OK: Kronenfarben (Region, Determinismus, Stamm unverändert, SurfaceAppearance/Farbersatz, Herbstquote).")
 end
+
+-- Der Schalter stellt ausschließlich die bisherige Modell-Höhenschwelle wieder her.
+do
+	local oldShadows = Config.ENVIRONMENT.castShadows
+	freshAssets()
+	for _, category in { "tree", "bush", "rock", "deco_root", "deco_flower", "deco_grass", "deco_fence", "deco_stone" } do
+		assetModel(models, category .. "_1", Vector3.new(4, 8, 4))
+	end
+	for _, enabled in { false, true } do
+		Config.ENVIRONMENT.castShadows = enabled
+		for _, category in { "tree", "bush", "rock", "deco_root", "deco_flower", "deco_grass", "deco_fence", "deco_stone" } do
+			for _, height in { 0.3, 1.2 } do
+				local model = Assets.place(category, CFrame.new(), { parent = workspace, key = "Schatten", height = height, width = 2, rotation = 0 })
+				local _, size = model:GetBoundingBox()
+				for _, part in model:GetDescendants() do if part:IsA("BasePart") then
+					expect(part.CastShadow == (enabled and size.Y >= Config.ENVIRONMENT.shadowHeight * Config.TILE_SIZE), "Schatten-Schalter/Höhenschwelle")
+				end end
+				model:Destroy()
+			end
+		end
+	end
+	Config.ENVIRONMENT.castShadows = false
+	Grid.setMap({ "F.MH", "...." })
+	local function checkBoard(regionId)
+		local board = Board.build(regionId)
+		for _, part in board:GetDescendants() do if part:IsA("BasePart") then
+			expect(part.CastShadow == false, "Umgebungsteil wirft echten Schatten")
+		end end
+		local ground = board:FindFirstChild("Ground"):FindFirstChild("Ground_1")
+		local region = modules.Stages.getRegion(regionId)
+		local baseColor = region.terrainColors and region.terrainColors.F or Config.TERRAIN.F.color
+		local expected = baseColor:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade)
+		expect(math.abs(ground.Color.R - expected.R) < 0.000001 and math.abs(ground.Color.G - expected.G) < 0.000001
+			and math.abs(ground.Color.B - expected.B) < 0.000001, "Waldboden nicht regional abgedunkelt")
+	end
+	checkBoard("greenland"); checkBoard("swamp")
+	freshAssets()
+	checkBoard("greenland"); checkBoard("swamp")
+	Config.ENVIRONMENT.castShadows = oldShadows
+	print("OK: Umgebung ohne Schatten (Modelle/Part-Fallback), alter Höhenschalter, ruhiger Waldboden.")
+end
