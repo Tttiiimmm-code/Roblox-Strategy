@@ -87,7 +87,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 - [x] 9. **Prüfskripte + Messung** – Tests für alle Schritte. In den Notizen: Teile und geschätzte Dreiecke je Karte (Mittel/Max über 100 Seeds, mit Stub-Varianten in Originalgröße der Kategorien) und Stub-Aufbauzeit.
 
-- [ ] 10. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#34** „Level-Optik Etappe C2“ (inklusive Creator-Store-Import und Credits-Hinweis), „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
+- [x] 10. **Abschluss:** `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#34** „Level-Optik Etappe C2“ (inklusive Creator-Store-Import und Credits-Hinweis), „Nächste Schritte“ aktualisieren. Committen, pushen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Waldfelder dicht mit 2–3 Bäumen, Kronen gemischt gefärbt (meist grün, einige Herbstbäume), Stämme natürlich
@@ -106,6 +106,9 @@ Branch: `feature/level-optik-c` (enthält Phase 3 + C1)
 
 
 ## Notizen (Codex)
+
+- Schritt 10: Abschlussskripte check (37 Dateien), test-levelgen (19.000 Level/5.000 Optionen/2.400 Bosskarten/96 Kombinationen), test-run (Lauf/Brett/C2), test-tutorial (168) und test-run-ui (109) grün, Rojo-Build `TacticsGame.rbxlx` erfolgreich. Devlog #34 inklusive Creator-Store-Import/Credits/Entscheidungen/Problemen/Messungen und nächsten manuellen Tests ergänzt. Studio/Handy und unabhängiger Claude-Review weiterhin ausstehend; manuelle Checkboxen unverändert offen. Alle Schritte einzeln committet; Abschluss wird auf `feature/level-optik-c` gepusht, danach `.handoff/status` = `fertig`.
+- Zusätzlicher Abschlussfall: Kopierte Highlights (z. B. Figuren-Ghost) dürfen ihr geklontes ForestOutline-Attribut nicht als Budgetausnahme verwenden. Eigene Highlight-Instanzen werden per Identität registriert; fremde Kopien zählen mit. Neuer Stub für diesen Fall sowie erneuter check/test-run/Rojo-Build grün.
 
 - Schritt 9: Tests für sämtliche C2-Schritte in `test-run.ps1` integriert; zusätzliche Fälle für fremde Highlight-Slots, Kameradrehung, entfernte Figuren, Material-Klonfehler, Skript-/Sound-Bereinigung, vollständigen Brettdeterminismus und den echten Server-Höhensnapshot. Aus dem lokalen Rojo-Export maßhaltige Fixtures aller **83 Paketmodelle / 118 Teile** erzeugt (Originalgrößen, Rotationen, Teileklassen und Kronenmerkmale, ohne Mesh-Geometrie). WIP-Mengen auf das typische Budget abgestimmt: weiterhin 2–3 Bäume/Feld (dritter Baum 10 %), Busch/Wurzel 20 %, weiterhin 1–2 kleine Felsen (zweiter 35 %), Wiesenquote unverändert 50 %. Pflichtcheck/test-run grün.
 - Endmessung Schritt 9, gleiche 100 Grünland-Seeds, 16×12, sechs Starts, inklusive Umgebungsrand: mit Original-Paketfixtures **1.762,2 Teile im Mittel / max. 1.971**, Dreiecke geschätzt **296.921 im Mittel / max. 453.272**, **87,87 ms Stub-Aufbau im Mittel**. Ohne Paket **1.936,9 Teile im Mittel / max. 2.350**, **41,77 ms Stub-Aufbau**. Typisches geschätztes Ziel ≤ 300.000 wird im Mittel geprüft; dichte Maximalfälle liegen darüber. Mesh-IDs referenzieren externe Geometrie; die lokale Datei enthält keine brauchbaren Render-Dreieckzahlen (VertexCount/TriangleCount 0). Schätzannahmen aus Schritt 1 unverändert, Zaun mit tatsächlichen 8 Unions/2 Parts genauer. Reale Dreiecke, Asset-Ladezeit, Raycast-Oberfläche und Handy-Bildrate bleiben ausdrücklich ungemessen; kein Studio-/Handy-Ergebnis behauptet.

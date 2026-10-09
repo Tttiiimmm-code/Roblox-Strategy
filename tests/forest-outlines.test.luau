@@ -24,6 +24,12 @@ do
 	count, players = 0, 0
 	for _, model in figures do if model:FindFirstChild("ForestOutline") then count += 1; if model:GetAttribute("Team") == "Player" then players += 1 end end end
 	expect(count == 5 and players == 5, "Fremde Highlights ohne Budgetreserve/Spielervorrang")
+	local duplicate = figures[25]:FindFirstChild("ForestOutline"):Clone()
+	duplicate.Parent = workspace
+	update(true)
+	count = 0; for _, model in figures do if model:FindFirstChild("ForestOutline") then count += 1 end end
+	expect(count == 4 and duplicate.Parent == workspace, "Kopierter Umriss fehlt im fremden Highlight-Budget")
+	duplicate:Destroy()
 	for _, h in reserved do h:Destroy() end
 	update(true)
 	figures[25].PrimaryPart.Position = Grid.toWorld(2, 1); update(true)

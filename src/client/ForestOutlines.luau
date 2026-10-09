@@ -3,11 +3,11 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Grid = require(Shared.Grid)
 local ForestOutlines = {}
-local outlines, foreign = {}, {}
+local outlines, foreign, owned = {}, {}, {}
 local initialized = false
 
 local function track(object)
-	if object:IsA("Highlight") and not object:GetAttribute("ForestOutline") then foreign[object] = true end
+	if object:IsA("Highlight") and not owned[object] then foreign[object] = true end
 end
 
 function ForestOutlines.init()
@@ -20,7 +20,7 @@ end
 
 function ForestOutlines.remove(model)
 	local outline = outlines[model]
-	if outline then outline:Destroy(); outlines[model] = nil end
+	if outline then outline:Destroy(); owned[outline] = nil; outlines[model] = nil end
 end
 
 local function covered(model, look)
@@ -61,6 +61,7 @@ function ForestOutlines.update(models, look, dying, enabled)
 			outline = Instance.new("Highlight")
 			outline.Name = "ForestOutline"
 			outline:SetAttribute("ForestOutline", true)
+			owned[outline] = true
 			outline.Adornee = model
 			outline.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 			outline.FillTransparency = settings.fillTransparency
