@@ -21,7 +21,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
 
 ## Schritte
 
-- [ ] 1. **Ufer ohne Ringe** – `BoardBuilder` (Uferaufbau), `Config.FEEL.shore`
+- [x] 1. **Ufer ohne Ringe** – `BoardBuilder` (Uferaufbau), `Config.FEEL.shore`
   - Uferkappen, Füllstücke und Streifen sind **ausgefüllte** Flächen ohne kontrastierenden Rand. Keine wasserfarbene Maske, die eine Ringform erzeugt. Die Sandfarbe ist gedämpft und nah an Boden- und Erdtönen (WIP), nicht leuchtend gelb oder beige.
   - Aus Kamerasicht müssen Ufer wie ein weicher Übergang Land → Sand → Wasser wirken. Kreise oder Ringe auf der Wasserfläche dürfen nicht sichtbar sein. Gelingt eine runde Form nicht ohne Ringwirkung, sind gerade Sandstreifen mit leicht abgeschrägten Ecken vorzuziehen; Entscheidung und Begründung in die Notizen.
   - Fertig, wenn: Ein Stub prüft, dass keine Uferteile über der Wasserfläche liegen, die nicht an Land angrenzen, und dass keine Ringstruktur entsteht (zum Beispiel kein Teil mit Loch oder Masken-Kombination). Teilezahl vorher/nachher.
@@ -69,3 +69,5 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1, C2)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1: Gerade, deckende Sandstreifen auf Land statt runder Scheiben mit Land-/Wassermasken; verhindert die beobachtete Ringwirkung, spart Teile und laesst Brueckenenden frei. Farbe WIP in Config (123/119/89), Studio-Beurteilung offen. Ufer-Fixture: vorher 14, nachher 4 Teile. Seeds 1-100 mit Paket-Fixtures: vorher Teile Mittel/Max 1762,2/1971, Dreiecke 296921/453272, Stub 89,62 ms; nachher 1732,4/1925, 293732/453272, 85,49 ms. check.ps1 und test-run.ps1 OK.

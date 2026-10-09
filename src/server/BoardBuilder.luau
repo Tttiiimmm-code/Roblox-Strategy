@@ -322,7 +322,7 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 	end
 end
 
-local function shoreline(ch, x, y, parent, colorFor, bridgeTiles)
+local function shoreline(ch, x, y, parent, bridgeTiles)
 	local settings, T = Config.FEEL.shore, Config.TILE_SIZE
 	if not settings.enabled or (ch ~= "." and ch ~= "F" and ch ~= "S" and ch ~= "H") then return 0 end
 	local key = Grid.key(x, y)
@@ -330,45 +330,21 @@ local function shoreline(ch, x, y, parent, colorFor, bridgeTiles)
 	local function char(xx, yy) return Grid.inBounds(xx, yy) and Grid.getMap()[yy]:sub(xx, xx) or "" end
 	local function water(xx, yy) local c = char(xx, yy); return c == "W" or c == "D" end
 	for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do if char(x + d[1], y + d[2]) == "B" then return 0 end end
-	local center, half, r, width = Grid.toWorld(x, y), T / 2, T * settings.radius, T * settings.width
+	local center, half, width = Grid.toWorld(x, y), T / 2, T * settings.width
 	local count = 0
-	local function part(name, size, cf, color, shape)
-		if count >= settings.maxPartsPerTile then return end
-		deco({ Name = name, Size = size, CFrame = cf, Color = color,
-			Shape = shape or Enum.PartType.Block, Material = Enum.Material.SmoothPlastic }, parent)
+	-- Sand bleibt vollst?ndig auf Land: keine Scheiben oder optischen Masken im Wasser.
+	for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+		if not water(x + d[1], y + d[2]) or count >= settings.maxPartsPerTile then continue end
+		local horizontal = d[1] ~= 0
+		local edge = half - width / 2
+		local part = deco({ Name = "ShoreStrip", Shape = Enum.PartType.Block,
+			Size = Vector3.new(horizontal and width or T, settings.thickness, horizontal and T or width),
+			Position = center + Vector3.new(d[1] * edge, settings.surfaceOffset, d[2] * edge),
+			Color = settings.color, Material = Enum.Material.SmoothPlastic }, parent)
+		part:SetAttribute("ShoreX", x); part:SetAttribute("ShoreY", y)
+		part:SetAttribute("WaterX", x + d[1]); part:SetAttribute("WaterY", y + d[2])
 		count += 1
 	end
-	local function disk(name, at, radius, color, layer)
-		part(name, Vector3.new(settings.thickness, radius * 2, radius * 2),
-			CFrame.new(at + Vector3.new(0, settings.surfaceOffset + layer * settings.layerOffset, 0)) * CFrame.Angles(0, 0, math.pi / 2), color, Enum.PartType.Cylinder)
-	end
-	-- Gerade Abschnitte enden an den Tangenten der runden Ecken.
-	for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
-		if not water(x + d[1], y + d[2]) then continue end
-		local horizontal = d[1] ~= 0
-		local near = horizontal and water(x, y - 1) or (not horizontal and water(x - 1, y))
-		local far = horizontal and water(x, y + 1) or (not horizontal and water(x + 1, y))
-		local low, high = -half + (near and r or 0), half - (far and r or 0)
-		local along, edge = (low + high) / 2, half - width / 2
-		local off = horizontal and Vector3.new(d[1] * edge, settings.surfaceOffset, along) or Vector3.new(along, settings.surfaceOffset, d[2] * edge)
-		part("ShoreStrip", Vector3.new(horizontal and width or high - low, settings.thickness, horizontal and high - low or width),
-			CFrame.new(center + off), settings.color)
-	end
-	for _, sx in { -1, 1 } do for _, sz in { -1, 1 } do
-		local wx, wz = water(x + sx, y), water(x, y + sz)
-		if wx and wz and count + 3 <= settings.maxPartsPerTile then
-			-- Wasserfarbige Maske ersetzt optisch die eckige Boden-Kappe; Raster bleibt erhalten.
-			part("ShoreCornerWater", Vector3.new(r, settings.thickness, r),
-				CFrame.new(center + Vector3.new(sx * (half - r / 2), settings.surfaceOffset + settings.layerOffset, sz * (half - r / 2))), colorFor("W"))
-			local at = center + Vector3.new(sx * (half - r), 0, sz * (half - r))
-			disk("ShoreConvexSand", at, r, settings.color, 2)
-			disk("ShoreConvexLand", at, math.max(r - width, width), colorFor(ch), 3)
-		elseif not wx and not wz and water(x + sx, y + sz) and count + 2 <= settings.maxPartsPerTile then
-			local at = center + Vector3.new(sx * half, 0, sz * half)
-			disk("ShoreConcaveSand", at, r, settings.color, 2)
-			disk("ShoreConcaveLand", at, math.max(r - width, width), colorFor(ch), 3)
-		end
-	end end
 	return count
 end
 
@@ -514,7 +490,7 @@ function BoardBuilder.build(regionId, features, stage)
 		for x = 1, Grid.width() do
 			local ch = string.sub(Grid.getMap()[y], x, x)
 			local terrain = Config.TERRAIN[ch]
-			shoreCount += shoreline(ch, x, y, ground, colorFor, bridgeTiles)
+			shoreCount += shoreline(ch, x, y, ground, bridgeTiles)
 			local tile = Instance.new("Part")
 			tile.Name = ("Tile_%d_%d"):format(x, y)
 			tile.Anchored = true
