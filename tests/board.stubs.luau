@@ -45,6 +45,9 @@ function methods:SetAttribute(k,v)self._attrs[k]=v end
 function methods:GetAttribute(k)return self._attrs[k]end
 function methods:Clone()if not self.Archivable then return nil end local c=Instance.new(self.ClassName);for k,v in self._props do c[k]=v end;c.CFrame=self.CFrame;c._pivot=self._pivot;c._attrs=table.clone(self._attrs);for _,ch in self._children do local cp=ch:Clone();if cp then cp.Parent=c end end;return c end
 function methods:GetPivot()return self._pivot end
+function methods:FindFirstChildOfClass(class)
+	for _, child in self:GetChildren() do if child:IsA(class) then return child end end
+end
 function methods:GetBoundingBox()
  local lo=Vector3.new(math.huge,math.huge,math.huge);local hi=Vector3.new(-math.huge,-math.huge,-math.huge)
  for _,p in self:GetDescendants()do if p:IsA('BasePart')then for _,x in {-1,1}do for _,y in {-1,1}do for _,z in {-1,1}do local pt=p.CFrame*Vector3.new(x*p.Size.X/2,y*p.Size.Y/2,z*p.Size.Z/2);lo=Vector3.new(math.min(lo.X,pt.X),math.min(lo.Y,pt.Y),math.min(lo.Z,pt.Z));hi=Vector3.new(math.max(hi.X,pt.X),math.max(hi.Y,pt.Y),math.max(hi.Z,pt.Z))end end end end end

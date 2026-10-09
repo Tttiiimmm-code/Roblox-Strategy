@@ -102,6 +102,7 @@ Config.TILE_SIZE = 8
 Config.FOREST_OUTLINES = { -- WIP: Reserven für Tutorial/Auswahl/Kampfeffekte
 	maxCount = 20, totalBudget = 31, reserved = 8, updateInterval = 0.1,
 	fillTransparency = 1, outlineTransparency = 0,
+	canopyNeighborRadius = 1, sightDistance = 2, -- WIP: Kronenüberhang und perspektivische Verdeckung
 	colors = { Player = Color3.fromRGB(70, 155, 255), Enemy = Color3.fromRGB(255, 80, 70) },
 }
 
@@ -139,7 +140,7 @@ Config.ENVIRONMENT = {
 	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
 	treesPerForestTile = { min = 2, max = 3 }, -- WIP: dichter Wald
 	forest = {
-		treeHeight = { min = 1, max = 1.4 }, treeWidth = { min = 0.6, max = 0.9 },
+		treeHeight = { min = 1.3, max = 1.8 }, treeWidth = { min = 1.35, max = 1.5 },
 		bush = { height = 0.3, width = 0.45 }, deco_root = { height = 0.2, width = 0.5 },
 		thirdTreeChance = 0.1, understoryChance = 0.2, positionJitter = 0.1, -- WIP: Mengen für Handy-Budget
 	},

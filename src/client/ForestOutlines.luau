@@ -28,10 +28,23 @@ local function covered(model, look)
 	local x, y = math.floor(p.X / Config.TILE_SIZE) + 1, math.floor(p.Z / Config.TILE_SIZE) + 1
 	if not Grid.inBounds(x, y) then return false end
 	if Grid.getMap()[y]:sub(x, x) == "F" then return true end
-	-- Das kameranähere Nachbarfeld liegt entgegen der dominanten Blickachse.
-	if math.abs(look.X) > math.abs(look.Z) then x -= look.X > 0 and 1 or -1
-	else y -= look.Z > 0 and 1 or -1 end
-	return Grid.inBounds(x, y) and Grid.getMap()[y]:sub(x, x) == "F"
+	local settings = Config.FOREST_OUTLINES
+	-- Breite Kronen überragen auch seitliche und diagonale Nachbarn.
+	for dy = -settings.canopyNeighborRadius, settings.canopyNeighborRadius do
+		for dx = -settings.canopyNeighborRadius, settings.canopyNeighborRadius do
+			if Grid.inBounds(x + dx, y + dy) and Grid.getMap()[y + dy]:sub(x + dx, x + dx) == "F" then return true end
+		end
+	end
+	-- Hohe Bäume verdecken zusätzlich das übernächste Feld hinter der Blickachse.
+	for distance = settings.canopyNeighborRadius + 1, settings.sightDistance do
+		local dx = math.abs(look.X) > math.abs(look.Z) and (look.X > 0 and -distance or distance) or 0
+		local dy = dx == 0 and (look.Z > 0 and -distance or distance) or 0
+		for lateral = -settings.canopyNeighborRadius, settings.canopyNeighborRadius do
+			local xx, yy = x + dx + (dx == 0 and lateral or 0), y + dy + (dy == 0 and lateral or 0)
+			if Grid.inBounds(xx, yy) and Grid.getMap()[yy]:sub(xx, xx) == "F" then return true end
+		end
+	end
+	return false
 end
 
 function ForestOutlines.update(models, look, dying, enabled)

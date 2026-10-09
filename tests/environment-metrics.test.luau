@@ -82,6 +82,53 @@ for _, object in forest:GetChildren() do
 		and object:GetPivot().Position.Z >= 0 and object:GetPivot().Position.Z <= Config.TILE_SIZE then forestTrees += 1 end
 end
 expect(forestTrees >= 2 and forestTrees <= 3, "Dichter Wald ohne 2–3 Bäume")
+-- Union der tats?chlichen Kronen-AABBs: gleichm??iges 32x32-Sampling je Waldfeld.
+local function forestCoverage(baseline)
+	local oldForest, originalPlace = Config.ENVIRONMENT.forest, Assets.place
+	if baseline then
+		Config.ENVIRONMENT.forest = table.clone(oldForest)
+		Config.ENVIRONMENT.forest.treeHeight = { min = 1, max = 1.4 }
+		Config.ENVIRONMENT.forest.treeWidth = { min = 0.6, max = 0.9 }
+		Assets.place = function(category, cf, opts)
+			if opts.crownWidth then opts.width, opts.crownWidth = opts.crownWidth, nil end
+			return originalPlace(category, cf, opts)
+		end
+	end
+	Grid.setMap({ "FFFF", "FFFF", "FFFF", "FFFF" })
+	local board, boxes = Board.build("greenland"), {}
+	local minWidth, maxWidth, minHeight, maxHeight = math.huge, 0, math.huge, 0
+	for _, model in board:GetChildren() do
+		if not model:IsA("Model") or not model.Name:match("^tree_") then continue end
+		local box, size = model:GetBoundingBox()
+		if box.Position.X < 0 or box.Position.X > 32 or box.Position.Z < 0 or box.Position.Z > 32 then continue end
+		minHeight, maxHeight = math.min(minHeight, size.Y), math.max(maxHeight, size.Y)
+		for _, part in model:GetDescendants() do
+			if not part:IsA("BasePart") or part.Material ~= Enum.Material.LeafyGrass then continue end
+			local loX, hiX, loZ, hiZ = math.huge, -math.huge, math.huge, -math.huge
+			for _, dx in { -1, 1 } do for _, dz in { -1, 1 } do
+				local p = part.CFrame:PointToWorldSpace(Vector3.new(dx * part.Size.X / 2, 0, dz * part.Size.Z / 2))
+				loX, hiX, loZ, hiZ = math.min(loX, p.X), math.max(hiX, p.X), math.min(loZ, p.Z), math.max(hiZ, p.Z)
+			end end
+			local width = math.max(hiX - loX, hiZ - loZ)
+			minWidth, maxWidth = math.min(minWidth, width), math.max(maxWidth, width)
+			table.insert(boxes, { loX, hiX, loZ, hiZ })
+		end
+	end
+	local covered = 0
+	for y = 1, 128 do for x = 1, 128 do
+		local px, pz = (x - 0.5) / 4, (y - 0.5) / 4
+		for _, b in boxes do if px >= b[1] and px <= b[2] and pz >= b[3] and pz <= b[4] then covered += 1; break end end
+	end end
+	Config.ENVIRONMENT.forest, Assets.place = oldForest, originalPlace
+	local coverage = covered / (128 * 128)
+	print(string.format("Wald %s: Kronen %.2f-%.2f Felder; Hoehe %.2f-%.2f; AABB-Abdeckung %.2f%%.", baseline and "vorher" or "nachher", minWidth / 8, maxWidth / 8, minHeight / 8, maxHeight / 8, coverage * 100))
+	return coverage, minWidth / 8, maxWidth / 8, minHeight / 8, maxHeight / 8
+end
+local oldCoverage = forestCoverage(true)
+local coverage, minCrown, maxCrown, minTree, maxTree = forestCoverage(false)
+expect(coverage >= 0.85 and coverage > oldCoverage, "Wald ohne geschlossenes Kronendach")
+expect(minCrown >= 1.1 and maxCrown <= 1.501 and minTree >= 1.299 and maxTree <= 1.801, "Waldmasse ausserhalb WIP-Ziel")
+
 do
 	local stage = Gen.generate(17, "greenland", 1, "axe", RC.MAX_TEAM)
 	local function signature()

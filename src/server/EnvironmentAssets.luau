@@ -177,6 +177,8 @@ function EnvironmentAssets.place(category, cframe, opts)
 			math.abs(math.sin(angle)) * size.X + math.abs(math.cos(angle)) * size.Z))
 		* random:NextNumber(1 - spread, 1 + spread) / (1 + spread)
 	-- Die Vorlage verläuft entlang X; jede Querung bekommt exakt ihre Spannweite.
+	-- Wald: Höhe bestimmt die Stammskalierung; schmale Kronen erhalten ihre eigene Breite.
+	if category == "tree" and opts.crownWidth then scale = height / size.Y end
 	if category == "archbridge" and opts.length then scale = opts.length * Config.TILE_SIZE / size.X end
 	model:ScaleTo(scale)
 	local box, scaledSize = model:GetBoundingBox()
@@ -184,6 +186,18 @@ function EnvironmentAssets.place(category, cframe, opts)
 	model:PivotTo(transform * model:GetPivot())
 	for _, object in model:GetDescendants() do
 		if object:IsA("BasePart") then
+			local appearance = object:FindFirstChildOfClass("SurfaceAppearance")
+			if opts.crownWidth and object:IsA("MeshPart") and (object.Material == Enum.Material.LeafyGrass
+				or (appearance and appearance.AlphaMode == Enum.AlphaMode.Transparency)) then
+				local lo, hi = Vector3.new(math.huge, 0, math.huge), Vector3.new(-math.huge, 0, -math.huge)
+				for _, x in { -1, 1 } do for _, z in { -1, 1 } do
+					local p = object.CFrame:PointToWorldSpace(Vector3.new(x * object.Size.X / 2, 0, z * object.Size.Z / 2))
+					lo = Vector3.new(math.min(lo.X, p.X), 0, math.min(lo.Z, p.Z))
+					hi = Vector3.new(math.max(hi.X, p.X), 0, math.max(hi.Z, p.Z))
+				end end
+				local factor = opts.crownWidth * Config.TILE_SIZE / math.max(hi.X - lo.X, hi.Z - lo.Z)
+				object.Size = Vector3.new(object.Size.X * factor, object.Size.Y, object.Size.Z * factor)
+			end
 			object.CastShadow = scaledSize.Y >= Config.ENVIRONMENT.shadowHeight * Config.TILE_SIZE
 		end
 	end

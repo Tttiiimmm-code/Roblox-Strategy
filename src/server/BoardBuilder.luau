@@ -194,7 +194,7 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 				place("tree", center + off, parent, key .. ":tree:" .. i, {
 					palette = palette,
 					height = random:NextNumber(settings.treeHeight.min, settings.treeHeight.max),
-					width = random:NextNumber(settings.treeWidth.min, settings.treeWidth.max),
+					crownWidth = random:NextNumber(settings.treeWidth.min, settings.treeWidth.max),
 				})
 			end
 			if random:NextNumber(0, 1) < settings.understoryChance then
