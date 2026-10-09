@@ -185,18 +185,20 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 			local random = Random.new(hash(key .. ":forest"))
 			local settings = Config.ENVIRONMENT.forest
 			local range = Config.ENVIRONMENT.treesPerForestTile
-			local count = random:NextNumber(0, 1) < settings.thirdTreeChance and range.max or range.min
+			local count = random:NextNumber(0, 1) < settings.secondTreeChance and range.max or range.min
 			local startAngle = random:NextNumber(0, math.pi * 2)
 			for i = 1, count do
 				local angle = startAngle + (i - 1) * math.pi * 2 / count
 				local jitter = settings.positionJitter * Config.TILE_SIZE
-				local off = Vector3.new(math.cos(angle) * c + random:NextNumber(-jitter, jitter), 0,
-					math.sin(angle) * c + random:NextNumber(-jitter, jitter))
-				place("tree", center + off, parent, key .. ":tree:" .. i, {
+				local distance = count == 1 and settings.singleTreeOffset * Config.TILE_SIZE or c
+				local off = Vector3.new(math.cos(angle) * distance + random:NextNumber(-jitter, jitter), 0,
+					math.sin(angle) * distance + random:NextNumber(-jitter, jitter))
+				local tree = place("tree", center + off, parent, key .. ":tree:" .. i, {
 					palette = palette,
 					height = random:NextNumber(settings.treeHeight.min, settings.treeHeight.max),
 					crownWidth = random:NextNumber(settings.treeWidth.min, settings.treeWidth.max),
 				})
+				if tree then tree:SetAttribute("ForestTile", Grid.key(x, y)) end
 			end
 			if random:NextNumber(0, 1) < settings.understoryChance then
 				local kind = random:NextInteger(0, 1) == 0 and "bush" or "deco_root"
@@ -206,15 +208,25 @@ local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied
 			end
 			return
 		end
-		for _, off in { Vector3.new(-c, 0, -c), Vector3.new(c, 0, c) } do
-			local base = center + off
-			if place(category, base, parent, key .. tostring(off)) then continue end
+		local settings = Config.ENVIRONMENT.forest
+		local random = Random.new(hash(key .. ":forest"))
+		local count = random:NextNumber(0, 1) < settings.secondTreeChance and 2 or 1
+		local angle = random:NextNumber(0, math.pi * 2)
+		for i = 1, count do
+			local distance = count == 1 and settings.singleTreeOffset * Config.TILE_SIZE or c
+			local direction = angle + (i - 1) * math.pi
+			local base = center + Vector3.new(math.cos(direction) * distance, 0, math.sin(direction) * distance)
+			local tree = Instance.new("Model")
+			tree.Name, tree.Parent = "ForestTreeFallback", parent
+			tree:SetAttribute("ForestTile", Grid.key(x, y))
 			deco({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 0.6, 0.6),
 				CFrame = CFrame.new(base + Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-				Color = Color3.fromRGB(100, 70, 40), Material = Enum.Material.Wood }, parent)
+				Color = Color3.fromRGB(100, 70, 40), Material = Enum.Material.Wood }, tree)
+			-- Kantige Tannensilhouette statt Kugel-Kronen, falls das Paket fehlt.
 			for layer = 1, 3 do
 				local diameter = 3.2 - layer * 0.5
-				deco({ Shape = Enum.PartType.Ball, Size = Vector3.new(diameter, 1.6, diameter), Position = base + Vector3.new(0, 1.8 + layer * 0.7, 0), Color = Color3.fromRGB(40, 100, 45), Material = Enum.Material.Grass }, parent)
+				deco({ Size = Vector3.new(diameter, 2.2, diameter), Position = base + Vector3.new(0, 1.8 + layer * 0.7, 0),
+					Color = Color3.fromRGB(40, 100, 45), Material = Enum.Material.Grass }, tree, "WedgePart")
 			end
 		end
 		if hash(key .. ":bush") % 10000 / 10000 < Config.ENVIRONMENT.bushChance then

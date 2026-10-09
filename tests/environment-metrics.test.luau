@@ -83,7 +83,31 @@ for _, object in forest:GetChildren() do
 	if object:IsA("Model") and object.Name:match("^tree_") and object:GetPivot().Position.X >= 0 and object:GetPivot().Position.X <= Config.TILE_SIZE
 		and object:GetPivot().Position.Z >= 0 and object:GetPivot().Position.Z <= Config.TILE_SIZE then forestTrees += 1 end
 end
-expect(forestTrees >= 2 and forestTrees <= 3, "Dichter Wald ohne 2–3 Bäume")
+expect(forestTrees >= 1 and forestTrees <= 2, "Lichter Wald ohne 1–2 Bäume")
+do
+	local function forestSignature(withPackage)
+		if withPackage then metricAssets() else freshAssets() end
+		Grid.setMap({ "FFFF", "FFFF", "FFFF", "FFFF" })
+		local board, counts, signature = Board.build("greenland"), {}, {}
+		for _, tree in board:GetChildren() do
+			local cell = tree:GetAttribute("ForestTile")
+			if cell then
+				counts[cell] = (counts[cell] or 0) + 1
+				local box, size = tree:GetBoundingBox()
+				table.insert(signature, cell .. ":" .. tostring(box.Position) .. ":" .. tostring(size))
+			end
+		end
+		for y = 1, 4 do for x = 1, 4 do
+			local count = counts[Grid.key(x, y)] or 0
+			expect(count >= 1 and count <= 2, "Waldfeld ohne 1-2 B?ume")
+		end end
+		return table.concat(signature, "|")
+	end
+	for _, withPackage in { true, false } do
+		expect(forestSignature(withPackage) == forestSignature(withPackage), "Wald nicht deterministisch")
+	end
+	metricAssets()
+end
 -- Union der tatsächlichen Kronen-AABBs: gleichmäßiges 32×32-Sampling je Waldfeld.
 local function forestCoverage(baseline)
 	local oldForest, originalPlace = Config.ENVIRONMENT.forest, Assets.place

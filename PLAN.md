@@ -28,7 +28,7 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C4)
 
 ## Schritte
 
-- [ ] 1. **Wald lichter** – `Config.ENVIRONMENT.forest`, `BoardBuilder.decorate` (Fall `F`)
+- [x] 1. **Wald lichter** – `Config.ENVIRONMENT.forest`, `BoardBuilder.decorate` (Fall `F`)
   - 1–2 Bäume pro Waldfeld (WIP z. B. `treesPerForestTile = {min = 1, max = 2}`, Anteil mit 2 Bäumen als WIP-Wert), dritter Baum entfällt. Kronengröße aus C4 bleibt. Bei einem Baum steht er leicht außermittig, damit die Figurenmitte sichtbarer ist.
   - Fertig, wenn: Stub prüft 1–2 Bäume pro Feld und Determinismus; Teile/Dreiecke vorher/nachher.
 
@@ -68,3 +68,6 @@ Branch: `feature/level-optik-c` (enthält Phase 3, C1–C4)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1: 35 % zweite B?ume, ein Baum 0,22 Felder au?ermittig; C4-Kronenma?e erhalten. Paket-/Fallback-Stubs pr?fen jedes Waldfeld und Determinismus. Fallback mit kantiger Tannensilhouette statt Kugelkronen. Ausgangsstand `ad26c63`: 1.989,5/2.128 Teile, 343.195/495.996 gesch?tzte Dreiecke, 101,43/126,15 ms Stub-Aufbau (Mittel/Max; 100 Seeds).
+- Schritt 1 nachher: 1.908,0/2.072 Teile, 282.045/368.996 gesch?tzte Dreiecke, 95,27/126,74 ms Stub-Aufbau; Syntaxcheck gr?n.
