@@ -178,7 +178,7 @@ end
 local function buildMenu()
 	menuFrame = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.42, 0), Size = UDim2.fromOffset(200, 212),
+		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.42, 0), Size = UDim2.fromOffset(200, 220),
 		Visible = false,
 	}, hud)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, menuFrame)
@@ -192,7 +192,7 @@ local function buildMenu()
 	waitButton = button("Warten", content, "default", 2)
 	cancelButton = button("Abbrechen", content, "muted", 3)
 	for _, b in { attackButton, waitButton, cancelButton } do
-		b.Size = UDim2.new(1, 0, 0, 46)
+		b.Size = UDim2.new(1, 0, 0, 48)
 	end
 	attackButton.Activated:Connect(function()
 		if attackButton:GetAttribute("Style") ~= "disabled" and menuCallbacks.onAttack then
@@ -262,12 +262,12 @@ local function buildForecast()
 
 	local confirm = button("⚔  Angreifen!", f, "danger")
 	forecast.confirm = confirm
-	confirm.Position = UDim2.new(0, 0, 1, -44)
-	confirm.Size = UDim2.new(0.5, -5, 0, 44)
+	confirm.Position = UDim2.new(0, 0, 1, -48)
+	confirm.Size = UDim2.new(0.5, -5, 0, 48)
 	local back = button("Zurück", f, "muted")
 	forecast.back = back
-	back.Position = UDim2.new(0.5, 5, 1, -44)
-	back.Size = UDim2.new(0.5, -5, 0, 44)
+	back.Position = UDim2.new(0.5, 5, 1, -48)
+	back.Size = UDim2.new(0.5, -5, 0, 48)
 	confirm.Activated:Connect(function()
 		if forecastCallbacks.onConfirm then
 			forecastCallbacks.onConfirm()
@@ -283,19 +283,19 @@ end
 -- Unten rechts: Zurück · [Rückblende][Gefahr][Tempo] · Zug beenden
 local function buildTools(callbacks)
 	local col = make("Frame", {
-		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(300, 212),
+		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(300, 240),
 		BackgroundTransparency = 1,
 	}, hud)
 
 	tools.endTurn = button("Zug beenden", col, "primary")
 	tools.endTurn.AnchorPoint = Vector2.new(0, 1)
 	tools.endTurn.Position = UDim2.fromScale(0, 1)
-	tools.endTurn.Size = UDim2.new(1, 0, 0, 50)
+	tools.endTurn.Size = UDim2.new(1, 0, 0, UIKit.METRICS.primaryHeight)
 	tools.endTurn.TextSize = 20
 	tools.endTurn.Activated:Connect(callbacks.onEndTurn)
 
 	local row = make("Frame", {
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -58), Size = UDim2.new(1, 0, 0, 44),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -72), Size = UDim2.new(1, 0, 0, 48),
 		BackgroundTransparency = 1,
 	}, col)
 	make("UIListLayout", {
@@ -318,8 +318,8 @@ local function buildTools(callbacks)
 	tools.speed = toolButton("1×", 3, callbacks.onSpeed)
 	tools.scenes = button("Szenen an", col, "active")
 	tools.scenes.AnchorPoint = Vector2.new(0, 1)
-	tools.scenes.Position = UDim2.new(0, 0, 1, -110)
-	tools.scenes.Size = UDim2.new(1, 0, 0, 44)
+	tools.scenes.Position = UDim2.new(0, 0, 1, -128)
+	tools.scenes.Size = UDim2.new(1, 0, 0, 48)
 	tools.scenes.TextSize = 18
 	tools.scenes.Activated:Connect(callbacks.onBattleScenes)
 
@@ -333,8 +333,8 @@ local function buildTools(callbacks)
 
 	tools.back = button("Zurück", col, "muted")
 	tools.back.AnchorPoint = Vector2.new(0, 1)
-	tools.back.Position = UDim2.new(0, 0, 1, -162)
-	tools.back.Size = UDim2.new(1, 0, 0, 44)
+	tools.back.Position = UDim2.new(0, 0, 1, -184)
+	tools.back.Size = UDim2.new(1, 0, 0, 48)
 	tools.back.Visible = false
 	tools.back.Activated:Connect(callbacks.onBack)
 end

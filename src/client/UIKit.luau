@@ -70,12 +70,13 @@ local function chromeSequence()
 end
 
 UIKit.BUTTON_STYLES = {
-	default = { Color3.fromRGB(50, 68, 128), Color3.fromRGB(76, 100, 172) },
-	primary = { Color3.fromRGB(176, 132, 40), Color3.fromRGB(214, 166, 60) },
-	danger = { Color3.fromRGB(150, 48, 48), Color3.fromRGB(198, 70, 62) },
-	muted = { Color3.fromRGB(56, 58, 76), Color3.fromRGB(82, 86, 108) },
-	active = { Color3.fromRGB(60, 130, 90), Color3.fromRGB(80, 166, 116) },
-	disabled = { Color3.fromRGB(38, 40, 52), Color3.fromRGB(38, 40, 52) },
+	default = { Color3.fromRGB(74, 141, 255), Color3.fromRGB(42, 95, 196) },
+	primary = { THEME.gold, THEME.goldShade },
+	danger = { Color3.fromRGB(255, 77, 77), Color3.fromRGB(194, 45, 54) },
+	muted = { Color3.fromRGB(106, 113, 201), Color3.fromRGB(69, 75, 154) },
+	active = { Color3.fromRGB(63, 209, 90), Color3.fromRGB(35, 150, 58) },
+	disabled = { Color3.fromRGB(138, 144, 166), Color3.fromRGB(138, 144, 166) },
+	holo = { THEME.holoCyan, THEME.holoShade },
 }
 
 function UIKit.make(className, props, parent)
@@ -269,22 +270,75 @@ function UIKit.panel(props, parent)
 	return f
 end
 
+local function gloss(parent, z)
+	local cap = make("Frame", {
+		Name = "Gloss", Position = UDim2.fromScale(0.05, 0.02), Size = UDim2.fromScale(0.9, 0.48),
+		BackgroundColor3 = THEME.text, BorderSizePixel = 0, ZIndex = z or 0,
+	}, parent)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, cap)
+	make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1),
+	}) }, cap)
+	return cap
+end
+
+local buttonStates = setmetatable({}, { __mode = "k" })
+
+local function updateButton(b)
+	local state = buttonStates[b]
+	if not state then return end
+	local style = b:GetAttribute("Style")
+	local colors = UIKit.BUTTON_STYLES[style]
+	local disabled = style == "disabled"
+	if disabled then state.pressed = false end
+	local drop = state.pressed and METRICS.buttonEdge - METRICS.pressedEdge or 0
+	-- padding verschiebt nur den Text; die Flächen kompensieren dieselben Abstände.
+	state.padding.PaddingTop = UDim.new(0, drop * 2)
+	state.face.Position = UDim2.fromOffset(-6, -drop)
+	state.face.Size = UDim2.new(1, 12, 1, drop * 2)
+	state.edge.Position = UDim2.fromOffset(-6, METRICS.buttonEdge - drop * 2)
+	state.edge.Size = UDim2.new(1, 12, 1, drop * 2)
+	state.edge.Visible = not disabled
+	state.edge.BackgroundColor3 = colors[2]
+	state.face.BackgroundColor3 = style == "holo" and THEME.text or colors[1]
+	if state.hovered and not disabled and style ~= "holo" then
+		state.face.BackgroundColor3 = colors[1]:Lerp(THEME.text, 0.08)
+	end
+	state.gradient.Enabled = style == "holo"
+	state.gloss.Visible = not disabled
+	for _, decoration in { state.edge, state.face, state.gloss } do decoration.ZIndex = math.max(0, b.ZIndex - 1) end
+end
+
 function UIKit.setButtonStyle(b, style)
 	b:SetAttribute("Style", style)
 	b.BackgroundColor3 = UIKit.BUTTON_STYLES[style][1]
-	b.TextTransparency = style == "disabled" and 0.55 or 0
+	b.TextTransparency = style == "disabled" and 0.4 or 0
+	updateButton(b)
 end
 
 function UIKit.button(text, parent, style, order, wrap)
 	local b = make("TextButton", {
-		Text = text, Size = UDim2.new(1, 0, 0, 40), AutoButtonColor = false,
+		Text = text, Size = UDim2.new(1, 0, 0, METRICS.buttonHeight), AutoButtonColor = false,
 		TextColor3 = THEME.text, Font = THEME.bold, TextSize = 18,
-		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true,
+		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true, BackgroundTransparency = 1,
 	}, parent)
 	UIKit.fitText(b, nil, wrap)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
-	UIKit.corner(b, 6)
-	local s = UIKit.stroke(b, THEME.goldDark, 1.5)
+	local textPadding = make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
+	UIKit.corner(b, METRICS.buttonRadius)
+	UIKit.outline(b)
+	local edge = make("Frame", { Name = "ButtonEdge", BorderSizePixel = 0, ZIndex = 0 }, b)
+	UIKit.corner(edge, METRICS.buttonRadius)
+	UIKit.stroke(edge, THEME.ink, 3)
+	local face = make("Frame", { Name = "ButtonFace", BorderSizePixel = 0, ZIndex = 0 }, b)
+	UIKit.corner(face, METRICS.buttonRadius)
+	UIKit.stroke(face, THEME.ink, 3)
+	local gradient = make("UIGradient", { Rotation = 15, Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, THEME.holoCyan), ColorSequenceKeypoint.new(0.33, THEME.holoLilac),
+		ColorSequenceKeypoint.new(0.67, THEME.holoPink), ColorSequenceKeypoint.new(1, THEME.gold),
+	}) }, face)
+	local state = { edge = edge, face = face, gradient = gradient, gloss = gloss(face), padding = textPadding, pressed = false, hovered = false }
+	buttonStates[b] = state
+	b:GetPropertyChangedSignal("ZIndex"):Connect(function() updateButton(b) end)
 	UIKit.setButtonStyle(b, style or "default")
 	local scale = make("UIScale", { Name = "ButtonScale" }, b)
 	local scaleTween
@@ -297,11 +351,15 @@ function UIKit.button(text, parent, style, order, wrap)
 	end
 	b.InputBegan:Connect(function(input)
 		if b:GetAttribute("Style") ~= "disabled" and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+			state.pressed = true
+			updateButton(b)
 			animateScale(Config.FEEL.buttonPressScale, Config.FEEL.buttonPressTime)
 		end
 	end)
 	b.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			state.pressed = false
+			updateButton(b)
 			animateScale(hovered and hoverScale() or 1, Config.FEEL.buttonReleaseTime,
 				hoverScale() <= 1 and Enum.EasingStyle.Quad or Enum.EasingStyle.Back)
 		end
@@ -312,6 +370,8 @@ function UIKit.button(text, parent, style, order, wrap)
 	b.MouseEnter:Connect(function()
 		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" then
 			hovered = true
+			state.hovered = true
+			updateButton(b)
 			animateScale(hoverScale(), Config.FEEL.buttonReleaseTime)
 		end
 		local now = os.clock()
@@ -319,16 +379,12 @@ function UIKit.button(text, parent, style, order, wrap)
 			lastHoverSound = now
 			SoundPlayer.play("hover")
 		end
-		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
-		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[2] }):Play()
-		s.Color = THEME.gold
 	end)
 	b.MouseLeave:Connect(function()
 		hovered = false
+		state.hovered = false
+		updateButton(b)
 		animateScale(1, Config.FEEL.buttonReleaseTime)
-		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
-		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[1] }):Play()
-		s.Color = THEME.goldDark
 	end)
 	return b
 end

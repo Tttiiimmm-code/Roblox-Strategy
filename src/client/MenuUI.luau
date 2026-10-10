@@ -79,7 +79,7 @@ local function buildLobby(root)
 	local close = button("X", f, "muted")
 	close.AnchorPoint = Vector2.new(1, 0)
 	close.Position = UDim2.fromScale(1, 0)
-	close.Size = UDim2.fromOffset(44, 40)
+	close.Size = UDim2.fromOffset(48, 48)
 	close.TextSize = 22
 	close.Activated:Connect(function()
 		MenuUI.closeLobby()
@@ -92,7 +92,7 @@ local function buildLobby(root)
 
 	-- Reiter: Rekrutieren · Kaserne
 	local tabBar = make("Frame", {
-		Position = UDim2.fromOffset(0, 80), Size = UDim2.new(1, 0, 0, 42), BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 80), Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1,
 	}, f)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -101,7 +101,7 @@ local function buildLobby(root)
 	lobby.pages = {}
 	for i, tab in { { "recruit", "Rekrutieren" }, { "barracks", "Kaserne" } } do
 		local b = button(tab[2], tabBar, "default", i)
-		b.Size = UDim2.fromOffset(200, 42)
+		b.Size = UDim2.fromOffset(200, 48)
 		b.Activated:Connect(function()
 			lobbyTab = tab[1]
 			MenuUI.update(lastState, lastProfile)
@@ -152,7 +152,7 @@ local function buildResult(root)
 	}, resultDetails)
 
 	local buttons = make("Frame", {
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 148),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 165),
 		BackgroundTransparency = 1, ZIndex = 12,
 	}, box)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, buttons)
@@ -160,7 +160,7 @@ local function buildResult(root)
 	result.retry = button("Nochmal", buttons, "default", 2)
 	result.lobby = button("Zum Thronsaal", buttons, "muted", 3)
 	for _, b in { result.next, result.retry, result.lobby } do
-		b.Size = UDim2.new(1, 0, 0, 44)
+		b.Size = UDim2.new(1, 0, 0, 48)
 		b.ZIndex = 12
 	end
 	result.retry.Activated:Connect(function()
@@ -248,7 +248,7 @@ local function buildThroneMenu(root)
 	}
 	for i, e in entries do
 		local b = button(e[2], content, e[3], i)
-		b.Size = UDim2.new(1, 0, 0, 52)
+		b.Size = UDim2.new(1, 0, 0, e[1] == "run" and UIKit.METRICS.primaryHeight or 52)
 		b.TextSize = 20
 		throne[e[1]] = b
 		b.Activated:Connect(function()
@@ -259,7 +259,7 @@ local function buildThroneMenu(root)
 		end)
 	end
 	local stand = button("Aufstehen", content, "muted", 10)
-	stand.Size = UDim2.new(1, 0, 0, 44)
+	stand.Size = UDim2.new(1, 0, 0, 48)
 	stand.Activated:Connect(function()
 		callbacks.onStandUp()
 	end)
