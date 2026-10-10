@@ -23,7 +23,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, schon gepusht).
   - WIP-Zielgrößen am Rand: Gras ≈ 0,35 Feld hoch, Blumen ≈ 0,3, Steine ≈ 0,25 hoch / 0,5 breit; ±15 % Streuung.
   - Regression: gemessene Bounding-Box der Randdeko entspricht den Randwerten; Brettdeko unverändert.
 
-- [ ] 2. **Rand schmaler** – `Config.ISLAND.rimTiles` = `{ min = 2, max = 3 }`
+- [x] 2. **Rand schmaler** – `Config.ISLAND.rimTiles` = `{ min = 2, max = 3 }`
   - Abhängige Werte prüfen und anpassen: Kantenreserve, Randgruppen-Abstände, Übersichtszoom/Schwenkgrenzen, Nebeninsel- und Wolkenabstände, Flussmündungen/Wasserfälle. Nichts darf über die Kante ragen oder in der Luft hängen.
   - Akzeptanz: Übersichtsbild – Insel kompakter, Brett größer im Bild, Kante/Wand/Wasserfälle intakt.
 
@@ -53,3 +53,5 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, schon gepusht).
 ## Notizen (Codex)
 
 - Schritt 1: Eigene Randmaße pro Streukategorie, ±15 % Variation; aufrechte Einzelmeshes werden in Höhe/Breite getrennt angepasst, komplexe Ersatzmodelle weiter proportional begrenzt. Brettpfad unverändert. Studio: reguläres ResumeLevel (Grasland Level 3), D2b_01_groessen_normal/uebersicht, nur Mausrad. Gemessen: Randgras 2,747 Studs, Stein 1,875 Studs. Syntaxcheck OK; gesamte Regression läuft.
+
+- Schritt 2: Rand 2–3 Felder, Gruppenmitte 1,25 Felder, Baumabstand 1,15–1,4; Baumgruppen ebenfalls mit rimFits gegen Kante/Wasser geschützt. Zoom und Wolkenabstand folgen bereits rimTiles.max; Schwenkgrenzen/Nebeninseln sind brettbezogen und bleiben gültig. Fluss-/Fallschale nutzt denselben Umriss. D2b_02_schmal_normal/uebersicht im regulären ResumeLevel, kein Kameraeingriff. 426 Inselteile; Kante/Wand intakt. check.ps1 OK; Schritt-1-test-run.ps1 Exit 0.

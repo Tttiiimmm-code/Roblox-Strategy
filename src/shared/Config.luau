@@ -222,13 +222,14 @@ Config.WATER = { -- WIP: ruhiges Terrain-Wasser, Fortsetzung bis zur Senke.
 }
 
 Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal.
-	enabled = true, rimTiles = { min = 3.4, max = 4 }, outlineSteps = 4,
+	enabled = true, rimTiles = { min = 2, max = 3 }, outlineSteps = 4,
 	surfaceHeight = -1, edgeReserve = 4, earthTiles = 1, depthTiles = 4.5,
 	rimBrighten = 0.3, -- WIP: Brett-Gras als Mindesthelligkeit, frischer heller Inselrand.
 	cliffEarthTiles = 0.6, cliffStoneTiles = 1, -- WIP: senkrechtes Band vor der Verjüngung.
 	layerScales = { 1, 0.46, 0 }, partBudget = 450, -- WIP: zwei Steinstufen sparen Teile für runde Wolken.
 	facetThickness = 0.16, edgeLip = 0.2, edgeOverlap = 1,
 	clusterCount = 10, clusterSize = 3, clusterSpread = 0.45, maxTrees = 18,
+		clusterDistance = { min = 1.15, max = 1.4 },
 	tree = { height = 1.15, crownWidth = 1.35 }, rock = { height = 0.45, width = 0.65 }, bush = { height = 0.3, width = 0.5 },
 	rimGroups = { { "rim_ruin_column", "rim_ruin_arch", "deco_stone" },
 		{ "rim_barrels", "rim_lantern", "deco_grass" },
@@ -238,8 +239,8 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 		height = 0.28, width = 0.45, rockHeight = 0.45, rockWidth = 0.65, sizeVariation = 0.15,
 		sizes = { deco_grass = { height = 0.35, width = 0.55 },
 			deco_flower = { height = 0.3, width = 0.55 }, deco_stone = { height = 0.25, width = 0.5 } } },
-	rimPlacement = { attempts = 16, distance = 2.2, groupSpacing = 1.35, jitter = 1.5,
-		scatterDistance = { min = 1.5, inset = 0.5 }, edgeClearance = 2,
+	rimPlacement = { attempts = 16, distance = 1.25, groupSpacing = 0.65, jitter = 0.65,
+		scatterDistance = { min = 0.75, inset = 0.5 }, edgeClearance = 2,
 		waterClearance = 3, overlapClearance = 0.4, frontHeight = 2.6 },
 	earthColor = Color3.fromRGB(154, 106, 72), stoneColor = Color3.fromRGB(109, 100, 128),
 	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9, crystalDepth = 0.75,

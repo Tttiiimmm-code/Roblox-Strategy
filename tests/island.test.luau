@@ -3,6 +3,7 @@ do
 	local Landscape, Island = modules.LandscapeBuilder, modules.IslandBuilder
 	local s, T = Config.ISLAND, Config.TILE_SIZE
 	s.enabled = true
+	expect(s.rimTiles.min == 2 and s.rimTiles.max == 3, "Randbreite muss 2 bis 3 Felder sein")
 	local beforeChecks, maxParts, rivers, duration = checks, 0, 0, 0
 	local function signature(board)
 		local rows = {}
