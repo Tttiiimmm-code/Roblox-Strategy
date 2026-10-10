@@ -28,7 +28,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
   - Der Rand trägt die bisherige Deko-Logik (`details`: Bäume, Felsen, Büsche) in angepasster Dichte; dazu 1–3 Requisiten-Plätze (vorerst vorhandene Paketmodelle).
   - Akzeptanz: Übersichtsbild zeigt Brett + Landrand + Kante, dahinter nur Himmel.
 
-- [ ] 3. **Inselkante und Unterseite** – neues Modul z. B. `src/server/IslandBuilder.luau`
+- [x] 3. **Inselkante und Unterseite** – neues Modul z. B. `src/server/IslandBuilder.luau`
   - Senkrechte, kantige Kante aus Teilen entlang des Umrisses (wie `cliffWalls`: verdeckt Terrain-Rundung), oben **Erdschicht** (#9a6a48, etwa eine Feldbreite tief), darunter **Steinschicht** (#6d6480), die sich in 2–3 Stufen nach unten zu einer Spitze verjüngt (umgedrehter, facettierter Kegel; Gesamttiefe WIP ≈ 4–5 Felder).
   - **2–4 Thronkristalle** ragen aus der Unterseite: Rauten-Oktaeder (z. B. zwei gegeneinander gesetzte Pyramiden aus Wedges oder ein passendes Paketmodell), `Neon` in der Gebietsakzentfarbe, harte weiße Glanzfacette. Keine teuren Partikel.
   - Akzeptanz: Bild schräg von unten/seitlich (Übersicht, Kamera geneigt): Schichten und Kristalle klar erkennbar, keine Lücken zwischen Kante und Oberseite.
@@ -89,3 +89,5 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 - Letzte Aktion vor dem Schwarzbild: ResumeLevel, echte Geometrieprobe mit LevelGen-Seed 1 und korrigiertem BoardBuilder, danach Kamera `(180, −10, 170)` auf `(64, −18, 48)`, FOV 65; Abstand ca. 169 Studs. Keine Wolken, Nebeninseln oder großen neuen Teile erzeugt. Wechsel auf Normalansicht `(64, 112, 136)` änderte das Schwarzbild nicht. Studio danach gestoppt und Originalkamera wiederhergestellt; auch Edit-Aufnahme `D1_03_edit_nach_schwarzbild` schwarz. Kein Terrain im Edit-Modus geräumt; Nutzer-ColorGrading/Bloom nicht bearbeitet.
 
 - Übergabe dieser Fortsetzung: scripts/check.ps1 OK (39 Dateien), Rojo-Build OK. Studio im Edit-Modus; MCP bestätigt probe=false, backup=false, override=false. Schritte 4–7 wegen fehlender Pflicht-Seitenprüfung nicht begonnen, Lauf-/Generator-/Tutorial-/UI-Suiten noch nicht ausgeführt; kein abgeschlossener Plan und deshalb noch kein Devlog #43. Übergabe mit frage.
+
+- Fortsetzung Schritt 3 (10.10.2026, Vulkan): Nur normale Spielkamera und echtes Mausrad; Bilder D1_03_kappe_normal/uebersicht zeigen Kante und Erdschicht, kein Schwarzbild. Seed 1: 212 neue Teile / 1.760 geschätzte Dreiecke; 1.585 Brettteile / 386.760 geschätzte Dreiecke (Mesh/Union pauschal 1.000), 8.168 Voxel / 58.088 Studs³, Aufbau 0,186–0,234 s. Geometrieprobe mit echtem BoardBuilder; Figuren gehören zum laufenden Level. Unterseite/Kristalle übernimmt Claude beim Review gemäß Antwort (2). Schritt 3 erfüllt nach angepasstem Akzeptanzkriterium.
