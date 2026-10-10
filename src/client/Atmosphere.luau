@@ -14,6 +14,10 @@ function Atmosphere.set(name)
 	table.clear(tweens)
 	for key, class in classes do
 		local goal = Config.FEEL.atmosphere[name][key]
+		if key == "haze" and name == "battle" and Config.ISLAND.enabled then
+			goal = table.clone(goal)
+			goal.Color, goal.Decay = Config.ISLAND.skyColor, Config.ISLAND.horizonColor
+		end
 		-- Neue Effekte und Unschärfe sofort setzen: Standardwerte (z. B. 75 % Tiefenunschärfe)
 		-- bzw. ein Überblenden der Unschärfe ließen Text und Szene kurz verschwommen wirken.
 		if not effects[key] or key == "depth" then
