@@ -19,7 +19,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 
 ## Schritte
 
-- [ ] 1. **Vorher-Bilder und Messung** – nur Studio
+- [x] 1. **Vorher-Bilder und Messung** – nur Studio
   - Ein Grasland-Kampflevel mit Fluss: Normalzoom, Übersichtszoom, Aufbauzeit, Brett-Nachkommen, Terrain-Voxel.
 
 - [ ] 2. **Inselgrundriss und Oberseite** – `Config.ISLAND` (neu), `LandscapeBuilder`
@@ -67,3 +67,5 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1: Studio Throne Tales (75433071253639), Play mit aktivem DataStore; vorhandenen Lauf per ChooseLevel gestartet. Reproduzierbare Landschaftsprobe danach direkt mit echtem BoardBuilder und Generator-Seed 1 (Grasland, Fluss/Lake), ohne Profilmanipulation. MCP-require verwendet eigenen Modulzustand: daher Grid explizit mit Generator-Karte gesetzt; Figuren des laufenden Kampfes sind nicht Teil dieser Geometrieprobe. Bilder D1_01_vorher_fluss_normal/uebersicht aufgenommen. Vorher: 1.447 BaseParts, 2.532 Nachkommen, 118.528 geschriebene Terrain-Voxel, Terrainvolumen 33.832.189 Studs³, Aufbau 0,338 s. Dreiecke geschätzt 460.976 (Mesh/Union je pauschal 1.000; keine exakte GPU-Messung). Tal/Fernboden füllt den gesamten Hintergrund.
