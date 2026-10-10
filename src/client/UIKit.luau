@@ -12,26 +12,45 @@ local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = {}
 
 UIKit.THEME = {
-	top = Color3.fromRGB(42, 60, 118),
-	bottom = Color3.fromRGB(14, 20, 48),
-	gold = Color3.fromRGB(228, 192, 108),
-	goldDark = Color3.fromRGB(130, 102, 54),
-	text = Color3.fromRGB(246, 242, 230),
-	dim = Color3.fromRGB(170, 178, 204),
+	ink = Color3.fromRGB(20, 26, 51),
+	backdrop = Color3.fromRGB(11, 10, 38),
+	panelTop = Color3.fromRGB(59, 63, 209),
+	panelBottom = Color3.fromRGB(26, 22, 96),
+	panelInset = Color3.fromRGB(17, 14, 69),
+	panelLine = Color3.fromRGB(127, 134, 255),
+	chromeLight = Color3.fromRGB(244, 247, 255),
+	chromeMid = Color3.fromRGB(185, 194, 214),
+	chromeDark = Color3.fromRGB(95, 104, 132),
+	holoCyan = Color3.fromRGB(62, 240, 255),
+	holoLilac = Color3.fromRGB(181, 140, 255),
+	holoPink = Color3.fromRGB(255, 95, 210),
+	holoLime = Color3.fromRGB(198, 255, 74),
+	holoShade = Color3.fromRGB(122, 79, 214),
+	gold = Color3.fromRGB(255, 201, 60),
+	goldShade = Color3.fromRGB(201, 138, 18),
+	gem = Color3.fromRGB(110, 232, 255),
+	starEmpty = Color3.fromRGB(74, 80, 104),
+	text = Color3.new(1, 1, 1),
+	dim = Color3.fromRGB(210, 217, 245),
 	player = Color3.fromRGB(120, 176, 255),
 	enemy = Color3.fromRGB(255, 112, 112),
 	good = Color3.fromRGB(120, 232, 140),
 	bad = Color3.fromRGB(255, 120, 100),
 	warn = Color3.fromRGB(255, 180, 80),
-	barBg = Color3.fromRGB(8, 10, 24),
-	title = Enum.Font.Fondamento,
+	title = Enum.Font.FredokaOne,
 	body = Enum.Font.GothamMedium,
-	bold = Enum.Font.GothamBold,
+	bold = Enum.Font.FredokaOne,
+	display = Enum.Font.LuckiestGuy,
+	tech = Enum.Font.Michroma,
 }
-UIKit.DIM_HEX = "#aab2cc"
+UIKit.THEME.top = UIKit.THEME.panelTop
+UIKit.THEME.bottom = UIKit.THEME.panelBottom
+UIKit.THEME.barBg = UIKit.THEME.panelInset
+UIKit.THEME.goldDark = UIKit.THEME.goldShade
+UIKit.DIM_HEX = "#d2d9f5"
 UIKit.GOOD_HEX = "#78e88c"
 UIKit.BAD_HEX = "#ff7864"
-UIKit.GOLD_HEX = "#e4c06c"
+UIKit.GOLD_HEX = "#ffc93c"
 
 local THEME = UIKit.THEME
 local lastHoverSound = -math.huge
@@ -78,6 +97,23 @@ function UIKit.padding(parent, px)
 	}, parent)
 end
 
+-- Konturen folgen auch später gesetzten Schriften und Textgrößen.
+function UIKit.outline(text, enabled, thickness)
+	local outline = make("UIStroke", {
+		Name = "TextOutline", Color = THEME.ink, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+	}, text)
+	local function update()
+		outline.Enabled = enabled ~= false and (text.Font == THEME.bold or text.Font == THEME.display)
+		outline.Thickness = thickness or (text.TextSize <= 16 and 1.5 or text.TextSize < 32 and 2 or 3)
+		outline.Transparency = text.TextTransparency
+	end
+	text:GetPropertyChangedSignal("Font"):Connect(update)
+	text:GetPropertyChangedSignal("TextSize"):Connect(update)
+	text:GetPropertyChangedSignal("TextTransparency"):Connect(update)
+	update()
+	return outline
+end
+
 -- Feste Textfelder passen sich an; nachträgliche TextSize-Werte bleiben die Obergrenze.
 function UIKit.fitText(text, minimum, wrap)
 	text.TextScaled = true
@@ -103,12 +139,15 @@ end
 function UIKit.label(props, parent)
 	local wrap = props.wrap == true
 	props.wrap = nil
+	local outline = props.Outline
+	props.Outline = nil
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or THEME.text
 	props.Font = props.Font or THEME.body
 	props.TextSize = props.TextSize or 16
 	props.RichText = true
 	local text = make("TextLabel", props, parent)
+	UIKit.outline(text, outline)
 	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text, nil, wrap) end
 	return text
 end

@@ -18,6 +18,7 @@ local RunConfig = require(Shared:WaitForChild("RunConfig"))
 local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
 Atmosphere.set("hall") -- sofort, nicht erst wenn der erste Spielstand vom Server kommt
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
+local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local UI = require(script.Parent:WaitForChild("UI"))
 local MenuUI = require(script.Parent:WaitForChild("MenuUI"))
 local CameraController = require(script.Parent:WaitForChild("CameraController"))
@@ -875,12 +876,13 @@ local function floatText(unitId, text, color, size)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBlack
+	label.Font = UIKit.THEME.display
+	label.TextSize = 44
 	label.TextScaled = true
 	label.TextColor3 = color
-	label.TextStrokeTransparency = 0
 	label.Text = text
 	label.Parent = bb
+	UIKit.outline(label)
 	local scale = Instance.new("UIScale")
 	scale.Scale = 1.6
 	scale.Parent = label
@@ -890,7 +892,7 @@ local function floatText(unitId, text, color, size)
 	local info = TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	TweenService:Create(bb, info, { StudsOffsetWorldSpace = Vector3.new(0, top + 5, 0) }):Play()
 	TweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.6), {
-		TextTransparency = 1, TextStrokeTransparency = 1,
+		TextTransparency = 1,
 	}):Play()
 	Debris:AddItem(bb, 1.2)
 end
