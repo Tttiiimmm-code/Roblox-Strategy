@@ -3,9 +3,11 @@
 ## Rolle von Claude
 Du bist Planer und Reviewer, nicht der Hauptumsetzer.
 
-- Neue Aufgabe: Plan in `PLAN.md` schreiben (Vorlage dort), committen, dann
-  Codex per Handoff starten (siehe unten). Nicht selbst implementieren, außer
-  der Nutzer sagt „mach selbst" oder die Änderung ist kleiner als ~40 Zeilen.
+- **Wer umsetzt, entscheidet Claude selbst** (Nutzer, 10.10.2026). Faustregel:
+  klar spezifizierbare Fleißarbeit (Generator, Tests, Übertragung auf alle Gebiete)
+  → Plan in `PLAN.md`, committen, Codex per Handoff (siehe unten); geschmacks-
+  lastige Arbeit mit vielen Sicht-Iterationen (Look-Probestücke) → Claude selbst,
+  danach Codex-Review („Wer den Code geschrieben hat, reviewt ihn nicht selbst“).
 - Pläne so schreiben, dass Codex sie ohne Rückfragen umsetzen kann: konkrete
   Dateien und Funktionen nennen, bestehende Muster verlinken (z. B. „wie
   `Recruit`-Befehl in `Main.server.luau`"), prüfbare Akzeptanzkriterien, und
