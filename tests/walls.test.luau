@@ -18,6 +18,13 @@ local function validateWalls(withPackage)
 		end
 		if asset:GetAttribute("CliffTile") then
 			expect(not asset.CanQuery and not asset.CanCollide, "Felswand blockiert Feldklick")
+			local cx, cy = asset:GetAttribute("CliffTile"):match("^(%d+),(%d+)$")
+			cx, cy = tonumber(cx), tonumber(cy)
+			for _, dx in { -1, 1 } do for _, dy in { -1, 1 } do for _, dz in { -1, 1 } do
+				local point = asset.CFrame:PointToWorldSpace(Vector3.new(dx * asset.Size.X / 2, dy * asset.Size.Y / 2, dz * asset.Size.Z / 2))
+				expect(point.X >= (cx - 1) * Config.TILE_SIZE - 0.001 and point.X <= cx * Config.TILE_SIZE + 0.001
+					and point.Z >= (cy - 1) * Config.TILE_SIZE - 0.001 and point.Z <= cy * Config.TILE_SIZE + 0.001, "Felswand verdeckt Nachbarfeld")
+			end end end
 		end
 	end
 	for _, asset in board:GetChildren() do
@@ -84,3 +91,12 @@ end
 validateWalls(true)
 validateWalls(false)
 print("OK: Felshügel (Terrain, gemessene Figurenhoehen, Overlayfreiheit, höhere unpassierbare Klippen, freie Felsmitten, Klickfelder, Wasserfall, Aufräumen, Paket/Fallback).")
+
+do
+	freshAssets()
+	Grid.setMap({ "C" })
+	Config.LANDSCAPE.cliffWalls.enabled = false
+	local board = Board.build("greenland")
+	expect(not board:FindFirstChild("CliffCore") and terrainHeightAt(4,4) >= Config.TERRAIN.C.height, "Klippen-Schalter ohne Terrain-Rückfall")
+	Config.LANDSCAPE.cliffWalls.enabled = true
+end

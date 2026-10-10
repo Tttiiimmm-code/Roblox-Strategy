@@ -34,3 +34,28 @@ do
 	metricAssets()
 	print("OK: Wasserfälle (vier Richtungen, freie Terrainkanäle, Quelle/Fall bündig, Fall/Gischt außerhalb Terrain, Paket/Fallback).")
 end
+
+-- Die gemessene Wasseroberfläche darf vom Sollwert der Karte abweichen.
+do
+	freshAssets()
+	Grid.setMap({ ".....", ".CCC.", ".CWC.", "....." })
+	local raycast = workspace.Raycast
+	function workspace:Raycast(origin, direction, params)
+		local hit = raycast(self, origin, direction, params)
+		local _, material = terrainHeightAt(origin.X, origin.Z)
+		if hit and params.FilterDescendantsInstances[1] == self.Terrain and material == Enum.Material.Water then
+			hit.Position = hit.Position + Vector3.new(0, 0.4, 0)
+		end
+		return hit
+	end
+	local board = Board.build("greenland", { waterfall = { x = 3, y = 2, dx = 0, dy = 1 } })
+	local sheet = board:FindFirstChild("Waterfall")
+	local measured = Config.TERRAIN.W.height + 0.4
+	expect(math.abs(sheet.Position.Y - sheet.Size.Y / 2 - measured) < 0.001, "Fallende ignoriert gemessene Wasseroberfläche")
+	for _, part in board:GetChildren() do if part.Name == "WaterfallFoam" then
+		expect(math.abs(part.Position.Y - part.Size.Y / 2 - measured) < 0.001, "Gischt schwebt über der Wasseroberfläche")
+	end end
+	workspace.Raycast = raycast
+	metricAssets()
+	print("OK: Wasserfallanschluss an abweichende gemessene Wasseroberfläche.")
+end
