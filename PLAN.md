@@ -52,7 +52,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
   - Landschaftsregressionen in `scripts/test-run.ps1`/Tests auf Insel umstellen bzw. ergänzen (Rückfall `ISLAND.enabled = false` weiter geprüft): Insel umschließt Brett, kein Terrain außerhalb der Insel, Randfluss endet in Wasserfall, Teilebudget, Determinismus.
   - `scripts/check.ps1`, `test-run.ps1`, `test-levelgen.ps1`, `test-tutorial.ps1`, `test-run-ui.ps1` OK; Rojo-Build.
   - Messung vorher/nachher: Teile, geschätzte Dreiecke, Terrain-Voxel, Aufbauzeit.
-  - Devlog **#43 „Schwebende Thronlande D1“**, „Nächste Schritte“ (D2: Thronkristalle/Banner auf der Insel, weitere Gebiete). Committen, `git push -u origin feature/thronlande`, Studio im Edit-Modus, `.handoff/status` = `fertig`.
+  - Devlog **#43 „Schwebende Thronlande D1“**, „Nächste Schritte“ (D2: Thronkristalle/Banner auf der Insel, weitere Gebiete). Committen, `git push -u origin feature/thronlande` (Ziel ist das eigene Repository des Nutzers `Tttiiimmm-code/Roblox-Strategy`; lehnt die automatische Freigabeprüfung den Push ab, **nicht** als Frage stoppen, sondern in den Notizen vermerken – Claude pusht dann), Studio im Edit-Modus, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
 - [ ] Kampflevel schwebt als Insel über Wolken, Rand mit Bäumen, Kante mit Erd-/Steinschicht und Kristallen
