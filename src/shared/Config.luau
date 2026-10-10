@@ -207,6 +207,25 @@ Config.WATER = { -- WIP: ruhiges Terrain-Wasser, Fortsetzung bis zur Senke.
 	extendRivers = true, extensionTiles = 10, extensionWidth = 0.65,
 }
 
+Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal.
+	enabled = true, rimTiles = { min = 3.4, max = 4 }, outlineSteps = 4,
+	surfaceHeight = -1, edgeReserve = 4, earthTiles = 1, depthTiles = 4.5,
+	layerScales = { 1, 0.72, 0.38, 0.04 }, partBudget = 450,
+	clusterCount = 10, clusterSize = 3, clusterSpread = 0.45, maxTrees = 18,
+	tree = { height = 1.15, crownWidth = 1.35 }, rock = { height = 0.45, width = 0.65 }, bush = { height = 0.3, width = 0.5 },
+	propCount = { min = 1, max = 3 }, propCategories = { "deco_fence", "rock", "deco_fence" },
+	earthColor = Color3.fromRGB(154, 106, 72), stoneColor = Color3.fromRGB(109, 100, 128),
+	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9,
+	accents = { greenland = Color3.fromRGB(124, 194, 66), swamp = Color3.fromRGB(180, 107, 224),
+		ice = Color3.fromRGB(111, 211, 255), volcano = Color3.fromRGB(255, 122, 26) },
+	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 220, cloudCount = 36,
+	cloudColor = Color3.fromRGB(244, 241, 255), horizonColor = Color3.fromRGB(201, 168, 255),
+	skyColor = Color3.fromRGB(157, 221, 230), foamColor = Color3.fromRGB(242, 251, 255),
+	satelliteCount = { min = 2, max = 4 }, satelliteDistanceTiles = { min = 13, max = 18 },
+	satelliteRadiusTiles = { min = 1.8, max = 2.6 }, satelliteHeight = { min = -10, max = 8 },
+	overviewPadding = 1.06, panInset = 0.3,
+}
+
 Config.LANDSCAPE = {
 	resolution = 4, chunkCells = 32, viewSafetyTiles = 2, sculptDistance = 18,
 	rockFields = { mountainHeight = 8, mountainEdgeHeight = -2, edgeFalloff = 4, edgeDensity = 0.35, mountainRoughness = 1.5, roughnessScale = 7,

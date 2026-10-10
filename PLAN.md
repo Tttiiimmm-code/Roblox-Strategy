@@ -22,7 +22,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 - [x] 1. **Vorher-Bilder und Messung** – nur Studio
   - Ein Grasland-Kampflevel mit Fluss: Normalzoom, Übersichtszoom, Aufbauzeit, Brett-Nachkommen, Terrain-Voxel.
 
-- [ ] 2. **Inselgrundriss und Oberseite** – `Config.ISLAND` (neu), `LandscapeBuilder`
+- [x] 2. **Inselgrundriss und Oberseite** – `Config.ISLAND` (neu), `LandscapeBuilder`
   - Statt Tal und Fernboden: eine Inseloberseite, die das Brett um **3–4 Felder** (WIP `rimTiles`) umschließt. Umriss organisch-kantig (pro Seite unregelmäßige Polygonkante, deterministisch), keine perfekte Rechteckform.
   - Außerhalb der Insel ist Luft: kein Terrain-Tal, kein Fernboden mehr. Aufräumen beim nächsten Aufbau wie bisher vollständig.
   - Der Rand trägt die bisherige Deko-Logik (`details`: Bäume, Felsen, Büsche) in angepasster Dichte; dazu 1–3 Requisiten-Plätze (vorerst vorhandene Paketmodelle).
@@ -69,3 +69,6 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 ## Notizen (Codex)
 
 - Schritt 1: Studio Throne Tales (75433071253639), Play mit aktivem DataStore; vorhandenen Lauf per ChooseLevel gestartet. Reproduzierbare Landschaftsprobe danach direkt mit echtem BoardBuilder und Generator-Seed 1 (Grasland, Fluss/Lake), ohne Profilmanipulation. MCP-require verwendet eigenen Modulzustand: daher Grid explizit mit Generator-Karte gesetzt; Figuren des laufenden Kampfes sind nicht Teil dieser Geometrieprobe. Bilder D1_01_vorher_fluss_normal/uebersicht aufgenommen. Vorher: 1.447 BaseParts, 2.532 Nachkommen, 118.528 geschriebene Terrain-Voxel, Terrainvolumen 33.832.189 Studs³, Aufbau 0,338 s. Dreiecke geschätzt 460.976 (Mesh/Union je pauschal 1.000; keine exakte GPU-Messung). Tal/Fernboden füllt den gesamten Hintergrund.
+
+- Schritt 1 Ergänzung: screen_capture-Kameraparameter bewegen die Play-Kamera nicht. Echte Übersichtsprobe per Mausrad nach Startanimation: D1_01_vorher_seed1_uebersicht, Normalbild D1_01_vorher_seed1_normal (Terrain repliziert verzögert; Normalbild vollständig).
+- Schritt 2: Config.ISLAND.enabled mit Tal-Rückfall, 16 deterministische Polygonpunkte, Rand 3,4–4 Felder, kein Fernboden, Terrain nur innerhalb der Insel. Angepasste Baum-/Fels-/Buschgruppen, vorhandene Zaun-/Felsmodelle als 1–3 Requisitenplätze (ruins-Paket fehlt, daher vorhandene Kategorien). Seed 1: 10 Randbäume, 1 Requisit, 12.368 Voxel, ca. 0,165 s, vor Requisit 1.375 Teile / 388.976 geschätzte Dreiecke. Bilder D1_02_oberseite_normal und D1_02_final_uebersicht: Brett plus Rand/Kante, dahinter Himmel. Pflichtcheck OK (38 Dateien).

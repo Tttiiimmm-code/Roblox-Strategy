@@ -14,6 +14,34 @@ local function hash(key)
 	return value
 end
 
+-- Gerade Segmentkanten bleiben für Terrain, Schale und Flussausgänge identisch.
+local function outline(w, h, random)
+	local points, settings, T = {}, Config.ISLAND, Config.TILE_SIZE
+	for side = 1, 4 do
+		for index = 0, settings.outlineSteps - 1 do
+			local t = index / (settings.outlineSteps - 1)
+			local margin = random:NextNumber(settings.rimTiles.min, settings.rimTiles.max) * T
+			local x, z
+			if side == 1 then x, z = -2 * T + (w + 4 * T) * t, -margin
+			elseif side == 2 then x, z = w + margin, -2 * T + (h + 4 * T) * t
+			elseif side == 3 then x, z = w + 2 * T - (w + 4 * T) * t, h + margin
+			else x, z = -margin, h + 2 * T - (h + 4 * T) * t end
+			table.insert(points, Vector3.new(x, settings.surfaceHeight, z))
+		end
+	end
+	return points
+end
+
+function LandscapeBuilder.contains(state, x, z)
+	if not state.island then return true end
+	local inside = false
+	for i, a in state.outline do
+		local b = state.outline[i % #state.outline + 1]
+		if (a.Z > z) ~= (b.Z > z) and x < (b.X - a.X) * (z - a.Z) / (b.Z - a.Z) + a.X then inside = not inside end
+	end
+	return inside
+end
+
 local function smooth(value)
 	value = math.clamp(value, 0, 1)
 	return value * value * (3 - 2 * value)
@@ -56,11 +84,13 @@ end
 function LandscapeBuilder.prepare(mapKey, region, features)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local w, h = Grid.width() * T, Grid.height() * T
-	local margin = aligned(Config.landscapeMargin(Vector3.new(w, 0, h)), true)
+	local margin = aligned(Config.ISLAND.enabled and Config.ISLAND.rimTiles.max * T + Config.ISLAND.edgeReserve or Config.landscapeMargin(Vector3.new(w, 0, h)), true)
 	local random = Random.new(hash(mapKey .. ":landscape"))
 	local state = { w = w, h = h, region = region, key = mapKey, waterfall = features and features.waterfall, phase = random:NextNumber(0, math.pi * 2),
 		margin = margin, sculptMargin = math.min(margin, aligned(s.sculptDistance * T, true)),
 		palette = region and region.landscape or s.palette }
+	state.island = Config.ISLAND.enabled
+	if state.island then state.outline = outline(w, h, random); state.sculptMargin = margin end
 	state.rivers = {}
 	local water = region and region.water or Config.WATER
 	if water.extendRivers then
@@ -114,6 +144,7 @@ function LandscapeBuilder.surface(state, x, z)
 		end
 		return height - (s.cliffWalls.enabled and s.cliffWalls.terrainInset or 0), state.palette.slate
 	end
+	if state.island and not LandscapeBuilder.contains(state, x, z) then return nil end
 	local water = state.region and state.region.water or Config.WATER
 	for _, river in state.rivers do
 		local along = (x - river.x) * river.dx + (z - river.z) * river.dz
@@ -122,6 +153,7 @@ function LandscapeBuilder.surface(state, x, z)
 		local width = T * water.extensionWidth * math.sqrt(math.clamp((length - along) / T, 0, 1))
 		if along >= 0 and along < length and across < width then return Config.TERRAIN.W.height, Enum.Material.Water end
 	end
+	if state.island then return Config.ISLAND.surfaceHeight, state.palette.grass end
 	local dx = math.max(-x, x - state.w, 0)
 	local dz = math.max(-z, z - state.h, 0)
 	local distance = math.sqrt(dx * dx + dz * dz)
@@ -171,7 +203,7 @@ local function writeSurface(state, rect, stats)
 				local height, kind, density = LandscapeBuilder.surface(state, x, z)
 				heights[ix][iz], kinds[ix][iz], densities[ix][iz] = height, kind, density
 				top = math.max(top, height or s.foundationTop)
-				if x < 0 or x >= state.w or z < 0 or z >= state.h then
+				if not state.island and (x < 0 or x >= state.w or z < 0 or z >= state.h) then
 					-- Der Nahblock ersetzt diesen Teil des bereits gezählten Fernbodens.
 					stats.volume -= (s.foundationTop + Config.FEEL.terrainDepth) * R * R
 				end
@@ -223,15 +255,17 @@ end
 local function details(state, board)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local random = Random.new(hash(state.key .. ":clusters"))
+	if state.island then s = setmetatable(table.clone(Config.ISLAND), { __index = s }) end
 	local trees = 0
 	for group = 1, s.clusterCount do
 		local edge = random:NextInteger(1, 3)
-		local distance = random:NextNumber(s.clusterDistance.min, s.clusterDistance.max) * T
+		local distance = (state.island and random:NextNumber(2, 2.8) or random:NextNumber(s.clusterDistance.min, s.clusterDistance.max)) * T
 		local x = edge == 1 and random:NextNumber(-distance, state.w + distance) or (edge == 2 and -distance or state.w + distance)
-		local z = edge == 1 and -distance or random:NextNumber(-distance, state.h - s.frontTransition * T)
+		local z = edge == 1 and -distance or random:NextNumber(0, math.max(0, state.h - (state.island and 0 or s.frontTransition) * T))
 		for index = 1, s.clusterSize do
 			local px, pz = x + random:NextNumber(-s.clusterSpread, s.clusterSpread) * T, z + random:NextNumber(-s.clusterSpread, s.clusterSpread) * T
-			local height = LandscapeBuilder.surface(state, px, pz)
+			local height, material = LandscapeBuilder.surface(state, px, pz)
+			if material == Enum.Material.Water then continue end
 			if not height then continue end
 			local kind = index == s.clusterSize and (group % 2 == 0 and "rock" or "bush") or "tree"
 			if kind == "tree" and trees >= s.maxTrees then continue end
@@ -245,10 +279,30 @@ local function details(state, board)
 				and hi.Z > -s.objectClearance and lo.Z < state.h + s.objectClearance
 			local hubOverlap = hi.X > hub.X - s.hubHalfWidth and lo.X < hub.X + s.hubHalfWidth
 				and hi.Z > hub.Z - s.hubHalfDepth and lo.Z < hub.Z + s.hubHalfDepth
+			if state.island and (not LandscapeBuilder.contains(state, lo.X, lo.Z) or not LandscapeBuilder.contains(state, hi.X, hi.Z)
+				or not LandscapeBuilder.contains(state, lo.X, hi.Z) or not LandscapeBuilder.contains(state, hi.X, lo.Z)) then asset:Destroy(); continue end
 			if boardOverlap or hubOverlap or (hi.Z >= state.h and hi.Y > Config.FEEL.surroundHeight + s.frontMaxHeight) then asset:Destroy(); continue end
 			asset:SetAttribute("LandscapeDetail", kind)
 			if kind == "tree" then trees += 1 end
 		end
+	end
+	if state.island then
+		local count = random:NextInteger(s.propCount.min, s.propCount.max)
+		local placed = 0
+		for index = 1, count do
+			local x, z = state.w * index / (count + 1), state.h + 2.2 * T
+			local height, material = LandscapeBuilder.surface(state, x, z)
+			if not height or material == Enum.Material.Water then continue end
+			local asset = EnvironmentAssets.place(s.propCategories[(index - 1) % #s.propCategories + 1], CFrame.new(x, height, z),
+				{ parent = board, key = state.key .. ":prop:" .. index, height = 0.5, width = 1 })
+			if asset then
+				local lo, hi = bounds(asset)
+				if lo.Z <= state.h + s.objectClearance or not LandscapeBuilder.contains(state, lo.X, lo.Z)
+					or not LandscapeBuilder.contains(state, hi.X, hi.Z) then asset:Destroy()
+				else asset:SetAttribute("LandscapeDetail", "prop"); placed += 1 end
+			end
+		end
+		board:SetAttribute("IslandProps", placed)
 	end
 	board:SetAttribute("LandscapeTrees", trees)
 end
@@ -269,6 +323,7 @@ function LandscapeBuilder.build(board, mapKey, region, features)
 	workspace.Terrain.WaterWaveSpeed = water.waveSpeed
 	for material, color in state.palette.colors do workspace.Terrain:SetMaterialColor(material, color) end
 	-- Fernboden in wenigen großen Blöcken; das Brett selbst bleibt frei.
+	if not state.island then
 	for _, rect in {
 		{ x0 = -state.margin, x1 = 0, z0 = -state.margin, z1 = state.h + state.margin },
 		{ x0 = state.w, x1 = state.w + state.margin, z0 = -state.margin, z1 = state.h + state.margin },
@@ -277,10 +332,12 @@ function LandscapeBuilder.build(board, mapKey, region, features)
 	} do
 		for _, safe in withoutHub(rect) do fill(safe, -Config.FEEL.terrainDepth, s.foundationTop, state.palette.grass, stats) end
 	end
+	end
 	for _, rect in withoutHub({ x0 = -state.sculptMargin, x1 = state.w + state.sculptMargin, z0 = -state.sculptMargin, z1 = state.h + state.sculptMargin }) do
 		writeSurface(state, rect, stats)
 	end
 	details(state, board)
+	board:SetAttribute("IslandEnabled", state.island)
 	board:SetAttribute("TerrainWriteCalls", stats.calls)
 	board:SetAttribute("TerrainClearCalls", stats.clearCalls)
 	board:SetAttribute("TerrainVoxelCalls", stats.voxelCalls)
