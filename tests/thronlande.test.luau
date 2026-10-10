@@ -57,15 +57,40 @@ do
 	end
 	package = ownAssets()
 	local function signature(board, state)
-		local rows, triangles, count = {}, 0, 0
+		local rows, triangles, count, front, grass, groups = {}, 0, 0, 0, 0, {}
 		for _, asset in board:GetChildren() do if asset:GetAttribute("RimCategory") then
 			local box, size = asset:GetBoundingBox()
 			expect(Landscape.rimFits(state, box.Position - size / 2, box.Position + size / 2), "Randmodell auf Brett/Kante/Wasser")
 			table.insert(rows, asset.Name .. ":" .. tostring(box.Position) .. ":" .. tostring(size))
 			count += 1; triangles += asset:GetAttribute("EstimatedTriangles") or 0
+			local category = asset:GetAttribute("RimCategory")
+			if category == "deco_grass" then grass += 1 end
+			if box.Position.Z + size.Z / 2 > state.h then
+				front += 1
+				expect(size.Y <= Config.ISLAND.rimPlacement.frontHeight + 0.001, "Vorderdeko zu hoch")
+				expect(category == "deco_grass" or category == "deco_flower" or category == "deco_stone"
+					or category == "rim_barrels" or category == "rock", "Hohe Kategorie vorne")
+			end
+			local dimensions = Config.ISLAND.rimScatter.sizes[category]
+			if dimensions then
+				expect(size.Y >= dimensions.height * Config.TILE_SIZE * 0.85 - 0.001
+					and size.Y <= dimensions.height * Config.TILE_SIZE * 1.15 + 0.001, "Platzierte Randdeko zu klein/groß")
+				expect(math.max(size.X, size.Z) <= dimensions.width * Config.TILE_SIZE * 1.15 + 0.001, "Randdeko zu breit")
+			end
+			local group = asset:GetAttribute("RimGroup")
+			if group then groups[group] = (groups[group] or 0) + 1 end
 		end end
-		expect(count == board:GetAttribute("IslandProps") and count >= Config.ISLAND.rimScatter.count, "Rand zu leer/Zähler falsch")
-		expect(triangles == board:GetAttribute("IslandPropEstimatedTriangles") and triangles > 0, "Dreiecksmessung fehlt")
+		expect(count == board:GetAttribute("IslandProps") and count >= Config.ISLAND.rimBudget.minimumObjects
+			and count <= Config.ISLAND.rimBudget.objects, "Rand zu leer/Zähler falsch")
+		expect(triangles == board:GetAttribute("IslandPropEstimatedTriangles") and triangles > 0
+			and triangles <= Config.ISLAND.rimBudget.triangles, "Dreiecksmessung fehlt")
+		expect(front >= 12 and grass > count / 3, "Vorderkante zu leer/zu wenig Gras")
+		for edge = 1, 4 do
+			local limits = edge == 4 and Config.ISLAND.rimGroups.front or Config.ISLAND.rimGroups.sides
+			local n = board:GetAttribute("IslandGroups" .. edge)
+			expect(n >= limits.min and n <= limits.max, "Gruppenzahl falsch: " .. edge)
+		end
+		for group, n in groups do expect(n >= 4 and n <= 7, "Gruppe braucht 3 bis 6 Begleiter: " .. group) end
 		table.sort(rows); return table.concat(rows, "|")
 	end
 	Config.ISLAND.enabled = true
@@ -75,6 +100,8 @@ do
 		local board = Board.build(regionId, stage.features, stage)
 		local state = Landscape.prepare(regionId .. ":" .. table.concat(stage.map, "|"), modules.Stages.getRegion(regionId), stage.features)
 		local original = signature(board, state)
+		if regionId == "greenland" then print(string.format("D2b Seed %d: %d Randobjekte, %d geschätzte Dreiecke, %.2f ms Stub-Randaufbau.",
+			seed, board:GetAttribute("IslandProps"), board:GetAttribute("IslandPropEstimatedTriangles"), board:GetAttribute("IslandPropBuildMs"))) end
 		expect(original == signature(Board.build(regionId, stage.features, stage), state), "D2-Rand nicht deterministisch")
 	end end
 	-- Unabhängige Negativproben: Brett, Inselkante, Flusskorridor, hohe Vorderobjekte.

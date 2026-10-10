@@ -355,6 +355,7 @@ local function rimDetails(state, board)
 		local estimate = asset:GetAttribute("EstimatedTriangles") or 0
 		if estimate == 0 then estimate = s.rimBudget.estimates[category] or 0 end
 		local safe = triangles + estimate <= s.rimBudget.triangles and LandscapeBuilder.rimFits(state, lo, hi)
+		if hi.Z > state.h and not s.frontCategories[category] then safe = false end
 		for _, other in occupied do
 			local gap = s.rimPlacement.overlapClearance
 			if hi.X + gap > other.lo.X and lo.X - gap < other.hi.X and hi.Z + gap > other.lo.Z and lo.Z - gap < other.hi.Z then safe = false; break end
@@ -380,24 +381,33 @@ local function rimDetails(state, board)
 			local category = edge == 4 and categories[(index - 1) % #categories + 1] or categories[(sequence - 1) % #categories + 1]
 			sequence += 1
 			local group = edge .. ":" .. index
-			local center
-			for attempt = 1, s.rimPlacement.attempts do
+			local companions = random:NextInteger(s.rimGroups.companions.min, s.rimGroups.companions.max)
+			for placement = 1, s.rimPlacement.attempts do
 				local along = length * index / (count + 1) + random:NextNumber(-s.rimPlacement.jitter, s.rimPlacement.jitter) * T
-				local x, z = point(edge, along, s.rimPlacement.distance * T)
-				if put(category, x, z, state.key .. ":rim:main:" .. group, group, edge) then center = { x = x, z = z, edge = edge }; break end
-			end
-			if not center then continue end
-			table.insert(centers, center)
-			groups[edge] += 1
-			for companion = 1, random:NextInteger(s.rimGroups.companions.min, s.rimGroups.companions.max) do
-				local kind = s.rimScatter.categories[(companion - 1) % #s.rimScatter.categories + 1]
-				for attempt = 1, s.rimPlacement.attempts do
-					local along = random:NextNumber(-s.rimGroups.radius, s.rimGroups.radius) * T
-					local depth = random:NextNumber(-s.rimGroups.depthSpread, s.rimGroups.depthSpread) * T
-					local x = center.x + ((edge == 1 or edge == 4) and along or depth)
-					local z = center.z + ((edge == 1 or edge == 4) and depth or along)
-					if put(kind, x, z, state.key .. ":rim:companion:" .. group .. ":" .. companion, group, edge) then break end
+				if placement > s.rimPlacement.attempts / 2 then along = random:NextNumber(0, length) end
+				local distance = random:NextNumber(s.rimGroups.mainDistance.min, s.rimGroups.mainDistance.max)
+				local x, z = point(edge, along, distance * T)
+				local before, beforeTriangles = placed, triangles
+				if not put(category, x, z, state.key .. ":rim:main:" .. group, group, edge) then continue end
+				for companion = 1, companions do
+					local kind = s.rimGroups.companionCategories[(companion - 1) % #s.rimGroups.companionCategories + 1]
+					for attempt = 1, s.rimPlacement.attempts do
+						local offset = random:NextNumber(-s.rimGroups.radius, s.rimGroups.radius) * T
+						local depth = random:NextNumber(-s.rimGroups.depthSpread, s.rimGroups.depthSpread) * T
+						local px = x + ((edge == 1 or edge == 4) and offset or depth)
+						local pz = z + ((edge == 1 or edge == 4) and depth or offset)
+						if put(kind, px, pz, state.key .. ":rim:companion:" .. group .. ":" .. companion, group, edge) then break end
+					end
 				end
+				if placed - before >= s.rimGroups.companions.min + 1 then
+					table.insert(centers, { x = x, z = z, edge = edge })
+					groups[edge] += 1
+					break
+				end
+				-- Unvollständige Szenen verlegen, statt einzelne Hauptobjekte zurückzulassen.
+				for _, asset in board:GetChildren() do if asset:GetAttribute("RimGroup") == group then asset:Destroy() end end
+				while #occupied > before do table.remove(occupied) end
+				placed, triangles = before, beforeTriangles
 			end
 		end
 	end
