@@ -250,7 +250,7 @@ function UIKit.panel(props, parent)
 	}, background)
 	UIKit.corner(outer, METRICS.panelRadius + METRICS.panelBorder)
 	UIKit.stroke(outer, THEME.ink, METRICS.panelBorder)
-	if not animated then
+	if not animated and (props.AutomaticSize == nil or props.AutomaticSize == Enum.AutomaticSize.None) then
 		local shadow = make("Frame", {
 			Name = "Shadow", Position = UDim2.fromOffset(0, METRICS.shadowOffset),
 			Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.ink,
@@ -263,11 +263,14 @@ function UIKit.panel(props, parent)
 		shadow.Parent = f
 		background.Parent = f
 		local function alignShadow()
-			shadow.Position = background.Position + UDim2.fromOffset(0, METRICS.shadowOffset)
-			shadow.Size = background.Size
+			local fixed = f.AutomaticSize == Enum.AutomaticSize.None
+			shadow.Visible = fixed
+			shadow.Position = fixed and background.Position + UDim2.fromOffset(0, METRICS.shadowOffset) or UDim2.new()
+			shadow.Size = fixed and background.Size or UDim2.new()
 		end
 		background:GetPropertyChangedSignal("Position"):Connect(alignShadow)
 		background:GetPropertyChangedSignal("Size"):Connect(alignShadow)
+		f:GetPropertyChangedSignal("AutomaticSize"):Connect(alignShadow)
 	end
 	local reflection = make("Frame", {
 		Name = "Glass", Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.text,
@@ -305,6 +308,19 @@ function UIKit.panel(props, parent)
 		}, face)
 		UIKit.corner(gleam, 2)
 	end
+	-- AutomaticSize darf keine R?ckkopplung mit gepolsterter, ?berstehender Deko bilden.
+	local automaticGradient = make("UIGradient", {
+		Name = "AutomaticGradient", Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90,
+	}, f)
+	local function updateAutomaticSurface()
+		local automatic = f.AutomaticSize ~= Enum.AutomaticSize.None
+		background.Visible = not automatic
+		f.BackgroundColor3 = THEME.text
+		f.BackgroundTransparency = automatic and transparency or 1
+		automaticGradient.Enabled = automatic
+	end
+	f:GetPropertyChangedSignal("AutomaticSize"):Connect(updateAutomaticSurface)
+	updateAutomaticSurface()
 	-- Eigene Deko teilt die Fensterebene; Inhalt bekommt stets eine Ebene dar?ber.
 	local decorations = { [background] = true }
 	for _, object in background:GetDescendants() do

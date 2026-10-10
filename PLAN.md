@@ -21,7 +21,7 @@ Branch: `feature/ui-designsystem` (weiterarbeiten, Stand nach Devlog #40)
   - Funktioniert in Global- **und** Sibling-ScreenGuis (`BattleScene`).
   - Akzeptanz (Studio, je ein Bild): „Neue Verbündete“ nach einem echten Einzelruf, „Wahrscheinlichkeiten“, Level-Up-Fenster, Laufergebnis/Lauf-Fenster, Ladebildschirm. Hintergrund deckend, nichts vom Fenster dahinter lesbar, alle Inhalte sichtbar.
 
-- [ ] 2. **Kein Wachsen bei `AutomaticSize`** – `UIKit.panel`, ggf. `UI.luau` (`GelaendeKasten`)
+- [x] 2. **Kein Wachsen bei `AutomaticSize`** – `UIKit.panel`, ggf. `UI.luau` (`GelaendeKasten`)
   - Schatten und andere Deko dürfen die automatische Größe nicht beeinflussen (z. B. bei `AutomaticSize` keinen versetzten Schatten als direktes Kind, oder Schatten so anlegen, dass er nicht mitzählt).
   - Akzeptanz: `GelaendeKasten.AbsoluteSize.Y` passt zum Inhalt (Richtwert ≤ 100 px bei drei Zeilen) und bleibt nach mehrmaligem Ein-/Ausblenden gleich (in den Notizen Messwerte nennen). Bild: Kampf mit ausgewähltem Feld.
 
@@ -62,3 +62,5 @@ Branch: `feature/ui-designsystem` (weiterarbeiten, Stand nach Devlog #40)
 ## Notizen (Codex)
 
 - Schritt 1: Eigene Fensterdeko folgt `f.ZIndex`; Inhaltsobjekte werden mindestens auf `f.ZIndex + 1`, beschriftete TextButtons auf `+2` angehoben, damit ihre Jelly-Fl?chen (`Button.ZIndex - 1`) unter dem Text bleiben. H?here Inhaltswerte bleiben erhalten; neue/umgeh?ngte Inhalte und sp?tere ZIndex-Zuweisungen werden ereignisbasiert erfasst. Standardhintergrund jetzt Transparenz 0: 0,04 lie? dahinterliegende Schrift noch schwach durchscheinen. Alle f?nf geforderten Fenstertypen plus Laufergebnis im echten Ort im Play-Modus bildgepr?ft. Zwei echte Einzelrufe mit jeweils 50 tempor?r erg?nzten Edelsteinen; Bestand danach wieder 3, Ruf-/Verschmelzungsfortschritt gem?? erlaubtem Spielstandtest ge?ndert. Level-Up/Laufergebnis/Ladekarte als UI-Darstellungsfixtures, Laufwahl mit realem Profil. MCP liefert keine lokalen Screenshotdateien; Bilder im Werkzeugergebnis betrachtet. Unabh?ngiges Review bleibt Claude vorbehalten.
+
+- Schritt 2: Studio widerlegte die reine Schatten-Ursache: ohne Schatten blieb der gepolsterte Background/OuterBorder bei ca. 620 px, ohne Padding-Kompensation noch ca. 546 px. Bei `AutomaticSize` zeichnet deshalb der Fensterframe selbst den Verlauf; die Background-Deko ist unsichtbar und z?hlt nicht mit. Keine versetzten Schatten f?r anfangs automatische Fenster; nachtr?gliches Umschalten deaktiviert und nullt vorhandene Schatten. Statisch gro?e Fenster behalten ihre komplette Deko. Messung bei f?nf Ein-/Ausblendungen mit drei Wald-Zeilen: jeweils 66,92 px bei der aktuellen UI-Skalierung (78 Designpixel), stabil; Kampfbild gepr?ft. Automatisch gro?e Fenster haben den Chromrand, aber keinen ?berstehenden ink-Au?enrand/Glasreflex/Juwel, da diese Kinder die Gr??enr?ckkopplung ausl?sten.
