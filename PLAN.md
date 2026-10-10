@@ -1,54 +1,69 @@
-# PLAN: Levelwahl-Karten im Designsystem-Stil + Wahrscheinlichkeitsliste schließen
+# PLAN: Schwebende Thronlande – Etappe D1 (Grasland)
 
-Ziel: Die drei Optionen der Levelwahl sehen aus wie im Designsystem (Komponente „LevelChoice“): eigenständige Karten statt riesiger Jelly-Knöpfe, gut lesbare Belohnung, ein klarer Knopf pro Karte. Außerdem schließt die Wahrscheinlichkeitsliste, wenn die Rekrutierung verlassen wird.
-Branch: `feature/ui-designsystem` (weiterarbeiten, Stand nach Devlog #41)
+Ziel: Jedes Kampflevel ist eine **schwebende Insel über einem Wolkenmeer** statt eines Terrain-Tals. Das ist das wichtigste Wiedererkennungsmerkmal der Welt (Designsystem „Throne Tales“, Komponente MapFrame, entschieden vom Nutzer am 10.10.2026). Erst Grasland, aber so gebaut, dass weitere Gebiete nur Palette/Fraktion/Gefahr ergänzen müssen.
+Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und die neue UI).
 
-**Befunde aus Claudes Studio-Test (10.10.2026):**
-1. `RunUI.luau` `buildChoice` (~Zeile 155–165): Jede Option ist ein `UIKit.button("", …, "default")` in Kartengröße. Die Glanzkuppe des Knopfs wird dadurch zu einem großen blassen Fleck über der oberen Kartenhälfte; die Belohnung („120 Gold“, `THEME.gold` auf `btn-blue` #4a8dff, ohne Kontur) ist kaum lesbar (Kontrast ≈ 1,5 : 1). Das Lager sieht aus wie ein Kampf.
-2. Die Wahrscheinlichkeitsliste (`CollectionUI` `buildOdds`, `odds.frame`) bleibt offen, wenn der Spieler die Rekrutierung über eine andere Einrichtung (z. B. Kriegstisch-Prompt) verlässt, und liegt dann über der Teamwahl. `MenuUI.closeLobby` schließt nur die Lobby.
+**Nutzerentscheidungen (10.10.2026):**
+- Insel **mittelgroß**: 3–4 Felder Landrand rund ums Brett (Bäume, Felsen, Requisiten, Thronkristalle), dann die Kante. Der Rand bleibt in der Übersicht sichtbar.
+- **2–4 kleine Nebeninseln** im Hintergrund (Gebietsfarben, je ein Thronkristall) für Tiefe.
+- **Dichte Wolkendecke** unter der Insel: hell, leicht lila zum Horizont, kantige Low-Poly-Wolkenberge, kein Boden sichtbar.
+- Canyon-/Tal-Landschaft aus dem Referenzvideo ist verworfen; das Video bleibt nur Maßstab für Helligkeit/Sättigung.
 
-**Ziel-Aussehen je Option (Werte aus `UIKit.THEME`/`METRICS`):**
-- Grundfläche: `UIKit.panel` **ohne** Juwel (Ecken 16, Glas-Indigo, Chromrand, ink außen).
-- Oben eine Kennzeile im `UIKit.tag`-Stil (Michroma, Versalien, holoCyan): „KAMPF“, „MINIBOSS“, „BOSS“ bzw. „RAST“.
-- Darunter Symbol (wie bisher aus `optionText`, Emoji bleiben vorerst – eigenes Icon-Set kommt später) und Titel in FredokaOne weiß mit Kontur (`THEME.title`, 26–28).
-- Belohnung/Detail als **Pille**: `panelInset`, 2 px ink-Rand, Ecken voll rund, weiße Schrift; das Belohnungssymbol darf farbig bleiben. Beim Lager stattdessen die Beschreibung in `dim` als normaler Text.
-- Unten ein echter Knopf (Höhe 48): Kampf „Wählen“ (`default`), Miniboss/Boss „Kampf!“ (`primary`), Lager „Rasten“ (`active`).
-- Die **ganze Karte bleibt antippbar** (große Touchfläche wie bisher), der Knopf ist zusätzlich klickbar; beide lösen `callbacks.onChooseLevel(i)` aus, nur einmal pro Tipp, `lastState.busy` weiter beachten.
-- Hover/Druck: Karte darf beim Drücken leicht skalieren (0,97) oder nur der Knopf reagiert – keine Überlappung der Nachbarkarten (bisher `HoverScale = 1`).
+**Farben (Designsystem, WIP in Config):** Erdschicht #9a6a48, Steinschicht #6d6480, Wolken #f4f1ff, Himmel oben #9ddde6 → Horizont #c9a8ff, Schaum #f2fbff, Thronkristall Grasland #7cc242 (Akzent je Gebiet: Sumpf #b46be0, Eis #6fd3ff, Vulkan #ff7a1a), Kristallglanz weiß. In der Welt keine Konturlinien.
+
+**Bestehender Code:** `src/server/LandscapeBuilder.luau` (Terrain-Tal: `prepare`, `surface`, `writeSurface`, `details`, Fernboden-Blöcke, `withoutHub`, Randflüsse `state.rivers`), `src/server/BoardBuilder.luau` (Brett, Terrain-Wasser, Felshügel, Klippenwände `cliffWalls`, `waterfall()`), `src/shared/Config.luau` (`LANDSCAPE`, `WATER.extendRivers`, `FEEL.environmentMargin`, `landscapeMargin`, `CAMERA`, `overviewZoom`), `src/client/CameraController.luau` (Zoom-/Schwenkgrenzen), `src/client/Atmosphere.luau` + `Config.FEEL.atmosphere.battle` (Haze/Farbe). Hub-Terrain bei `HUB_ORIGIN` bleibt unberührt.
+
+**Studio-Prüfung (Pflicht für Schritte 1–6):** echter Ort „Throne Tales“, Rojo verbunden, nur Play-Modus (Terrain-Räumen nie im Edit-Modus!). DataStore aktiv, Spielstand darf sich ändern. Lauf über Remotes oder UI starten, Kamera per Mausrad/WASD, `screen_capture`. Pro Schritt Normalzoom- und Übersichtsbild; vorher/nachher beschreiben. Teile-/Dreieckszahlen und Aufbauzeit vorher/nachher messen.
+
+**Leitlinien:** Alles schaltbar über `Config.ISLAND.enabled` (aus = bisheriges Tal, als Rückfall). Deterministisch pro `mapKey`. Klickbarkeit, Figurenhöhen, Overlays, Brücken, Wasser, Felshügel, Klippenwände und Wasserfälle auf dem Brett bleiben unverändert. Low-Poly: kantige Flächen, keine Roblox-Materialtexturen für neue Inselteile (`SmoothPlastic`), Terrain darf für Oberflächen bleiben, wo es heute schon genutzt wird. Teilebudget für alles Neue (Insel-Unterseite, Kante, Wolken, Nebeninseln, Kristalle) **≤ 450 Teile**, in den Notizen gemessen. Ein Commit pro Schritt. Geschmacksfragen → „Offene Fragen“.
 
 ## Schritte
 
-- [x] 1. **Levelwahl-Karten** – `RunUI.luau` (`buildChoice`, ggf. kleiner Helfer), ggf. `UIKit` für eine wiederverwendbare `UIKit.pill(...)`
-  - Umsetzung wie oben. Layout für 2 und 3 Optionen prüfen; nichts darf abgeschnitten sein (Designgröße 1280×720).
-  - Akzeptanz (Studio, echter Lauf): Bild der Levelwahl mit Kampf- und Lageroption; Belohnung klar lesbar, kein großer Glanzfleck, Lager unterscheidbar; ein Tipp auf Karte **und** einer auf den Knopf startet jeweils genau einmal.
+- [ ] 1. **Vorher-Bilder und Messung** – nur Studio
+  - Ein Grasland-Kampflevel mit Fluss: Normalzoom, Übersichtszoom, Aufbauzeit, Brett-Nachkommen, Terrain-Voxel.
 
-- [x] 2. **Wahrscheinlichkeitsliste beim Verlassen schließen** – `CollectionUI.luau`, `MenuUI.luau`
-  - Neue Funktion z. B. `CollectionUI.closeOverlays()` (schließt Wahrscheinlichkeitsliste; Ergebnisfenster nur, wenn das ohne Datenverlust geht – sonst offen lassen und in den Notizen begründen). `MenuUI.closeLobby` und jeder Wechsel weg von der Lobby rufen sie auf.
-  - Akzeptanz: Studio – Wahrscheinlichkeitsliste öffnen, dann per Kriegstisch-Prompt die Teamwahl öffnen: Liste ist zu.
+- [ ] 2. **Inselgrundriss und Oberseite** – `Config.ISLAND` (neu), `LandscapeBuilder`
+  - Statt Tal und Fernboden: eine Inseloberseite, die das Brett um **3–4 Felder** (WIP `rimTiles`) umschließt. Umriss organisch-kantig (pro Seite unregelmäßige Polygonkante, deterministisch), keine perfekte Rechteckform.
+  - Außerhalb der Insel ist Luft: kein Terrain-Tal, kein Fernboden mehr. Aufräumen beim nächsten Aufbau wie bisher vollständig.
+  - Der Rand trägt die bisherige Deko-Logik (`details`: Bäume, Felsen, Büsche) in angepasster Dichte; dazu 1–3 Requisiten-Plätze (vorerst vorhandene Paketmodelle).
+  - Akzeptanz: Übersichtsbild zeigt Brett + Landrand + Kante, dahinter nur Himmel.
 
-- [x] 3. **Abschluss**
-  - `scripts/check.ps1`, `scripts/test-run-ui.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` OK; Rojo-Build. UI-Regressionen: Option ist Panel ohne Juwel, Knopfstil je Optionsart, Ein-Tipp-eine-Wahl, `closeOverlays` beim Schließen der Lobby.
-  - Devlog **#42 „Levelwahl-Karten“**. Committen, pushen, Studio im Edit-Modus lassen, `.handoff/status` = `fertig`.
+- [ ] 3. **Inselkante und Unterseite** – neues Modul z. B. `src/server/IslandBuilder.luau`
+  - Senkrechte, kantige Kante aus Teilen entlang des Umrisses (wie `cliffWalls`: verdeckt Terrain-Rundung), oben **Erdschicht** (#9a6a48, etwa eine Feldbreite tief), darunter **Steinschicht** (#6d6480), die sich in 2–3 Stufen nach unten zu einer Spitze verjüngt (umgedrehter, facettierter Kegel; Gesamttiefe WIP ≈ 4–5 Felder).
+  - **2–4 Thronkristalle** ragen aus der Unterseite: Rauten-Oktaeder (z. B. zwei gegeneinander gesetzte Pyramiden aus Wedges oder ein passendes Paketmodell), `Neon` in der Gebietsakzentfarbe, harte weiße Glanzfacette. Keine teuren Partikel.
+  - Akzeptanz: Bild schräg von unten/seitlich (Übersicht, Kamera geneigt): Schichten und Kristalle klar erkennbar, keine Lücken zwischen Kante und Oberseite.
 
-**Studio-Prüfung:** wie im vorigen Plan (echter Ort, DataStore aktiv, Spielstand darf sich ändern; GUI-Koordinaten ohne 58-px-Topbar; Hub-Prompts per `InputHoldBegin/End`; nur Play-Modus).
+- [ ] 4. **Flüsse stürzen über die Kante** – `LandscapeBuilder` (Randflüsse), `BoardBuilder.waterfall` wiederverwenden
+  - Randflüsse (`state.rivers`) laufen bis zur Inselkante und stürzen dort als **Wasserfall** ins Wolkenmeer (Fallfläche ≥ Erd- + Steinschicht, Gischt-/Nebelfläche unten in den Wolken). Brett-Wasserfälle aus C7 bleiben wie sie sind.
+  - Akzeptanz: Bild eines Randflusses mit Fall über die Kante.
+
+- [ ] 5. **Wolkenmeer, Himmel, Nebeninseln** – `IslandBuilder`, `Config.FEEL.atmosphere.battle` (Haze), ggf. `Atmosphere.luau`
+  - Dichte Wolkendecke deutlich unter der Insel (WIP-Höhe): große helle Grundfläche (#f4f1ff) plus kantige Low-Poly-Wolkenberge, zum Horizont leicht lila (über Haze/Atmosphere oder Farbverlauf der Wolkenteile). Kein Boden darunter sichtbar, auch nicht beim Herauszoomen.
+  - Himmel: Haze/Atmosphere so einstellen, dass oben hell-cyan und zum Horizont lila (#c9a8ff) wirkt. Die vom Nutzer angelegten `ColorGrading`/`Bloom` nicht anfassen.
+  - **2–4 Nebeninseln** in Abstand (außerhalb des Schwenkbereichs), klein, gleiche Bauweise in vereinfachter Form (Oberseite in Gebietsfarbe, Erd-/Steinkegel, ein Kristall), deterministisch platziert, leichtes Schweben optional (nur wenn günstig, client-seitig).
+  - Akzeptanz: Übersichtsbild mit Wolken, Himmelsverlauf und mindestens zwei Nebeninseln; Normalzoom wirkt nicht leer.
+
+- [ ] 6. **Kamera und Lesbarkeit** – `CameraController`, `Config.CAMERA`, `Config.landscapeMargin`/`overviewZoom`
+  - Übersichtszoom zeigt die ganze Insel mit etwas Himmel; Schwenken darf nicht so weit, dass nur Wolken im Bild sind. Normalzoom und Klickbarkeit unverändert.
+  - Taktische Lesbarkeit: Brett hebt sich weiter klar vom Landrand ab (Randfelder dürfen nicht wie spielbare Felder wirken – z. B. etwas tiefer, Raster nur auf dem Brett).
+  - Akzeptanz: Bilder Normal- und Übersichtszoom; drei Proben mit verschiedenen Seeds (mit/ohne Fluss).
+
+- [ ] 7. **Abschluss** – Tests, Messung, Devlog
+  - Landschaftsregressionen in `scripts/test-run.ps1`/Tests auf Insel umstellen bzw. ergänzen (Rückfall `ISLAND.enabled = false` weiter geprüft): Insel umschließt Brett, kein Terrain außerhalb der Insel, Randfluss endet in Wasserfall, Teilebudget, Determinismus.
+  - `scripts/check.ps1`, `test-run.ps1`, `test-levelgen.ps1`, `test-tutorial.ps1`, `test-run-ui.ps1` OK; Rojo-Build.
+  - Messung vorher/nachher: Teile, geschätzte Dreiecke, Terrain-Voxel, Aufbauzeit.
+  - Devlog **#43 „Schwebende Thronlande D1“**, „Nächste Schritte“ (D2: Thronkristalle/Banner auf der Insel, weitere Gebiete). Committen, `git push -u origin feature/thronlande`, Studio im Edit-Modus, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Levelwahl: drei klar getrennte Karten, Belohnung lesbar, Lager erkennbar, Antippen startet sofort
-- [ ] Wahrscheinlichkeitsliste schließt beim Verlassen der Rekrutierung
+- [ ] Kampflevel schwebt als Insel über Wolken, Rand mit Bäumen, Kante mit Erd-/Steinschicht und Kristallen
+- [ ] Flüsse stürzen über die Kante; Nebeninseln im Hintergrund
+- [ ] Brett gut lesbar, Klicks/Bewegung wie vorher
+- [ ] Handy flüssig, Aufbauzeit okay
 
 ## Nicht anfassen
-- Server, Lauflogik, Optionsinhalte (`RunConfig`), Emoji-Symbole (eigenes Icon-Set kommt später), Welt-Optik, `docs/referenz/`
+- Spielregeln, Generator, Brett-Inhalt (Felder, Wasser, Hügel, Klippen, Brücken), UI, Thronsaal/Hub-Terrain, Lighting-Effekte des Nutzers, `docs/referenz/`
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-
-- Levelwahl als `UIKit.panel(Jewel=false)` mit transparenter Ganzkarten-Klickfläche, Michroma-Kennzeile, Fredoka-Titel und eigenem 48-px-Knopf umgesetzt. Belohnungspille lokal in RunUI: kein zusätzlicher UIKit-Helfer nötig. Nur der Knopf reagiert auf Druck; HoverScale=1 verhindert Überlappungen.
-- Gemeinsame Klickbehandlung für Karte/Knopf prüft `lastState.busy` und unterdrückt doppelte Aktivierungen derselben Eingabe. Nächster Tipp bleibt möglich; kein dauerhafter Wahllock.
-- `CollectionUI.closeOverlays()` schließt die Wahrscheinlichkeiten. Rufergebnisse bleiben bis „Weiter“ offen, damit eine noch ungelesene Enthüllung nicht verloren geht. `MenuUI.closeLobby()` und die zentrale Sichtbarkeitsprüfung schließen beim Wechsel zu Teamwahl, Kaserne, Laden, eigenem Kampf oder Willkommen.
-- Studio fand zunächst eine Überlappung bei 240 Designpixeln Kartenhöhe. Titel/Symbol kompakter angeordnet und Detail über dem Knopf verankert; Geometrieregressionen prüfen 240/296 Pixel mit zwei/drei Optionen.
-- Alle fünf Pflichtprüfungen und Rojo-Build erfolgreich: check 38 Dateien; Run-UI 280 Prüfungen; Tutorial 168; Lauf 34458 Lauf-/Boss-/Lager-Stubs und 338242 Brett-/Kameraprüfungen plus Landschaftsregressionen; Generator 19000 Level-/5000 Optionsprüfungen, 96 Landschaftskombinationen und 2400 Boss-/Minibosskarten.
-- Studio ausschließlich Play im echten Ort 75433071253639, Rojo-Quellen geprüft, DataStore `saveOk=true`: echte Zwei-/Drei-Optionen, Kampf/Lager und lesbare Gold-/Edelsteinpillen bildgeprüft. Ein Knopfklick startete einen Kampf, ein Klick auf den Lagertitel öffnete das Lager: temporärer serverseitiger Zähler bestätigte jeweils genau einen ChooseLevel-Befehl. Vier echte Testläufe neu gestartet/aufgegeben; vorhandener abgebrochener Lauf ebenfalls beendet. Abschluss ohne aktiven Lauf; Gold/Edelsteine unverändert (1563/3), keine Rufe/Käufe.
-- Wahrscheinlichkeitsliste per echtem Klick geöffnet, dann Kriegstisch-Prompt mit InputHoldBegin/End: `oddsVisible=false`, `teamVisible=true`, Bild bestätigt. Keine neuen Output-Fehler, nur bekannte Modell-/Lighting-Hinweise. Probescript nur in Play; nach Stop entfernt. Studio abschließend Edit bestätigt. Keine lokalen Screenshotpfade geliefert.
-- Sandbox-Prozessstart weiter defekt; Projektbefehle gemäß Dauerregel automatisch geprüft außerhalb der Sandbox ausgeführt. `docs/referenz/` unberührt. Unabhängiges Claude-Review sowie Nutzer-/Handytests bleiben offen; manuelle Nutzer-Checkboxen deshalb nicht abgehakt.
