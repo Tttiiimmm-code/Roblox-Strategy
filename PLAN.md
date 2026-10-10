@@ -36,7 +36,7 @@ Designsystem (nur zur Info, für Codex nicht nötig): https://claude.ai/artifact
 
 ## Schritte
 
-- [ ] 1. **Vorher-Bilder** – nur Studio
+- [x] 1. **Vorher-Bilder** – nur Studio
   - Vor jeder Codeänderung je ein Bild von: Hub-Menü, Rekrutierung (Banner + Ergebnis), Kaserne, Laufwahl/Levelwahl, Kampf (Einheiten-Info, Kampfvorschau, Schadenszahl), Level-Up-Fenster. Liste in den Notizen.
 
 - [ ] 2. **Theme, Schriften, Konturschrift** – `UIKit.luau` (THEME, `label`, `fitText`), `Main.client.luau` (Schwebezahlen, ca. Zeile 878)
@@ -95,3 +95,5 @@ Designsystem (nur zur Info, für Codex nicht nötig): https://claude.ai/artifact
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1 (10.10.2026): Studio 70aa44d0 (AutoRecovery-Datei, PlaceId 0); Config.Source entspricht lokal bis auf abschließenden Zeilenumbruch, Rojo 7.7.1 verbunden. Frisches Speicherprofil. Vorher-Aufnahmen im MCP: Willkommen, Hub/Thronmenü, Rekrutierungsbanner, echtes Einzelruf-Ergebnis, Kaserne mit allen Helden (Client-Profilprobe), Laufteam, Levelwahl, Kampf/Einheiteninfo, Kampfvorschau, Level-Up (Darstellungsprobe). Bisher Blau-Gold, Fondamento-Titel, flache Knöpfe; schmale Kartenrahmen. Schadenszahl aus echtem BattleEvent für das Bild stabilisiert; nur Darstellung, keine Server-Spielwerte geändert. Aufnahmen im MCP betrachtet, keine lokalen Bildpfade geliefert. Play beendet; Edit-Modus. Handyaufnahme folgt beim Abschluss, soweit MCP-Gerätesimulation möglich.
