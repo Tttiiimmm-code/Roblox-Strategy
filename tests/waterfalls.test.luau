@@ -12,7 +12,7 @@ do
 			local source,sheet=board:FindFirstChild("WaterfallSource"),board:FindFirstChild("Waterfall")
 			expect(source and sheet, "Wasserfallrichtung fehlt")
 			local center=Grid.toWorld(3,3)
-			local edge=(d[1]~=0 and center.X*d[1] or center.Z*d[2])+Config.TILE_SIZE/2
+			local edge=(d[1]~=0 and center.X*d[1] or center.Z*d[2])+Config.TILE_SIZE/2+Config.FEEL.waterfallFaceOffset
 			local near=(d[1]~=0 and sheet.Position.X*d[1]-sheet.Size.X/2 or sheet.Position.Z*d[2]-sheet.Size.Z/2)
 			expect(math.abs(near-edge)<0.001, "Fallfläche nicht an sichtbarer Klippenkante")
 			expect(math.abs(source.Position.Y+source.Size.Y/2-sheet.Position.Y-sheet.Size.Y/2)<0.001, "Quelle und Fall ohne bündigen Anschluss")

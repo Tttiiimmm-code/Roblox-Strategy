@@ -109,8 +109,8 @@ function LandscapeBuilder.surface(state, x, z)
 			local longitudinal = (x - fx) * fall.dx + (z - fz) * fall.dy
 			local lateral = math.abs((x - fx) * fall.dy - (z - fz) * fall.dx)
 			-- Reserve auch im stromaufwärtigen/seitlichen C-Nachbarvoxel gegen Glättung.
-			if longitudinal >= -T / 2 - s.resolution and longitudinal <= T / 2
-				and lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height end
+			if longitudinal >= -T / 2 - s.resolution and longitudinal <= T / 2 + s.resolution
+				and lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height - Config.FEEL.waterfallChannelDepth end
 		end
 		return height - (s.cliffWalls.enabled and s.cliffWalls.terrainInset or 0), state.palette.slate
 	end

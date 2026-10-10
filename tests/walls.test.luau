@@ -65,7 +65,7 @@ local function validateWalls(withPackage)
 	expect(terrainHeightAt(Config.TILE_SIZE - 0.01, 4) ~= nil and terrainHeightAt(Config.TILE_SIZE + 0.01, 4) ~= nil,
 		"Zusammenhängender M-Hügel an Feldgrenze unterbrochen")
 	local top = terrainHeightAt((fall.x - 0.5) * Config.TILE_SIZE + fall.dx * (Config.TILE_SIZE / 2 - 2), (fall.y - 0.5) * Config.TILE_SIZE)
-	expect(top == Config.TERRAIN.C.height - Config.LANDSCAPE.cliffWalls.terrainInset, "Terrain am Wasserfallanschluss hat andere Höhe")
+	expect(top == Config.TERRAIN.C.height - Config.LANDSCAPE.cliffWalls.terrainInset - Config.FEEL.waterfallChannelDepth, "Terrain am Wasserfallanschluss hat andere Höhe")
 	local cells = 0
 	for y, row in Grid.getMap() do for x=1,#row do
 		local ch=row:sub(x,x)

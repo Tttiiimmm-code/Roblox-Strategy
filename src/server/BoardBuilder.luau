@@ -189,8 +189,8 @@ local function cliffWall(x, y, parent, mapKey, landscape, feature)
 	for _, d in { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } } do
 		local nx, ny = x + d[1], y + d[2]
 		if Grid.inBounds(nx, ny) and Grid.getMap()[ny]:sub(nx, nx) == "C" then continue end
-		-- Die Quellkante bleibt frei; seitliche Grate rahmen den Wasserfall ein.
-		if feature and feature.x == x and feature.y == y and feature.dx == d[1] and feature.dy == d[2] then continue end
+		-- Auf dem Quellfeld darf auch kein seitlicher Grat die Wasserfläche verdecken.
+		if feature and feature.x == x and feature.y == y then continue end
 		local normal = Vector3.new(d[1], 0, d[2])
 		local along = Vector3.new(d[2], 0, -d[1])
 		local depth, width = T * settings.ridgeDepth, T / settings.segments
@@ -391,7 +391,7 @@ local function shoreline(ch, x, y, parent, bridgeTiles)
 	return count
 end
 
-local function waterfall(feature, parent)
+local function waterfall(feature, parent, landscape)
 	if not feature or not Config.FEEL.waterfallsEnabled then return end
 	local x, y = feature.x, feature.y
 	local nx, ny = x + feature.dx, y + feature.dy
@@ -399,15 +399,18 @@ local function waterfall(feature, parent)
 		or Grid.getMap()[y]:sub(x, x) ~= "C" or Grid.getMap()[ny]:sub(nx, nx) ~= "W" then return end
 	local feel, T = Config.FEEL, Config.TILE_SIZE
 	local top, bottom = Grid.tileHeight(x, y) + feel.waterfallSurfaceClearance, Grid.tileHeight(nx, ny)
+	local receiver = Grid.toWorld(nx, ny)
+	bottom = LandscapeBuilder.groundHeight(landscape, receiver.X, receiver.Z) or bottom
 	local center = Grid.toWorld(x, y)
 	local normal = Vector3.new(feature.dx, 0, feature.dy)
 	local along = Vector3.new(-feature.dy, 0, feature.dx)
-	local edge = center + normal * (T / 2 + feel.waterfallThickness / 2)
+	local edge = center + normal * (T / 2 + feel.waterfallFaceOffset + feel.waterfallThickness / 2)
 	local width = T * feel.waterfallWidth
 	local horizontal = feature.dx ~= 0
-	local length = T + feel.waterfallThickness
+	local overhang = feel.waterfallFaceOffset + feel.waterfallThickness
+	local length = T + overhang
 	deco({ Name = "WaterfallSource", Size = Vector3.new(horizontal and length or width, feel.waterfallThickness, horizontal and width or length),
-		Position = Vector3.new(center.X, top + feel.waterfallThickness / 2, center.Z) + normal * (feel.waterfallThickness / 2), Color = feel.waterfallColor,
+		Position = Vector3.new(center.X, top + feel.waterfallThickness / 2, center.Z) + normal * (overhang / 2), Color = feel.waterfallColor,
 		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
 	deco({ Name = "Waterfall", Size = Vector3.new(horizontal and feel.waterfallThickness or width, top + feel.waterfallThickness - bottom, horizontal and width or feel.waterfallThickness),
 		Position = Vector3.new(edge.X, (top + feel.waterfallThickness + bottom) / 2, edge.Z), Color = feel.waterfallColor,
@@ -565,7 +568,7 @@ function BoardBuilder.build(regionId, features, stage)
 	end
 
 	board:SetAttribute("ShoreParts", shoreCount)
-	waterfall(features and features.waterfall, board)
+	waterfall(features and features.waterfall, board, landscape)
 	board.Parent = workspace
 	return board
 end
