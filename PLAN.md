@@ -20,7 +20,7 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
 - [x] 1. **Robustheit Budget** – `IslandBuilder.skyIslands`
   - `assert(count >= satelliteCount.min, …)` entfernen: Reicht das Budget nicht, weniger (auch 0) Nebeninseln bauen und Attribut setzen; Levelaufbau darf nie daran scheitern. Regression im Inseltest: künstlich knappes Budget baut ohne Fehler.
 
-- [ ] 2. **Heller Inselrand** – `Config.ISLAND`, `LandscapeBuilder`/`Stages`
+- [x] 2. **Heller Inselrand** – `Config.ISLAND`, `LandscapeBuilder`/`Stages`
   - Rand-Grasfarbe für Inseln heller und frischer als das jetzige Oliv (Terrain-Grass aktuell ≈ 73,86,64 in Studio): neuer WIP-Wert je Gebiet bzw. Aufhellung der Gebietsfarbe (`ISLAND.rimBrighten` o. ä.), Ergebnis mindestens so hell wie die Brett-Grasfelder, aber leicht abgesetzt (Brett bleibt erkennbar). Tal-Rückfall (`ISLAND.enabled=false`) unverändert.
   - Akzeptanz: Normalbild – Rand wirkt hellgrün, nicht trüb; Brett hebt sich ab.
 
@@ -58,3 +58,5 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
 ## Notizen (Codex)
 
 - Schritt 1: Assertion entfernt, Nebeninselzahl auf mindestens 0 begrenzt; Regression mit partBudget=1 baut ohne Fehler und meldet 0 Nebeninseln. Ausgangsmessung: 450/450 Teilemaximum, Stub-Aufbau im Mittel 111,39 ms (200 Aufbauten); aktueller Studio-Lauf Seed 1748071667: 401 Insel-/1672 Brettteile. Bilder D1b_00_battle_normal/uebersicht bestätigen dunklen Rand, weiße Leere und Brett-Nebeninseln.
+
+- Schritt 2: Inselpalette klonen und Brett-Gras je Gebiet um 30 % Richtung Weiß aufhellen; Talpalette und Brettwerte bleiben erhalten. Bilder D1b_02_rand_normal/uebersicht: Rand sichtbar heller und grün, Brett abgesetzt. Palettenregression an Schnee-/Vulkanmaterial angepasst. Referenzmessung Seed 1 vor Wand/Wolkenumbau: 450 Insel-/1823 Brettteile, 197,62 ms (Einzelmessung in Studio, nach Randkorrektur).

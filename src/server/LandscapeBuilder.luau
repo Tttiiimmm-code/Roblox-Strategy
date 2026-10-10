@@ -91,7 +91,15 @@ function LandscapeBuilder.prepare(mapKey, region, features)
 		margin = margin, sculptMargin = math.min(margin, aligned(s.sculptDistance * T, true)),
 		palette = region and region.landscape or s.palette }
 	state.island = Config.ISLAND.enabled
-	if state.island then state.outline = outline(w, h, random); state.sculptMargin = margin end
+	if state.island then
+		state.outline = outline(w, h, random)
+		state.sculptMargin = margin
+		-- Eigene Palette: Tal, Brettfarben und die Gebietsdaten bleiben unverändert.
+		state.palette = table.clone(state.palette)
+		state.palette.colors = table.clone(state.palette.colors)
+		local grass = region and region.terrainColors and region.terrainColors["."] or Config.TERRAIN["."].color
+		state.palette.colors[state.palette.grass] = grass:Lerp(Color3.fromRGB(255, 255, 255), Config.ISLAND.rimBrighten)
+	end
 	state.rivers = {}
 	local water = region and region.water or Config.WATER
 	if water.extendRivers then

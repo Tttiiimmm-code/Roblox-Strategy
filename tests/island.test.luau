@@ -16,8 +16,13 @@ do
 		return table.concat(rows, "|")
 	end
 	local function validate(board, region)
+		local originalGrass = region.landscape.colors[region.landscape.grass]
 		local state = Landscape.prepare(region.id .. ":" .. table.concat(Grid.getMap(), "|"), region)
 		expect(board:GetAttribute("IslandEnabled"), "Inselpfad fehlt")
+		local grass = region.terrainColors and region.terrainColors["."] or Config.TERRAIN["."].color
+		local rim = state.palette.colors[state.palette.grass]
+		expect(rim.R >= grass.R and rim.G >= grass.G and rim.B >= grass.B, "Inselrand dunkler als Brettgras")
+		expect(region.landscape.colors[region.landscape.grass] == originalGrass, "Insel veraendert Talpalette")
 		expect(Island.measure(board) <= s.partBudget, "Inselteilebudget ueberschritten")
 		maxParts = math.max(maxParts, board:GetAttribute("IslandParts"))
 		expect(board:GetAttribute("IslandSatellites") >= 2 and board:GetAttribute("IslandSatellites") <= 4, "Nebeninselzahl")
