@@ -4,6 +4,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Grid = require(Shared.Grid)
 local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
+local IslandBuilder = require(script.Parent.IslandBuilder)
 
 local LandscapeBuilder = {}
 local previous = { rects = {}, top = 0 }
@@ -337,6 +338,7 @@ function LandscapeBuilder.build(board, mapKey, region, features)
 		writeSurface(state, rect, stats)
 	end
 	details(state, board)
+	IslandBuilder.build(board, state)
 	board:SetAttribute("IslandEnabled", state.island)
 	board:SetAttribute("TerrainWriteCalls", stats.calls)
 	board:SetAttribute("TerrainClearCalls", stats.clearCalls)

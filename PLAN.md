@@ -19,7 +19,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 
 ## Schritte
 
-- [x] 1. **Vorher-Bilder und Messung** – nur Studio
+- [ ] 1. **Vorher-Bilder und Messung** – nur Studio
   - Ein Grasland-Kampflevel mit Fluss: Normalzoom, Übersichtszoom, Aufbauzeit, Brett-Nachkommen, Terrain-Voxel.
 
 - [x] 2. **Inselgrundriss und Oberseite** – `Config.ISLAND` (neu), `LandscapeBuilder`
@@ -65,6 +65,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
+- 10.10.2026: Roblox Studio zeigt ein Fenster „Fehler“ (Prozess 30348, reagiert laut Windows), seit dem Stoppen der Seitenprobe beantworten `get_studio_state` und `execute_luau` keine Aufrufe mehr; zwei Warteversuche abgebrochen. Bitte Fehlerfenster prüfen und Studio/MCP wieder verbinden. Danach Vorher-Übersichtsbild mit Fluss vervollständigen und Schritt 3 seitlich prüfen, bevor Schritte 4–7 fortgesetzt werden. Temporäres LocalScript `StarterPlayer.StarterPlayerScripts.D1Pruefkamera` muss nach Wiederverbindung entfernt werden (nur für Play-Kameraproben angelegt; nicht im Repository). Ist die zuletzt versuchte Source-Änderung angekommen, enthält es `task.wait(4)` und `RenderStepped`; sonst `BindToRenderStep`. Im Edit-Modus wurde kein Terrain geräumt.
 
 ## Notizen (Codex)
 
@@ -72,3 +73,6 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 
 - Schritt 1 Ergänzung: screen_capture-Kameraparameter bewegen die Play-Kamera nicht. Echte Übersichtsprobe per Mausrad nach Startanimation: D1_01_vorher_seed1_uebersicht, Normalbild D1_01_vorher_seed1_normal (Terrain repliziert verzögert; Normalbild vollständig).
 - Schritt 2: Config.ISLAND.enabled mit Tal-Rückfall, 16 deterministische Polygonpunkte, Rand 3,4–4 Felder, kein Fernboden, Terrain nur innerhalb der Insel. Angepasste Baum-/Fels-/Buschgruppen, vorhandene Zaun-/Felsmodelle als 1–3 Requisitenplätze (ruins-Paket fehlt, daher vorhandene Kategorien). Seed 1: 10 Randbäume, 1 Requisit, 12.368 Voxel, ca. 0,165 s, vor Requisit 1.375 Teile / 388.976 geschätzte Dreiecke. Bilder D1_02_oberseite_normal und D1_02_final_uebersicht: Brett plus Rand/Kante, dahinter Himmel. Pflichtcheck OK (38 Dateien).
+- Korrektur Schritt 1: Das Übersichtsbild mit Seed 1 wurde während verzögerter Terrain-/Teil-Replikation aufgenommen und ist als vollständiger Nachweis ungeeignet. Vollständiges Normalbild mit Fluss und Übersicht der ursprünglichen Karte ohne Fluss liegen vor; der verlangte vollständige Fluss-Übersichtsvergleich fehlt. Deshalb Schritt 1 wieder offen markiert. Die Messwerte des echten serverseitigen Aufbaus bleiben gültig.
+- Schritt 3 teilweise umgesetzt: neues IslandBuilder-Modul, Erdschicht (1 Feld), drei facettierte Steinstufen bis zur Spitze (Gesamttiefe 4,5 Felder), 2–4 Neon-Oktaeder mit weißer Glanzfacette. Inselteile sind SmoothPlastic/Neon, ohne Texturen, Partikel, Schatten, Kollision, Touch oder Query. Seed 1: 212 neue Teile / 1.760 geschätzte Dreiecke, 1.597 Brett-BaseParts insgesamt, ca. 0,183 s Aufbau; Terrain unverändert 12.368 Voxel. Finale Erdschicht nach innen versetzt, damit sie keinen breiten Rand um die Insel bildet. Normalsicht dieser Korrektur in Studio gesehen; Seitenansicht/Kristallsicht nicht erfolgreich aufgenommen, daher Schritt 3 nicht abgehakt.
+- Letzte technische Prüfung: scripts/check.ps1 OK, 39 Dateien; Rojo-Build TacticsGame.rbxlx OK. Tests aus Schritt 7 noch nicht ausgeführt/angepasst (neues IslandBuilder muss in Board-Runner plus Vektorstubs ergänzt werden; Tal-Landschaftsprüfungen benötigen Insel-/Rückfallfälle). Keine Aussage über Klick-/Bewegungsregression oder Handy-Leistung. Kein abgeschlossener Plan, daher Devlog #43 noch nicht geschrieben. Schritte 4–7 nicht begonnen. Kein Push, Übergabe mit frage.

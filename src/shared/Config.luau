@@ -210,7 +210,8 @@ Config.WATER = { -- WIP: ruhiges Terrain-Wasser, Fortsetzung bis zur Senke.
 Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal.
 	enabled = true, rimTiles = { min = 3.4, max = 4 }, outlineSteps = 4,
 	surfaceHeight = -1, edgeReserve = 4, earthTiles = 1, depthTiles = 4.5,
-	layerScales = { 1, 0.72, 0.38, 0.04 }, partBudget = 450,
+	layerScales = { 1, 0.72, 0.38, 0 }, partBudget = 450,
+	facetThickness = 0.16, edgeLip = 0.2, edgeOverlap = 1,
 	clusterCount = 10, clusterSize = 3, clusterSpread = 0.45, maxTrees = 18,
 	tree = { height = 1.15, crownWidth = 1.35 }, rock = { height = 0.45, width = 0.65 }, bush = { height = 0.3, width = 0.5 },
 	propCount = { min = 1, max = 3 }, propCategories = { "deco_fence", "rock", "deco_fence" },
