@@ -153,6 +153,8 @@ Prüfungen: `scripts/check.ps1`, `scripts/test-levelgen.ps1` (90.000 normale Lev
 - **Endlosmodus:** Nach dem Vulkan geht es mit dem gesammelten Fortschritt wieder im Grasland weiter (**Zyklus 2, 3, …**), Gegner werden mit jedem Zyklus stärker.
 - **Relikte und Segen** sind als zusätzliche Lauf-Variation interessant (Regeln offen, siehe unten).
 - **Gesichter:** Die Stil-Guide-Regel „entschlossen bis neutral“ ist gelockert; jeder Held darf eine Grundstimmung tragen (siehe `docs/stil-guide.md`).
+- **Zielgruppe:** modern und intuitiv für jede Altersklasse; an Roblox-Hits orientiert, aber mit eigenem Wiedererkennungswert in UI **und** Welt (Raute/Kronjuwel, Thronkristalle, Königreichs-Banner, Rauten-Brosche an Helden, Holo-Saum für ★5).
+- **Kartendarstellung: Schwebende Thronlande.** Jedes Level ist eine Insel über einem Wolkenmeer, Unterseite mit Erd- und Steinschicht und Thronkristallen, Wasserfälle stürzen über die Kante. Der Canyon-Rahmen aus dem Referenzvideo ist verworfen; das Video gibt nur noch Helligkeit, Sättigung und Requisitendichte vor. Die bisherigen Klippen/Wasserfälle aus C7 müssen dafür umgebaut werden (eigener Plan).
 
 ## Offene Punkte (vor der jeweiligen Etappe klären)
 - Endlosmodus: Wie stark wird jeder Zyklus (Gegnerlevel, Elite-Anteil, Aufstiegsklassen bei Gegnern)? Teamgröße über 6? Endet der Lauf nur durch Niederlage/Aufgeben? Punktzahl und Bestenliste je Zyklus?
