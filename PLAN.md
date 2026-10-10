@@ -1,70 +1,70 @@
-# PLAN: Schwebende Thronlande – Etappe D1b (Optik-Korrektur)
+# PLAN: Thronlande D2 – eigene Requisiten (12 Modelle)
 
-Ziel: D1 (Devlog #43) ist technisch fertig, wirkt in der Kampfansicht aber leer und trüb. Claude-Review in Studio (10.10.2026, Grasland Level 1): Wolkenmeer = gleichmäßig **weiße Leere**, Inselrand **dunkles Oliv** und leer, Nebeninseln wirken wie **schräge Bretter** und ragen an Bildrändern/hinter der Rundenanzeige ins Bild, Kante/Unterseite aus Spielsicht nur ein dünner Streifen. Wichtig: Die Spielkamera schaut **steil nach unten** – was der Spieler sieht, ist vor allem die Wolkendecke, kaum Himmel/Horizont.
-Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
+Ziel: Der Inselrand wirkt leer und die Umgebung mischt Creator-Store-Modelle verschiedener Stile. D2 bringt **12 eigene, vom Nutzer freigegebene Requisiten** (3D AI Studio, Modell P2) ins Spiel: einheitlicher kantiger Low-Poly-Stil, lila-graues Gestein, warmes Holz, Gold, grüne Kristalle. Der Rand der Insel wird damit gefüllt; Gras, Blumen, Steine und Brücke auf dem Brett bekommen den neuen Stil.
+Branch: neu `feature/thronlande-d2` von `feature/thronlande`.
+Der gemalte Himmel je Gebiet × Tageszeit ist **nicht** Teil von D2 (eigene Etappe D3).
 
-**Nutzerentscheidungen (10.10.2026)**, Zielbild = Bild-Entwurf „Thronlande Kampfansicht Wolkenmeer“ (beschrieben, da Codex es nicht sieht):
-- **Wolken weich und rund**: voluminöse Wolkenhaufen mit weißen Oberseiten, **zart lila und hellcyan schattierten Zwischenräumen**, zum Bildrand hin lilafarbener; klar erkennbare Wolkenformen statt flacher Fläche. Umsetzung in D1b **ohne Credits** aus Roblox-Kugelteilen (`Shape = Ball`, `SmoothPlastic`), nicht aus Meshes.
-- **Unterseite kombiniert**: oben ein Stück **senkrechte Felswand** (Erdschicht, darunter Steinschicht, WIP ≈ 1,5–2 Felder hoch, deutlich sichtbar von der Spielkamera), darunter **spitz zulaufend** wie bisher mit Thronkristallen.
-- Kleine **Nebeninseln** lugen aus den Wolken, je mit Kristall im Gebietsakzent, spiegeln das aktuelle Gebiet (gilt weiter).
-- Rand frisch und hell grün, leicht vom Brett abgesetzt; Wasserfall über die Kante bleibt.
+**Rohdateien (von Claude heruntergeladen, nicht im Git, `assets/raw/` ist ignoriert):** `assets/raw/d2/<name>/<name>.glb`
 
-**Bestehender Code:** `src/server/IslandBuilder.luau` (`shell`, `satellite`, `skyIslands`, `crystal`, `triangle`, `measure`), `src/server/LandscapeBuilder.luau` (Insel-Oberfläche, `details`), `src/shared/Config.luau` (`Config.ISLAND`, `Config.LANDSCAPE.palette`), `src/shared/Stages.luau` (Zeile ~18–20: `region.landscape.colors[Grass] = region.surroundColor`), `src/client/Atmosphere.luau` (Haze für `battle` bei Insel), `tests/island.test.luau`, `scripts/test-run.ps1`.
+| Nr | Name (Ordner) | Inhalt | Kategorie im Spiel | Einsatz |
+|---|---|---|---|---|
+| 1 | `ruin_column` | Säulenruine mit Gras, Goldring | `rim_ruin_column` (neu) | Inselrand |
+| 2 | `banner` | blaues Königsbanner mit Goldkrone | `rim_banner` (neu) | Inselrand |
+| 3 | `crystal_shrine` | Steinschrein mit grünem Kristall | `rim_crystal_shrine` (neu) | Inselrand |
+| 4 | `ruin_arch` | Torbogen-Ruine (Schattenscheibe schon entfernt) | `rim_ruin_arch` (neu) | Inselrand |
+| 5 | `lantern` | Laternenpfahl mit Kristalllicht | `rim_lantern` (neu) | Inselrand |
+| 6 | `crystal_pedestal` | Kristallsockel (3 Kristalle, Goldband) | `rim_crystal_pedestal` (neu) | Inselrand |
+| 7 | `bridge` | Holzbrücke, Goldkappen, Seilgeländer | bestehende Brückenkategorie (`bridge`/`archbridge`, siehe Schritt 3) | Brett-Brücken |
+| 8 | `grass` | drei Grasbüschel, ohne Erde | `deco_grass` | Brett + Rand |
+| 9 | `flowers` | Blumen mit flachem Erdfleck | `deco_flower` | Brett + Rand |
+| 10 | `barrels` | zwei Fässer + Kiste | `rim_barrels` (neu) | Inselrand |
+| 11 | `stones` | Steingruppe, ohne Erde | `deco_stone` | Brett + Rand |
+| 12 | `boulder` | großer Felsen mit Moos und Erde | `rock` (Rand-Variante) | Inselrand |
 
-**Studio-Prüfung:** echter Ort „Throne Tales“, nur Play-Modus, **keine Kamera-Eingriffe** (nur Normalzoom + Mausrad-Übersicht), Studio-Fenster nicht minimiert (schwarzes Bild = minimiert → `frage`). Lauf über `Remotes.Command` `{type="ResumeLevel"}` bzw. `{type="ChooseLevel", index=1}`. Pro Schritt Normal- und Übersichtsbild, vorher/nachher kurz beschreiben.
+**Bestehende Kette (bitte genau so nutzen):** `docs/umgebung-assets.md` („Ein erstes Asset einbinden“), `scripts/cleanup.ps1` (`-Prop`, `-MaxTris`, `-Front`), `scripts/studio/umgebung-import.luau` (Paket-Ordner), `assets/environment/README.md` (Lader: `ServerStorage.EnvironmentModels`, Namensregel `<kategorie>_<nr>`, Pivot unten Mitte, vorne −Z, keine Bodenplatte), `src/server/EnvironmentAssets.luau` (`place`, `variants`), `Config.ENVIRONMENT.categories`, Inselrand-Deko in `LandscapeBuilder.details` (Insel-Zweig, `propCategories`).
 
-**Leitlinien:** Alle neuen Werte zentral in `Config.ISLAND` (WIP-Kommentar). Deterministisch pro `mapKey`. Brett, Klickbarkeit, Figuren, UI, Hub, Lighting-Effekte des Nutzers (ColorGrading/Bloom) und `docs/referenz/` nicht anfassen. Teilebudget Insel insgesamt weiter **≤ 450**; wo nötig vorhandene Teile einsparen (z. B. CloudSea-Kacheln, Wedge-Wolkenberge ersetzen). Ein Commit pro Schritt. Geschmacksfragen → „Offene Fragen“.
+**Hinweise zur Maschine:** AMD-Grafiktreiber (`atio6axx.dll`) stürzt bei GPU-Rendering in Blender ab. Stürzt `cleanup.ps1` in Blender ab (Vorschaubilder mit `BLENDER_WORKBENCH`), Vorschau-Rendering auf **Cycles CPU** umstellen (nur Vorschau, keine Änderung der Exportlogik) und notieren. Studio-Fenster nicht minimieren lassen (schwarze Bilder = minimiert). **Keine Credits** in 3D AI Studio ausgeben.
 
 ## Schritte
 
-- [x] 1. **Robustheit Budget** – `IslandBuilder.skyIslands`
-  - `assert(count >= satelliteCount.min, …)` entfernen: Reicht das Budget nicht, weniger (auch 0) Nebeninseln bauen und Attribut setzen; Levelaufbau darf nie daran scheitern. Regression im Inseltest: künstlich knappes Budget baut ohne Fehler.
+- [ ] 1. **Aufbereiten** – `scripts/cleanup.ps1`
+  - Jede GLB mit `-Prop` aufbereiten, Name = Ordnername. Dreieckslimits (WIP): kleine Deko (`grass`, `flowers`, `stones`) ≤ 300, `lantern`, `banner`, `barrels`, `crystal_pedestal` ≤ 1.000, `ruin_column`, `crystal_shrine`, `boulder` ≤ 1.500, `ruin_arch`, `bridge` ≤ 3.000. Textur 512.
+  - Kontrollbilder (`_vorne/_seite/_oben`) ansehen: vollständig, aufrecht, keine Bodenplatte/Schattenscheibe (bei allen 12 prüfen; flache Bodeninsel ggf. wie beim Torbogen entfernen), Farben wie Original, **matt**. Ausrichtung mit `-Front` korrigieren.
+  - Akzeptanz: 12 `*_clean.fbx`, Bericht je Modell in den Notizen (Dreiecke, Größe).
 
-- [x] 2. **Heller Inselrand** – `Config.ISLAND`, `LandscapeBuilder`/`Stages`
-  - Rand-Grasfarbe für Inseln heller und frischer als das jetzige Oliv (Terrain-Grass aktuell ≈ 73,86,64 in Studio): neuer WIP-Wert je Gebiet bzw. Aufhellung der Gebietsfarbe (`ISLAND.rimBrighten` o. ä.), Ergebnis mindestens so hell wie die Brett-Grasfelder, aber leicht abgesetzt (Brett bleibt erkennbar). Tal-Rückfall (`ISLAND.enabled=false`) unverändert.
-  - Akzeptanz: Normalbild – Rand wirkt hellgrün, nicht trüb; Brett hebt sich ab.
+- [ ] 2. **Ein Import für den Nutzer** – neues Blender-Skript + `scripts/studio/thronlande-import.luau`
+  - Alle 12 bereinigten Modelle in **eine** Datei `assets/raw/d2/thronlande_pack.fbx` zusammenführen (je Modell ein Objekt, Objektname = Zielname wie `rim_banner_1`, `deco_grass_2` …, Pivot unten Mitte, vorne −Z, nebeneinander mit Abstand).
+  - Befehlsleisten-Skript `scripts/studio/thronlande-import.luau` (Muster `umgebung-import.luau`): nimmt das importierte Model aus dem Workspace, macht daraus Ordner `thronlande_pack` mit je einem Model pro Vorlage (Name = Kategorie_Nr, Pivot unten Mitte, verankert, ohne Kollision), damit der Nutzer nur noch **Save to File → `assets/environment/thronlande_pack.rbxm`** machen muss.
+  - Anleitung für den Nutzer in `docs/umgebung-assets.md` ergänzen (kurz, ab null erklärt: 3D importieren → FBX wählen → Skript in Befehlsleiste → Save to File).
+  - Dann **stoppen**: unter „Offene Fragen“ eintragen „Nutzeraktion: thronlande_pack importieren“, `.handoff/status` = `frage`. Claude führt den Nutzer durch den Import.
 
-- [x] 3. **Kombinierte Unterseite** – `IslandBuilder.shell`
-  - Unter der Kante zuerst eine **senkrechte Wand** entlang des Umrisses: Erdschicht (`earthColor`, ≈ 0,6 Feld) + Steinschicht (`stoneColor`, ≈ 1 Feld), WIP-Werte `cliffEarthTiles`/`cliffStoneTiles`; erst darunter die bestehenden Verjüngungsstufen bis zur Spitze und die Kristalle. Flussmündungen (`riverCuts`) wie bisher ausgespart.
-  - Akzeptanz: Normal- und Übersichtsbild zeigen an der Vorderkante ein klar sichtbares Band Erde + Stein statt eines dünnen Streifens; keine Lücken zwischen Wand und Oberseite.
+- [ ] 3. **Kategorien und Größen** – `Config.ENVIRONMENT.categories`, `EnvironmentAssets`
+  - Neue `rim_*`-Kategorien mit WIP-Größen (Rand, außerhalb des Bretts): Säule/Schrein/Banner/Laterne ≈ 0,6–1,2 Felder hoch, Torbogen ≈ 1,5 Felder breit, Fässer ≈ 0,6 Felder, Kristallsockel ≈ 0,8 Felder, Felsen (`rock`-Randvariante) wie bisheriger Rand-Fels.
+  - `deco_grass`, `deco_flower`, `deco_stone`: neue Modelle als **bevorzugte** Varianten; alte Creator-Store-Varianten nur noch Rückfall, falls neue fehlen.
+  - Brücke: Prüfen, welche Kategorie die Brett-Brücken heute nutzen (`bridge`/`archbridge`). Neue Brücke dort einsetzen, **Laufwege, Feldhöhen und Klickbarkeit unverändert** (Figuren stehen auf dem bestehenden Brückenboden; Modell nur Optik, ohne Kollision/Query). Passt die Form nicht ohne Eingriff in Brettlogik, nicht umbauen, sondern unter „Offene Fragen“ notieren.
+  - Akzeptanz: Lader findet alle 12 Vorlagen; fehlende Datei → bisherige Optik (kein Fehler).
 
-- [x] 4. **Weiches Wolkenmeer** – `IslandBuilder.skyIslands`, `Config.ISLAND`, ggf. `Atmosphere.luau`
-  - Flache weiße Kacheln nicht mehr als einziges Bild: Grundfläche **getönt** (zart lila/cyan, nicht reinweiß) und **darauf Wolkenhaufen aus Kugeln** (je Haufen 3–6 Kugeln verschiedener Größe, Oberseiten fast weiß, untere/äußere Kugeln lila bzw. hellcyan getönt; zum Rand hin lilafarbener). Haufen so verteilen, dass sie **im Kamerabild bei Normalzoom und Übersicht** rund um die Insel sichtbar sind (nicht nur weit draußen). Wedge-„Wolkenberge“ entfernen oder durch Kugelhaufen ersetzen.
-  - Haze/Atmosphere so anpassen, dass die Wolken nicht zu einer gleichmäßig weißen Fläche verschwimmen (z. B. geringere Dichte/Haze für `battle` bei Insel). Nutzer-ColorGrading/Bloom nicht anfassen.
-  - Budget: Wolken + Rest ≤ 450; Messung in Notizen.
-  - Akzeptanz: Übersichtsbild zeigt erkennbare, weich schattierte Wolkenformen mit Lila/Cyan-Tönen, keine weiße Leere.
+- [ ] 4. **Inselrand füllen** – `LandscapeBuilder.details` (Insel-Zweig), `Config.ISLAND`
+  - Rand deterministisch pro `mapKey` mit Gruppen bestücken: z. B. Ruinen-Ecke (Säule + Torbogen + Steine), Lager (Fässer + Laterne), Kristallplatz (Schrein oder Sockel + Gras/Blumen), Banner an 1–2 Rand-Ecken Richtung Kamera nicht verdeckend. Gras/Blumen/Steine locker verteilt; Felsen an der Kante. Mengen als WIP-Werte in `Config.ISLAND` (`rimGroups`, `rimScatter` o. ä.).
+  - Regeln: nichts auf dem Brett, nichts über die Kante hinaus, Abstand zu Wasserfällen/Flussmündungen, nichts verdeckt Felder in Normalansicht (hohe Objekte nur an Hinterkante/Seiten). Andere Gebiete (Sumpf/Eis/Vulkan): vorerst dieselben Modelle, Kristallfarbe nicht ändern (Modelle sind Grasland-grün; Gebietsvarianten = spätere Etappe).
+  - Teile/Leistung: Meshes zählen nicht ins Insel-Teilebudget (450), aber messen: Anzahl Requisiten, geschätzte Dreiecke, Aufbauzeit.
+  - Akzeptanz: Normal- und Übersichtsbild (Grasland, 3 Seeds): Rand wirkt belebt, Brett frei und lesbar.
 
-- [x] 5. **Nebeninseln** – `IslandBuilder.satellite`/`skyIslands`
-  - Form: kein Quadrat mehr – kleiner unregelmäßiger Polygon-Umriss (wie Hauptinsel, 6–8 Punkte), kurze Wand + Spitze, Kristall im Gebietsakzent, 1 Baum in Gebietsfarbe.
-  - Platzierung: tiefer, **teilweise in den Wolken** („lugen heraus“), nie direkt vor der Kamera oder hinter der oberen Rundenanzeige; in der Übersicht 2–3 sichtbar am Rand, bei Normalzoom höchstens angeschnitten am Bildrand.
-  - Akzeptanz: Übersichtsbild mit mindestens zwei Nebeninseln, die wie kleine Inseln (nicht Bretter) wirken.
-
-- [x] 6. **Abschluss** – Tests, Messung, Devlog
-  - Inseltests anpassen/ergänzen (Budget-Fallback, Wand vorhanden, Wolkenhaufen im Sichtbereich, Determinismus, ≤ 450 Teile). `scripts/check.ps1`, `test-run.ps1`, `test-levelgen.ps1`, `test-tutorial.ps1`, `test-run-ui.ps1` OK; Rojo-Build.
-  - Messung vorher/nachher (Teile, Aufbauzeit). Devlog **#44 „Thronlande D1b – Optik-Korrektur“**, „Nächste Schritte“ (D2: 12 Requisiten-Modelle + gemalter Himmel je Gebiet × Tageszeit). Committen, `git push` (bei Ablehnung durch die Freigabeprüfung: notieren, trotzdem `fertig`; Claude pusht). Studio im Edit-Modus, `.handoff/status` = `fertig`.
+- [ ] 5. **Abschluss** – Tests, Messung, Devlog
+  - Tests: Lader/Kategorien (alle 12, Rückfall bei fehlenden), Rand-Platzierung (auf Insel, nicht auf Brett, Abstand Kante/Wasser, Determinismus), Brückenfelder unverändert begehbar/klickbar. `scripts/check.ps1`, `test-run.ps1`, `test-levelgen.ps1`, `test-tutorial.ps1`, `test-run-ui.ps1` OK; Rojo-Build.
+  - Credits-Hinweis: eigene Modelle in `assets/environment/README.md` (Quelle 3D AI Studio, vom Nutzer erstellt).
+  - Devlog **#45 „Thronlande D2 – eigene Requisiten“**, „Nächste Schritte“ (D3: gemalter Himmel je Gebiet × Tageszeit, zufällig pro Level; Gebietsvarianten der Requisiten). Committen, `git push -u origin feature/thronlande-d2` (bei Ablehnung notieren, trotzdem `fertig`). Studio im Edit-Modus, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Wolken unter der Insel weich, rund, lila/cyan schattiert – keine weiße Leere
-- [ ] Rand hellgrün, Brett gut erkennbar; Vorderkante zeigt Erd- und Steinwand
-- [ ] Nebeninseln sehen wie kleine Inseln aus und stören die Ansicht nicht
-- [ ] Klicks/Bewegung wie vorher, Handy flüssig
+- [ ] Inselrand mit Ruinen, Banner, Laternen, Fässern, Kristallen, Gras, Blumen, Steinen belebt; Stil einheitlich und matt
+- [ ] Neue Brücke sieht gut aus, Figuren laufen wie vorher darüber, Klicks funktionieren
+- [ ] Brett gut lesbar, nichts verdeckt Felder
+- [ ] Handy flüssig, Aufbauzeit okay
 
 ## Nicht anfassen
-- Spielregeln, Generator, Brett-Inhalt, UI, Hub, Lighting-Effekte des Nutzers, `docs/referenz/`, 3D AI Studio (keine Credits)
+- Spielregeln, Generator, Felder/Wasser/Klippen-Logik des Bretts, UI, Hub, Lighting-Effekte des Nutzers (ColorGrading/Bloom), `docs/referenz/`, 3D AI Studio (keine Credits), Figuren
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**.)
 
 ## Notizen (Codex)
-
-- Schritt 1: Assertion entfernt, Nebeninselzahl auf mindestens 0 begrenzt; Regression mit partBudget=1 baut ohne Fehler und meldet 0 Nebeninseln. Ausgangsmessung: 450/450 Teilemaximum, Stub-Aufbau im Mittel 111,39 ms (200 Aufbauten); aktueller Studio-Lauf Seed 1748071667: 401 Insel-/1672 Brettteile. Bilder D1b_00_battle_normal/uebersicht bestätigen dunklen Rand, weiße Leere und Brett-Nebeninseln.
-
-- Schritt 2: Inselpalette klonen und Brett-Gras je Gebiet um 30 % Richtung Weiß aufhellen; Talpalette und Brettwerte bleiben erhalten. Bilder D1b_02_rand_normal/uebersicht: Rand sichtbar heller und grün, Brett abgesetzt. Palettenregression an Schnee-/Vulkanmaterial angepasst. Referenzmessung Seed 1 vor Wand/Wolkenumbau: 450 Insel-/1823 Brettteile, 197,62 ms (Einzelmessung in Studio, nach Randkorrektur).
-
-- Schritt 3: senkrechte Erdwand 0,6 Felder und Steinwand 1 Feld; Verjüngung erst darunter, Gesamttiefe/Flussöffnungen erhalten. Bilder D1b_03_wand_normal/uebersicht zeigen beide Bänder an der Vorderkante. check.ps1 OK (39), test-run.ps1 OK einschließlich 628.421 Inselprüfungen; Maximum weiterhin 450/450. Regression prüft bündigen Erd-/Steinanschluss und gleiche Segmentzahl.
-
-- Schritt 4: 16 Kugelhaufen auf zwei inselnahen Ringen, je 3–6 überlappende Kugeln mit weißen Kappen, Cyan innen/Lila außen; getönte Grundfläche, Kampf-Haze/Dichte reduziert. Teileersparnis: 1024 statt 512 Studs Grundkacheln (16 statt 49) und zwei statt drei Verjüngungsstufen; Spitze/Gesamttiefe erhalten. Erste flache Balls wirkten in Studio wie getrennte Perlen; auf gleichmäßige Kugelgrößen korrigiert, Schnitt-/Nähetests ergänzt. Bilder D1b_04_wolken_final_normal/uebersicht zeigen runde Haufen und sanfte Farben. Aktueller Lauf: 363 Teile, 16 Haufen; Tests: 709.658 Inselprüfungen, Max 450/450; check.ps1 OK. Kugeldreiecke jetzt grob mit 240 je Kugel geschätzt (LOD unbekannt), keine Bildratenmessung.
-
-- Schritt 5: unregelmäßige Sechseck-Kappen mit kurzer Erdwand und Spitze; Baum in Gebietspalette, Kristall sichtbar an Kappenkante im Gebietsakzent. Seitliche Platzierung bei -23 bis -19 Studs, eigener Wolkenhaufen je Nebeninsel mit niedrigerer Kappe; reserviertes Teilebudget aus Polygonzahl berechnet. Bilder D1b_05_nebeninseln_normal/uebersicht: im Normalzoom keine störende Nebeninsel, Übersicht zwei kleine Inseln seitlich aus den Wolken. Aktueller Lauf: 370 Teile, zwei Nebeninseln/16 Haufen; check.ps1 OK (39), test-run.ps1 OK (751.512 Inselprüfungen, Max 450/450). Studio-Output nur bekannte Lighting-/Chibi-Hinweise; aktueller Lauf Brett 162 ms/Figuren 21 ms.
-
-- Schritt 6: endgültige Regressionen prüfen zusätzlich tatsächliche Wolkenprojektion in Normal-/Übersichtszoom bei 4:3, 16:9 und maximalem Kamerabildformat sowie Form/Material im Determinismus. Helle Gebietspaletten (Schnee) bleiben bei der Aufhellung erhalten. Alle Skripte Exit 0: check.ps1 OK (39), test-run.ps1 OK (752.975 Inselprüfungen, Maximum 450/450, Stub-Aufbau Mittel 103,48 ms), test-levelgen.ps1 OK (19.000 Level-/5.000 Optionsprüfungen, 96 Kombinationen, 2.400 Boss-/Minibosskarten), test-tutorial.ps1 OK (168), test-run-ui.ps1 OK (280); Rojo-Build erfolgreich. Seed 1 vorher/nachher: 450/442 Inselteile, 1823/1815 Brettteile, 197,62/212,61 ms (Einzelmessungen; vorher nach Randkorrektur). Devlog #44 ergänzt, D2 aktualisiert. Studio abschließend Edit bestätigt; Nutzer-/Handytests und unabhängiges Claude-Review offen, manuelle Checkboxen bewusst unverändert.
