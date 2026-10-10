@@ -63,7 +63,7 @@ local lastHoverSound = -math.huge
 UIKit.METRICS = {
 	smallRadius = 6, buttonRadius = 12, panelRadius = 16, bannerRadius = 24,
 	buttonHeight = 48, primaryHeight = 64, buttonEdge = 5, pressedEdge = 1,
-	panelBorder = 3, cardBorder = 4, selectedCardBorder = 6, shadowOffset = 8, forecastTop = 120,
+	panelBorder = 3, barBorder = 2, cardBorder = 4, selectedCardBorder = 6, shadowOffset = 8, forecastTop = 120,
 }
 local METRICS = UIKit.METRICS
 
@@ -159,7 +159,7 @@ local function displayedTextSize(text)
 	return low
 end
 
--- Konturen folgen Layout?nderungen; Transparenz?nderungen ben?tigen keine Schriftmessung.
+-- Konturen folgen Layoutänderungen; Transparenzänderungen benötigen keine Schriftmessung.
 function UIKit.outline(text, enabled, thickness)
 	local outline = make("UIStroke", {
 		Name = "TextOutline", Color = THEME.ink, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
@@ -383,7 +383,7 @@ function UIKit.panel(props, parent)
 	end
 	f:GetPropertyChangedSignal("AutomaticSize"):Connect(updateAutomaticSurface)
 	updateAutomaticSurface()
-	-- Eigene Deko teilt die Fensterebene; Inhalt bekommt stets eine Ebene dar?ber.
+	-- Eigene Deko teilt die Fensterebene; Inhalt bekommt stets eine Ebene darüber.
 	local decorations = { [background] = true }
 	for _, object in background:GetDescendants() do
 		if object:IsA("GuiObject") then decorations[object] = true end
@@ -547,7 +547,7 @@ function UIKit.bar(parent, position, size, color)
 		Position = position, Size = size, BackgroundColor3 = THEME.barBg, BorderSizePixel = 0,
 	}, parent)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, bg)
-	UIKit.stroke(bg, THEME.ink, 2)
+	UIKit.stroke(bg, THEME.ink, METRICS.barBorder)
 	local loss = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = THEME.bad, BorderSizePixel = 0 }, bg)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, loss)
 	local fill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = color, BorderSizePixel = 0 }, bg)

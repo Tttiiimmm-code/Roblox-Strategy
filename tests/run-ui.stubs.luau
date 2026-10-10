@@ -69,20 +69,27 @@ function Instance.new(class)
 	local o = setmetatable({ _props = {
 		ClassName = class, Name = class, Text = "", TextSize = 14, Visible = true, Scale = 1, Value = 0,
 		ZIndex = 1, TextTransparency = 0, TextStrokeTransparency = 1, Enabled = true,
+		AutomaticSize = Enum.AutomaticSize.None, TextBounds = Vector2.new(0, 0), LineHeight = 1, TextWrapped = false, TextScaled = false,
 		Size = UDim2.new(), Position = UDim2.new(), AnchorPoint = Vector2.new(0, 0),
 		AbsolutePosition = Vector2.new(0, 0), AbsoluteSize = Vector2.new(1280, 720), AbsoluteWindowSize = Vector2.new(600, 400),
 		AbsoluteCanvasSize = Vector2.new(1200, 720), BackgroundTransparency = 0,
 	}, _events = {}, _attrs = {} }, {
 		__index = function(self, k)
 			if k == "Parent" then return self._props.Parent end
+			if k == "ContentText" then return (self.Text:gsub("<[^>]+>", "")) end
 			if methods[k] then return methods[k] end
 			if self._props[k] ~= nil then return self._props[k] end
-			if k == "Activated" or k == "InputBegan" or k == "InputEnded" or k == "MouseEnter" or k == "MouseLeave" or k == "Destroying" or k == "Changed" or k == "DescendantAdded" then
+			if k == "Activated" or k == "InputBegan" or k == "InputEnded" or k == "MouseEnter" or k == "MouseLeave" or k == "Destroying" or k == "Changed" or k == "DescendantAdded" or k == "DescendantRemoving" then
 				return methods.GetPropertyChangedSignal(self, k)
 			end
 			return methods.FindFirstChild(self, k)
 		end,
 		__newindex = function(self, k, v)
+			if k == "Parent" and self.Parent then
+				local removed = { self }; for _, child in self:GetDescendants() do table.insert(removed, child) end
+				local p = self.Parent
+				while p do for _, child in removed do p.DescendantRemoving:Fire(child) end; p = p.Parent end
+			end
 			self._props[k] = v; if k == "Parent" and v then local p = v; while p do p.DescendantAdded:Fire(self); p = p.Parent end end; if k == "TextScaled" and v then self.TextWrapped = true end
 			if self._events[k] then self._events[k]:Fire(v) end
 		end,
@@ -95,6 +102,12 @@ local playerGui = Instance.new("PlayerGui")
 local player = Instance.new("Player"); player.UserId = 1; playerGui.Name = "PlayerGui"; playerGui.Parent = player
 local testTweens = {}
 local services = {
+	TextService = { calls = 0, GetTextSize = function(self, content, size, _, frame)
+		self.calls += 1
+		local width = #content * size / 2
+		local lines = math.max(1, math.ceil(width / frame.X))
+		return Vector2.new(math.min(width, frame.X), size * lines)
+	end },
 	GuiService = { TopbarInset = { Max = Vector2.new(1280, 58) }, insetChanged = event(), GetPropertyChangedSignal = function(self) return self.insetChanged end, GetGuiInset = function(self) return Vector2.new(0, self.guiTop or 58), Vector2.new(0, 0) end,
 		GetInsetArea = function(self, inset) return inset == Enum.ScreenInsets.DeviceSafeInsets and self.device or self.full end,
 		device = { Min = Vector2.new(0, -58), Max = Vector2.new(1280, 720) }, full = { Min = Vector2.new(0, -58), Max = Vector2.new(1280, 720), Width = 1280, Height = 778 },
