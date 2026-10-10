@@ -215,7 +215,23 @@ function EnvironmentAssets.place(category, cframe, opts)
 	-- Wald: Höhe bestimmt die Stammskalierung; schmale Kronen erhalten ihre eigene Breite.
 	if category == "tree" and opts.crownWidth then scale = height / size.Y end
 	if category == "archbridge" and opts.length then scale = opts.length * Config.TILE_SIZE / size.X end
-	model:ScaleTo(scale)
+	if opts.rimSize then
+		-- Die eigenen Streumodelle sind aufrechte Einzelmeshes: Randhöhe und -breite unabhängig treffen.
+		local parts = {}
+		for _, part in model:GetDescendants() do if part:IsA("BasePart") then table.insert(parts, part) end end
+		if #parts == 1 and math.abs((parts[1].CFrame:PointToWorldSpace(Vector3.new(0, 1, 0)) - parts[1].Position).Y) > 0.999 then
+			local variation = random:NextNumber(1 - spread, 1 + spread)
+			scale = width / math.max(math.abs(math.cos(angle)) * size.X + math.abs(math.sin(angle)) * size.Z,
+				math.abs(math.sin(angle)) * size.X + math.abs(math.cos(angle)) * size.Z) * variation
+			model:ScaleTo(scale)
+			local part = parts[1]
+			part.Size = Vector3.new(part.Size.X, height * variation, part.Size.Z)
+		else
+			model:ScaleTo(scale)
+		end
+	else
+		model:ScaleTo(scale)
+	end
 	local box, scaledSize = model:GetBoundingBox()
 	local transform = cframe * CFrame.Angles(0, angle, 0) * CFrame.new(0, scaledSize.Y / 2, 0) * box:Inverse()
 	model:PivotTo(transform * model:GetPivot())

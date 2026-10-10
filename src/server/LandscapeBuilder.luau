@@ -327,7 +327,12 @@ local function rimDetails(state, board)
 		if not height or material == Enum.Material.Water then return end
 		local opts = { parent = board, key = key }
 		if category == "rock" then opts.preferred = "rock_50" end
-		if scatter then
+		if s.rimScatter.sizes[category] then
+			opts.height = s.rimScatter.sizes[category].height
+			opts.width = s.rimScatter.sizes[category].width
+			opts.rimSize = true
+			opts.sizeVariation = s.rimScatter.sizeVariation
+		elseif scatter then
 			opts.height = category == "rock" and s.rimScatter.rockHeight or s.rimScatter.height
 			opts.width = category == "rock" and s.rimScatter.rockWidth or s.rimScatter.width
 		end

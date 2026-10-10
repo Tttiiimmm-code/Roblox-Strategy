@@ -18,7 +18,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, schon gepusht).
 
 ## Schritte
 
-- [ ] 1. **Größenfehler Streu-Deko** – `EnvironmentAssets.place`, `LandscapeBuilder.details`
+- [x] 1. **Größenfehler Streu-Deko** – `EnvironmentAssets.place`, `LandscapeBuilder.details`
   - Am Rand platzierte `deco_grass`/`deco_flower`/`deco_stone` sollen die **Rand-Größen** aus `ISLAND.rimScatter` erhalten, nicht die Brett-Grenzen. Brett-Deko bleibt in der bisherigen Brettgröße.
   - WIP-Zielgrößen am Rand: Gras ≈ 0,35 Feld hoch, Blumen ≈ 0,3, Steine ≈ 0,25 hoch / 0,5 breit; ±15 % Streuung.
   - Regression: gemessene Bounding-Box der Randdeko entspricht den Randwerten; Brettdeko unverändert.
@@ -51,3 +51,5 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, schon gepusht).
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**.)
 
 ## Notizen (Codex)
+
+- Schritt 1: Eigene Randmaße pro Streukategorie, ±15 % Variation; aufrechte Einzelmeshes werden in Höhe/Breite getrennt angepasst, komplexe Ersatzmodelle weiter proportional begrenzt. Brettpfad unverändert. Studio: reguläres ResumeLevel (Grasland Level 3), D2b_01_groessen_normal/uebersicht, nur Mausrad. Gemessen: Randgras 2,747 Studs, Stein 1,875 Studs. Syntaxcheck OK; gesamte Regression läuft.

@@ -25,6 +25,20 @@ do
 		end end
 		model:Destroy()
 	end
+	for category, dimensions in Config.ISLAND.rimScatter.sizes do
+		for seed = 1, 30 do
+			local board = Assets.place(category, CFrame.new(), { parent = workspace, key = tostring(seed) })
+			local _, boardSize = board:GetBoundingBox()
+			local limits = Config.ENVIRONMENT.categories[category]
+			expect(boardSize.Y <= limits.height * Config.TILE_SIZE, "Brettdeko vergrößert")
+			local rim = Assets.place(category, CFrame.new(), { parent = workspace, key = tostring(seed),
+				height = dimensions.height, width = dimensions.width, rimSize = true, sizeVariation = 0.15 })
+			local _, size = rim:GetBoundingBox()
+			expect(size.Y >= dimensions.height * Config.TILE_SIZE * 0.85 - 0.001
+				and size.Y <= dimensions.height * Config.TILE_SIZE * 1.15 + 0.001, "Randhöhe überschrieben")
+			rim:Destroy(); board:Destroy()
+		end
+	end
 	for category, name in Config.ENVIRONMENT.preferred do
 		local model = Assets.place(category, CFrame.new(), { parent = workspace })
 		expect(model and model.Name == name, "Bevorzugte Variante fehlt")
