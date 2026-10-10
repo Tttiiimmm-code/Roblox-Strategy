@@ -7,7 +7,7 @@ Verbindliche Regeln für alle Figuren-Designs. Stil-Anker: **Leon-Referenzblatt*
 |---|---|
 | Proportionen | **1 : 7** (Kopf zu Körper) wie Leon – realistische Anime-Proportionen, schlank, heroisch. Gegner-Bosse dürfen massiger sein, nicht größer als 1 : 7,5. |
 | Rendering | **Cel-Shading, 2 Töne**: flache Farbflächen + eine harte Schattenstufe, Glanzkanten auf Metall. Licht/Schatten in die Textur gemalt, **keine** Konturlinie. |
-| Gesicht | **wie Leon**: mittelgroße Anime-Augen mit klarer Irisfarbe, schmale Nase, kleiner Mund; Helden entschlossen bis neutral, Gegner grimmig/verschlagen. |
+| Gesicht | **wie Leon**: mittelgroße Anime-Augen mit klarer Irisfarbe, schmale Nase, kleiner Mund. Helden tragen eine **Grundstimmung passend zu ihrer Persönlichkeit** (z. B. verschmitzt, ernst, verträumt, hitzköpfig; gelockert am 10.10.2026), Gegner grimmig/verschlagen. |
 | Farben | Richtwert: **1 Hauptfarbe** (dominante Stofffläche) + **1 Akzentfarbe** (Säume, Embleme, Schmuck). Neutrale Basis für alle: Schwarz (Unteranzug), Braun (Leder), Messing (Schnallen). Farben dürfen sich zwischen Figuren wiederholen – unterscheidbar werden sie über **Silhouette, Rolle und Ausstattung**. Je höher die Seltenheit, desto eigenständiger die Farbgebung. |
 
 ## 2. Feste Material-Bausteine (auf allen Figuren)

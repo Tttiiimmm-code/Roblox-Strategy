@@ -145,7 +145,19 @@ Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein ze
 
 Prüfungen: `scripts/check.ps1`, `scripts/test-levelgen.ps1` (90.000 normale Level, 5.000 Wahlabfolgen, 12.000 Bosskarten), `scripts/test-tutorial.ps1`, `scripts/test-run.ps1` (34.006 Stub-Prüfungen), `scripts/test-run-ui.ps1` (109 UI-Anschlussprüfungen) und Rojo-Build. Automatische Prüfungen simulieren kein echtes Rendering, Roblox-Replikation oder Handybedienung; manuelle Phase-3-Checkboxen in PLAN.md bleiben offen, Claude-Review ausstehend.
 
+## Entscheidungen 10.10.2026 – Designsystem, Endlosmodus, Klassen
+- **Designsystem „Throne Tales“** (Artifact: https://claude.ai/artifact/GsncXyUBtQh3UymyBhtbfD) ist Richtschnur für UI und Optik: Y2K-Fantasy, hoher Coolnessfaktor, einheitlicher Stil für UI und Welt. Leitziele: unendlich spielbar, jeder Lauf macht sichtbar stärker, Persönlichkeit jedes Helden am Design erkennbar, viele Klassen und Gegnertypen wie in Fire Emblem.
+- **Aufstiegsklassen sind gewünscht** (Grundklasse → Aufstiegsklasse wie in Fire Emblem). Klassenliste nach Bewegungsart (Fuß, Pferd, Flug, Rüstung) laut Designsystem `ClassRoster` gilt als Zielbild.
+- **Gegnertypen** entstehen als Klasse × Gebietsfraktion × Rang (Gegner, Elite, Miniboss, Boss).
+- **Gebiete frei erweiterbar:** Neue Gebiete müssen sich ohne Umbau ergänzen lassen (eigene Palette, Fraktion, Gefahr, Kartenstücke). Jetzt zuerst die **ersten 4 Gebiete fertigstellen**.
+- **Endlosmodus:** Nach dem Vulkan geht es mit dem gesammelten Fortschritt wieder im Grasland weiter (**Zyklus 2, 3, …**), Gegner werden mit jedem Zyklus stärker.
+- **Relikte und Segen** sind als zusätzliche Lauf-Variation interessant (Regeln offen, siehe unten).
+- **Gesichter:** Die Stil-Guide-Regel „entschlossen bis neutral“ ist gelockert; jeder Held darf eine Grundstimmung tragen (siehe `docs/stil-guide.md`).
+
 ## Offene Punkte (vor der jeweiligen Etappe klären)
+- Endlosmodus: Wie stark wird jeder Zyklus (Gegnerlevel, Elite-Anteil, Aufstiegsklassen bei Gegnern)? Teamgröße über 6? Endet der Lauf nur durch Niederlage/Aufgeben? Punktzahl und Bestenliste je Zyklus?
+- Relikte und Segen: Was genau ist ein Relikt (passiv für den ganzen Lauf?) und was ein Segen (Wahl 1 aus 3, z. B. nach Bossen?), wie viele, Quelle, Seltenheiten.
+- Aufstieg: Wann und wie (Level, Item, Lager)? Wechselt die Waffe/das Modell?
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
 - Konkrete Bosse und Minibosse je Gebiet (Namen, Fähigkeiten).
 - Zahlen: Teilheilung in %, Preise (Wiederbeleben, Händler, Notfall-Beschwörung, Rückblende), Belohnungskurve, Punktzahl-Formel, Weiterspielen nach Level 20.
