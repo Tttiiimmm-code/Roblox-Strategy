@@ -122,6 +122,25 @@ local function satellite(parent, state, center, radius, index)
 		CFrame.new(trunk + Vector3.new(0, s.satelliteTreeHeight * 0.4, 0)) * CFrame.Angles(0, math.pi / 4, 0), crown)
 end
 
+local function cloudCluster(parent, position, width, height, count, tint, index, random)
+	local s, puff = Config.ISLAND, Config.ISLAND.cloudPuff
+	local folder = Instance.new("Folder")
+	folder.Name, folder.Parent = "CloudCluster_" .. index, parent
+	folder:SetAttribute("CloudCluster", true)
+	for i = 1, count do
+		local top = i == 1
+		local angle = (i - 2) * math.pi * 2 / (count - 1)
+		local scale = top and puff.topWidth or random:NextNumber(puff.shadeWidth.min, puff.shadeWidth.max)
+		local offset = top and Vector3.zero or Vector3.new(math.cos(angle), 0, math.sin(angle)) * width * puff.spread
+		local diameter = width * scale
+		local lift = height * (top and puff.topLift or puff.shadeLift) - diameter / 2
+		local color = top and s.cloudColor or s.cloudCyanColor:Lerp(s.cloudLilacColor, tint)
+		local ball = part(folder, top and "CloudTop" or "CloudShade", Vector3.new(diameter, diameter, diameter),
+			CFrame.new(position + offset + Vector3.new(0, lift, 0)), color)
+		ball.Shape = Enum.PartType.Ball
+	end
+end
+
 local function skyIslands(board, parent, state, random)
 	local s, T = Config.ISLAND, Config.TILE_SIZE
 	local center = Vector3.new(state.w / 2, s.cloudHeight, state.h / 2)
@@ -130,7 +149,8 @@ local function skyIslands(board, parent, state, random)
 	local baseParts = cells * cells
 	local riverParts = Config.FEEL.waterfallsEnabled and #state.rivers * (2 + Config.FEEL.waterfallFoamCount) or 0
 	local remaining = s.partBudget - IslandBuilder.measure(board) - riverParts - baseParts
-	local count = math.max(0, math.min(random:NextInteger(s.satelliteCount.min, s.satelliteCount.max), math.floor((remaining - 4) / 30)))
+	local cloudReserve = s.cloudCount * s.cloudParts.min
+	local count = math.max(0, math.min(random:NextInteger(s.satelliteCount.min, s.satelliteCount.max), math.floor((remaining - cloudReserve) / s.satellitePartCost)))
 	local phase = random:NextNumber(0, math.pi * 2)
 	for index = 1, count do
 		local angle = phase + (index - 1) * math.pi * 2 / count
@@ -143,23 +163,27 @@ local function skyIslands(board, parent, state, random)
 	for x = 1, cells do for z = 1, cells do
 		part(parent, "CloudSea", Vector3.new(s.cloudTileSize, s.cloudThickness, s.cloudTileSize),
 			CFrame.new(center + Vector3.new((x - (cells + 1) / 2) * s.cloudTileSize, -s.cloudThickness / 2,
-				(z - (cells + 1) / 2) * s.cloudTileSize)), s.cloudColor)
+				(z - (cells + 1) / 2) * s.cloudTileSize)), s.cloudCyanColor:Lerp(s.cloudBaseColor,
+				math.max(math.abs(x - (cells + 1) / 2), math.abs(z - (cells + 1) / 2)) / (cells / 2)))
 	end end
-	local mountainCount = math.min(s.cloudCount, math.floor((s.partBudget - IslandBuilder.measure(board) - riverParts) / 2))
-	for index = 1, mountainCount do
-		local angle = random:NextNumber(0, math.pi * 2)
-		local distance = random:NextNumber(s.cloudInnerTiles * T, s.cloudReachTiles * T * 0.8)
+	local available = s.partBudget - IslandBuilder.measure(board) - riverParts
+	local clusterCount = math.max(0, math.min(s.cloudCount, math.floor(available / s.cloudParts.min)))
+	local perRing = math.ceil(clusterCount / #s.cloudRings)
+	for index = 1, clusterCount do
+		local ringIndex = math.ceil(index / perRing)
+		local ring = s.cloudRings[ringIndex]
+		local angle = phase + (index - 1) * math.pi * 2 / perRing
+		local gap = random:NextNumber(s.cloudGapTiles.min, s.cloudGapTiles.max) * T
+		local position = center + Vector3.new(math.cos(angle) * (state.w / 2 + s.rimTiles.max * T + gap) * ring, 0,
+			math.sin(angle) * (state.h / 2 + s.rimTiles.max * T + gap) * ring)
 		local width = random:NextNumber(s.cloudWidthTiles.min, s.cloudWidthTiles.max) * T
 		local height = random:NextNumber(s.cloudHeightTiles.min, s.cloudHeightTiles.max) * T
-		local cf = CFrame.new(center + Vector3.new(math.cos(angle) * distance, height / 2 - s.facetThickness, math.sin(angle) * distance))
-			* CFrame.Angles(0, angle, 0)
-		local color = s.cloudColor:Lerp(s.horizonColor, distance / (s.cloudReachTiles * T) * 0.3)
-		for _, sign in { -1, 1 } do
-			part(parent, "CloudMountain", Vector3.new(width, height, width / 2), cf * CFrame.new(0, 0, sign * width / 4)
-				* CFrame.Angles(0, sign == 1 and math.pi or 0, 0), color, "WedgePart")
-		end
+		local balls = math.min(random:NextInteger(s.cloudParts.min, s.cloudParts.max), available - (clusterCount - index) * s.cloudParts.min)
+		local tint = math.clamp((ring - 1) / (s.cloudRings[#s.cloudRings] - 1) + random:NextNumber(0, s.cloudPuff.edgeTint), 0, 1)
+		cloudCluster(parent, position, width, height, balls, tint, index, random)
+		available -= balls
 	end
-	board:SetAttribute("IslandCloudMountains", mountainCount)
+	board:SetAttribute("IslandCloudClusters", clusterCount)
 end
 
 function IslandBuilder.measure(board)
@@ -167,7 +191,7 @@ function IslandBuilder.measure(board)
 	for _, object in board:GetDescendants() do
 		if object:IsA("BasePart") and object:GetAttribute("IslandPart") then
 			count += 1
-			triangles += object:IsA("WedgePart") and 8 or 12
+			triangles += object:IsA("WedgePart") and 8 or (object.Shape == Enum.PartType.Ball and Config.ISLAND.cloudBallEstimatedTriangles or 12)
 		end
 	end
 	board:SetAttribute("IslandParts", count)

@@ -17,6 +17,7 @@ function Atmosphere.set(name)
 		if key == "haze" and name == "battle" and Config.ISLAND.enabled then
 			goal = table.clone(goal)
 			goal.Color, goal.Decay = Config.ISLAND.skyColor, Config.ISLAND.horizonColor
+			goal.Density, goal.Haze = Config.ISLAND.battleDensity, Config.ISLAND.battleHaze
 		end
 		-- Neue Effekte und Unschärfe sofort setzen: Standardwerte (z. B. 75 % Tiefenunschärfe)
 		-- bzw. ein Überblenden der Unschärfe ließen Text und Szene kurz verschwommen wirken.

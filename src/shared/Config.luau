@@ -214,7 +214,7 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 	surfaceHeight = -1, edgeReserve = 4, earthTiles = 1, depthTiles = 4.5,
 	rimBrighten = 0.3, -- WIP: Brett-Gras als Mindesthelligkeit, frischer heller Inselrand.
 	cliffEarthTiles = 0.6, cliffStoneTiles = 1, -- WIP: senkrechtes Band vor der Verjüngung.
-	layerScales = { 1, 0.72, 0.38, 0 }, partBudget = 450,
+	layerScales = { 1, 0.46, 0 }, partBudget = 450, -- WIP: zwei Steinstufen sparen Teile für runde Wolken.
 	facetThickness = 0.16, edgeLip = 0.2, edgeOverlap = 1,
 	clusterCount = 10, clusterSize = 3, clusterSpread = 0.45, maxTrees = 18,
 	tree = { height = 1.15, crownWidth = 1.35 }, rock = { height = 0.45, width = 0.65 }, bush = { height = 0.3, width = 0.5 },
@@ -223,10 +223,17 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9, crystalDepth = 0.75,
 	accents = { greenland = Color3.fromRGB(124, 194, 66), swamp = Color3.fromRGB(180, 107, 224),
 		ice = Color3.fromRGB(111, 211, 255), volcano = Color3.fromRGB(255, 122, 26) },
-	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 224, cloudTileSize = 512, cloudCount = 16,
-	cloudWidthTiles = { min = 8, max = 18 }, cloudHeightTiles = { min = 1, max = 3 },
-	cloudInnerTiles = 10, satelliteDepthScale = 1.4, satelliteTreeHeight = 7, satelliteTreeWidth = 5,
-	cloudColor = Color3.fromRGB(244, 241, 255), horizonColor = Color3.fromRGB(201, 168, 255),
+	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 224, cloudTileSize = 1024, cloudCount = 16,
+	cloudWidthTiles = { min = 8, max = 14 }, cloudHeightTiles = { min = 2, max = 3.2 },
+	cloudRings = { 1, 1.8 }, cloudGapTiles = { min = 2, max = 4 }, cloudParts = { min = 3, max = 6 },
+	cloudPuff = { spread = 0.25, topLift = 1, shadeLift = 0.72, topWidth = 0.9,
+		shadeWidth = { min = 0.55, max = 0.85 }, edgeTint = 0.2 },
+	cloudBallEstimatedTriangles = 240, -- WIP: grobe Kugelschätzung, tatsächliches LOD ist geräteabhängig.
+	cloudColor = Color3.fromRGB(249, 248, 255), cloudBaseColor = Color3.fromRGB(194, 183, 224),
+	cloudCyanColor = Color3.fromRGB(186, 221, 232), horizonColor = Color3.fromRGB(201, 168, 255),
+	cloudLilacColor = Color3.fromRGB(222, 207, 239), -- WIP: sanfte Schatten trotz Nutzer-ColorGrading.
+	battleDensity = 0.08, battleHaze = 0.15, -- WIP: Wolkenfarben aus der steilen Spielkamera erhalten.
+	satelliteDepthScale = 1.4, satelliteTreeHeight = 7, satelliteTreeWidth = 5, satellitePartCost = 30,
 	skyColor = Color3.fromRGB(157, 221, 230), foamColor = Color3.fromRGB(242, 251, 255),
 	satelliteCount = { min = 2, max = 4 }, satelliteDistanceTiles = { min = 13, max = 18 },
 	satelliteRadiusTiles = { min = 1.8, max = 2.6 }, satelliteHeight = { min = -10, max = 8 },

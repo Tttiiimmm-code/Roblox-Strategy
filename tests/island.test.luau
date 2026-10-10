@@ -26,7 +26,22 @@ do
 		expect(Island.measure(board) <= s.partBudget, "Inselteilebudget ueberschritten")
 		maxParts = math.max(maxParts, board:GetAttribute("IslandParts"))
 		expect(board:GetAttribute("IslandSatellites") >= 2 and board:GetAttribute("IslandSatellites") <= 4, "Nebeninselzahl")
-		expect(board:GetAttribute("IslandCloudMountains") > 0, "Wolkenberge fehlen")
+		expect(board:GetAttribute("IslandCloudClusters") > 0, "Wolkenhaufen fehlen")
+		local clusters, near = 0, 0
+		for _, folder in board:GetDescendants() do if folder:GetAttribute("CloudCluster") then
+			clusters += 1
+			local balls = folder:GetChildren()
+			expect(#balls >= s.cloudParts.min and #balls <= s.cloudParts.max, "Wolkenhaufen ohne 3-6 Kugeln")
+			local top = folder:FindFirstChild("CloudTop")
+			local dx, dz = math.abs(top.Position.X - state.w / 2), math.abs(top.Position.Z - state.h / 2)
+			if dx <= state.w / 2 + (s.rimTiles.max + s.cloudGapTiles.max) * T
+				and dz <= state.h / 2 + (s.rimTiles.max + s.cloudGapTiles.max) * T then near += 1 end
+			for _, ball in balls do
+				expect(ball.Size.X == ball.Size.Y and ball.Size.Y == ball.Size.Z, "Wolkenkugel flach skaliert")
+				expect((ball.Position - top.Position).Magnitude < (ball.Size.X + top.Size.X) / 2, "Wolkenkugeln getrennt")
+			end
+		end end
+		expect(clusters == board:GetAttribute("IslandCloudClusters") and near >= math.floor(clusters / #s.cloudRings), "Wolkenhaufen nur weit draussen")
 		for _, x in { 0, state.w } do for _, z in { 0, state.h } do
 			expect(Landscape.contains(state, x, z), "Insel umschliesst Brett nicht")
 		end end
@@ -43,6 +58,10 @@ do
 				expect(p.Position.Y == Grid.tileHeight(p:GetAttribute("X"), p:GetAttribute("Y")) - 0.1, "Figuren-/Klickhoehe geaendert")
 			end
 			if not p:GetAttribute("IslandPart") then continue end
+			expect(p.Name ~= "CloudMountain", "Kantiger Wolkenberg bleibt")
+			if p.Name == "CloudTop" or p.Name == "CloudShade" then
+				expect(p.Shape == Enum.PartType.Ball and p.Position.Y + p.Size.Y / 2 < s.surfaceHeight, "Wolkenkugel fehlt/ueber Insel")
+			end
 			expect(p:IsA("BasePart") and not p.CanQuery and not p.CanTouch and not p.CanCollide and not p.CastShadow, "Insel faengt Eingaben ab")
 			expect(p.Size.X > 0 and p.Size.Y > 0 and p.Size.Z > 0, "Ungueltige Inselfacette")
 			expect(p.Material == Enum.Material.SmoothPlastic or p.Material == Enum.Material.Neon, "Inselteil mit Materialtextur")
@@ -70,7 +89,7 @@ do
 				expect(math.abs(p.Position.Y + p.Size.Y / 2 - s.cloudHeight) < 0.001, "Wolkendecke verschoben")
 			end
 		end
-		expect(tiles == Grid.width() * Grid.height(), "Spielbare Felder fehlen")
+			expect(tiles == Grid.width() * Grid.height(), "Spielbare Felder fehlen")
 		expect(earthWalls >= #state.outline and earthWalls == stoneWalls, "Senkrechte Inselwand fehlt")
 		expect(tops == board:GetAttribute("IslandSatellites") and cloudTiles > 0, "Nebeninseln/Wolken unvollstaendig")
 		local expected = Config.FEEL.waterfallsEnabled and #state.rivers or 0
