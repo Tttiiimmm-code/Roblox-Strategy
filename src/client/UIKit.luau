@@ -30,8 +30,6 @@ UIKit.THEME = {
 	gold = Color3.fromRGB(255, 201, 60),
 	goldShade = Color3.fromRGB(201, 138, 18),
 	goldLight = Color3.fromRGB(255, 246, 208),
-	bannerTop = Color3.fromRGB(120, 86, 30),
-	bannerBottom = Color3.fromRGB(30, 20, 50),
 	gem = Color3.fromRGB(110, 232, 255),
 	starEmpty = Color3.fromRGB(74, 80, 104),
 	text = Color3.new(1, 1, 1),
@@ -47,6 +45,8 @@ UIKit.THEME = {
 	display = Enum.Font.LuckiestGuy,
 	tech = Enum.Font.Michroma,
 }
+UIKit.THEME.bannerTop = UIKit.THEME.holoShade
+UIKit.THEME.bannerBottom = UIKit.THEME.panelBottom
 UIKit.THEME.top = UIKit.THEME.panelTop
 UIKit.THEME.bottom = UIKit.THEME.panelBottom
 UIKit.THEME.barBg = UIKit.THEME.panelInset
@@ -62,7 +62,7 @@ local lastHoverSound = -math.huge
 UIKit.METRICS = {
 	smallRadius = 6, buttonRadius = 12, panelRadius = 16, bannerRadius = 24,
 	buttonHeight = 48, primaryHeight = 64, buttonEdge = 5, pressedEdge = 1,
-	panelBorder = 3, cardBorder = 4, shadowOffset = 8, forecastTop = 120,
+	panelBorder = 3, cardBorder = 4, selectedCardBorder = 6, shadowOffset = 8, forecastTop = 120,
 }
 local METRICS = UIKit.METRICS
 
@@ -101,6 +101,31 @@ function UIKit.stroke(parent, color, thickness)
 	return make("UIStroke", {
 		Color = color, Thickness = thickness, ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 	}, parent)
+end
+
+
+-- Der ?u?ere Rand einer Scrollfl?che liegt au?erhalb ihrer abgeschnittenen Kinder.
+function UIKit.bannerBorder(surface)
+	local chrome = UIKit.stroke(surface, THEME.text, METRICS.panelBorder)
+	make("UIGradient", { Color = chromeSequence(), Rotation = 90 }, chrome)
+	local outer = make("Frame", {
+		Name = "BannerOuterBorder", BackgroundTransparency = 1, BorderSizePixel = 0,
+	}, surface.Parent)
+	UIKit.corner(outer, METRICS.bannerRadius + METRICS.panelBorder)
+	UIKit.stroke(outer, THEME.ink, METRICS.panelBorder)
+	local function update()
+		outer.AnchorPoint = surface.AnchorPoint
+		outer.Position = surface.Position + UDim2.fromOffset(
+			METRICS.panelBorder * (2 * surface.AnchorPoint.X - 1), METRICS.panelBorder * (2 * surface.AnchorPoint.Y - 1))
+		outer.Size = surface.Size + UDim2.fromOffset(METRICS.panelBorder * 2, METRICS.panelBorder * 2)
+		outer.ZIndex, outer.Visible = surface.ZIndex, surface.Visible
+	end
+	for _, property in { "Position", "Size", "AnchorPoint", "ZIndex", "Visible" } do
+		surface:GetPropertyChangedSignal(property):Connect(update)
+	end
+	surface.Destroying:Connect(function() outer:Destroy() end)
+	update()
+	return chrome
 end
 
 function UIKit.padding(parent, px)

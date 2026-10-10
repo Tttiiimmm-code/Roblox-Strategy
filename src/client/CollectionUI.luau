@@ -60,9 +60,9 @@ local function buildRecruit(frame)
 	}, frame)
 	art.BackgroundTransparency = 0
 	corner(art, UIKit.METRICS.bannerRadius)
-	UIKit.stroke(art, THEME.gold, 2)
+	UIKit.bannerBorder(art)
 	make("UIGradient", {
-		Color = ColorSequence.new(THEME.bannerTop, THEME.bannerBottom), Rotation = 120,
+		Color = ColorSequence.new(THEME.bannerTop, THEME.bannerBottom), Rotation = 90,
 	}, art)
 	padding(art, 16)
 	UIKit.chromeTitle({
@@ -330,7 +330,7 @@ local function showHeroDetail(heroId)
 	barracks.extra.Text = ("Verschmelzungen: <b>%d / %d</b>  (+%d KP)\nDoppelte Rekrutierungen verschmelzen automatisch."):format(
 		merges, Recruit.MAX_MERGES, merges * Recruit.MERGE_HP)
 	for id, c in barracks.cards do
-		c.stroke.Thickness = id == heroId and 5 or 3
+		c.stroke.Thickness = id == heroId and UIKit.METRICS.selectedCardBorder or UIKit.METRICS.cardBorder
 	end
 end
 
@@ -356,6 +356,8 @@ local function updateBarracks()
 	for heroId, c in barracks.cards do
 		local entry = profile.heroes[heroId]
 		c.badge.Visible = true
+		c.badge.BackgroundColor3 = THEME.panelInset
+		c.badge.TextColor3 = THEME.text
 		local member = campRun and campRun.team[heroId]
 		c.sub.Text = campRun and (member and not member.alive and "Gefallen in diesem Lauf"
 			or table.find(campRun.order, heroId) and "Im Laufteam" or "Für Tausch verfügbar")

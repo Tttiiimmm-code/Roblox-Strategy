@@ -43,8 +43,10 @@ local function buildSide(parent, side, x, color)
 	label({ Text = stats, Font = THEME.bold, TextSize = 23, Position = UDim2.fromOffset(18, 76), Size = UDim2.new(1, -36, 0, 30), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local hp = label({ Text = ("KP %d / %d"):format(unit.hp, unit.maxHp), Font = THEME.bold, TextSize = 22, Position = UDim2.fromOffset(18, 115), Size = UDim2.fromOffset(170, 30), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local bar = make("Frame", { Position = UDim2.fromOffset(194, 118), Size = UDim2.new(1, -212, 0, 25), BackgroundColor3 = THEME.barBg, BorderSizePixel = 0, ClipsDescendants = true }, panel)
-	UIKit.stroke(bar, THEME.goldDark, 1)
+	UIKit.stroke(bar, THEME.ink, 2)
+	UIKit.corner(bar, UIKit.METRICS.smallRadius)
 	local fill = make("Frame", { Size = UDim2.fromScale(unit.hp / unit.maxHp, 1), BackgroundColor3 = UIKit.hpColor(unit.hp / unit.maxHp), BorderSizePixel = 0 }, bar)
+	UIKit.corner(fill, UIKit.METRICS.smallRadius)
 	-- Eine Trennlinie je KP; die Füllung läuft kontinuierlich darunter zurück.
 	for i = 1, unit.maxHp - 1 do
 		make("Frame", { Position = UDim2.fromScale(i / unit.maxHp, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = THEME.barBg, BackgroundTransparency = 0.3, BorderSizePixel = 0 }, bar)
