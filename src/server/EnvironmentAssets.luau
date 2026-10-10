@@ -176,7 +176,24 @@ function EnvironmentAssets.place(category, cframe, opts)
 	local definition = Config.ENVIRONMENT.categories[category]
 	if #variants == 0 or not definition then return nil end
 	local random = randomFor(tostring(opts.key or cframe.Position) .. ":" .. category)
-	local model = variants[random:NextInteger(1, #variants)]:Clone()
+	local preferred = opts.variant or opts.preferred or Config.ENVIRONMENT.preferred[category]
+	-- Der große eigene Felsen gehört ausschließlich an den Rand, nicht in die Brett-Felsmischung.
+	if category == "rock" and preferred ~= "rock_50" then
+		local boardVariants = {}
+		for _, variant in variants do if variant.Name ~= "rock_50" then table.insert(boardVariants, variant) end end
+		variants = boardVariants
+		if #variants == 0 then return nil end
+	end
+	local selected = variants[random:NextInteger(1, #variants)]
+	local found = false
+	if preferred then
+		for _, variant in variants do
+			if variant.Name == preferred then selected, found = variant, true; break end
+		end
+	end
+	if opts.variant and not found then return nil end
+	local model = selected:Clone()
+	model:SetAttribute("EstimatedTriangles", Config.ENVIRONMENT.triangles[selected.Name] or 0)
 	if category == "tree" or category == "bush" then
 		EnvironmentAssets.tintCrowns(model, EnvironmentAssets.crownColor(opts.key or tostring(cframe.Position), opts.palette))
 	end
@@ -221,6 +238,28 @@ function EnvironmentAssets.place(category, cframe, opts)
 	end
 	model.Parent = opts.parent
 	if category == "tree" then EnvironmentAssets.attachRoot(model, opts.key or tostring(cframe.Position)) end
+	return model
+end
+
+-- Das eigene Paket enthält genau ein achsenparalleles Mesh, längs Z.
+function EnvironmentAssets.bridgeVisual(cframe, opts)
+	local template
+	for _, variant in EnvironmentAssets.variants("archbridge") do
+		if variant.Name == Config.ENVIRONMENT.bridge.ownModel then template = variant; break end
+	end
+	if not template then return nil end
+	local model = template:Clone()
+	local parts = {}
+	for _, part in model:GetDescendants() do if part:IsA("BasePart") then table.insert(parts, part) end end
+	if #parts ~= 1 or not parts[1]:IsA("MeshPart") then model:Destroy(); return nil end
+	local part = parts[1]
+	if (part.CFrame:PointToWorldSpace(Vector3.new(0, 1, 0)) - part.Position - Vector3.new(0, 1, 0)).Magnitude > 0.001
+		or (part.CFrame:PointToWorldSpace(Vector3.new(1, 0, 0)) - part.Position - Vector3.new(1, 0, 0)).Magnitude > 0.001 then model:Destroy(); return nil end
+	local settings = Config.ENVIRONMENT.bridge
+	part.Size = Vector3.new(settings.ownWidth, settings.ownHeight, opts.length * Config.TILE_SIZE)
+	part.CFrame = cframe * CFrame.Angles(0, opts.rotation + math.pi / 2, 0) * CFrame.new(0, settings.ownHeight / 2, 0)
+	model:SetAttribute("EstimatedTriangles", Config.ENVIRONMENT.triangles[template.Name])
+	model.Parent = opts.parent
 	return model
 end
 

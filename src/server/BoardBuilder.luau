@@ -131,7 +131,7 @@ local function buildBridges(parent, mapKey)
 		if base == math.huge then continue end
 		local length = crossing.length + 2 * settings.bankOverlap
 		local model = place("archbridge", Vector3.new((crossing.x - 0.5) * T, base, (crossing.y - 0.5) * T), parent,
-			mapKey .. ":crossing:" .. i, { length = length, rotation = crossing.angle })
+			mapKey .. ":crossing:" .. i, { length = length, rotation = crossing.angle, variant = "archbridge_1" })
 		if not model then continue end
 		model:SetAttribute("BridgeLength", length * T)
 		model:SetAttribute("BridgeAlongX", crossing.alongX)
@@ -166,6 +166,56 @@ local function buildBridges(parent, mapKey)
 			model:Destroy()
 			if not bridgeWarning then bridgeWarning = true; warn("Brückenboden nicht messbar; bisherige Part-Brücke als Ersatz") end
 			continue
+		end
+		-- Alte Messung bleibt die Referenz für Ufer; nur das Brückenprofil darf wechseln.
+		local visual = EnvironmentAssets.bridgeVisual(CFrame.new((crossing.x - 0.5) * T, base, (crossing.y - 0.5) * T),
+			{ parent = parent, length = length, rotation = crossing.angle })
+		if visual then
+			visual:SetAttribute("BridgeLength", length * T)
+			visual:SetAttribute("BridgeAlongX", crossing.alongX)
+			local visualParts = {}
+			for _, part in visual:GetDescendants() do if part:IsA("BasePart") then
+				part.CanQuery = true
+				pcall(function() part.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition end)
+				table.insert(visualParts, part)
+			end end
+			params.FilterDescendantsInstances = { visual }
+			local visualBox, visualSize = visual:GetBoundingBox()
+			local function deck(x, y)
+				local ray = workspace:Raycast(Vector3.new((x - 0.5) * T, visualBox.Position.Y + visualSize.Y / 2 + settings.rayMargin,
+					(y - 0.5) * T), Vector3.new(0, -visualSize.Y - 2 * settings.rayMargin, 0), params)
+				return ray and ray.Position.Y
+			end
+			local low, high, safe, bankCount = math.huge, -math.huge, true, 0
+			for _, bank in crossing.banks do
+				local target = samples[Grid.key(bank.x, bank.y)]
+				if not target then safe = false; continue end
+				bankCount += 1
+				-- Ufermitte und tatsächlicher Feldübergang müssen auf gleicher Höhe liegen.
+				local dx = crossing.alongX and (crossing.x > bank.x and 0.5 or -0.5) or 0
+				local dy = not crossing.alongX and (crossing.y > bank.y and 0.5 or -0.5) or 0
+				for _, point in { { bank.x, bank.y }, { bank.x + dx, bank.y + dy } } do
+					local value = deck(point[1], point[2])
+					if not value then safe = false; continue end
+					low, high = math.min(low, target - value), math.max(high, target - value)
+				end
+			end
+			local offset = (low + high) / 2
+			if bankCount ~= 2 or high - low > 2 * settings.footTolerance then safe = false end
+			local profile = {}
+			for _, cell in crossing.cells do
+				local value = deck(cell.x, cell.y)
+				if not value then safe = false else profile[Grid.key(cell.x, cell.y)] = value + offset end
+			end
+			for _, part in visualParts do part.CanQuery = false end
+			if safe then
+				visual:PivotTo(CFrame.new(0, offset, 0) * visual:GetPivot())
+				for key, value in profile do samples[key] = value end
+				model:Destroy()
+			else
+				visual:Destroy()
+				parent:SetAttribute("OwnBridgeFallback", true)
+			end
 		end
 		for key, value in samples do heights[key] = value end
 		for _, cell in crossing.cells do bridgeTiles[Grid.key(cell.x, cell.y)] = true end

@@ -18,6 +18,20 @@ weiter die bisherigen Part-Objekte. Größen stehen in `Config.ENVIRONMENT`.
 
 Herstellung, Größen und Liste: [Umgebungs-Assets](../../docs/umgebung-assets.md).
 
+## Eigene Thronlande-Requisiten
+
+`thronlande_pack.rbxm`: zwölf vom Nutzer mit **3D AI Studio, Modell P2** erstellte
+Modelle, lokal aufbereitet (512-Pixel-Texturen, matte Materialien). Sieben
+`rim_*_1`-Vorlagen, `deco_grass_2`, `deco_flower_4`, `deco_stone_1`, `rock_50`
+und `archbridge_2`; insgesamt 15.890 Dreiecke vor Platzierung.
+Gras/Blumen/Steine bevorzugen die eigenen Vorlagen, fehlendes Paket erhält
+die bisherigen Varianten. `rock_50` wird nur am Inselrand eingesetzt.
+Die eigene Brücke verläuft in der Vorlage längs Z; ihre Spieloptik wird auf
+die bestehende Spannweite, 5,2 Studs Breite und 4,8 Studs Gesamthöhe angepasst.
+Uferhöhen stammen weiterhin aus `archbridge_1`; bei fehlender Vorlage oder
+ungeeigneten Deckübergängen bleibt diese Brücke erhalten. Ohne alte Referenz
+bleibt die bisherige Part-Brücke. Alle Größen sind WIP.
+
 ## Credits (Roblox Creator Store, kostenlos, ohne Skripte)
 
 | Paket-Kategorie | Modell | Urheber | Asset-ID |

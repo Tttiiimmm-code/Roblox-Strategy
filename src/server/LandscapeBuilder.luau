@@ -282,6 +282,108 @@ local function bounds(asset)
 	return lo, hi
 end
 
+function LandscapeBuilder.rimFits(state, lo, hi)
+	local s = Config.ISLAND.rimPlacement
+	local clearance = Config.LANDSCAPE.objectClearance
+	if hi.X > -clearance and lo.X < state.w + clearance and hi.Z > -clearance and lo.Z < state.h + clearance then return false end
+	if hi.Z > state.h and hi.Y > Config.ISLAND.surfaceHeight + s.frontHeight then return false end
+	local hub = Config.HUB_ORIGIN
+	if hi.X > hub.X - Config.LANDSCAPE.hubHalfWidth and lo.X < hub.X + Config.LANDSCAPE.hubHalfWidth
+		and hi.Z > hub.Z - Config.LANDSCAPE.hubHalfDepth and lo.Z < hub.Z + Config.LANDSCAPE.hubHalfDepth then return false end
+	for _, x in { lo.X - s.edgeClearance, hi.X + s.edgeClearance } do
+		for _, z in { lo.Z - s.edgeClearance, hi.Z + s.edgeClearance } do
+			if not LandscapeBuilder.contains(state, x, z) then return false end
+		end
+	end
+	local water = state.region and state.region.water or Config.WATER
+	local function nearChannel(x, z, dx, dz, width)
+		local alongMax, acrossMin, acrossMax = -math.huge, math.huge, -math.huge
+		for _, px in { lo.X, hi.X } do for _, pz in { lo.Z, hi.Z } do
+			alongMax = math.max(alongMax, (px - x) * dx + (pz - z) * dz)
+			local across = (px - x) * dz - (pz - z) * dx
+			acrossMin, acrossMax = math.min(acrossMin, across), math.max(acrossMax, across)
+		end end
+		return alongMax >= -s.waterClearance and acrossMin < width + s.waterClearance and acrossMax > -width - s.waterClearance
+	end
+	for _, river in state.rivers do
+		if nearChannel(river.x, river.z, river.dx, river.dz, Config.TILE_SIZE * water.extensionWidth) then return false end
+	end
+	local fall = state.waterfall
+	if fall and nearChannel((fall.x - 0.5) * Config.TILE_SIZE, (fall.y - 0.5) * Config.TILE_SIZE,
+		fall.dx, fall.dy, Config.TILE_SIZE * Config.FEEL.waterfallWidth / 2) then return false end
+	return true
+end
+
+local function rimDetails(state, board)
+	local started, s, T = os.clock(), Config.ISLAND, Config.TILE_SIZE
+	local random = Random.new(hash(state.key .. ":rim"))
+	local occupied, placed, triangles = {}, 0, 0
+	for _, asset in board:GetChildren() do if asset:GetAttribute("LandscapeDetail") then
+		local lo, hi = bounds(asset)
+		table.insert(occupied, { lo = lo, hi = hi })
+	end end
+	local function put(category, x, z, key, scatter)
+		local height, material = LandscapeBuilder.surface(state, x, z)
+		if not height or material == Enum.Material.Water then return end
+		local opts = { parent = board, key = key }
+		if category == "rock" then opts.preferred = "rock_50" end
+		if scatter then
+			opts.height = category == "rock" and s.rimScatter.rockHeight or s.rimScatter.height
+			opts.width = category == "rock" and s.rimScatter.rockWidth or s.rimScatter.width
+		end
+		local asset = EnvironmentAssets.place(category, CFrame.new(x, height, z), opts)
+		if not asset then return end
+		local lo, hi = bounds(asset)
+		local safe = LandscapeBuilder.rimFits(state, lo, hi)
+		for _, other in occupied do
+			local gap = s.rimPlacement.overlapClearance
+			if hi.X + gap > other.lo.X and lo.X - gap < other.hi.X and hi.Z + gap > other.lo.Z and lo.Z - gap < other.hi.Z then safe = false; break end
+		end
+		if not safe then asset:Destroy(); return end
+		asset:SetAttribute("LandscapeDetail", "prop")
+		asset:SetAttribute("RimCategory", category)
+		table.insert(occupied, { lo = lo, hi = hi })
+		placed += 1
+		triangles += asset:GetAttribute("EstimatedTriangles") or 0
+	end
+	for group, categories in s.rimGroups do
+		local edge = (group - 1) % 3 + 1
+		local distance = s.rimPlacement.distance * T
+		local x = edge == 1 and state.w * group / (#s.rimGroups + 1) or (edge == 2 and -distance or state.w + distance)
+		local z = edge == 1 and -distance or state.h * group / (#s.rimGroups + 1)
+		for index, category in categories do
+			local offset = (index - (#categories + 1) / 2) * s.rimPlacement.groupSpacing * T
+			for attempt = 1, s.rimPlacement.attempts do
+				local before = placed
+				local jitter = attempt == 1 and 0 or random:NextNumber(-s.rimPlacement.jitter, s.rimPlacement.jitter) * T
+				local px, pz = x + (edge == 1 and offset + jitter or 0), z + (edge ~= 1 and offset + jitter or 0)
+				-- Bei blockiertem Gruppenplatz einen freien Abschnitt derselben Hinter-/Seitenkante suchen.
+				if attempt > s.rimPlacement.attempts / 2 then
+					if edge == 1 then px = random:NextNumber(0, state.w) else pz = random:NextNumber(0, state.h) end
+				end
+				put(category, px, pz,
+					state.key .. ":rim:group:" .. group .. ":" .. index, false)
+				if placed > before then break end
+			end
+		end
+	end
+	for index = 1, s.rimScatter.count do
+		local category = s.rimScatter.categories[(index - 1) % #s.rimScatter.categories + 1]
+		for attempt = 1, s.rimPlacement.attempts do
+			local before = placed
+			local edge = random:NextInteger(1, 4)
+			local distance = random:NextNumber(s.rimPlacement.scatterDistance.min, s.rimTiles.min - s.rimPlacement.scatterDistance.inset) * T
+			local x = edge <= 2 and random:NextNumber(0, state.w) or (edge == 3 and -distance or state.w + distance)
+			local z = edge <= 2 and (edge == 1 and -distance or state.h + distance) or random:NextNumber(0, state.h)
+			put(category, x, z, state.key .. ":rim:scatter:" .. index, true)
+			if placed > before then break end
+		end
+	end
+	board:SetAttribute("IslandProps", placed)
+	board:SetAttribute("IslandPropEstimatedTriangles", triangles)
+	board:SetAttribute("IslandPropBuildMs", (os.clock() - started) * 1000)
+end
+
 local function details(state, board)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local random = Random.new(hash(state.key .. ":clusters"))
@@ -316,24 +418,7 @@ local function details(state, board)
 			if kind == "tree" then trees += 1 end
 		end
 	end
-	if state.island then
-		local count = random:NextInteger(s.propCount.min, s.propCount.max)
-		local placed = 0
-		for index = 1, count do
-			local x, z = state.w * index / (count + 1), state.h + 2.2 * T
-			local height, material = LandscapeBuilder.surface(state, x, z)
-			if not height or material == Enum.Material.Water then continue end
-			local asset = EnvironmentAssets.place(s.propCategories[(index - 1) % #s.propCategories + 1], CFrame.new(x, height, z),
-				{ parent = board, key = state.key .. ":prop:" .. index, height = 0.5, width = 1 })
-			if asset then
-				local lo, hi = bounds(asset)
-				if lo.Z <= state.h + s.objectClearance or not LandscapeBuilder.contains(state, lo.X, lo.Z)
-					or not LandscapeBuilder.contains(state, hi.X, hi.Z) then asset:Destroy()
-				else asset:SetAttribute("LandscapeDetail", "prop"); placed += 1 end
-			end
-		end
-		board:SetAttribute("IslandProps", placed)
-	end
+	if state.island then rimDetails(state, board) end
 	board:SetAttribute("LandscapeTrees", trees)
 end
 

@@ -106,6 +106,8 @@ def import_model(args, report):
 		if layer.name != 'UV_alt':
 			obj.data.uv_layers.remove(layer)
 	angle = {'+X': -math.pi / 2, '-X': math.pi / 2, '+Y': math.pi, '-Y': 0}[args.front]
+	# GLB nutzt Quaternionen; vor der Frontkorrektur explizit auf Euler umstellen.
+	obj.rotation_mode = 'XYZ'
 	obj.rotation_euler.z = angle
 	bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 	low, high = bounds(obj)
@@ -161,6 +163,18 @@ def clean_geometry(obj, args, report):
 	bm = bmesh.new()
 	bm.from_mesh(obj.data)
 	bmesh.ops.triangulate(bm, faces=list(bm.faces))
+	if args.prop:
+		# Decimate kann deckungsgleiche Restflächen erzeugen, die beim Re-Import verschwinden.
+		bm.verts.index_update()
+		seen, duplicates = set(), []
+		for face in bm.faces:
+			key = tuple(sorted(vertex.index for vertex in face.verts))
+			if key in seen:
+				duplicates.append(face)
+			else:
+				seen.add(key)
+		report['duplicate_faces_removed'] = len(duplicates)
+		bmesh.ops.delete(bm, geom=duplicates, context='FACES_ONLY')
 	bm.to_mesh(obj.data)
 	bm.free()
 	bpy.ops.object.shade_smooth_by_angle(angle=math.radians(40), keep_sharp_edges=False)
@@ -576,7 +590,7 @@ def proof_images(obj, original, args, report):
 	mask = (before[:, :, 3] >= 250) & (after[:, :, 3] >= 250)
 	if not np.any(mask):
 		raise ValueError('Keine Figurpixel im Farbtreue-Check; Prüfrender fehlgeschlagen.')
-	deviation = np.abs(before[:, :, :3].astype(float) - after[:, :, :3].astype(float))[mask].mean(axis=0)
+	deviation = np.abs(before[:, :, :3][mask].astype(np.int16) - after[:, :, :3][mask].astype(np.int16)).mean(axis=0)
 	report['color_deviation_channels'] = deviation.tolist()
 	report['color_deviation'] = float(deviation.mean())
 	report['color_pixels'] = int(mask.sum())
@@ -662,6 +676,8 @@ def write_report(args, report, started):
 		f'Farbtreue-Grenze: 12 / 255 pro Kanal; bei Cel nur informativ',
 		f'Laufzeit: {time.monotonic() - started:.2f} s',
 		'Studio-Test: ungetestet']
+	if args.prop:
+		lines.append(f"Deckungsgleiche Restflächen entfernt: {report['duplicate_faces_removed']}")
 	if args.cel:
 		lines.extend([f"Cel-Farben Soll/Ist: {args.cel_colors} / {report['cel_colors']}",
 			f"Cel-Körperpixel: {report['cel_body_pixels']}; geschützte Kopf-Pixel: {report['cel_head_pixels']}",
