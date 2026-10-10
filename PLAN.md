@@ -16,7 +16,7 @@ Branch: `feature/ui-designsystem` (weiterarbeiten, Stand nach Devlog #40)
 
 ## Schritte
 
-- [ ] 1. **Fensterhintergrund in der richtigen Ebene** – `UIKit.panel`
+- [x] 1. **Fensterhintergrund in der richtigen Ebene** – `UIKit.panel`
   - Alle Deko-Teile des Fensters (`Background`, `Shadow`, `Glass`, `InnerLight`, `OuterBorder`, `CrownJewel`) liegen in derselben Ebene wie das Fenster selbst (`ZIndex = f.ZIndex`) und folgen späteren `ZIndex`-Änderungen. Sie müssen trotzdem **unter** dem Fensterinhalt liegen – auch dann, wenn Inhalte ihren Standard-ZIndex 1 behalten oder genau den ZIndex des Fensters haben. Lösung frei (z. B. Inhalt-ZIndex beim Hinzufügen auf mindestens `f.ZIndex` anheben, oder Deko konsequent in eigener Ebene), in den Notizen begründen.
   - Funktioniert in Global- **und** Sibling-ScreenGuis (`BattleScene`).
   - Akzeptanz (Studio, je ein Bild): „Neue Verbündete“ nach einem echten Einzelruf, „Wahrscheinlichkeiten“, Level-Up-Fenster, Laufergebnis/Lauf-Fenster, Ladebildschirm. Hintergrund deckend, nichts vom Fenster dahinter lesbar, alle Inhalte sichtbar.
@@ -60,3 +60,5 @@ Branch: `feature/ui-designsystem` (weiterarbeiten, Stand nach Devlog #40)
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
+
+- Schritt 1: Eigene Fensterdeko folgt `f.ZIndex`; Inhaltsobjekte werden mindestens auf `f.ZIndex + 1`, beschriftete TextButtons auf `+2` angehoben, damit ihre Jelly-Fl?chen (`Button.ZIndex - 1`) unter dem Text bleiben. H?here Inhaltswerte bleiben erhalten; neue/umgeh?ngte Inhalte und sp?tere ZIndex-Zuweisungen werden ereignisbasiert erfasst. Standardhintergrund jetzt Transparenz 0: 0,04 lie? dahinterliegende Schrift noch schwach durchscheinen. Alle f?nf geforderten Fenstertypen plus Laufergebnis im echten Ort im Play-Modus bildgepr?ft. Zwei echte Einzelrufe mit jeweils 50 tempor?r erg?nzten Edelsteinen; Bestand danach wieder 3, Ruf-/Verschmelzungsfortschritt gem?? erlaubtem Spielstandtest ge?ndert. Level-Up/Laufergebnis/Ladekarte als UI-Darstellungsfixtures, Laufwahl mit realem Profil. MCP liefert keine lokalen Screenshotdateien; Bilder im Werkzeugergebnis betrachtet. Unabh?ngiges Review bleibt Claude vorbehalten.

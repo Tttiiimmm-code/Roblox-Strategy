@@ -231,7 +231,7 @@ function UIKit.panel(props, parent)
 	props.Animated = nil
 	local jewel = props.Jewel ~= false
 	props.Jewel = nil
-	local transparency = props.BackgroundTransparency or 0.04
+	local transparency = props.BackgroundTransparency or 0
 	props.BackgroundTransparency = 1
 	props.BorderSizePixel = 0
 	local f = make(animated and "CanvasGroup" or "Frame", props, parent)
@@ -240,13 +240,13 @@ function UIKit.panel(props, parent)
 	make("UIGradient", { Color = chromeSequence(), Rotation = 90 }, chrome)
 	local background = make("Frame", {
 		Name = "Background", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = transparency, BorderSizePixel = 0, ZIndex = 0,
+		BackgroundTransparency = transparency, BorderSizePixel = 0, ZIndex = f.ZIndex,
 	}, f)
 	UIKit.corner(background, METRICS.panelRadius)
 	make("UIGradient", { Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90 }, background)
 	local outer = make("Frame", {
 		Name = "OuterBorder", Position = UDim2.fromOffset(-3, -3), Size = UDim2.new(1, 6, 1, 6),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 0,
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = f.ZIndex,
 	}, background)
 	UIKit.corner(outer, METRICS.panelRadius + METRICS.panelBorder)
 	UIKit.stroke(outer, THEME.ink, METRICS.panelBorder)
@@ -254,7 +254,7 @@ function UIKit.panel(props, parent)
 		local shadow = make("Frame", {
 			Name = "Shadow", Position = UDim2.fromOffset(0, METRICS.shadowOffset),
 			Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.ink,
-			BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 0,
+			BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = f.ZIndex,
 		}, background)
 		UIKit.corner(shadow, METRICS.panelRadius)
 		-- Gleicher ZIndex: zuerst zeichnen, dann Glas und Inhalt.
@@ -271,7 +271,7 @@ function UIKit.panel(props, parent)
 	end
 	local reflection = make("Frame", {
 		Name = "Glass", Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.text,
-		BorderSizePixel = 0, ZIndex = 0,
+		BorderSizePixel = 0, ZIndex = f.ZIndex,
 	}, background)
 	UIKit.corner(reflection, METRICS.panelRadius)
 	make("UIGradient", {
@@ -281,7 +281,7 @@ function UIKit.panel(props, parent)
 	}, reflection)
 	make("Frame", {
 		Name = "InnerLight", Position = UDim2.fromOffset(16, 3), Size = UDim2.new(1, -32, 0, 1),
-		BackgroundColor3 = THEME.panelLine, BorderSizePixel = 0, ZIndex = 0,
+		BackgroundColor3 = THEME.panelLine, BorderSizePixel = 0, ZIndex = f.ZIndex,
 	}, background)
 	if jewel then
 		local gem = make("Frame", {
@@ -305,6 +305,42 @@ function UIKit.panel(props, parent)
 		}, face)
 		UIKit.corner(gleam, 2)
 	end
+	-- Eigene Deko teilt die Fensterebene; Inhalt bekommt stets eine Ebene dar?ber.
+	local decorations = { [background] = true }
+	for _, object in background:GetDescendants() do
+		if object:IsA("GuiObject") then decorations[object] = true end
+	end
+	local shadow = f:FindFirstChild("Shadow")
+	if shadow then decorations[shadow] = true end
+	local contentConnections = {}
+	local function raiseContent(object)
+		local minimum = f.ZIndex + (object:IsA("TextButton") and object.Text ~= "" and 2 or 1)
+		if object.ZIndex < minimum then object.ZIndex = minimum end
+	end
+	local function watchContent(object)
+		if not object:IsA("GuiObject") or decorations[object] or contentConnections[object] then return end
+		raiseContent(object)
+		contentConnections[object] = object:GetPropertyChangedSignal("ZIndex"):Connect(function()
+			raiseContent(object)
+		end)
+	end
+	local function updateLayers()
+		for object in decorations do object.ZIndex = f.ZIndex end
+		for object in contentConnections do raiseContent(object) end
+	end
+	f.DescendantAdded:Connect(function(object)
+		watchContent(object)
+		for _, child in object:GetDescendants() do watchContent(child) end
+	end)
+	f.DescendantRemoving:Connect(function(object)
+		local connection = contentConnections[object]
+		if connection then connection:Disconnect(); contentConnections[object] = nil end
+	end)
+	f:GetPropertyChangedSignal("ZIndex"):Connect(updateLayers)
+	f.Destroying:Connect(function()
+		for _, connection in contentConnections do connection:Disconnect() end
+	end)
+	updateLayers()
 	return f
 end
 
