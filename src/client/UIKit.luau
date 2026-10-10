@@ -1,5 +1,6 @@
 -- Gemeinsame UI-Bausteine im Fire-Emblem-Stil: Farben, Fenster, Buttons, Balken, Skalierung
 local TweenService = game:GetService("TweenService")
+local TextService = game:GetService("TextService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
@@ -104,7 +105,7 @@ function UIKit.stroke(parent, color, thickness)
 end
 
 
--- Der ?u?ere Rand einer Scrollfl?che liegt au?erhalb ihrer abgeschnittenen Kinder.
+-- Der äußere Rand einer Scrollfläche liegt außerhalb ihrer abgeschnittenen Kinder.
 function UIKit.bannerBorder(surface)
 	local chrome = UIKit.stroke(surface, THEME.text, METRICS.panelBorder)
 	make("UIGradient", { Color = chromeSequence(), Rotation = 90 }, chrome)
@@ -141,20 +142,56 @@ function UIKit.padding(parent, px)
 	}, parent)
 end
 
--- Konturen folgen auch später gesetzten Schriften und Textgrößen.
+-- TextBounds enthält die gerenderte Größe einschließlich TextScaled/UIScale.
+local function displayedTextSize(text)
+	local bounds = text.TextBounds
+	if bounds.Y <= 0 then return text.TextSize end
+	local content = text.ContentText
+	local _, breaks = content:gsub("\n", "")
+	if not text.TextWrapped then return bounds.Y / (breaks + 1) / text.LineHeight end
+	-- Umgebrochene Konturtexte sind selten; logarithmisch statt pro Frame messen.
+	local low, high = 1, math.ceil(bounds.Y)
+	while low < high do
+		local candidate = math.ceil((low + high) / 2)
+		local measured = TextService:GetTextSize(content, candidate, text.Font, Vector2.new(bounds.X + 1, 100000))
+		if measured.Y * text.LineHeight <= bounds.Y + 1 then low = candidate else high = candidate - 1 end
+	end
+	return low
+end
+
+-- Konturen folgen Layout?nderungen; Transparenz?nderungen ben?tigen keine Schriftmessung.
 function UIKit.outline(text, enabled, thickness)
 	local outline = make("UIStroke", {
 		Name = "TextOutline", Color = THEME.ink, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 	}, text)
-	local function update()
+	local function updateAppearance()
 		outline.Enabled = enabled ~= false and (text.Font == THEME.bold or text.Font == THEME.display)
-		outline.Thickness = thickness or (text.TextSize <= 16 and 1.5 or text.TextSize < 32 and 2 or 3)
 		outline.Transparency = text.TextTransparency
 	end
-	text:GetPropertyChangedSignal("Font"):Connect(update)
-	text:GetPropertyChangedSignal("TextSize"):Connect(update)
-	text:GetPropertyChangedSignal("TextTransparency"):Connect(update)
-	update()
+	local function updateSize()
+		updateAppearance()
+		if not outline.Enabled then return end
+		local size = displayedTextSize(text)
+		local limit = size < 12 and 1 or size <= 16 and 1.5 or size < 32 and 2 or 3
+		outline.Thickness = math.min(thickness or limit, limit)
+		updateAppearance()
+	end
+	local pending = false
+	local function scheduleSize()
+		if pending then return end
+		pending = true
+		task.defer(function()
+			pending = false
+			if text.Parent then updateSize() end
+		end)
+	end
+	text:GetPropertyChangedSignal("Font"):Connect(updateSize)
+	text:GetPropertyChangedSignal("TextSize"):Connect(updateSize)
+	text:GetPropertyChangedSignal("TextTransparency"):Connect(updateAppearance)
+	for _, property in { "TextBounds", "AbsoluteSize", "TextScaled", "TextWrapped", "ContentText", "LineHeight" } do
+		text:GetPropertyChangedSignal(property):Connect(scheduleSize)
+	end
+	updateSize()
 	return outline
 end
 
@@ -333,7 +370,7 @@ function UIKit.panel(props, parent)
 		}, face)
 		UIKit.corner(gleam, 2)
 	end
-	-- AutomaticSize darf keine R?ckkopplung mit gepolsterter, ?berstehender Deko bilden.
+	-- AutomaticSize darf keine Rückkopplung mit gepolsterter, überstehender Deko bilden.
 	local automaticGradient = make("UIGradient", {
 		Name = "AutomaticGradient", Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90,
 	}, f)
