@@ -56,10 +56,6 @@ function CameraController.shake(strength, duration)
 	shakeStrength, shakeDuration, shakeTime = strength, math.max(duration, 0.001), 0
 end
 
-local function clampFocus()
-	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), focus.Y, math.clamp(focus.Z, 0, bounds.Z))
-end
-
 local function maximumZoom()
 	local camera, c = workspace.CurrentCamera, Config.CAMERA
 	local viewport = camera.ViewportSize
@@ -67,13 +63,29 @@ local function maximumZoom()
 	return Config.overviewZoom(bounds, camera.FieldOfView, aspect)
 end
 
+local function defaultZoom()
+	return math.clamp(math.max(bounds.X, bounds.Z) * Config.CAMERA.zoomDefaultScale, Config.CAMERA.zoomDefaultMin,
+		math.min(Config.CAMERA.zoomDefaultMax, maximumZoom()))
+end
+
+local function clampFocus()
+	local inset = 0
+	if Config.ISLAND.enabled then
+		-- Erst beim Herauszoomen wird der Fokus Richtung Brettmitte begrenzt.
+		local normal = defaultZoom()
+		inset = Config.ISLAND.panInset * math.clamp((zoom - normal) / math.max(0.001, maximumZoom() - normal), 0, 1)
+	end
+	focus = Vector3.new(math.clamp(focus.X, bounds.X * inset, bounds.X * (1 - inset)), focus.Y,
+		math.clamp(focus.Z, bounds.Z * inset, bounds.Z * (1 - inset)))
+end
+
 function CameraController.setBounds(center, size, startFocus)
 	saved, transition = nil, nil
 	shakeStrength = 0
 	focus = startFocus or center
 	bounds = size
+	zoom = defaultZoom()
 	clampFocus()
-	zoom = math.clamp(math.max(size.X, size.Z) * Config.CAMERA.zoomDefaultScale, Config.CAMERA.zoomDefaultMin, math.min(Config.CAMERA.zoomDefaultMax, maximumZoom()))
 end
 
 -- Bildschirm-Verschiebung in Pixeln ("Karte greifen")

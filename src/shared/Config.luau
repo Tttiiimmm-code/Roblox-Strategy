@@ -21,12 +21,14 @@ Config.CAMERA = { zoomMin = 30, zoomDefaultMin = 45, zoomDefaultMax = 120,
 	fovMin = 60, fovMax = 75, aspectMin = 4 / 3, aspectMax = 21 / 9, focusHeightReserve = 12 }
 
 -- Die Brettdiagonale als Umkreis passt bei jeder Drehung in beide Bildachsen.
-function Config.overviewZoom(size, fov, aspect)
+function Config.overviewZoom(size, fov, aspect, includeIsland)
 	local c = Config.CAMERA
 	local vertical = math.rad(math.clamp(fov, c.fovMin, c.fovMax)) / 2
 	local horizontal = math.atan(math.tan(vertical) * aspect)
-	return math.max(c.zoomMin, math.sqrt(size.X ^ 2 + size.Z ^ 2) / 2
-		/ math.sin(math.min(vertical, horizontal)) * c.overviewPadding)
+	local rim = Config.ISLAND and Config.ISLAND.enabled and includeIsland ~= false and Config.ISLAND.rimTiles.max * Config.TILE_SIZE or 0
+	local padding = rim > 0 and Config.ISLAND.overviewPadding or 1
+	return math.max(c.zoomMin, math.sqrt((size.X + rim * 2) ^ 2 + (size.Z + rim * 2) ^ 2) / 2
+		/ math.sin(math.min(vertical, horizontal)) * c.overviewPadding * padding)
 end
 
 -- Reichweite des fernsten unteren Sichtstrahls auf dem flachen Fernboden.
@@ -41,7 +43,7 @@ end
 
 function Config.landscapeMargin(size)
 	local c = Config.CAMERA
-	local distance = Config.overviewZoom(size, c.fovMin, c.aspectMin)
+	local distance = Config.overviewZoom(size, c.fovMin, c.aspectMin, false)
 	return Config.viewReach(distance, c.fovMax, c.aspectMax) + Config.LANDSCAPE.viewSafetyTiles * Config.TILE_SIZE
 end
 
