@@ -142,7 +142,7 @@ end
 -- Vollständige Liste aller Ergebnisse mit Prozentwerten (Pflicht bei Zufallsitems gegen Robux)
 local function buildOdds(root)
 	local overlay = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45,
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop, BackgroundTransparency = 0.35,
 		Visible = false, ZIndex = 20,
 	}, root)
 	odds.frame = overlay
@@ -200,7 +200,7 @@ end
 -- Enthüllung nach dem Ruf
 local function buildResults(root)
 	local overlay = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35,
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop, BackgroundTransparency = 0.35,
 		Visible = false, ZIndex = 30,
 	}, root)
 	results.frame = overlay

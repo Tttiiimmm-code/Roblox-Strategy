@@ -122,7 +122,7 @@ end
 -- Ergebnis ---------------------------------------------------------------------------
 local function buildResult(root)
 	local overlay = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45,
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop, BackgroundTransparency = 0.35,
 		Visible = false, ZIndex = 10,
 	}, root)
 	result.frame = overlay
@@ -268,7 +268,7 @@ end
 -- Erste Wahl mit ausdrücklicher Bestätigung beim Überspringen.
 local function buildWelcome(root)
 	welcome.frame = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0),
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop,
 		BackgroundTransparency = 0.35, Active = true, Visible = false, ZIndex = 60,
 	}, root)
 	local box = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),

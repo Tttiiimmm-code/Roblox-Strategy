@@ -271,7 +271,7 @@ function RunUI.init(root, cbs)
 	callbacks = cbs
 	frame = panel({ Name = "RunWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.new(1, -64, 1, -64), Visible = false }, root)
-	confirmation = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0),
+	confirmation = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop,
 		BackgroundTransparency = 0.35, BorderSizePixel = 0, Active = true, Visible = false, ZIndex = 50 }, root)
 	local dialog = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(680, 290), ZIndex = 51 }, confirmation)

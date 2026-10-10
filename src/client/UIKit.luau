@@ -55,6 +55,20 @@ UIKit.GOLD_HEX = "#ffc93c"
 local THEME = UIKit.THEME
 local lastHoverSound = -math.huge
 
+UIKit.METRICS = {
+	smallRadius = 6, buttonRadius = 12, panelRadius = 16, bannerRadius = 24,
+	buttonHeight = 48, primaryHeight = 64, buttonEdge = 5, pressedEdge = 1,
+	panelBorder = 3, cardBorder = 4, shadowOffset = 8,
+}
+local METRICS = UIKit.METRICS
+
+local function chromeSequence()
+	return ColorSequence.new({
+		ColorSequenceKeypoint.new(0, THEME.chromeLight), ColorSequenceKeypoint.new(0.49, THEME.chromeMid),
+		ColorSequenceKeypoint.new(0.5, THEME.chromeDark), ColorSequenceKeypoint.new(1, THEME.chromeLight),
+	})
+end
+
 UIKit.BUTTON_STYLES = {
 	default = { Color3.fromRGB(50, 68, 128), Color3.fromRGB(76, 100, 172) },
 	primary = { Color3.fromRGB(176, 132, 40), Color3.fromRGB(214, 166, 60) },
@@ -173,22 +187,85 @@ function UIKit.textList(props, parent, gap)
 	return list
 end
 
--- Blaues Fenster mit Verlauf und Goldrand
+-- Dekoration bleibt am Hintergrund, damit padding nur den Inhalt verschiebt.
 function UIKit.panel(props, parent)
 	local animated = props.Animated
 	props.Animated = nil
+	local jewel = props.Jewel ~= false
+	props.Jewel = nil
 	local transparency = props.BackgroundTransparency or 0.04
 	props.BackgroundTransparency = 1
 	props.BorderSizePixel = 0
 	local f = make(animated and "CanvasGroup" or "Frame", props, parent)
+	UIKit.corner(f, METRICS.panelRadius)
+	local chrome = UIKit.stroke(f, THEME.text, METRICS.panelBorder)
+	make("UIGradient", { Color = chromeSequence(), Rotation = 90 }, chrome)
 	local background = make("Frame", {
 		Name = "Background", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = transparency, BorderSizePixel = 0, ZIndex = 0,
 	}, f)
-	UIKit.corner(background, 8)
+	UIKit.corner(background, METRICS.panelRadius)
 	make("UIGradient", { Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90 }, background)
-	UIKit.corner(f, 8)
-	UIKit.stroke(f, THEME.gold, 2)
+	local outer = make("Frame", {
+		Name = "OuterBorder", Position = UDim2.fromOffset(-3, -3), Size = UDim2.new(1, 6, 1, 6),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 0,
+	}, background)
+	UIKit.corner(outer, METRICS.panelRadius + METRICS.panelBorder)
+	UIKit.stroke(outer, THEME.ink, METRICS.panelBorder)
+	if not animated then
+		local shadow = make("Frame", {
+			Name = "Shadow", Position = UDim2.fromOffset(0, METRICS.shadowOffset),
+			Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.ink,
+			BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 0,
+		}, background)
+		UIKit.corner(shadow, METRICS.panelRadius)
+		-- Gleicher ZIndex: zuerst zeichnen, dann Glas und Inhalt.
+		shadow.Parent = nil
+		background.Parent = nil
+		shadow.Parent = f
+		background.Parent = f
+		local function alignShadow()
+			shadow.Position = background.Position + UDim2.fromOffset(0, METRICS.shadowOffset)
+			shadow.Size = background.Size
+		end
+		background:GetPropertyChangedSignal("Position"):Connect(alignShadow)
+		background:GetPropertyChangedSignal("Size"):Connect(alignShadow)
+	end
+	local reflection = make("Frame", {
+		Name = "Glass", Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.text,
+		BorderSizePixel = 0, ZIndex = 0,
+	}, background)
+	UIKit.corner(reflection, METRICS.panelRadius)
+	make("UIGradient", {
+		Rotation = 90, Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.86), NumberSequenceKeypoint.new(0.33, 1), NumberSequenceKeypoint.new(1, 1),
+		}),
+	}, reflection)
+	make("Frame", {
+		Name = "InnerLight", Position = UDim2.fromOffset(16, 3), Size = UDim2.new(1, -32, 0, 1),
+		BackgroundColor3 = THEME.panelLine, BorderSizePixel = 0, ZIndex = 0,
+	}, background)
+	if jewel then
+		local gem = make("Frame", {
+			Name = "CrownJewel", AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0, animated and 12 or 0), Size = UDim2.fromOffset(16, 16),
+			Rotation = 45, BackgroundColor3 = THEME.text, BorderSizePixel = 0,
+			ZIndex = f.ZIndex,
+		}, background)
+		UIKit.corner(gem, 3)
+		UIKit.stroke(gem, THEME.ink, 3)
+		local face = make("Frame", {
+			Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.text, BorderSizePixel = 0, ZIndex = gem.ZIndex,
+		}, gem)
+		UIKit.corner(face, 3)
+		UIKit.stroke(face, THEME.chromeLight, 1)
+		make("UIGradient", { Color = ColorSequence.new(THEME.gem, THEME.holoLilac), Rotation = 90 }, face)
+		local gleam = make("Frame", {
+			Position = UDim2.fromOffset(3, 3), Size = UDim2.fromOffset(5, 3),
+			BackgroundColor3 = THEME.text, BorderSizePixel = 0, ZIndex = gem.ZIndex,
+		}, face)
+		UIKit.corner(gleam, 2)
+	end
 	return f
 end
 
