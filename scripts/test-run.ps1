@@ -28,14 +28,16 @@ if ($result -ne 0) { exit $result }
 # Separater Runner: tatsächlicher BoardBuilder statt des Server-Platzhalters.
 $runner = Join-Path $projectRoot "tools/board.runner.luau"
 $source = Get-Content -LiteralPath (Join-Path $projectRoot "tests/board.stubs.luau") -Raw -Encoding UTF8
-foreach ($module in @("Config", "UnitData", "Grid", "Stages", "RunConfig", "MapChunks", "LevelGen", "EnvironmentAssets", "LandscapeBuilder", "BoardBuilder", "CameraController", "ForestOutlines")) {
-    $directory = if ($module -in @("EnvironmentAssets", "LandscapeBuilder", "BoardBuilder")) { "server" } elseif ($module -in @("CameraController", "ForestOutlines")) { "client" } else { "shared" }
+foreach ($module in @("Config", "UnitData", "Grid", "Stages", "RunConfig", "MapChunks", "LevelGen", "EnvironmentAssets", "IslandBuilder", "LandscapeBuilder", "BoardBuilder", "CameraController", "ForestOutlines")) {
+    $directory = if ($module -in @("EnvironmentAssets", "IslandBuilder", "LandscapeBuilder", "BoardBuilder")) { "server" } elseif ($module -in @("CameraController", "ForestOutlines")) { "client" } else { "shared" }
     $moduleSource = Get-Content -LiteralPath (Join-Path $projectRoot "src/$directory/$module.luau") -Raw -Encoding UTF8
     $moduleSource = [regex]::Replace($moduleSource, 'require\((?:script.Parent|Shared)\.([A-Za-z]+)\)', 'modules.$1')
     $moduleSource = $moduleSource.Replace('require(ReplicatedStorage:WaitForChild("Shared").Config)', 'modules.Config')
+    $moduleSource = $moduleSource.Replace('require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Config)', 'modules.Config')
     $moduleSource = $moduleSource.Replace('require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))', 'modules.Config')
     $source += "`r`n modules.$module = (function()`r`n$moduleSource`r`n end)()`r`n"
 }
+$source += "`r`nmodules.Config.ISLAND.enabled = false -- Bestehende Regressionen pruefen den Tal-Rueckfall.`r`n"
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/board.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/environment.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/forest-outlines.test.luau") -Raw -Encoding UTF8
@@ -51,6 +53,7 @@ $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/landscape.tes
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/walls.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/waterfalls.test.luau") -Raw -Encoding UTF8
 $source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/meadow.test.luau") -Raw -Encoding UTF8
+$source += Get-Content -LiteralPath (Join-Path $projectRoot "tests/island.test.luau") -Raw -Encoding UTF8
 try {
     [System.IO.File]::WriteAllText($runner, $source, (New-Object System.Text.UTF8Encoding($false)))
     & $luau $runner

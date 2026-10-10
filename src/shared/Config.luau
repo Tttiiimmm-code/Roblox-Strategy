@@ -221,7 +221,7 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9, crystalDepth = 0.75,
 	accents = { greenland = Color3.fromRGB(124, 194, 66), swamp = Color3.fromRGB(180, 107, 224),
 		ice = Color3.fromRGB(111, 211, 255), volcano = Color3.fromRGB(255, 122, 26) },
-	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 128, cloudTileSize = 512, cloudCount = 16,
+	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 224, cloudTileSize = 512, cloudCount = 16,
 	cloudWidthTiles = { min = 8, max = 18 }, cloudHeightTiles = { min = 1, max = 3 },
 	cloudInnerTiles = 10, satelliteDepthScale = 1.4, satelliteTreeHeight = 7, satelliteTreeWidth = 5,
 	cloudColor = Color3.fromRGB(244, 241, 255), horizonColor = Color3.fromRGB(201, 168, 255),

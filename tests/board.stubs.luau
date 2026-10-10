@@ -217,3 +217,12 @@ cm.__mul = function(a, b)
 	if a.target then result.target = a.target end
 	return result
 end
+
+-- Facetten verwenden echte Vektorprodukte und eine vollstaendige Basis.
+function vm:Dot(other) return self.X * other.X + self.Y * other.Y + self.Z * other.Z end
+function vm:Cross(other) return Vector3.new(self.Y * other.Z - self.Z * other.Y, self.Z * other.X - self.X * other.Z, self.X * other.Y - self.Y * other.X) end
+function CFrame.fromMatrix(position, right, up, back)
+	local cf = CFrame.new(position)
+	cf.rotation = { right.X, up.X, back.X, right.Y, up.Y, back.Y, right.Z, up.Z, back.Z }
+	return cf
+end

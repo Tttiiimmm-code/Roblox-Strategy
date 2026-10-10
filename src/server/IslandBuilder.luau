@@ -127,7 +127,7 @@ local function skyIslands(board, parent, state, random)
 	local baseParts = cells * cells
 	local riverParts = Config.FEEL.waterfallsEnabled and #state.rivers * (2 + Config.FEEL.waterfallFoamCount) or 0
 	local remaining = s.partBudget - IslandBuilder.measure(board) - riverParts - baseParts
-	local count = math.min(random:NextInteger(s.satelliteCount.min, s.satelliteCount.max), math.floor((remaining - 4) / 28))
+	local count = math.min(random:NextInteger(s.satelliteCount.min, s.satelliteCount.max), math.floor((remaining - 4) / 30))
 	assert(count >= s.satelliteCount.min, "Inselbudget reicht nicht fuer Nebeninseln")
 	local phase = random:NextNumber(0, math.pi * 2)
 	for index = 1, count do
