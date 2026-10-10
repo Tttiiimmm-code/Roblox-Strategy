@@ -9,6 +9,7 @@ local EnvironmentAssets = require(script.Parent.EnvironmentAssets)
 
 local BoardBuilder = {}
 local LandscapeBuilder = require(script.Parent.LandscapeBuilder)
+local IslandBuilder = require(script.Parent.IslandBuilder)
 
 local function deco(props, parent, className)
 	local p = Instance.new(className or "Part")
@@ -391,36 +392,47 @@ local function shoreline(ch, x, y, parent, bridgeTiles)
 	return count
 end
 
-local function waterfall(feature, parent, landscape)
+local function waterfall(feature, parent, landscape, river)
 	if not feature or not Config.FEEL.waterfallsEnabled then return end
-	local x, y = feature.x, feature.y
-	local nx, ny = x + feature.dx, y + feature.dy
-	if not Grid.inBounds(x, y) or not Grid.inBounds(nx, ny)
-		or Grid.getMap()[y]:sub(x, x) ~= "C" or Grid.getMap()[ny]:sub(nx, nx) ~= "W" then return end
 	local feel, T = Config.FEEL, Config.TILE_SIZE
-	local top, bottom = Grid.tileHeight(x, y) + feel.waterfallSurfaceClearance, Grid.tileHeight(nx, ny)
-	local receiver = Grid.toWorld(nx, ny)
-	bottom = LandscapeBuilder.groundHeight(landscape, receiver.X, receiver.Z) or bottom
-	local center = Grid.toWorld(x, y)
-	local normal = Vector3.new(feature.dx, 0, feature.dy)
-	local along = Vector3.new(-feature.dy, 0, feature.dx)
-	local edge = center + normal * (T / 2 + feel.waterfallFaceOffset + feel.waterfallThickness / 2)
-	local width = T * feel.waterfallWidth
-	local horizontal = feature.dx ~= 0
+	local top, bottom, center, normal, along, edge, width
+	if river then
+		center = LandscapeBuilder.riverEnd(landscape, river)
+		if not center then return end
+		top, bottom = Config.TERRAIN.W.height + feel.waterfallSurfaceClearance, Config.ISLAND.cloudHeight
+		normal = Vector3.new(river.dx, 0, river.dz)
+		width = T * (landscape.region and landscape.region.water or Config.WATER).extensionWidth * 2
+	else
+		local x, y = feature.x, feature.y
+		local nx, ny = x + feature.dx, y + feature.dy
+		if not Grid.inBounds(x, y) or not Grid.inBounds(nx, ny)
+			or Grid.getMap()[y]:sub(x, x) ~= "C" or Grid.getMap()[ny]:sub(nx, nx) ~= "W" then return end
+		top, bottom = Grid.tileHeight(x, y) + feel.waterfallSurfaceClearance, Grid.tileHeight(nx, ny)
+		local receiver = Grid.toWorld(nx, ny)
+		bottom = LandscapeBuilder.groundHeight(landscape, receiver.X, receiver.Z) or bottom
+		center = Grid.toWorld(x, y)
+		normal = Vector3.new(feature.dx, 0, feature.dy)
+		width = T * feel.waterfallWidth
+	end
+	along = Vector3.new(-normal.Z, 0, normal.X)
+	edge = center + normal * ((river and 0 or T / 2) + feel.waterfallFaceOffset + feel.waterfallThickness / 2)
+	local horizontal = normal.X ~= 0
 	local overhang = feel.waterfallFaceOffset + feel.waterfallThickness
-	local length = T + overhang
-	deco({ Name = "WaterfallSource", Size = Vector3.new(horizontal and length or width, feel.waterfallThickness, horizontal and width or length),
+	local length = (river and Config.LANDSCAPE.resolution or T) + overhang
+	local source = deco({ Name = "WaterfallSource", Size = Vector3.new(horizontal and length or width, feel.waterfallThickness, horizontal and width or length),
 		Position = Vector3.new(center.X, top + feel.waterfallThickness / 2, center.Z) + normal * (overhang / 2), Color = feel.waterfallColor,
 		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
-	deco({ Name = "Waterfall", Size = Vector3.new(horizontal and feel.waterfallThickness or width, top + feel.waterfallThickness - bottom, horizontal and width or feel.waterfallThickness),
+	local face = deco({ Name = "Waterfall", Size = Vector3.new(horizontal and feel.waterfallThickness or width, top + feel.waterfallThickness - bottom, horizontal and width or feel.waterfallThickness),
 		Position = Vector3.new(edge.X, (top + feel.waterfallThickness + bottom) / 2, edge.Z), Color = feel.waterfallColor,
 		Transparency = feel.waterfallTransparency, Material = Enum.Material.SmoothPlastic }, parent)
+	if river then source:SetAttribute("IslandPart", true); face:SetAttribute("IslandPart", true); face.Name = "IslandWaterfall" end
 	for i = 1, feel.waterfallFoamCount do
 		local offset = (i - (feel.waterfallFoamCount + 1) / 2) * width / feel.waterfallFoamCount
-		deco({ Name = "WaterfallFoam", Shape = Enum.PartType.Ball,
+		local foam = deco({ Name = "WaterfallFoam", Shape = Enum.PartType.Ball,
 			Size = Vector3.new(feel.waterfallFoamSize * 2, feel.waterfallFoamSize, feel.waterfallFoamSize * 2),
 			Position = Vector3.new(edge.X, bottom + feel.waterfallFoamSize / 2, edge.Z) + along * offset + normal * feel.waterfallFoamSize,
-			Color = feel.waterfallFoamColor, Material = Enum.Material.SmoothPlastic }, parent)
+			Color = river and Config.ISLAND.foamColor or feel.waterfallFoamColor, Material = Enum.Material.SmoothPlastic }, parent)
+		if river then foam.Shape = Enum.PartType.Block; foam:SetAttribute("IslandPart", true) end
 	end
 end
 
@@ -569,6 +581,11 @@ function BoardBuilder.build(regionId, features, stage)
 
 	board:SetAttribute("ShoreParts", shoreCount)
 	waterfall(features and features.waterfall, board, landscape)
+	if landscape.island then
+		for _, river in landscape.rivers do waterfall({}, board, landscape, river) end
+		board:SetAttribute("IslandRiverFalls", #landscape.rivers)
+		IslandBuilder.measure(board)
+	end
 	board.Parent = workspace
 	return board
 end

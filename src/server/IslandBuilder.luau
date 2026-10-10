@@ -49,7 +49,7 @@ local function crystal(parent, center, width, height, color)
 		center + Vector3.new(width * 0.55 + 0.04, 0, width * 0.45 + 0.04), Color3.fromRGB(255, 255, 255), Enum.Material.Neon)
 end
 
-local function shell(parent, points, center, earthDepth, depth)
+local function shell(parent, points, center, earthDepth, depth, riverCuts)
 	local s = Config.ISLAND
 	local top = points[1].Y + s.edgeLip
 	local earthBottom = points[1].Y - earthDepth
@@ -57,9 +57,29 @@ local function shell(parent, points, center, earthDepth, depth)
 		local b = points[index % #points + 1]
 		local delta = b - a
 		local inward = Vector3.new(-delta.Z, 0, delta.X).Unit
-		local midpoint = (a + b) / 2 + inward * (s.edgeReserve - s.facetThickness)
-		part(parent, "IslandEarth", Vector3.new(delta.Magnitude + s.edgeOverlap, top - earthBottom, s.edgeReserve * 2),
-			CFrame.new(midpoint.X, (top + earthBottom) / 2, midpoint.Z) * CFrame.Angles(0, -math.atan2(delta.Z, delta.X), 0), s.earthColor)
+		local breaks = { 0, delta.Magnitude }
+		local cuts = {}
+		for _, cut in riverCuts or {} do
+			local offset = cut.position - a
+			local projected = offset:Dot(delta.Unit)
+			if math.abs(offset:Dot(inward)) < s.edgeReserve and projected >= 0 and projected <= delta.Magnitude then
+				local lo, hi = math.max(0, projected - cut.width / 2), math.min(delta.Magnitude, projected + cut.width / 2)
+				table.insert(breaks, lo); table.insert(breaks, hi)
+				table.insert(cuts, { lo, hi })
+			end
+		end
+		table.sort(breaks)
+		for segment = 1, #breaks - 1 do
+			local lo, hi = breaks[segment], breaks[segment + 1]
+			if hi - lo < 0.001 then continue end
+			local segmentTop = top
+			for _, cut in cuts do
+				if (lo + hi) / 2 >= cut[1] and (lo + hi) / 2 <= cut[2] then segmentTop = Config.TERRAIN.W.height - Config.FEEL.waterfallSurfaceClearance end
+			end
+			local midpoint = a + delta.Unit * ((lo + hi) / 2) + inward * (s.edgeReserve - s.facetThickness)
+			part(parent, "IslandEarth", Vector3.new(hi - lo + s.edgeOverlap, segmentTop - earthBottom, s.edgeReserve * 2),
+				CFrame.new(midpoint.X, (segmentTop + earthBottom) / 2, midpoint.Z) * CFrame.Angles(0, -math.atan2(delta.Z, delta.X), 0), s.earthColor)
+		end
 		for layer = 1, #s.layerScales - 1 do
 			local function point(v, level)
 				local scale = s.layerScales[level]
@@ -93,7 +113,7 @@ function IslandBuilder.build(board, state)
 	local folder = Instance.new("Folder")
 	folder.Name, folder.Parent = "Island", board
 	local center = Vector3.new(state.w / 2, s.surfaceHeight, state.h / 2)
-	shell(folder, state.outline, center, s.earthTiles * T, s.depthTiles * T)
+	shell(folder, state.outline, center, s.earthTiles * T, s.depthTiles * T, state.riverCuts)
 	local random = Random.new(hash(state.key .. ":island"))
 	local count = random:NextInteger(s.crystalCount.min, s.crystalCount.max)
 	local accent = s.accents[state.region and state.region.id or "greenland"] or s.accents.greenland

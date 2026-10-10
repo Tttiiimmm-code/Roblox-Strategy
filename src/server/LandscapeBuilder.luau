@@ -108,6 +108,23 @@ function LandscapeBuilder.prepare(mapKey, region, features)
 	return state
 end
 
+-- Strahl-/Segment-Schnitt: dieselbe Polygonkante begrenzt Terrain und Wasserfall.
+function LandscapeBuilder.riverEnd(state, river)
+	if not state.island then return nil end
+	local nearest
+	for index, a in state.outline do
+		local b = state.outline[index % #state.outline + 1]
+		local ex, ez = b.X - a.X, b.Z - a.Z
+		local determinant = river.dx * ez - river.dz * ex
+		if math.abs(determinant) < 0.001 then continue end
+		local ox, oz = a.X - river.x, a.Z - river.z
+		local distance = (ox * ez - oz * ex) / determinant
+		local segment = (ox * river.dz - oz * river.dx) / determinant
+		if distance >= 0 and segment >= 0 and segment <= 1 and (not nearest or distance < nearest) then nearest = distance end
+	end
+	return nearest and Vector3.new(river.x + river.dx * nearest, Config.TERRAIN.W.height, river.z + river.dz * nearest)
+end
+
 function LandscapeBuilder.surface(state, x, z)
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	if x >= 0 and x < state.w and z >= 0 and z < state.h then
@@ -151,8 +168,8 @@ function LandscapeBuilder.surface(state, x, z)
 		local along = (x - river.x) * river.dx + (z - river.z) * river.dz
 		local across = math.abs((x - river.x) * river.dz - (z - river.z) * river.dx)
 		local length = math.min(water.extensionTiles * T, state.sculptMargin - T)
-		local width = T * water.extensionWidth * math.sqrt(math.clamp((length - along) / T, 0, 1))
-		if along >= 0 and along < length and across < width then return Config.TERRAIN.W.height, Enum.Material.Water end
+		local width = T * water.extensionWidth * (state.island and 1 or math.sqrt(math.clamp((length - along) / T, 0, 1)))
+		if along >= 0 and (state.island or along < length) and across < width then return Config.TERRAIN.W.height, Enum.Material.Water end
 	end
 	if state.island then return Config.ISLAND.surfaceHeight, state.palette.grass end
 	local dx = math.max(-x, x - state.w, 0)
@@ -340,6 +357,13 @@ function LandscapeBuilder.build(board, mapKey, region, features)
 		writeSurface(state, rect, stats)
 	end
 	details(state, board)
+	if state.island then
+		state.riverCuts = {}
+		for _, river in state.rivers do
+			local position = LandscapeBuilder.riverEnd(state, river)
+			if position then table.insert(state.riverCuts, { position = position, width = Config.TILE_SIZE * water.extensionWidth * 2 }) end
+		end
+	end
 	IslandBuilder.build(board, state)
 	board:SetAttribute("IslandEnabled", state.island)
 	board:SetAttribute("TerrainWriteCalls", stats.calls)
