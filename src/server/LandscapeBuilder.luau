@@ -112,7 +112,7 @@ function LandscapeBuilder.surface(state, x, z)
 			if longitudinal >= -T / 2 - s.resolution and longitudinal <= T / 2
 				and lateral <= T * Config.FEEL.waterfallWidth / 2 + s.resolution then height = Config.TERRAIN.C.height end
 		end
-		return height, state.palette.slate
+		return height - (s.cliffWalls.enabled and s.cliffWalls.terrainInset or 0), state.palette.slate
 	end
 	local water = state.region and state.region.water or Config.WATER
 	for _, river in state.rivers do

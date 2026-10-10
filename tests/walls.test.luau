@@ -4,10 +4,21 @@ local function validateWalls(withPackage)
 	Grid.setMap({ "MM.CC", "M.C.C", ".CW..", "..M.." })
 	local fall = { x = 2, y = 3, dx = 1, dy = 0 }
 	local board, rocks, stands = Board.build("greenland", { waterfall = fall }), {}, {}
-	local minCliff, maxCliff = math.huge, 0
+	local minCliff, maxCliff, cores, ridges = math.huge, 0, {}, 0
 	for _, asset in board:GetDescendants() do
 		expect(asset.Name ~= "WallFacet" and not asset:GetAttribute("WallX"), "Alte Felsfacetten vorhanden")
 		if asset:GetAttribute("StandTile") then stands[asset:GetAttribute("StandTile")] = asset end
+		if asset.Name == "CliffCore" then
+			cores[asset:GetAttribute("CliffTile")] = asset
+			expect(asset.Position.Y + asset.Size.Y / 2 == Config.TERRAIN.C.height, "Klippenwand ohne feste Oberkante")
+		end
+		if asset.Name == "CliffRidge" then
+			ridges += 1
+			minCliff, maxCliff = math.min(minCliff, asset.Size.Y), math.max(maxCliff, asset.Size.Y)
+		end
+		if asset:GetAttribute("CliffTile") then
+			expect(not asset.CanQuery and not asset.CanCollide, "Felswand blockiert Feldklick")
+		end
 	end
 	for _, asset in board:GetChildren() do
 		if asset:GetAttribute("TopRockX") then
@@ -44,16 +55,17 @@ local function validateWalls(withPackage)
 					or math.abs(p.Z - center.Z) - size.Z / 2 >= Config.ENVIRONMENT.rocks.centerClearance - 0.001, "Fels auf Standfläche")
 			end
 		else
-			expect(height and height >= Config.TERRAIN.C.height and height > Config.TERRAIN.M.height, "Klippe nicht höher als Berg")
+			expect(height and height < Config.TERRAIN.C.height, "Terrainkern ragt aus Klippenwand")
+			expect(cores[Grid.key(x,y)], "Klippenfeld ohne senkrechte Felswand")
 			expect(next(Config.TERRAIN.C.cost) == nil, "Klippe passierbar")
-			minCliff, maxCliff = math.min(minCliff, height), math.max(maxCliff, height)
+			
 		end
 	end end
-	expect(maxCliff - minCliff > 0.2, "Klippen ohne unregelmäßige Oberkante")
+	expect(ridges > 0 and maxCliff - minCliff > 0.2, "Klippen ohne unregelmäßige Oberkante")
 	expect(terrainHeightAt(Config.TILE_SIZE - 0.01, 4) ~= nil and terrainHeightAt(Config.TILE_SIZE + 0.01, 4) ~= nil,
 		"Zusammenhängender M-Hügel an Feldgrenze unterbrochen")
 	local top = terrainHeightAt((fall.x - 0.5) * Config.TILE_SIZE + fall.dx * (Config.TILE_SIZE / 2 - 2), (fall.y - 0.5) * Config.TILE_SIZE)
-	expect(top == Config.TERRAIN.C.height, "Terrain am Wasserfallanschluss hat andere Höhe")
+	expect(top == Config.TERRAIN.C.height - Config.LANDSCAPE.cliffWalls.terrainInset, "Terrain am Wasserfallanschluss hat andere Höhe")
 	local cells = 0
 	for y, row in Grid.getMap() do for x=1,#row do
 		local ch=row:sub(x,x)

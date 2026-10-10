@@ -175,6 +175,36 @@ local function buildBridges(parent, mapKey)
 	return bridgeTiles
 end
 
+-- Der abgesenkte Terrainkern bleibt hinter senkrechten Felswänden verborgen.
+local function cliffWall(x, y, parent, mapKey, landscape, feature)
+	local settings = Config.LANDSCAPE.cliffWalls
+	if not settings.enabled then return end
+	local T, top = Config.TILE_SIZE, Config.TERRAIN.C.height
+	local bottom = Config.LANDSCAPE.foundationTop
+	local color = landscape.palette.colors[landscape.palette.slate]
+	local center = Vector3.new((x - 0.5) * T, 0, (y - 0.5) * T)
+	local core = deco({ Name = "CliffCore", Size = Vector3.new(T, top - bottom, T),
+		Position = center + Vector3.new(0, (top + bottom) / 2, 0), Color = color, Material = landscape.palette.slate }, parent)
+	core:SetAttribute("CliffTile", Grid.key(x, y))
+	for _, d in { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } } do
+		local nx, ny = x + d[1], y + d[2]
+		if Grid.inBounds(nx, ny) and Grid.getMap()[ny]:sub(nx, nx) == "C" then continue end
+		-- Die Quellkante bleibt frei; seitliche Grate rahmen den Wasserfall ein.
+		if feature and feature.x == x and feature.y == y and feature.dx == d[1] and feature.dy == d[2] then continue end
+		local normal = Vector3.new(d[1], 0, d[2])
+		local along = Vector3.new(d[2], 0, -d[1])
+		local depth, width = T * settings.ridgeDepth, T / settings.segments
+		local random = Random.new(hash(mapKey .. ":cliff:" .. Grid.key(x, y) .. ":" .. d[1] .. ":" .. d[2]))
+		for i = 1, settings.segments do
+			local height = Config.LANDSCAPE.rockFields.cliffRoughness * random:NextNumber(0.35, 1)
+			local position = center + normal * (T / 2 - depth / 2) + along * ((i - 0.5) * width - T / 2)
+			local ridge = deco({ Name = "CliffRidge", Size = Vector3.new(width, height, depth),
+				CFrame = CFrame.new(position + Vector3.new(0, top + height / 2, 0)) * CFrame.Angles(0, math.atan2(d[1], d[2]), 0),
+				Color = color:Lerp(Color3.fromRGB(0, 0, 0), random:NextNumber(0, 0.12)), Material = landscape.palette.slate }, parent, "WedgePart")
+			ridge:SetAttribute("CliffTile", Grid.key(x, y))
+		end
+	end
+end
 -- Dekoration in den Ecken, damit die Einheit in der Mitte sichtbar bleibt
 local function decorate(ch, x, y, parent, mapKey, palette, bridgeTiles, occupied, landscape)
 	local center = Grid.toWorld(x, y)
@@ -500,6 +530,7 @@ function BoardBuilder.build(regionId, features, stage)
 			local ch = string.sub(Grid.getMap()[y], x, x)
 			local terrain = Config.TERRAIN[ch]
 
+			if ch == "C" then cliffWall(x, y, board, mapKey, landscape, features and features.waterfall) end
 			shoreCount += shoreline(ch, x, y, ground, bridgeTiles)
 			local tile = Instance.new("Part")
 			tile.Name = ("Tile_%d_%d"):format(x, y)
