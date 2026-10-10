@@ -108,6 +108,13 @@ do
 	-- Kamera passt alle Polygonpunkte bei jedem Bildformat und jeder Drehung ins Bild.
 	Grid.setMap(Gen.generate(1, "greenland", 1, "axe", RC.MAX_TEAM).map)
 	local region = modules.Stages.getRegion("greenland")
+	-- Ein knappes Dekobudget darf den Levelaufbau nicht abbrechen.
+	local budget = s.partBudget
+	s.partBudget = 1
+	local limited = Board.build("greenland")
+	expect(limited:GetAttribute("IslandSatellites") == 0, "Budget-Fallback ohne Nebeninseln fehlt")
+	expect(limited:FindFirstChild("Island") ~= nil, "Knappes Budget bricht Inselaufbau ab")
+	s.partBudget = budget
 	local state = Landscape.prepare("Kamera", region)
 	local size = Vector3.new(state.w, 0, state.h)
 	local c = Config.CAMERA

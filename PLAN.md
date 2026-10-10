@@ -17,7 +17,7 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
 
 ## Schritte
 
-- [ ] 1. **Robustheit Budget** – `IslandBuilder.skyIslands`
+- [x] 1. **Robustheit Budget** – `IslandBuilder.skyIslands`
   - `assert(count >= satelliteCount.min, …)` entfernen: Reicht das Budget nicht, weniger (auch 0) Nebeninseln bauen und Attribut setzen; Levelaufbau darf nie daran scheitern. Regression im Inseltest: künstlich knappes Budget baut ohne Fehler.
 
 - [ ] 2. **Heller Inselrand** – `Config.ISLAND`, `LandscapeBuilder`/`Stages`
@@ -56,3 +56,5 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**.)
 
 ## Notizen (Codex)
+
+- Schritt 1: Assertion entfernt, Nebeninselzahl auf mindestens 0 begrenzt; Regression mit partBudget=1 baut ohne Fehler und meldet 0 Nebeninseln. Ausgangsmessung: 450/450 Teilemaximum, Stub-Aufbau im Mittel 111,39 ms (200 Aufbauten); aktueller Studio-Lauf Seed 1748071667: 401 Insel-/1672 Brettteile. Bilder D1b_00_battle_normal/uebersicht bestätigen dunklen Rand, weiße Leere und Brett-Nebeninseln.
