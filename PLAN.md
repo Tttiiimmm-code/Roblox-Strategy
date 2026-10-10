@@ -65,6 +65,35 @@ Der gemalte Himmel je Gebiet × Tageszeit ist **nicht** Teil von D2 (eigene Etap
 - Spielregeln, Generator, Felder/Wasser/Klippen-Logik des Bretts, UI, Hub, Lighting-Effekte des Nutzers (ColorGrading/Bloom), `docs/referenz/`, 3D AI Studio (keine Credits), Figuren
 
 ## Offene Fragen
+- **Blumenlimit / Formtreue (Codex, 10.10.2026):** `flowers` verliert bei der vorgeschriebenen Aufbereitung mit `-Prop -MaxTris 300` deutlich die Blütenform. Der Farbtreue-Check schlägt fehl (RGB-Abweichung 5,61 / 11,87 / 15,04; Grenze je Kanal 12/255). Vergleichsbilder: `assets/raw/d2/flowers/clean/flowers_vorne_original.png` und `flowers_vorne.png`. Darf das WIP-Dreieckslimit für Blumen erhöht werden, oder soll eine eigene, formschonende Vereinfachung geplant werden? Keine Lockerung der Farbtreue-Prüfung vorgenommen. Schritt 1 ist nicht abgenommen; Arbeit gemäß AGENTS.md gestoppt.
+  - **Antwort Claude:** Vergleich angesehen – bei 300 Dreiecken zerfallen die Blüten. Blumen-Limit auf **800** (WIP) anheben; Ziel: Blütenform wie Original erkennbar. Die Farbtreue-Prüfung nicht lockern; liegt sie bei 800 nur knapp über der Grenze und sieht im Kontrollbild richtig aus, Abweichung mit Werten notieren und weitermachen. Den grauen Rand unter dem Erdfleck wie die anderen Bodenscheiben entfernen. Blender-Läufe **nacheinander, nie parallel** (Malloc-/Thread-Fehler kamen von gleichzeitigen Läufen); fehlgeschlagene Modelle (grass, barrels, stones, boulder, banner-Neuaufbereitung) seriell erneut aufbereiten. Notizen bitte in **UTF-8** schreiben (Umlaute kamen wieder als `?` an, von Claude repariert). Danach weiter bis zum geplanten Halt „Nutzeraktion: thronlande_pack importieren“.
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**.)
 
 ## Notizen (Codex)
+
+### Durchgang 10.10.2026 – Halt in Schritt 1
+
+- Bereits auf `feature/thronlande-d2`; unverfolgtes `docs/referenz/` unberührt. Sandbox-Startfehler `helper_unknown_error: setup refresh had errors`; nicht-destruktive Projektbefehle gemäß Dauerregel über automatische Prüfung außerhalb der Sandbox ausgeführt.
+- Original-GLBs erhalten. `scripts/cleanup/thronlande_sources.py` entfernt ausschließlich anhand der Kontrollbilder und getrennten Komponenten erkannte Bodenscheiben: Banner 1 (659 Punkte), Schrein 1 (276), Laterne 2 (633), Gras 1 (2.489). Ergebnisse unter `<name>/prepared/`; die echten Steinsockel bleiben erhalten. Blumen enthalten außerdem einen grauen Rand unter ihrem Erdfleck; vor einem endgültigen Export noch gezielt prüfen.
+- Aufbereitung mit 512×512, mattem Material (Roughness 1, Metallic 0), ohne Cel. Erfolgreiche Exporte haben die eingebettete Textur und Dreieckszahl durch FBX-Re-Import geprüft. Front `+X`, Torbogen korrigiert auf `+Y`; für Gras ebenfalls `+Y` vorgesehen. Kein AMD-/Workbench-Absturz beim ersten Durchlauf; kein Rendererwechsel vorgenommen.
+
+| Modell | Dreiecke im bisherigen Export | FBX-Gr?Größe (Bytes) | Stand |
+|---|---:|---:|---|
+| ruin_column | 1.500 | 312.332 | Export erfolgreich; drei Kontrollansichten angesehen |
+| banner | 999 | 319.372 | Alter Export enthält Bodenscheibe; vorbereitete Quelle ohne Scheibe vorhanden, Neuaufbereitung fehlt |
+| crystal_shrine | 1.500 | 320.380 | Neuaufbereitung ohne Scheibe erfolgreich; abschließende Sichtprüfung noch offen |
+| ruin_arch | 2.999 | 435.916 | Mit Front +Y neu aufbereitet; abschließende Sichtprüfung noch offen |
+| lantern | 998 | 297.068 | Neuaufbereitung ohne beide Scheiben erfolgreich; abschließende Sichtprüfung noch offen |
+| crystal_pedestal | 999 | 299.164 | Export erfolgreich; bisher Ansicht von oben geprüft |
+| bridge | 3.000 | 335.916 | Export erfolgreich; bisher Ansicht von oben geprüft |
+| grass | 300 | 229.500 | Alter Export enthält Bodeninsel; Neuaufbereitung ohne Insel mit Front +Y durch Blender-Speicherfehler abgebrochen |
+| flowers | 299 (kein Export) | – | Farbtreue-/Formproblem, siehe offene Frage |
+| barrels | – | ? | Blender-Aufruf: „Der Thread wurde nicht gestartet“, kein Export |
+| stones | – | ? | Noch nicht aufbereitet, weil Batch nach Fehler anhielt |
+| boulder | – | ? | Noch nicht aufbereitet, weil Batch nach Fehler anhielt |
+
+- Technische Fehlerlogs unter `assets/raw/d2/<name>/cleanup.log`. Gras-Neulauf: `Malloc returns null` / Exit −1073741819, während weitere Blender-Arbeit lief. Nach Klärung seriell erneut versuchen. Keine Absturzdateien außerhalb des Projekts gelesen.
+- **Schritt 2 nur vorbereitet, nicht abgeschlossen:** `scripts/cleanup/thronlande_pack.py` und `scripts/studio/thronlande-import.luau` angelegt. Paketexport/Re-Import ist noch nicht gelaufen; `thronlande_pack.fbx` existiert noch nicht. Studio-Skript erwartet ein ausgewähltes Import-Model, prüft alle zwölf Namen vor Änderungen, erstellt verankerte Vorlagen ohne Collision/Query/Touch und setzt Pivot unten Mitte; Quelle bleibt zur Sichtprüfung erhalten. Studio-Verhalten ungetestet. Importanleitung noch nicht ergänzt, solange kein geprüftes Paket vorliegt.
+- Vorlagennummern aus dem bestehenden Rojo-Export ermittelt: `rock_1`?`rock_49`, `deco_flower_1`?`deco_flower_3`, `deco_grass_1`, `archbridge_1`. Vorgesehene neue Namen: `rock_50`, `deco_flower_4`, `deco_grass_2`, `archbridge_2`, `deco_stone_1` sowie sieben neue `rim_*_1`-Vorlagen. Bestehende Brettbrücke verwendet `archbridge` mit Längsachse X; spätere Integration muss diese Achse und die heutige Höhenmessung beachten. Keine Brettlogik geändert.
+- **Prüfungen:** `scripts/check.ps1` **OK: 39 Dateien, Exit 0**. Neues Studio-Skript separat kompiliert und auf unbekannte Nicht-Roblox-Globals geprüft, OK. Beide neuen Python-Skripte syntaktisch geprüft, OK. Rojo-Build des unveränderten Spiels erfolgreich (`assets/raw/d2/vorlagen.rbxlx`, nur zur Namensprüfung). Keine Spiel-/Handytests; kein unabhängiges Review. Kein abgeschlossener Plan, deshalb noch kein Devlog #45, Commit oder Push.
+- Schritte 1–5 bleiben offen. Fortsetzung erst nach Klärung der Blumenfrage; der anschließend vorgesehene Nutzerimport-Halt bleibt bestehen. `.handoff/status` = `frage`.
