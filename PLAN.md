@@ -1,111 +1,62 @@
-# PLAN: UI-Umstellung auf das Designsystem „Throne Tales“ (Y2K-Fantasy)
+# PLAN: UI-Korrekturen nach Studio-Test (Designsystem-Umstellung, Teil 2)
 
-Ziel: Die gesamte Oberfläche bekommt den Look des Designsystems – Glas-Indigo-Fenster mit Chromrand und Kronjuwel, Jelly-Knöpfe mit 3D-Kante, runde Konturschriften, Chrom-Titel, Heldenkarten mit Signaturfarbe und Holo-Rahmen für ★5. Das Spielverhalten ändert sich nicht.
-Branch: `feature/ui-designsystem` (abgezweigt von `feature/level-optik-c`, Stand `b44961a`)
-Designsystem (nur zur Info, für Codex nicht nötig): https://claude.ai/artifact/GsncXyUBtQh3UymyBhtbfD – alle benötigten Werte stehen unten.
+Ziel: Die Fehler beheben, die Claude am 10.10.2026 beim eigenen Studio-Test im echten Ort „Throne Tales“ (PlaceId 75433071253639) gefunden hat. Danach darf der Nutzer veröffentlichen.
+Branch: `feature/ui-designsystem` (weiterarbeiten, Stand nach Devlog #40)
 
-**Warum zentral:** Fast alle Bildschirme (`UI`, `MenuUI`, `CollectionUI`, `RunUI`, `BattleScene`, `Hub`, `TutorialGuide`) bauen über `src/client/UIKit.luau` (`THEME`, `BUTTON_STYLES`, `panel`, `button`, `bar`, `heroCard`, `rarityStars`, `label`). Deshalb zuerst UIKit umbauen, dann nur gezielte Stellen in den Bildschirmen.
+**Befunde aus Claudes Studio-Test (Play-Modus, echter Ablauf):**
+1. **Überlagerte Fenster ohne Hintergrund:** „Neue Verbündete“ (`CollectionUI` ~Zeile 211, Panel `Animated`, ZIndex 31) und „Wahrscheinlichkeiten“ (`CollectionUI` ~Zeile 153) zeigen Titel, Karten und Knöpfe, aber keinen Fensterhintergrund – man liest das Rekrutierungsfenster dahinter. Gemessen: `Background` existiert, Transparenz 0,04, `GroupTransparency` 0, aber `Background.ZIndex = 0`. Alle ScreenGuis außer `BattleScene` laufen mit `ZIndexBehavior.Global` (Standard dieses Orts), dadurch wird der Hintergrund unter der Abdunklung (ZIndex 30) und dem Rekrutierungsfenster gezeichnet. Bei den Wahrscheinlichkeiten kritisch (Roblox-Regel: gut lesbar).
+2. **Geländefenster wächst:** `GelaendeKasten` (`UI.luau` ~Zeile 101, `AutomaticSize = Y`) ist 620 px statt ca. 78 px hoch und verdeckt die rechte Bildschirmseite. Ursache: der neue `Shadow` (um 8 px nach unten versetzt) zählt für `AutomaticSize` mit.
+3. **Zu viele Kronjuwelen:** Im Kampf bis zu fünf gleichzeitig (Phasenbanner, Einheiten-Info, Geländefenster, Aktionsmenü, Kampfvorschau), dazu auf den Helden-Feldern im Laufbildschirm. Laut Designsystem gehört das Juwel nur auf **große** Fenster. Außerdem überlappt die Kampfvorschau (`UI.luau` `buildForecast`, Position y = 92) das Phasenbanner, sodass zwei Juwelen aufeinander sitzen.
+4. **Reste im alten Stil:** Beschwörungsbanner-Hintergrund noch Braun-Gold (`THEME.bannerTop/bannerBottom`, Goldrand 2 px); KP-Balken der Kampfszene (`BattleScene.luau` `buildSide`, ~Zeile 45) noch eckig mit goldDark-Rand; Level-Abzeichen der Kaserne (`CollectionUI` ~Zeile 358–363) in Pink wie „NEU“; Kartenrahmen der Kaserne werden nach Auswahl 3 px statt 4 px (`CollectionUI` ~Zeile 333).
+5. **Kontur bei geschrumpftem Text:** `UIKit.outline` richtet die Dicke nach `TextSize`, nicht nach der tatsächlich angezeigten Größe (`TextScaled`/`fitText`). Kleine, herunterskalierte Texte können „zulaufen“.
 
-**Werte (alle in `UIKit.THEME` als `Color3`, Namen frei wählbar, aber alte Schlüssel weiter gültig lassen):**
+**Studio-Prüfung (Pflicht ab Schritt 1):** wie im vorigen Plan. Achtung: Der Ort ist jetzt der echte, veröffentlichte Ort; DataStore-Zugriff ist in Studio **aktiv**. Der Nutzer erlaubt, seinen Spielstand fürs Testen zu verändern (10.10.2026). Trotzdem keine Profil-Massenänderungen, keine Robux-/Kaufabläufe. Klicks über `user_mouse_input` verwenden GUI-Koordinaten (ohne die 58-px-Topbar des Screenshots); ProximityPrompts im Hub lassen sich per `InputHoldBegin/End` auslösen. Nur im Play-Modus testen; danach `start_stop_play(false)`.
 
-| Rolle | Wert | Verwendung |
-|---|---|---|
-| ink | #141a33 | einzige Konturfarbe: Textkontur, äußerer Fensterrand, Knopfrand, Kartenrand |
-| backdrop | #0b0a26 | Abdunklung hinter modalen Fenstern (Transparenz 0,35) |
-| panelTop / panelBottom | #3b3fd1 / #1a1660 | Fensterverlauf (ersetzt `top`/`bottom`) |
-| panelInset | #110e45 | vertiefte Flächen, Balkenspur (ersetzt `barBg`) |
-| panelLine | #7f86ff | 1-px-Lichtkante oben innen |
-| text / dim | #ffffff / #d2d9f5 | Haupttext / Nebentext |
-| chromeLight / chromeMid / chromeDark | #f4f7ff / #b9c2d6 / #5f6884 | Chromverlauf: hell → mittel → harter Knick dunkel (bei 0,50) → hell |
-| holoCyan / holoLilac / holoPink / holoLime | #3ef0ff / #b58cff / #ff5fd2 / #c6ff4a | Holo-Verlauf (nur Beschwörung und ★5), Kennzeilen in holoCyan |
-| holoShade | #7a4fd6 | 3D-Kante unter dem Holo-Knopf |
-| gold / goldShade | #ffc93c / #c98a12 | Hauptaktion, Gold-Chrom-Titel, Münzen |
-| gem | #6ee8ff | Edelstein-Symbol ♦ (wie bisher) |
-| starEmpty | #4a5068 | leere Sterne (wie bisher) |
-| good / bad / warn, player / enemy, HP-Farben, Seltenheitsfarben | **unverändert** | |
-
-**Knopfstile (`BUTTON_STYLES`: Füllung, 3D-Kante):** default #4a8dff / #2a5fc4 · primary = gold #ffc93c / #c98a12 · danger #ff4d4d / #c22d36 · active #3fd15a / #23963a · muted #6a71c9 / #454b9a (WIP, noch nicht im Designsystem) · disabled #8a90a6 ohne Kante, Schrift 0,4 transparent · **neu `holo`**: Verlauf holoCyan → holoLilac → holoPink → gold, Kante holoShade.
-
-**Schriften:** Display `Enum.Font.LuckiestGuy` (große Titel, Schadenszahlen) · UI `Enum.Font.FredokaOne` (Knöpfe, Namen, Überschriften, Balkenzahlen – ersetzt `title` und `bold`) · Text `Enum.Font.GothamMedium` (bleibt) · Tech `Enum.Font.Michroma` (kurze Kennzeilen in Versalien). Falls ein Enum-Wert fehlt: `Font.fromName` bzw. `FontFace` verwenden und in den Notizen nennen.
-
-**Maße:** Ecken klein 6 / Knopf+Karte 12 / Fenster 16 / Banner 24 · Knopf mindestens 48 hoch (Designgröße 1280×720), Hauptaktion 64 · 3D-Kante 5 px, beim Drücken 1 px · Textkontur 1,5 px (≤ 16), 2 px (17–28), 3 px (≥ 32) · Fensterrand: 3 px Chrom innen + 3 px ink außen · Kartenrahmen 4 px + ink außen · harter Fallschatten 8 px nach unten, ink, Transparenz ≈ 0,55 (kein Weichzeichner).
-
-**Studio-Prüfung (Pflicht für Schritte 2–6), wie in C7:** `list_roblox_studios` → Ort „Throne Tales“, Rojo verbunden (`ReplicatedStorage.Shared.Config.Source` aktuell). `start_stop_play(true)`, frisches Profil; Bildschirme über `Remotes.Command` aufrufen (Hub/Menü, Sammlung/Rekrutierung, Kaserne, Laufwahl, Kampf mit Kampfvorschau und Level-Up). `screen_capture` je Bildschirm vorher (Schritt 1) und nachher; in den Notizen beschreiben, was zu sehen ist. Zusätzlich eine Aufnahme in Handygröße (Studio-Gerätesimulation, z. B. 844×390), wenn über MCP möglich – sonst in den Notizen sagen, dass es fehlt. Danach `start_stop_play(false)`. Nichts im Edit-Modus bauen.
-
-**Leitlinien:** Server bleibt unberührt. Alle Werte zentral in `UIKit` (THEME/BUTTON_STYLES/neue Konstanten), keine Farbwerte verstreut. Bestehende Aufrufer müssen ohne Änderung weiterlaufen: `UIKit.button` liefert weiter einen `TextButton`, dessen `.Text` man setzen kann; `setButtonStyle`, `GetAttribute("Style")`, `HoverScale`, Größen in Layouts bleiben. Klick-/Touchflächen dürfen nicht kleiner werden. Animationen aus `Config.FEEL` unverändert. Lesbarkeit vor Effekt: Weiße Schrift auf hellen Flächen (gold, grün, cyan) nur mit ink-Kontur. Ein Commit pro Schritt. Geschmacksfragen nicht selbst entscheiden → „Offene Fragen“.
+**Leitlinien:** Nur Client-UI. Alle Werte zentral in `UIKit`. Bestehende Aufrufer bleiben gültig. Ein Commit pro Schritt. Geschmacksfragen → „Offene Fragen“.
 
 ## Schritte
 
-- [x] 1. **Vorher-Bilder** – nur Studio
-  - Vor jeder Codeänderung je ein Bild von: Hub-Menü, Rekrutierung (Banner + Ergebnis), Kaserne, Laufwahl/Levelwahl, Kampf (Einheiten-Info, Kampfvorschau, Schadenszahl), Level-Up-Fenster. Liste in den Notizen.
+- [ ] 1. **Fensterhintergrund in der richtigen Ebene** – `UIKit.panel`
+  - Alle Deko-Teile des Fensters (`Background`, `Shadow`, `Glass`, `InnerLight`, `OuterBorder`, `CrownJewel`) liegen in derselben Ebene wie das Fenster selbst (`ZIndex = f.ZIndex`) und folgen späteren `ZIndex`-Änderungen. Sie müssen trotzdem **unter** dem Fensterinhalt liegen – auch dann, wenn Inhalte ihren Standard-ZIndex 1 behalten oder genau den ZIndex des Fensters haben. Lösung frei (z. B. Inhalt-ZIndex beim Hinzufügen auf mindestens `f.ZIndex` anheben, oder Deko konsequent in eigener Ebene), in den Notizen begründen.
+  - Funktioniert in Global- **und** Sibling-ScreenGuis (`BattleScene`).
+  - Akzeptanz (Studio, je ein Bild): „Neue Verbündete“ nach einem echten Einzelruf, „Wahrscheinlichkeiten“, Level-Up-Fenster, Laufergebnis/Lauf-Fenster, Ladebildschirm. Hintergrund deckend, nichts vom Fenster dahinter lesbar, alle Inhalte sichtbar.
 
-- [x] 2. **Theme, Schriften, Konturschrift** – `UIKit.luau` (THEME, `label`, `fitText`), `Main.client.luau` (Schwebezahlen, ca. Zeile 878)
-  - THEME auf die Werte oben umstellen; alte Schlüssel (`top`, `bottom`, `barBg`, `goldDark`, `title`, `bold`, `body`) bleiben als Verweise auf die neuen Werte, damit alle Module laufen. `THEME.title` und `THEME.bold` → FredokaOne; neu `THEME.display` (LuckiestGuy) und `THEME.tech` (Michroma). `DIM_HEX`/`GOLD_HEX` anpassen.
-  - `UIKit.label`: Für UI-/Display-Schrift automatisch eine **Textkontur in ink** (UIStroke mit `ApplyStrokeMode.Contextual`, Dicke nach Textgröße wie oben). Fließtext (GothamMedium) ohne Kontur. Abschaltbar über ein Prop (z. B. `Outline = false`).
-  - Schwebende Schadens-/Heilzahlen: LuckiestGuy mit ink-Kontur statt GothamBlack/TextStroke.
-  - Akzeptanz: alle Bildschirme öffnen ohne Fehler im Output; Texte haben die neuen Schriften; Kontur sichtbar und nicht matschig bei 12–14 px.
+- [ ] 2. **Kein Wachsen bei `AutomaticSize`** – `UIKit.panel`, ggf. `UI.luau` (`GelaendeKasten`)
+  - Schatten und andere Deko dürfen die automatische Größe nicht beeinflussen (z. B. bei `AutomaticSize` keinen versetzten Schatten als direktes Kind, oder Schatten so anlegen, dass er nicht mitzählt).
+  - Akzeptanz: `GelaendeKasten.AbsoluteSize.Y` passt zum Inhalt (Richtwert ≤ 100 px bei drei Zeilen) und bleibt nach mehrmaligem Ein-/Ausblenden gleich (in den Notizen Messwerte nennen). Bild: Kampf mit ausgewähltem Feld.
 
-- [x] 3. **Fenster mit Chromrand, Glas und Kronjuwel** – `UIKit.panel`
-  - Verlauf panelTop → panelBottom; innen 3-px-Chromrand (UIStroke mit UIGradient chromeLight → chromeMid → chromeDark bei 0,50 → chromeLight, senkrecht), außen 3 px ink (z. B. Chromrand am inneren `Background`, ink-Rand am äußeren Frame, sodass beide sichtbar sind); Ecken 16.
-  - Glas: 1-px-Lichtkante panelLine oben innen und eine weiche weiße Spiegelung im oberen Drittel (Transparenz ≈ 0,86 → 1).
-  - **Kronjuwel** (Erkennungszeichen): kleine Raute (um 45° gedrehtes Quadrat, ca. 16 px, Ecken 3) oben mittig auf der Fensterkante, Verlauf gem → holoLilac, ink-Rand, dünner Chromring, kleines weißes Glanzlicht. Prop zum Abschalten für kleine Info-Fenster (z. B. `Jewel = false`); Standard an.
-  - Harter Fallschatten 8 px unter dem Fenster; bei `Animated` (CanvasGroup, schneidet ab) darf er entfallen oder außerhalb liegen – Lösung in den Notizen.
-  - Modale Abdunklungen, die heute schwarz/dunkel sind, auf backdrop (0,35) umstellen, soweit sie über UIKit laufen.
-  - Akzeptanz: Studio-Bild Hub und Lager/Laufwahl: Chromrand mit hellem Knick erkennbar, ink-Außenrand, Juwel mittig oben, Inhalt nicht verdeckt.
+- [ ] 3. **Kronjuwel nur auf großen Fenstern, Vorschau ohne Überlappung** – `UIKit.panel` und Aufrufer
+  - Standard umdrehen: `Jewel` ist **aus**, außer ausdrücklich `Jewel = true`. Einschalten nur für große, eigenständige Fenster: Willkommen/Lobby-Hauptfenster und Lager-Dialog (`MenuUI`, `RunUI` `RunWindow` und Dialog), Rekrutierung/Kaserne-Hauptfenster, „Neue Verbündete“, „Wahrscheinlichkeiten“, Level-Up, Ladebildschirm-Karte. **Kein** Juwel auf: Phasenbanner, Einheiten-Info, Geländefenster, Aktionsmenü, Kampfvorschau, Toast, Pillen, Helden-Feldern im Lauf, Kampfszenen-Fenstern. Liste der tatsächlich gesetzten Stellen in den Notizen.
+  - Kampfvorschau so weit nach unten setzen, dass sie das Phasenbanner nicht berührt (mindestens 8 px Abstand inklusive Rand).
+  - Akzeptanz: Kampfbild mit Auswahl + Aktionsmenü + Kampfvorschau: höchstens ein Juwel sichtbar, keine Überlappung.
 
-- [x] 4. **Jelly-Knöpfe mit 3D-Kante** – `UIKit.button`, `setButtonStyle`, `BUTTON_STYLES`
-  - Füllung aus Stil, Ecken 12, ink-Rand 3 px, **3D-Kante** 5 px in der Kantenfarbe unter dem Knopf, **Glanzkuppe** (weiße Ellipse/Verlauf in der oberen Hälfte, 0,35–0,5 deckend → 0), Schrift FredokaOne weiß mit ink-Kontur.
-  - Drücken: Knopf senkt sich auf 1 px Kante (zusätzlich zur bestehenden Skalierung 0,94). Hover wie bisher.
-  - Stile wie oben inkl. neuem `holo` (Verlauf), `disabled` ohne Kante. `setButtonStyle` setzt Füllung und Kante.
-  - Wichtig: `.Text`, Layout-Größe, Klickfläche und alle bestehenden Aufrufer bleiben gültig. Die Kante darf Layout-Abstände nicht zerstören (in den Notizen sagen, wie gelöst – z. B. Kante als Kind unterhalb der Knopfkante).
-  - Mindesthöhe 48 für normale Knöpfe dort sicherstellen, wo Knöpfe heute niedriger sind, ohne Layouts zu sprengen; Abweichungen auflisten.
-  - Akzeptanz: Studio-Bild mit default, primary, danger, active, muted, disabled; Text auf Gold/Grün gut lesbar.
+- [ ] 4. **Reste angleichen** – `UIKit.THEME`, `CollectionUI`, `BattleScene`
+  - Beschwörungsbanner: Verlauf `holoShade` (#7a4fd6) oben → `panelBottom` unten statt Braun-Gold; Rand wie Fenster (Chrom 3 px + ink außen) statt Gold 2 px; Ecken 24 bleiben. Gold-Chrom-Titel bleibt.
+  - Kampfszene-KP-Balken: Spur `panelInset`, Rand 2 px ink, Ecken 6; KP-Trennlinien bleiben.
+  - Kaserne-Level-Abzeichen: `panelInset` mit ink-Rand und weißer Schrift; Pink (`holoPink`) bleibt allein „NEU!“ vorbehalten.
+  - Kaserne-Auswahl: nicht gewählte Karten behalten 4 px (`METRICS.cardBorder`), gewählte 6 px.
+  - Akzeptanz: Bilder Rekrutierung, Kaserne mit gewählter Karte, Kampfszene.
 
-- [x] 5. **Balken, Sterne, Heldenkarten** – `UIKit.bar`, `rarityStars`, `heroCard`
-  - Balken: Pillenform (Ecken voll rund), Spur panelInset, Rand 2 px ink, Füllung mit Glanzkuppe; Zahl FredokaOne mit Kontur.
-  - Sterne: volle Sterne in Seltenheitsfarbe, leere starEmpty (wie bisher), wenn möglich mit ink-Kontur.
-  - Heldenkarte: Hintergrund-Verlauf aus der **Signaturfarbe des Helden** (`UnitData.Heroes[id].chibi.outfit.primary`, sonst Seltenheitsfarbe) oben nach panelBottom unten; Rahmen 4 px in Seltenheitsfarbe + ink außen; Ecken 12; Name FredokaOne in Seltenheitsfarbe mit dicker ink-Kontur, Klasse GothamMedium dim.
-  - **★5-Holo-Rahmen**: Rahmen als Verlauf rarity5 → #fff3b0 → holoPink → holoCyan (UIGradient am UIStroke), dazu ein schwacher Schein um die Karte; ★4 einfacher Rahmen (optional ein langsamer Glanzstreifen, nur wenn günstig – sonst weglassen und notieren). `Config.FEEL.rarityEffects` betrifft nur 3D-Effekte, nicht diesen Rahmen.
-  - Abzeichen „NEU“ o. ä. als Pille holoPink mit ink-Rand.
-  - Akzeptanz: Studio-Bild Kaserne mit ★1–★5 nebeneinander; jede Karte zeigt ihre Signaturfarbe, ★5 Holo-Rahmen.
+- [ ] 5. **Kontur nach angezeigter Größe** – `UIKit.outline`
+  - Dicke nach der tatsächlich dargestellten Textgröße (`TextBounds`/`AbsoluteSize` bzw. aktuelle Größe bei `TextScaled`), mit denselben Stufen (≤ 16 → 1,5; 17–28 → 2; ≥ 32 → 3); bei sehr kleinem Text (< 12) höchstens 1 px. Günstig halten (kein Aktualisieren pro Frame).
+  - Akzeptanz: Bild eines herunterskalierten Knopftexts (z. B. „Gegnerphase überspringen“) und der Pillenzahlen; Buchstaben offen und lesbar.
 
-- [x] 6. **Titel, Kennzeilen, Beschwörung** – neue Helfer in `UIKit` + gezielte Stellen
-  - `UIKit.chromeTitle(props, parent)`: TextLabel in LuckiestGuy, Text mit Chromverlauf (UIGradient auf dem TextLabel, Hintergrund transparent), 3 px ink-Kontur; Variante `Gold = true` (Verlauf #fff6d0 → gold → goldShade bei 0,52 → gold → #fff6d0).
-  - `UIKit.tag(props, parent)`: Michroma, Versalien, holoCyan, klein (12–16).
-  - Große Titel umstellen (heute `THEME.title` mit TextSize ≥ 30): `MenuUI.luau` 72, 137, 240, 277 · `CollectionUI.luau` 69 (Bannertitel → Gold-Chrom), 157, 215 · `RunUI.luau` 36, 146 · `UI.luau` 382 („Level Up!“ → Gold-Chrom), 421, 448 · `BattleScene.luau` 39, 53. Zeilennummern Stand `b44961a`.
-  - Rekrutierung (`CollectionUI`): Zehnerruf-Knopf im Stil `holo` statt `primary`; Einzelruf `default`; Edelstein-Anzeige als Pille (panelInset, ink-Rand, Ecken voll rund). **Wahrscheinlichkeiten bleiben unverändert sichtbar** (Roblox-Regel).
-  - Akzeptanz: Studio-Bilder Hub-Titel, Rekrutierungsbanner, Ergebnis „Neue Verbündete“, Level-Up.
-
-- [x] 7. **Abschluss** – Tests, Devlog
-  - `scripts/check.ps1`, `scripts/test-run-ui.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` alle OK; Rojo-Build. UI-Tests anpassen, falls sie Farben/Fonts prüfen (Regeln nicht abschwächen, nur neue Werte).
-  - Devlog **#40 „UI-Umstellung Designsystem“** (Ziel · Umsetzung · Entscheidungen · Probleme · Teststatus) und „Nächste Schritte“ aktualisieren (nächste Etappen: Schwebende Thronlande, Thronkristalle/Banner).
-  - Committen, pushen (erster Push des neuen Branches: `git push -u origin feature/ui-designsystem`), Studio im Edit-Modus lassen, `.handoff/status` = `fertig`.
+- [ ] 6. **Abschluss** – Tests, Devlog
+  - `scripts/check.ps1`, `scripts/test-run-ui.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` alle OK; Rojo-Build. UI-Regressionen für Schritt 1–3 ergänzen (Deko-ZIndex folgt Fenster-ZIndex; Juwel standardmäßig aus; `AutomaticSize` ohne versetzten Schatten).
+  - Devlog **#41 „UI-Korrekturen nach Studio-Test“**.
+  - Committen, pushen, Studio im Edit-Modus lassen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Hub, Rekrutierung, Kaserne, Laufwahl, Kampf, Level-Up: neuer Look überall, nichts abgeschnitten oder überlappend
-- [ ] Fenster haben Chromrand und Kronjuwel; Knöpfe wirken „drückbar“ (Kante, Senken beim Tippen)
-- [ ] Texte gut lesbar, auch klein und auf goldenen/grünen Knöpfen
-- [ ] Heldenkarten zeigen ihre eigene Farbe; ★5-Karten haben den Holo-Rahmen
-- [ ] Handy: alle Knöpfe gut mit dem Daumen treffbar, Bildwiederholrate unverändert flüssig
+- [ ] Beschwörung: Ergebnisfenster und Wahrscheinlichkeiten mit deckendem Hintergrund, gut lesbar
+- [ ] Kampf: Geländefenster rechts klein, nur ein Kronjuwel im Bild, Vorschau überlappt nichts
+- [ ] Beschwörungsbanner lila statt braun; Kaserne-Abzeichen und Rahmen stimmig
+- [ ] Handy: kleine Texte mit Kontur gut lesbar
+- [ ] Danach: Datei → Auf Roblox veröffentlichen
 
 ## Nicht anfassen
-- Server, Spielregeln, Generator, Brett/Welt-Optik (Terrain, Klippen, Wasser – kommt mit „Schwebende Thronlande“ in einem eigenen Plan), Kamera, Sounds, Profil-Schema, Wahrscheinlichkeitsanzeige, die vom Nutzer angelegten Lighting-Effekte, `docs/referenz/`
+- Server, Spielregeln, Generator, Welt-Optik, Kamera, Sounds, Profil-Schema, Inhalte der Wahrscheinlichkeitsanzeige, die vom Nutzer angelegten Lighting-Effekte, `docs/referenz/`
 
 ## Offene Fragen
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-
-- Schritt 1 (10.10.2026): Studio 70aa44d0 (AutoRecovery-Datei, PlaceId 0); Config.Source entspricht lokal bis auf abschließenden Zeilenumbruch, Rojo 7.7.1 verbunden. Frisches Speicherprofil. Vorher-Aufnahmen im MCP: Willkommen, Hub/Thronmenü, Rekrutierungsbanner, echtes Einzelruf-Ergebnis, Kaserne mit allen Helden (Client-Profilprobe), Laufteam, Levelwahl, Kampf/Einheiteninfo, Kampfvorschau, Level-Up (Darstellungsprobe). Bisher Blau-Gold, Fondamento-Titel, flache Knöpfe; schmale Kartenrahmen. Die flüchtigen BattleEvent-Schadenszahlen waren in den ersten Aufnahmen nicht sichtbar. Ergänzende Aufnahme UI_Vorher_Schadensschrift_Standbild: stehende 7 als ScreenGui auf dem Kampfbrett mit den bisherigen floatText-TextLabel-Werten (GothamBlack/TextStroke); reine Darstellungsfixture. Keine Server-Spielwerte geändert. Aufnahmen im MCP betrachtet, keine lokalen Bildpfade geliefert. Play beendet; Edit-Modus. Handyaufnahme folgt beim Abschluss, soweit MCP-Gerätesimulation möglich.
-
-- Schritt 2: THEME-Farben/Verweise und RichText-Hexwerte umgestellt. FredokaOne, LuckiestGuy und Michroma sind in Studio als Enum vorhanden. label/outline verfolgen Font, TextSize und TextTransparency; Outline=false deaktiviert die Kontur. Schwebezahlen verwenden LuckiestGuy und denselben ink-UIStroke, der mit ausblendet. check.ps1 OK (38 Dateien). Studio-Bilder Willkommen, Rekrutierung, Kaserne, Laufwahl und Kampf/Level-Up: neue runde Schrift und klare Konturen auch bei kleinen Namen/Kennwerten; Fließtext ohne Kontur. Output ohne neue Fehler, bekannte Mesh-Rückfälle/Lighting-Hinweis. Play beendet. Vorher-Schadenszahl tatsächlich in UI_Vorher_Schadensschrift_Standbild sichtbar: ScreenGui-Standbild der ursprünglichen floatText-TextLabel-Werte auf dem Kampfbrett; Billboard-Proben waren in screen_capture unsichtbar.
-
-- Schritt 3: Chrom-UIStroke am Außenframe, eigener versetzter ink-Rahmen, Glasreflex/Lichtkante und Kronjuwel im Background; padding verschiebt nur Inhalte und hält Schatten am Hintergrund ausgerichtet. Bei Animated entfällt der äußere Schatten, das Juwel liegt 12 px innen (CanvasGroup schneidet außerhalb ab). Jewel=false unterstützt kleine Fenster. Modale Abdunklungen in MenuUI/CollectionUI/RunUI nutzen zentral backdrop bei 0,35. Studio-Bilder Willkommen, Hub und Laufwahl: Indigo-Glas, mittiger Cyan/Lila-Juwel, Lichtkante; nach Bildkorrektur Chrom statt verdecktem Rand, ink außen sichtbar. Inhalt frei. check.ps1 OK; Play beendet.
-
-- Schritt 4: Alle sieben Knopfstile zentral mit Glanzkuppe, ink-Rand und Kante. TextButton bleibt die Klickfläche und Textquelle; ButtonEdge/Face sind Kinder mit kleinerem ZIndex, ohne zusätzliche Layoutplätze. 5-px-Kante ragt nach unten; beim Drücken bewegt sich nur Face/Text um 4 px, Kante bleibt bei 5 (sichtbar 1 px); padding wird für die Flächen kompensiert. HoverScale und Config.FEEL-Skalierung unverändert. disabled ohne Kante/Glanz, Text 0,4 transparent. Default 48 px; bisherige kleinere Reiter/Schließen/Ergebnis-/Aktions-/Vorschau-/Werkzeugknöpfe auf 48, nötige Container/Abstände mitgezogen. Thron-Lauf und Zug beenden 64; bestehende 68/72/80-px-Aktionen behalten ihre Größe. Keine kleineren Ausnahmen. Studio-Stilprobe zeigt default/primary/danger/active/muted/disabled/holo; Gold/Grün gut konturiert, Primary auch per echter Maus gedrückt aufgenommen. check.ps1 OK; keine neuen Output-Fehler; Play beendet.
-
-- Schritt 5: Pillenbalken mit ink-Spur/Rand, Glanz und Fredoka-Zahlen ohne doppelte TextStroke-Kontur. Kartenverlauf nimmt chibi.outfit.primary (Fallback Seltenheit), 4-px-Rahmen mit ink außen, Namen 3-px-Kontur, Sterne Fredoka/ink, Klasse Gotham dim. ★5 statischer Holo-Rahmen mit getrenntem schwachem Schein; direkte Auswahlfarben schalten Holo vorübergehend aus und stellen ihn bei Abwahl wieder her. ★4 bleibt einfacher Rahmen ohne animierten Glanzstreifen (günstig am Handy). Abzeichen als pinke Pille; Verschmelzungen panelInset. Studio-Bilder: alle 13 Helden und gesondert Leon/Mira/Magierin/Bruno/Ida mit ★5–★1 nebeneinander, eigene Outfitfarben und Holo sichtbar; Laufwahl zeigt Pillenbalken und lesbare Zahlen. check.ps1 OK; Output ohne neue Fehler; Play beendet. Kontur der RichText-Sterne im Fließtext der Chancen bleibt aus, dort Lesbarkeit der body-Schrift unverändert.
-
-- Schritt 6: chromeTitle mit LuckiestGuy/3-px-ink und Chrom-/Goldverlauf; setChromeTitleGold hält auch dynamische Siegtitel korrekt. tag verwendet Michroma/Versalien/Cyan (Kampfvorschau-Kennzeilen). Alle im Plan genannten Titel umgestellt, einschließlich Wiederaufnahmezeile in RunUI. Bannerfarben nun zentral, Banner-Ecken 24; Zehnerruf Holo und 64 hoch, Einzelruf default, Edelstein-Pille. Rechte Aktionsspalte passend vergrößert, Chancen bleiben sichtbar. Studio-Bilder Willkommen, Hubtitel, Banner mit aktivem Holo (500 Edelsteine nur als Clientprobe), echtes Einzelruf-Ergebnis, Laufwahl und Gold-Level-Up; keine neuen Fehler. Animated-Juwel auf 14 px/10 px Innenposition verkleinert und Level-Up-Titel versetzt, damit Schmuck/Schrift nicht überlappen. check.ps1 OK; UI-Regressionssuite mit ergänzten Roblox-Stub-Standardwerten bereits grün (160). Handy-/Kampfabschlussbilder folgen Schritt 7. Play beendet.
-
-- Schritt 7: Alle Abschlussprüfungen Exit 0: check 38 Dateien, UI 173 (13 zusätzliche Vertragsregressionen; reale Roblox-Stub-Standardwerte ergänzt), Tutorial 168, Levelgenerator 19000/5000 plus 96 Landschaftskombinationen und 2400 Bosskarten, Lauf-/Brett-/Landschaftssuite komplett grün. Finaler Rojo-Build OK. Abschlussbilder Einheiteninfo + Kampfvorschau mit Cyan/Michroma, Kampfszene mit Chromnamen, Level-Up ohne Juwelüberlappung und Schadensschrift-Standbild. Auch Kampfszenen-Schadenszahlen nutzen jetzt die im Design geforderte Display-Schrift ohne doppelte alte TextStroke-Kontur; unveränderte Timings. Studio Edit bestätigt; keine neuen Spiel-Output-Fehler. Handyaufnahme fehlt: verfügbare MCP-Werkzeuge steuern keine Studio-Gerätesimulation. Nutzer-/Handytests bleiben offen; kein eigenes Review. Devlog #40 und nächste Etappen Schwebende Thronlande/Thronkristalle/Banner aktualisiert. Schritt 1 hat wegen präzisierter Schadenszahlprobe einen zusätzlichen Dokumentationscommit; übrige Schritte separat. Push und Signal erfolgen als letzte Abschlussaktionen.
