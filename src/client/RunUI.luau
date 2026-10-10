@@ -269,11 +269,11 @@ end
 
 function RunUI.init(root, cbs)
 	callbacks = cbs
-	frame = panel({ Name = "RunWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+	frame = panel({ Jewel = true, Name = "RunWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.new(1, -64, 1, -64), Visible = false }, root)
 	confirmation = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop,
 		BackgroundTransparency = 0.35, BorderSizePixel = 0, Active = true, Visible = false, ZIndex = 50 }, root)
-	local dialog = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+	local dialog = panel({ Jewel = true, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(680, 290), ZIndex = 51 }, confirmation)
 	label({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 125), ZIndex = 52,
 		Text = "Lauf wirklich aufgeben?\nVerdientes Gold, Edelsteine und Helden-Erfahrung bleiben erhalten.",

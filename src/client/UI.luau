@@ -214,7 +214,7 @@ end
 local function buildForecast()
 	local f = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 92), Size = UDim2.fromOffset(470, 256),
+		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, UIKit.METRICS.forecastTop), Size = UDim2.fromOffset(470, 256),
 		Visible = false,
 	}, hud)
 	padding(f, 12)
@@ -371,7 +371,7 @@ local function buildPopups()
 	}, level.gui)
 	dismiss.Activated:Connect(UI.dismissLevelUp)
 
-	local lf = panel({
+	local lf = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.fromOffset(320, 250),
 		Visible = false, ZIndex = 6,
@@ -440,7 +440,7 @@ local function buildLoading(playerGui)
 	loading.content = make("CanvasGroup", {
 		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Active = false,
 	}, contentRoot)
-	local card = panel({
+	local card = panel({ Jewel = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(780, 250),
 	}, loading.content)

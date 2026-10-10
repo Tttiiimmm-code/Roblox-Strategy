@@ -150,7 +150,7 @@ local function buildOdds(root)
 		Visible = false, ZIndex = 20,
 	}, root)
 	odds.frame = overlay
-	local box = panel({
+	local box = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(520, 560),
 		ZIndex = 21,
@@ -208,7 +208,7 @@ local function buildResults(root)
 		Visible = false, ZIndex = 30,
 	}, root)
 	results.frame = overlay
-	local box = panel({
+	local box = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(940, 560),
 		ZIndex = 31,

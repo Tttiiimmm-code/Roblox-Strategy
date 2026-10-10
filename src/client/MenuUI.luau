@@ -60,7 +60,7 @@ local function updateCurrency(textLabel, profile)
 end
 
 local function buildLobby(root)
-	local f = panel({
+	local f = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(1000, 640),
 		Visible = false,
@@ -126,7 +126,7 @@ local function buildResult(root)
 		Visible = false, ZIndex = 10,
 	}, root)
 	result.frame = overlay
-	local box = panel({
+	local box = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(480, 540),
 		ZIndex = 11,
@@ -271,7 +271,7 @@ local function buildWelcome(root)
 		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop,
 		BackgroundTransparency = 0.35, Active = true, Visible = false, ZIndex = 60,
 	}, root)
-	local box = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+	local box = panel({ Jewel = true, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(760, 400), ZIndex = 61 }, welcome.frame)
 	welcome.title = UIKit.chromeTitle({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 60),
 		Text = "Willkommen im Thronsaal!", Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold, ZIndex = 62 }, box)

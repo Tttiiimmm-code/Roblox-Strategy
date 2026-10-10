@@ -62,7 +62,7 @@ local lastHoverSound = -math.huge
 UIKit.METRICS = {
 	smallRadius = 6, buttonRadius = 12, panelRadius = 16, bannerRadius = 24,
 	buttonHeight = 48, primaryHeight = 64, buttonEdge = 5, pressedEdge = 1,
-	panelBorder = 3, cardBorder = 4, shadowOffset = 8,
+	panelBorder = 3, cardBorder = 4, shadowOffset = 8, forecastTop = 120,
 }
 local METRICS = UIKit.METRICS
 
@@ -229,7 +229,7 @@ end
 function UIKit.panel(props, parent)
 	local animated = props.Animated
 	props.Animated = nil
-	local jewel = props.Jewel ~= false
+	local jewel = props.Jewel == true
 	props.Jewel = nil
 	local transparency = props.BackgroundTransparency or 0
 	props.BackgroundTransparency = 1
