@@ -320,6 +320,7 @@ function MenuUI.openLobby(tab)
 end
 
 function MenuUI.closeLobby()
+	CollectionUI.closeOverlays()
 	if lobbyOpen then SoundPlayer.play("close") end
 	lobbyOpen = false
 	MenuUI.update(lastState, lastProfile)
@@ -383,6 +384,7 @@ function MenuUI.update(state, profile)
 	end
 	UIKit.setVisible(throne.frame, inHall and throneSeated and not lobbyOpen)
 
+	if not (inHall and lobbyOpen and lobbyTab == "recruit") then CollectionUI.closeOverlays() end
 	UIKit.setVisible(lobby.frame, inHall and lobbyOpen)
 	if inHall and lobbyOpen then
 		lobby.title.Text = TAB_TITLES[lobbyTab]

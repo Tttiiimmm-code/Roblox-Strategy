@@ -153,18 +153,50 @@ local function buildChoice(run, profile)
 	else
 		local options = make("Frame", { Position = UDim2.fromOffset(24, 254), Size = UDim2.new(1, -48, 1, -360),
 			BackgroundTransparency = 1 }, content)
+		local choosing, choiceInput = false, nil
 		for i, option in ipairs(run.options) do
 			local symbol, title, detail = optionText(option)
-			local b = button("", options, "default")
-			b:SetAttribute("HoverScale", 1) -- Große Karten behalten Farb-/Randfeedback ohne Überlappung.
-			b.Position = UDim2.new((i - 1) / #run.options, 6, 0, 0)
-			b.Size = UDim2.new(1 / #run.options, -12, 1, 0)
-			label({ Position = UDim2.fromScale(0, 0.04), Size = UDim2.fromScale(1, 0.22), Text = symbol, TextSize = 48 }, b)
-			label({ Position = UDim2.fromScale(0.03, 0.28), Size = UDim2.fromScale(0.94, 0.26), Text = title,
-				Font = THEME.title, TextSize = 28, TextWrapped = true, TextScaled = false }, b)
-			label({ Position = UDim2.fromScale(0.03, 0.58), Size = UDim2.fromScale(0.94, 0.34),
-				Text = detail, TextWrapped = true, TextScaled = false, TextSize = 23, TextColor3 = THEME.gold }, b)
-			b.Activated:Connect(function() if not lastState.busy then callbacks.onChooseLevel(i) end end)
+			local camp = option.kind == "camp"
+			local boss = option.kind == "boss" or option.kind == "miniboss"
+			local card = panel({ Name = "LevelChoice", Jewel = false,
+				Position = UDim2.new((i - 1) / #run.options, 6, 0, 0),
+				Size = UDim2.new(1 / #run.options, -12, 1, 0) }, options)
+			local hit = make("TextButton", { Name = "ChooseCard", Text = "", Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1, BorderSizePixel = 0, AutoButtonColor = false }, card)
+			UIKit.tag({ Position = UDim2.fromOffset(16, 12), Size = UDim2.new(1, -32, 0, 22),
+				Text = camp and "RAST" or (boss and string.upper(option.kind) or "KAMPF") }, hit)
+			label({ Position = UDim2.fromOffset(16, 34), Size = UDim2.new(1, -32, 0, 40),
+				Text = symbol, TextSize = 48 }, hit)
+			label({ Position = UDim2.fromOffset(16, 78), Size = UDim2.new(1, -32, 0, 44), Text = title,
+				Font = THEME.title, TextSize = 28, TextWrapped = true, wrap = true }, hit)
+			if camp then
+				label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -82), Size = UDim2.new(1, -32, 0, 36),
+					Text = detail, TextWrapped = true, wrap = true, TextSize = 20, TextColor3 = THEME.dim }, hit)
+			else
+				local pill = make("Frame", { Name = "RewardPill", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -82),
+					Size = UDim2.new(1, -40, 0, 36), BackgroundColor3 = THEME.panelInset, BorderSizePixel = 0 }, hit)
+				UIKit.corner(pill, 999)
+				UIKit.stroke(pill, THEME.ink, UIKit.METRICS.barBorder)
+				label({ Position = UDim2.fromOffset(12, 0), Size = UDim2.new(1, -24, 1, 0),
+					Text = detail, TextSize = 23, TextColor3 = THEME.text }, pill)
+			end
+			local action = button(camp and "Rasten" or (boss and "Kampf!" or "Wählen"), hit,
+				camp and "active" or (boss and "primary" or "default"))
+			action.Name = "ChooseButton"
+			action.AnchorPoint = Vector2.new(0, 1)
+			action.Position = UDim2.new(0, 20, 1, -18)
+			action.Size = UDim2.new(1, -40, 0, UIKit.METRICS.buttonHeight)
+			action.TextSize = 22
+			action:SetAttribute("HoverScale", 1)
+			local function choose(input)
+				if lastState.busy or choosing or (input and input == choiceInput) then return end
+				-- Karte und Knopf teilen dieselbe Wahl; ein Eingabeereignis sendet nur einmal.
+				choosing, choiceInput = true, input
+				task.defer(function() choosing = false end)
+				callbacks.onChooseLevel(i)
+			end
+			hit.Activated:Connect(choose)
+			action.Activated:Connect(choose)
 		end
 	end
 	footer("Aufgeben", "danger", RunUI.confirmAbandon, false)

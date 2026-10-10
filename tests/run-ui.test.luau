@@ -73,6 +73,7 @@ for _, depth in ipairs({ 3, 5 }) do
 	local title = depth == 3 and "Miniboss: Banditenhauptmann" or "Boss: Garrick"
 	local card = object(title, "TextLabel").Parent
 	check(#run.options == 1 and card.ClassName == "TextButton", "Bosskarte fehlt")
+	flushDeferred()
 	card.Activated:Fire()
 	check(messages[#messages].type == "choose" and messages[#messages].index == 1, "Bossstart falsch")
 	run.current = 1
@@ -95,22 +96,23 @@ check(object("Heilung & Teamwechsel\nKeine Kampfbelohnung", "TextLabel").Parent 
 -- Echte Hover-/Loslass-Ereignisse; Geometrie bei schmalen und breiten Auswahlbereichen.
 services.UserInputService.MouseEnabled = true
 local optionCards = {}
-for _, child in campCard.Parent:GetChildren() do
-	if child.ClassName == "TextButton" then table.insert(optionCards, child) end
+for _, child in campCard.Parent.Parent:GetChildren() do
+	if child.Name == "LevelChoice" then table.insert(optionCards, child) end
 end
 table.sort(optionCards, function(a, b) return a.Position.X.Scale < b.Position.X.Scale end)
 for _, width in { 480, 900, 1600 } do
 	local right = -math.huge
 	for _, card in optionCards do
-		card.MouseEnter:Fire()
-		card.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
-		card.InputEnded:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
-		local scale = card:FindFirstChild("ButtonScale").Scale
+		local action = card.ChooseCard.ChooseButton
+		action.MouseEnter:Fire()
+		action.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+		action.InputEnded:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+		local scale = action.ButtonScale.Scale
 		local size = card.Size.X.Scale * width + card.Size.X.Offset
 		local left = card.Position.X.Scale * width + card.Position.X.Offset - size * (scale - 1) / 2
 		check(left >= right and scale == 1, "Auswahlkarten ueberlappen beim Hover/Loslassen")
 		right = left + size * scale
-		card.MouseLeave:Fire()
+		action.MouseLeave:Fire()
 	end
 end
 local small = modules.UIKit.button("Hover-Test", root)
@@ -146,6 +148,7 @@ check(not legendary.stroke.UIGradient.Enabled, "Auswahlfarbe wird vom Holo-Rahme
 legendary.stroke.Color = legendary.rarity.color
 check(legendary.stroke.UIGradient.Enabled and legendary.stroke.Color == modules.UIKit.THEME.text, "Abwahl stellt Holo nicht wieder her")
 changingFont:Destroy(); plain:Destroy(); legendary.card:Destroy()
+flushDeferred()
 campCard.Activated:Fire()
 check(messages[#messages].type == "choose" and messages[#messages].index == campOption, "Wahllager falsch angebunden")
 -- Die ausgeliehene Kaserne bleibt im Hub verwendbar und enthält keine Lagerstatus-Texte.
@@ -213,3 +216,108 @@ check(wrapped.TextOutline.Transparency == 0.6, "Kontur-Fade nicht synchron")
 check(services.TextService.calls == measuredBeforeFade, "Transparenz-Fade löst unnötige Schriftmessung aus")
 scaled:Destroy(); wrapped:Destroy()
 print("OK: " .. count .. " gesamte Lauf-UI-Prüfungen inklusive Fenster-/Konturregressionen. Renderer durch Studio-Bildtests ergänzt.")
+
+-- Levelwahl: Panel/Klickfläche, Knopfstile, zwei/drei Optionen und einmalige Eingabe.
+profile.run = run
+run.phase, run.current = "choice", nil
+local battle
+-- Ein echtes generiertes Kampfthema verwenden.
+for _, option in run.options do if option.kind == "battle" then battle = option; break end end
+check(battle ~= nil, "Generierte Kampfoption fehlt")
+for _, number in { 2, 3 } do
+	run.seed += 1
+	run.options = { battle, { kind = "camp" } }
+	if number == 3 then table.insert(run.options, battle) end
+	render()
+	local cards = window:FindFirstChild("LevelChoice", true).Parent:GetChildren()
+	check(#cards == number, "Falsche Anzahl Levelwahl-Karten")
+	for _, card in cards do
+		check(card.ClassName == "Frame" and card.Background and not card.Background:FindFirstChild("CrownJewel"), "Levelwahl ist kein Panel ohne Juwel")
+		check(not card:FindFirstChild("ButtonFace"), "Jelly-Fläche überzieht die Karte") -- Knopf hat seine eigene Fläche.
+		for _, height in { 240, 296 } do
+			local hit = card.ChooseCard
+			local action = hit.ChooseButton
+			local detail = hit:FindFirstChild("RewardPill") or object("Heilung & Teamwechsel\nKeine Kampfbelohnung", "TextLabel", hit)
+			local detailBottom = height + detail.Position.Y.Offset
+			local detailTop = detailBottom - detail.Size.Y.Offset
+			local actionTop = height + action.Position.Y.Offset - action.Size.Y.Offset
+			check(detailTop >= 122 and detailBottom < actionTop, "Titel/Detail/Knopf überlappen bei kleiner Kartenhöhe")
+			check(actionTop >= 0 and height + action.Position.Y.Offset <= height, "Knopf außerhalb der Karte")
+		end
+	end
+end
+local choice = window:FindFirstChild("LevelChoice", true)
+local hit, action = choice.ChooseCard, choice.ChooseCard.ChooseButton
+check(action.Text == "Wählen" and action:GetAttribute("Style") == "default" and action.Size.Y.Offset == 48, "Kampfknopf falsch")
+check(hit.RewardPill.BackgroundColor3 == modules.UIKit.THEME.panelInset and hit.RewardPill.UIStroke.Thickness == 2, "Belohnungspille ohne dunkle Fläche/ink-Rand")
+check(hit.RewardPill.TextLabel.TextColor3 == modules.UIKit.THEME.text, "Belohnung nicht weiß")
+local campHit = object("Lager", "TextLabel").Parent
+check(campHit.ChooseButton.Text == "Rasten" and campHit.ChooseButton:GetAttribute("Style") == "active" and not campHit:FindFirstChild("RewardPill"), "Lager unterscheidet sich nicht vom Kampf")
+check(object("RAST", "TextLabel").Font == modules.UIKit.THEME.tech, "Lager-Kennzeile ohne Michroma")
+local beforeChoice = #messages
+state.busy = true
+hit.Activated:Fire({}); action.Activated:Fire({})
+check(#messages == beforeChoice, "Wahl ignoriert Busy")
+state.busy = false
+flushDeferred()
+local input = { UserInputType = Enum.UserInputType.Touch }
+action.Activated:Fire(input)
+flushDeferred()
+hit.Activated:Fire(input)
+check(#messages == beforeChoice + 1 and messages[#messages].index == 1, "Ein Tipp löst Karte und Knopf doppelt aus")
+flushDeferred()
+hit.Activated:Fire({ UserInputType = Enum.UserInputType.Touch })
+check(#messages == beforeChoice + 2, "Nächster Kartentipp wird blockiert")
+flushDeferred()
+campHit.ChooseButton.Activated:Fire({})
+check(#messages == beforeChoice + 3 and messages[#messages].index == 2, "Lagerknopf startet falsche Wahl")
+for _, depth in { 3, 5 } do
+	run.depth = depth
+	run.options = modules.LevelGen.makeOptions(run.seed, depth, "greenland")
+	render()
+	local boss = window:FindFirstChild("LevelChoice", true).ChooseCard.ChooseButton
+	check(boss.Text == "Kampf!" and boss:GetAttribute("Style") == "primary", "Boss-/Minibossknopf falsch")
+end
+
+-- Lobbywechsel schließen nur die Wahrscheinlichkeiten, auch ohne closeLobby-Aufruf.
+profile.run = nil
+local function finishTweens()
+	for _, animation in testTweens do animation.Completed:Fire(Enum.PlaybackState.Completed) end
+end
+local menuRoot = Instance.new("Frame")
+modules.MenuUI.init(menuRoot, callbacks)
+modules.MenuUI.update(state, profile)
+modules.MenuUI.openLobby("recruit")
+local oddsButton = object("ⓘ  Alle Wahrscheinlichkeiten", "TextButton", menuRoot)
+local odds = object("Wahrscheinlichkeiten", "TextLabel", menuRoot).Parent.Parent
+oddsButton.Activated:Fire()
+check(odds.Visible, "Wahrscheinlichkeiten nicht öffnbar")
+modules.MenuUI.closeLobby()
+finishTweens()
+check(not odds.Visible, "closeLobby lässt Wahrscheinlichkeiten offen")
+modules.MenuUI.openLobby("recruit"); oddsButton.Activated:Fire()
+modules.MenuUI.openLobby("barracks")
+finishTweens()
+check(not odds.Visible, "Kasernenwechsel lässt Wahrscheinlichkeiten offen")
+modules.MenuUI.openLobby("recruit"); oddsButton.Activated:Fire()
+modules.MenuUI.openLobby("run")
+finishTweens()
+check(not odds.Visible and menuRoot.RunWindow.Visible, "Teamwahl lässt Wahrscheinlichkeiten offen")
+object("Zurück", "TextButton", menuRoot.RunWindow).Activated:Fire()
+modules.MenuUI.openLobby("recruit"); oddsButton.Activated:Fire()
+modules.MenuUI.setLoading(true)
+finishTweens()
+check(not odds.Visible, "Laden lässt Wahrscheinlichkeiten offen")
+modules.MenuUI.setLoading(false)
+modules.MenuUI.openLobby("recruit"); oddsButton.Activated:Fire()
+state.mode, state.ownerUserId = "Battle", player.UserId
+modules.MenuUI.update(state, profile)
+finishTweens()
+check(not odds.Visible, "Eigener Kampf lässt Wahrscheinlichkeiten offen")
+state.mode, state.ownerUserId = "Lobby", nil
+modules.MenuUI.update(state, profile)
+modules.MenuUI.showRecruitResults({})
+local results = object("Neue Verbündete", "TextLabel", menuRoot).Parent.Parent
+modules.MenuUI.closeLobby()
+check(results.Visible, "Lobbywechsel verwirft ungelesene Rufergebnisse")
+print("OK: " .. count .. " gesamte Lauf-UI-Prüfungen inklusive Levelwahl-/Overlayregressionen. Studio/Handy separat prüfen.")

@@ -242,6 +242,11 @@ local function buildResults(root)
 	end)
 end
 
+function CollectionUI.closeOverlays()
+	if odds.frame then UIKit.setVisible(odds.frame, false) end
+	-- Rufergebnisse bleiben bis „Weiter“ sichtbar, damit die Enthüllung nicht verloren geht.
+end
+
 function CollectionUI.showResults(list)
 	for _, child in results.grid:GetChildren() do
 		if child:IsA("GuiObject") then
