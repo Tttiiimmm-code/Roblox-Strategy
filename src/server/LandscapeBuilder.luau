@@ -211,7 +211,9 @@ local function writeSurface(state, rect, stats)
 			end
 		end
 		top = aligned(top, true) + R -- Luft über jeder Oberfläche ist Teil desselben Schreibblocks.
-		local bottom = -Config.FEEL.terrainDepth
+		-- Die Insel braucht nur eine dünne Terrainkappe; darunter liegt die facettierte Schale.
+		local bottom = state.island and aligned(Config.ISLAND.surfaceHeight - Config.ISLAND.earthTiles * Config.TILE_SIZE + R, true)
+			or -Config.FEEL.terrainDepth
 		local ny = (top - bottom) / R
 		local materials, occupancies = {}, {}
 		for ix = 1, nx do

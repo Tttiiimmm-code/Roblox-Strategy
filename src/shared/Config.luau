@@ -216,7 +216,7 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 	tree = { height = 1.15, crownWidth = 1.35 }, rock = { height = 0.45, width = 0.65 }, bush = { height = 0.3, width = 0.5 },
 	propCount = { min = 1, max = 3 }, propCategories = { "deco_fence", "rock", "deco_fence" },
 	earthColor = Color3.fromRGB(154, 106, 72), stoneColor = Color3.fromRGB(109, 100, 128),
-	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9,
+	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9, crystalDepth = 0.75,
 	accents = { greenland = Color3.fromRGB(124, 194, 66), swamp = Color3.fromRGB(180, 107, 224),
 		ice = Color3.fromRGB(111, 211, 255), volcano = Color3.fromRGB(255, 122, 26) },
 	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 220, cloudCount = 36,

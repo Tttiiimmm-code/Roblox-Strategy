@@ -99,7 +99,7 @@ function IslandBuilder.build(board, state)
 	local accent = s.accents[state.region and state.region.id or "greenland"] or s.accents.greenland
 	for index = 1, count do
 		local angle = (index - 1) * math.pi * 2 / count + random:NextNumber(-0.3, 0.3)
-		local position = center + Vector3.new(math.cos(angle) * state.w * 0.32, -s.depthTiles * T * 0.6, math.sin(angle) * state.h * 0.32)
+		local position = center + Vector3.new(math.cos(angle) * state.w * 0.32, -s.depthTiles * T * s.crystalDepth, math.sin(angle) * state.h * 0.32)
 		crystal(folder, position, s.crystalWidth, s.crystalHeight, accent)
 	end
 	board:SetAttribute("IslandCrystals", count)
