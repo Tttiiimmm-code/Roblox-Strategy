@@ -35,6 +35,7 @@ local Enum = setmetatable({}, { __index = function(t, k)
 	local e = setmetatable({}, { __index = function(_, n) return k .. "." .. n end }); t[k] = e; return e
 end })
 local ColorSequence = { new = function(...) return { ... } end }
+local ColorSequenceKeypoint = ColorSequence
 local NumberSequence = ColorSequence
 local NumberSequenceKeypoint = ColorSequence
 local TweenInfo = { new = function(...) return { ... } end }
@@ -67,6 +68,7 @@ function methods:Destroy() for _, c in self:GetChildren() do c:Destroy() end; se
 function Instance.new(class)
 	local o = setmetatable({ _props = {
 		ClassName = class, Name = class, Text = "", TextSize = 14, Visible = true, Scale = 1, Value = 0,
+		ZIndex = 1, TextTransparency = 0, TextStrokeTransparency = 1, Enabled = true,
 		Size = UDim2.new(), Position = UDim2.new(), AnchorPoint = Vector2.new(0, 0),
 		AbsolutePosition = Vector2.new(0, 0), AbsoluteSize = Vector2.new(1280, 720), AbsoluteWindowSize = Vector2.new(600, 400),
 		AbsoluteCanvasSize = Vector2.new(1200, 720), BackgroundTransparency = 0,

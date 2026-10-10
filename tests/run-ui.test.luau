@@ -116,7 +116,36 @@ end
 local small = modules.UIKit.button("Hover-Test", root)
 small.MouseEnter:Fire()
 check(small:FindFirstChild("ButtonScale").Scale == modules.Config.FEEL.buttonHoverScale, "Kleine Buttons ohne Hoverfeedback")
+local clickSize = small.Size
+small.Text = "Geänderter Knopftext"
+small.InputBegan:Fire({ UserInputType = Enum.UserInputType.Touch })
+check(small.Size == clickSize and small.Text == "Geänderter Knopftext", "Jelly-Dekoration verändert TextButton-Vertrag")
+check(small.ButtonFace.Position.Y.Offset + small.UIPadding.PaddingTop.Offset == 4, "Gedrückte Fläche senkt sich nicht um vier Pixel")
+check(small.ButtonEdge.Position.Y.Offset + small.UIPadding.PaddingTop.Offset == 5, "Drücken verschiebt die Kante statt nur der Fläche")
+small.InputEnded:Fire({ UserInputType = Enum.UserInputType.Touch })
+check(small.ButtonFace.Position.Y.Offset == 0 and small.Size == clickSize, "Loslassen verändert Klickfläche oder Layoutgröße")
+modules.UIKit.setButtonStyle(small, "holo")
+check(small:GetAttribute("Style") == "holo" and small.ButtonFace.UIGradient.Enabled, "Holo-Stil nicht aktiv")
+modules.UIKit.setButtonStyle(small, "disabled")
+small.InputBegan:Fire({ UserInputType = Enum.UserInputType.Touch })
+check(not small.ButtonEdge.Visible and small.ButtonFace.Position.Y.Offset == 0, "Deaktivierter Knopf bekommt eine gedrückte Kante")
+check(small.TextOutline.Transparency == small.TextTransparency and small.TextTransparency == 0.4, "Deaktivierter Text und Kontur blenden unterschiedlich aus")
 small:Destroy()
+local changingFont = modules.UIKit.label({ Text = "Dynamische Schrift", TextSize = 20 }, root)
+check(not changingFont.TextOutline.Enabled, "Fließtext bekommt eine Kontur")
+changingFont.Font = modules.UIKit.THEME.bold
+check(changingFont.TextOutline.Enabled and changingFont.TextOutline.Thickness == 2, "Später gesetzte UI-Schrift bekommt keine Kontur")
+changingFont.TextSize = 14
+changingFont.TextTransparency = 0.8
+check(changingFont.TextOutline.Thickness == 1.5 and changingFont.TextOutline.Transparency == 0.8, "Größe/Fade der Kontur folgt nicht dem Text")
+local plain = modules.UIKit.label({ Text = "Ohne Kontur", Font = modules.UIKit.THEME.display, Outline = false }, root)
+check(not plain.TextOutline.Enabled, "Outline=false wird ignoriert")
+local legendary = modules.UIKit.heroCard(root, "leon", {})
+legendary.stroke.Color = modules.UIKit.THEME.good
+check(not legendary.stroke.UIGradient.Enabled, "Auswahlfarbe wird vom Holo-Rahmen verdeckt")
+legendary.stroke.Color = legendary.rarity.color
+check(legendary.stroke.UIGradient.Enabled and legendary.stroke.Color == modules.UIKit.THEME.text, "Abwahl stellt Holo nicht wieder her")
+changingFont:Destroy(); plain:Destroy(); legendary.card:Destroy()
 campCard.Activated:Fire()
 check(messages[#messages].type == "choose" and messages[#messages].index == campOption, "Wahllager falsch angebunden")
 -- Die ausgeliehene Kaserne bleibt im Hub verwendbar und enthält keine Lagerstatus-Texte.
