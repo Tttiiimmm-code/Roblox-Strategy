@@ -19,7 +19,7 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 
 ## Schritte
 
-- [ ] 1. **Vorher-Bilder und Messung** – nur Studio
+- [x] 1. **Vorher-Bilder und Messung** – nur Studio
   - Ein Grasland-Kampflevel mit Fluss: Normalzoom, Übersichtszoom, Aufbauzeit, Brett-Nachkommen, Terrain-Voxel.
 
 - [x] 2. **Inselgrundriss und Oberseite** – `Config.ISLAND` (neu), `LandscapeBuilder`
@@ -77,3 +77,5 @@ Branch: neu `feature/thronlande` von `feature/ui-designsystem` (enthält C7 und 
 - Korrektur Schritt 1: Das Übersichtsbild mit Seed 1 wurde während verzögerter Terrain-/Teil-Replikation aufgenommen und ist als vollständiger Nachweis ungeeignet. Vollständiges Normalbild mit Fluss und Übersicht der ursprünglichen Karte ohne Fluss liegen vor; der verlangte vollständige Fluss-Übersichtsvergleich fehlt. Deshalb Schritt 1 wieder offen markiert. Die Messwerte des echten serverseitigen Aufbaus bleiben gültig.
 - Schritt 3 teilweise umgesetzt: neues IslandBuilder-Modul, Erdschicht (1 Feld), drei facettierte Steinstufen bis zur Spitze (Gesamttiefe 4,5 Felder), 2–4 Neon-Oktaeder mit weißer Glanzfacette. Inselteile sind SmoothPlastic/Neon, ohne Texturen, Partikel, Schatten, Kollision, Touch oder Query. Seed 1: 212 neue Teile / 1.760 geschätzte Dreiecke, 1.597 Brett-BaseParts insgesamt, ca. 0,183 s Aufbau; Terrain unverändert 12.368 Voxel. Finale Erdschicht nach innen versetzt, damit sie keinen breiten Rand um die Insel bildet. Normalsicht dieser Korrektur in Studio gesehen; Seitenansicht/Kristallsicht nicht erfolgreich aufgenommen, daher Schritt 3 nicht abgehakt.
 - Letzte technische Prüfung: scripts/check.ps1 OK, 39 Dateien; Rojo-Build TacticsGame.rbxlx OK. Tests aus Schritt 7 noch nicht ausgeführt/angepasst (neues IslandBuilder muss in Board-Runner plus Vektorstubs ergänzt werden; Tal-Landschaftsprüfungen benötigen Insel-/Rückfallfälle). Keine Aussage über Klick-/Bewegungsregression oder Handy-Leistung. Kein abgeschlossener Plan, daher Devlog #43 noch nicht geschrieben. Schritte 4–7 nicht begonnen. Kein Push, Übergabe mit frage.
+
+- Fortsetzung Schritt 1 (10.10.2026): Vollständige Fluss-Übersicht `D1_01_vorher_seed1_uebersicht_render` im echten Play-Modus nach Terrain-Replikation aufgenommen; Normalbild `D1_01_vorher_seed1_vollstaendig_normal_2`. Tal weiterhin vollständig im Hintergrund. Wiederholungsmessung Seed 1: 1.445 BaseParts, 2.525 Nachkommen, 118.528 Terrain-Voxel, 33.832.189 Studs³, 0,369 s Aufbau, 458.976 geschätzte Dreiecke (Mesh/Union pauschal 1.000). Vorhandenen Lauf per ResumeLevel gestartet; Geometrieprobe ersetzt nur das Brett, Figuren gehören zum laufenden Level und sind keine Seed-1-Spielprobe. Kameraprobe nur temporär in Studio: RenderStepped nach der regulären Kamera, moderate Abstände; BindToRenderStep wurde von der regulären RenderStepped-Kamera überschrieben. Keine Terrain-Änderung im Edit-Modus.
