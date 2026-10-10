@@ -24,7 +24,7 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
   - Rand-Grasfarbe für Inseln heller und frischer als das jetzige Oliv (Terrain-Grass aktuell ≈ 73,86,64 in Studio): neuer WIP-Wert je Gebiet bzw. Aufhellung der Gebietsfarbe (`ISLAND.rimBrighten` o. ä.), Ergebnis mindestens so hell wie die Brett-Grasfelder, aber leicht abgesetzt (Brett bleibt erkennbar). Tal-Rückfall (`ISLAND.enabled=false`) unverändert.
   - Akzeptanz: Normalbild – Rand wirkt hellgrün, nicht trüb; Brett hebt sich ab.
 
-- [ ] 3. **Kombinierte Unterseite** – `IslandBuilder.shell`
+- [x] 3. **Kombinierte Unterseite** – `IslandBuilder.shell`
   - Unter der Kante zuerst eine **senkrechte Wand** entlang des Umrisses: Erdschicht (`earthColor`, ≈ 0,6 Feld) + Steinschicht (`stoneColor`, ≈ 1 Feld), WIP-Werte `cliffEarthTiles`/`cliffStoneTiles`; erst darunter die bestehenden Verjüngungsstufen bis zur Spitze und die Kristalle. Flussmündungen (`riverCuts`) wie bisher ausgespart.
   - Akzeptanz: Normal- und Übersichtsbild zeigen an der Vorderkante ein klar sichtbares Band Erde + Stein statt eines dünnen Streifens; keine Lücken zwischen Wand und Oberseite.
 
@@ -60,3 +60,5 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
 - Schritt 1: Assertion entfernt, Nebeninselzahl auf mindestens 0 begrenzt; Regression mit partBudget=1 baut ohne Fehler und meldet 0 Nebeninseln. Ausgangsmessung: 450/450 Teilemaximum, Stub-Aufbau im Mittel 111,39 ms (200 Aufbauten); aktueller Studio-Lauf Seed 1748071667: 401 Insel-/1672 Brettteile. Bilder D1b_00_battle_normal/uebersicht bestätigen dunklen Rand, weiße Leere und Brett-Nebeninseln.
 
 - Schritt 2: Inselpalette klonen und Brett-Gras je Gebiet um 30 % Richtung Weiß aufhellen; Talpalette und Brettwerte bleiben erhalten. Bilder D1b_02_rand_normal/uebersicht: Rand sichtbar heller und grün, Brett abgesetzt. Palettenregression an Schnee-/Vulkanmaterial angepasst. Referenzmessung Seed 1 vor Wand/Wolkenumbau: 450 Insel-/1823 Brettteile, 197,62 ms (Einzelmessung in Studio, nach Randkorrektur).
+
+- Schritt 3: senkrechte Erdwand 0,6 Felder und Steinwand 1 Feld; Verjüngung erst darunter, Gesamttiefe/Flussöffnungen erhalten. Bilder D1b_03_wand_normal/uebersicht zeigen beide Bänder an der Vorderkante. check.ps1 OK (39), test-run.ps1 OK einschließlich 628.421 Inselprüfungen; Maximum weiterhin 450/450. Regression prüft bündigen Erd-/Steinanschluss und gleiche Segmentzahl.

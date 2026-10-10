@@ -35,7 +35,7 @@ do
 				and math.abs(column.z - Config.HUB_ORIGIN.Z) <= Config.LANDSCAPE.hubHalfDepth
 			if column.height and not inHub then expect(Landscape.contains(state, column.x, column.z), "Terrain ausserhalb Insel") end
 		end
-		local falls, foam, tops, cloudTiles, tiles = 0, 0, 0, 0, 0
+		local falls, foam, tops, cloudTiles, tiles, earthWalls, stoneWalls = 0, 0, 0, 0, 0, 0, 0
 		for _, p in board:GetDescendants() do
 			if p.Name:sub(1, 5) == "Tile_" then
 				tiles += 1
@@ -46,7 +46,14 @@ do
 			expect(p:IsA("BasePart") and not p.CanQuery and not p.CanTouch and not p.CanCollide and not p.CastShadow, "Insel faengt Eingaben ab")
 			expect(p.Size.X > 0 and p.Size.Y > 0 and p.Size.Z > 0, "Ungueltige Inselfacette")
 			expect(p.Material == Enum.Material.SmoothPlastic or p.Material == Enum.Material.Neon, "Inselteil mit Materialtextur")
-			if p.Name == "IslandWaterfall" then
+			if p.Name == "IslandEarth" then
+				earthWalls += 1
+				expect(math.abs(p.Position.Y - p.Size.Y / 2 - (s.surfaceHeight - s.cliffEarthTiles * T)) < 0.001, "Erdwand endet falsch")
+			elseif p.Name == "IslandCliffStone" then
+				stoneWalls += 1
+				expect(math.abs(p.Size.Y - s.cliffStoneTiles * T) < 0.001, "Steinwandhoehe falsch")
+				expect(math.abs(p.Position.Y + p.Size.Y / 2 - (s.surfaceHeight - s.cliffEarthTiles * T)) < 0.001, "Luecke zwischen Erde und Stein")
+			elseif p.Name == "IslandWaterfall" then
 				falls += 1
 				expect(math.abs(p.Position.Y - p.Size.Y / 2 - s.cloudHeight) < 0.001, "Fall endet nicht in Wolken")
 				expect(p.Size.Y >= (s.earthTiles + s.depthTiles) * T, "Fall kuerzer als Inselschale")
@@ -64,6 +71,7 @@ do
 			end
 		end
 		expect(tiles == Grid.width() * Grid.height(), "Spielbare Felder fehlen")
+		expect(earthWalls >= #state.outline and earthWalls == stoneWalls, "Senkrechte Inselwand fehlt")
 		expect(tops == board:GetAttribute("IslandSatellites") and cloudTiles > 0, "Nebeninseln/Wolken unvollstaendig")
 		local expected = Config.FEEL.waterfallsEnabled and #state.rivers or 0
 		expect(falls == expected and foam == expected * Config.FEEL.waterfallFoamCount, "Randfluss ohne Fall/Gischt")

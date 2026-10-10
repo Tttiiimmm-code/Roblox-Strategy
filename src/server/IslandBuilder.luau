@@ -50,10 +50,11 @@ local function crystal(parent, center, width, height, color)
 		center + Vector3.new(width * 0.55 + 0.04, 0, width * 0.45 + 0.04), Color3.fromRGB(255, 255, 255), Enum.Material.Neon)
 end
 
-local function shell(parent, points, center, earthDepth, depth, riverCuts)
+local function shell(parent, points, center, depth, riverCuts)
 	local s = Config.ISLAND
 	local top = points[1].Y + s.edgeLip
-	local earthBottom = points[1].Y - earthDepth
+	local earthBottom = points[1].Y - s.cliffEarthTiles * Config.TILE_SIZE
+	local stoneBottom = earthBottom - s.cliffStoneTiles * Config.TILE_SIZE
 	for index, a in points do
 		local b = points[index % #points + 1]
 		local delta = b - a
@@ -80,12 +81,14 @@ local function shell(parent, points, center, earthDepth, depth, riverCuts)
 			local midpoint = a + delta.Unit * ((lo + hi) / 2) + inward * (s.edgeReserve - s.facetThickness)
 			part(parent, "IslandEarth", Vector3.new(hi - lo + s.edgeOverlap, segmentTop - earthBottom, s.edgeReserve * 2),
 				CFrame.new(midpoint.X, (segmentTop + earthBottom) / 2, midpoint.Z) * CFrame.Angles(0, -math.atan2(delta.Z, delta.X), 0), s.earthColor)
+			part(parent, "IslandCliffStone", Vector3.new(hi - lo + s.edgeOverlap, earthBottom - stoneBottom, s.edgeReserve * 2),
+				CFrame.new(midpoint.X, (earthBottom + stoneBottom) / 2, midpoint.Z) * CFrame.Angles(0, -math.atan2(delta.Z, delta.X), 0), s.stoneColor)
 		end
 		for layer = 1, #s.layerScales - 1 do
 			local function point(v, level)
 				local scale = s.layerScales[level]
 				return Vector3.new(center.X + (v.X - center.X) * scale,
-					earthBottom - (depth - earthDepth) * (level - 1) / (#s.layerScales - 1), center.Z + (v.Z - center.Z) * scale)
+					stoneBottom - (depth + stoneBottom - points[1].Y) * (level - 1) / (#s.layerScales - 1), center.Z + (v.Z - center.Z) * scale)
 			end
 			local p, q, r, t = point(a, layer), point(b, layer), point(a, layer + 1), point(b, layer + 1)
 			local color = s.stoneColor:Lerp(s.earthColor, layer == 1 and 0.12 or 0)
@@ -178,7 +181,7 @@ function IslandBuilder.build(board, state)
 	local folder = Instance.new("Folder")
 	folder.Name, folder.Parent = "Island", board
 	local center = Vector3.new(state.w / 2, s.surfaceHeight, state.h / 2)
-	shell(folder, state.outline, center, s.earthTiles * T, s.depthTiles * T, state.riverCuts)
+	shell(folder, state.outline, center, s.depthTiles * T, state.riverCuts)
 	local random = Random.new(hash(state.key .. ":island"))
 	local count = random:NextInteger(s.crystalCount.min, s.crystalCount.max)
 	local accent = s.accents[state.region and state.region.id or "greenland"] or s.accents.greenland

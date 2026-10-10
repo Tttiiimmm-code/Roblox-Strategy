@@ -213,6 +213,7 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 	enabled = true, rimTiles = { min = 3.4, max = 4 }, outlineSteps = 4,
 	surfaceHeight = -1, edgeReserve = 4, earthTiles = 1, depthTiles = 4.5,
 	rimBrighten = 0.3, -- WIP: Brett-Gras als Mindesthelligkeit, frischer heller Inselrand.
+	cliffEarthTiles = 0.6, cliffStoneTiles = 1, -- WIP: senkrechtes Band vor der Verjüngung.
 	layerScales = { 1, 0.72, 0.38, 0 }, partBudget = 450,
 	facetThickness = 0.16, edgeLip = 0.2, edgeOverlap = 1,
 	clusterCount = 10, clusterSize = 3, clusterSpread = 0.45, maxTrees = 18,
