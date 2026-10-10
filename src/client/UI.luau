@@ -248,7 +248,7 @@ local function buildForecast()
 			Position = UDim2.fromOffset(12, 0), Size = UDim2.new(0.35, -12, 1, 0), Font = THEME.bold, TextSize = 20,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}, row)
-		label({
+		UIKit.tag({
 			AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0), Size = UDim2.new(0.3, 0, 1, 0),
 			TextSize = 14, TextColor3 = THEME.gold, Font = THEME.bold,
 			Text = ({ dmg = "SCHADEN", hit = "TREFFER", crit = "KRIT" })[key],
@@ -378,8 +378,9 @@ local function buildPopups()
 	}, levelRoot)
 	padding(lf, 14)
 	level.frame = lf
-	label({
-		Size = UDim2.new(1, 0, 0, 38), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold, Text = "Level Up!",
+	UIKit.chromeTitle({
+		Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 32),
+		TextSize = 38, Gold = true, Text = "Level Up!",
 	}, lf)
 	level.sub = label({ Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 20), TextColor3 = THEME.dim }, lf)
 	local grid = make("Frame", {
@@ -417,8 +418,8 @@ local function buildPopups()
 		}, bf)
 		make("UIGradient", { Transparency = fade }, line)
 	end
-	banner.label = label({
-		Size = UDim2.fromScale(1, 1), Font = THEME.title, TextSize = 64, ZIndex = 9, TextStrokeTransparency = 0.5,
+	banner.label = UIKit.chromeTitle({
+		Size = UDim2.fromScale(1, 1), TextSize = 64, ZIndex = 9,
 	}, bf)
 	banner.frame = bf
 end
@@ -443,7 +444,7 @@ local function buildLoading(playerGui)
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(780, 250),
 	}, loading.content)
-	loading.title = label({
+	loading.title = UIKit.chromeTitle({
 		Position = UDim2.fromOffset(24, 32), Size = UDim2.new(1, -48, 0, 76),
 		Font = THEME.title, TextSize = 42, TextWrapped = true, TextScaled = false,
 	}, card)

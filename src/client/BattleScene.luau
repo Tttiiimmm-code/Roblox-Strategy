@@ -36,7 +36,7 @@ end
 local function buildSide(parent, side, x, color)
 	local unit, forecast = side.unit, side.forecast
 	local panel = coloredPanel(parent, UDim2.new(x, 4, 1, -174), UDim2.new(0.5, -8, 0, 166), color)
-	label({ Text = unit.name, Font = THEME.title, TextSize = 32, Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -36, 0, 36), TextXAlignment = Enum.TextXAlignment.Left }, panel)
+	UIKit.chromeTitle({ Text = unit.name, TextSize = 32, Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -36, 0, 36), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local weapon = UnitData.Weapons[unit.weapon]
 	label({ Text = weapon and weapon.name or unit.weapon, TextSize = 20, TextColor3 = THEME.dim, Position = UDim2.fromOffset(18, 45), Size = UDim2.new(1, -36, 0, 26), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local stats = forecast and forecast.count ~= 0 and ("HIT %d    DMG %d    CRT %d"):format(forecast.hit, forecast.dmg, forecast.crit) or "HIT --    DMG --    CRT --"
@@ -50,7 +50,7 @@ local function buildSide(parent, side, x, color)
 		make("Frame", { Position = UDim2.fromScale(i / unit.maxHp, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = THEME.barBg, BackgroundTransparency = 0.3, BorderSizePixel = 0 }, bar)
 	end
 	local shield = coloredPanel(parent, UDim2.new(x, 18, 0, 18), UDim2.new(0.5, -36, 0, 54), color)
-	label({ Text = unit.name, Font = THEME.title, TextSize = 30, Size = UDim2.fromScale(1, 1) }, shield)
+	UIKit.chromeTitle({ Text = unit.name, TextSize = 30, Size = UDim2.fromScale(1, 1) }, shield)
 	return { unit = unit, model = side.model, hp = hp, fill = fill, x = x == 0 and 0.28 or 0.72 }
 end
 

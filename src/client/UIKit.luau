@@ -29,6 +29,9 @@ UIKit.THEME = {
 	holoGold = Color3.fromRGB(255, 243, 176),
 	gold = Color3.fromRGB(255, 201, 60),
 	goldShade = Color3.fromRGB(201, 138, 18),
+	goldLight = Color3.fromRGB(255, 246, 208),
+	bannerTop = Color3.fromRGB(120, 86, 30),
+	bannerBottom = Color3.fromRGB(30, 20, 50),
 	gem = Color3.fromRGB(110, 232, 255),
 	starEmpty = Color3.fromRGB(74, 80, 104),
 	text = Color3.new(1, 1, 1),
@@ -170,6 +173,37 @@ function UIKit.label(props, parent)
 	return text
 end
 
+function UIKit.setChromeTitleGold(text, gold)
+	text:SetAttribute("Gold", gold == true)
+	text.TextColor3 = THEME.text
+	text.ChromeGradient.Color = gold and ColorSequence.new({
+		ColorSequenceKeypoint.new(0, THEME.goldLight), ColorSequenceKeypoint.new(0.51, THEME.gold),
+		ColorSequenceKeypoint.new(0.52, THEME.goldShade), ColorSequenceKeypoint.new(0.75, THEME.gold),
+		ColorSequenceKeypoint.new(1, THEME.goldLight),
+	}) or chromeSequence()
+end
+
+function UIKit.chromeTitle(props, parent)
+	local gold = props.Gold
+	props.Gold = nil
+	props.Font = THEME.display
+	props.TextColor3 = THEME.text
+	props.OutlineThickness = 3
+	props.TextStrokeTransparency = 1
+	local text = UIKit.label(props, parent)
+	make("UIGradient", { Name = "ChromeGradient", Rotation = 90 }, text)
+	UIKit.setChromeTitleGold(text, gold)
+	return text
+end
+
+function UIKit.tag(props, parent)
+	props.Font = THEME.tech
+	props.TextColor3 = THEME.holoCyan
+	props.TextSize = props.TextSize or 14
+	props.Text = string.upper(props.Text or "")
+	return UIKit.label(props, parent)
+end
+
 -- Fließtext behält seine Schriftgröße und erweitert den Kasten nach unten.
 function UIKit.flowLabel(props, parent)
 	props.TextWrapped = true
@@ -252,7 +286,8 @@ function UIKit.panel(props, parent)
 	if jewel then
 		local gem = make("Frame", {
 			Name = "CrownJewel", AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0.5, 0, 0, animated and 12 or 0), Size = UDim2.fromOffset(16, 16),
+			Position = UDim2.new(0.5, 0, 0, animated and 10 or 0),
+			Size = UDim2.fromOffset(animated and 14 or 16, animated and 14 or 16),
 			Rotation = 45, BackgroundColor3 = THEME.text, BorderSizePixel = 0,
 			ZIndex = f.ZIndex,
 		}, background)

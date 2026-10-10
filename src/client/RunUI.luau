@@ -32,8 +32,8 @@ local function resetContent()
 end
 
 local function heading(title, subtitle)
-	label({ Position = UDim2.fromOffset(24, 16), Size = UDim2.new(1, -48, 0, 48), Text = title,
-		Font = THEME.title, TextSize = 36, TextColor3 = THEME.gold }, content)
+	UIKit.chromeTitle({ Position = UDim2.fromOffset(24, 16), Size = UDim2.new(1, -48, 0, 48), Text = title,
+		TextSize = 36 }, content)
 	label({ Position = UDim2.fromOffset(24, 70), Size = UDim2.new(1, -48, 0, 44), Text = subtitle,
 		TextSize = 20, TextWrapped = true, TextScaled = false, TextColor3 = THEME.dim }, content)
 end
@@ -141,7 +141,7 @@ local function buildChoice(run, profile)
 	if run.current then
 		local option = run.options[run.current]
 		local symbol, title, detail = optionText(option)
-		label({ Position = UDim2.fromOffset(24, 270), Size = UDim2.new(1, -48, 0, 60),
+		UIKit.chromeTitle({ Position = UDim2.fromOffset(24, 270), Size = UDim2.new(1, -48, 0, 60),
 			Text = symbol .. "  " .. title .. "     " .. detail,
 			TextSize = 30 }, content)
 		local resume = button("Level erneut starten", content, "primary")

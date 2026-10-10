@@ -68,7 +68,7 @@ local function buildLobby(root)
 	padding(f, 18)
 	lobby.frame = f
 
-	lobby.title = label({
+	lobby.title = UIKit.chromeTitle({
 		Size = UDim2.new(0.5, 0, 0, 40), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold,
 		Text = "Kaserne", TextXAlignment = Enum.TextXAlignment.Left,
 	}, f)
@@ -133,7 +133,7 @@ local function buildResult(root)
 	}, overlay)
 	padding(box, 18)
 	result.box = box
-	result.title = label({
+	result.title = UIKit.chromeTitle({
 		Size = UDim2.new(1, 0, 0, 64), Font = THEME.title, TextSize = 64, ZIndex = 12,
 	}, box)
 	result.sub = label({
@@ -183,7 +183,7 @@ local function updateResult(state, _profile)
 	local key = state.stageId .. tostring(info.victory) .. state.turn
 	if key ~= resultKey then resultKey = key; UIKit.popIn(result.box) end
 	result.title.Text = info.victory and "Sieg!" or "Niederlage"
-	result.title.TextColor3 = info.victory and THEME.gold or THEME.enemy
+	UIKit.setChromeTitleGold(result.title, info.victory)
 	result.sub.Text = Stages.get(state.stageId).name
 	result.goals.Text = not info.victory and "Leon ist gefallen. Versuche die Mission erneut."
 		or state.tutorial.mission == 1 and "Gut gemacht! In Mission 2 lernst du Magierin und Ritter kennen."
@@ -236,8 +236,8 @@ local function buildThroneMenu(root)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, f)
 	padding(content, 14)
 	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, content)
-	label({
-		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 32, TextColor3 = THEME.gold,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, 0, 0, 36), TextSize = 32,
 		Text = "★  Thron", LayoutOrder = 0,
 	}, content)
 	local entries = {
@@ -273,7 +273,7 @@ local function buildWelcome(root)
 	}, root)
 	local box = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(760, 400), ZIndex = 61 }, welcome.frame)
-	welcome.title = label({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 60),
+	welcome.title = UIKit.chromeTitle({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 60),
 		Text = "Willkommen im Thronsaal!", Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold, ZIndex = 62 }, box)
 	welcome.text = label({ Position = UDim2.fromOffset(24, 100), Size = UDim2.new(1, -48, 0, 164),
 		Text = "Lerne in zwei kurzen Missionen, wie du dein Team bewegst und angreifst. Danach kannst du deinen ersten Lauf starten.",

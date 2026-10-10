@@ -59,14 +59,14 @@ local function buildRecruit(frame)
 		Size = UDim2.new(1, -320, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
 	}, frame)
 	art.BackgroundTransparency = 0
-	corner(art, 8)
+	corner(art, UIKit.METRICS.bannerRadius)
 	UIKit.stroke(art, THEME.gold, 2)
 	make("UIGradient", {
-		Color = ColorSequence.new(Color3.fromRGB(120, 86, 30), Color3.fromRGB(30, 20, 50)), Rotation = 120,
+		Color = ColorSequence.new(THEME.bannerTop, THEME.bannerBottom), Rotation = 120,
 	}, art)
 	padding(art, 16)
-	label({
-		Size = UDim2.new(1, -12, 0, 44), Font = THEME.title, TextSize = 44, TextColor3 = THEME.gold, LayoutOrder = 1,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, -12, 0, 44), TextSize = 44, Gold = true, LayoutOrder = 1,
 		Text = BANNER.name, TextXAlignment = Enum.TextXAlignment.Left,
 	}, art)
 	UIKit.flowLabel({
@@ -94,8 +94,11 @@ local function buildRecruit(frame)
 		BackgroundTransparency = 1,
 	}, frame)
 	recruit.gems = label({
-		Size = UDim2.new(1, 0, 0, 30), Font = THEME.bold, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, 0, 0, 30), Font = THEME.bold, TextSize = 22,
+		BackgroundTransparency = 0, BackgroundColor3 = THEME.panelInset,
 	}, side)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, recruit.gems)
+	UIKit.stroke(recruit.gems, THEME.ink, 2)
 	local rateLines = { ("<font color='%s'><b>Chancen pro Ruf</b></font>"):format(UIKit.GOLD_HEX) }
 	for rarity = 5, 1, -1 do
 		table.insert(rateLines, ("%s  %s  <b>%s</b>"):format(UIKit.rarityStars(rarity), UnitData.Rarities[rarity].name,
@@ -113,16 +116,17 @@ local function buildRecruit(frame)
 	}, rateDetails)
 
 	local buttons = make("Frame", {
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 170),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 190),
 		BackgroundTransparency = 1,
 	}, side)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, buttons)
 	recruit.single = button(("1× rufen   <font color='#6ee8ff'>♦</font> %d"):format(BANNER.costSingle), buttons, "default", 1)
-	recruit.multi = button(("10× rufen   <font color='#6ee8ff'>♦</font> %d"):format(BANNER.costMulti), buttons, "primary", 2)
+	recruit.multi = button(("10× rufen   <font color='#6ee8ff'>♦</font> %d"):format(BANNER.costMulti), buttons, "holo", 2)
 	local oddsButton = button("ⓘ  Alle Wahrscheinlichkeiten", buttons, "muted", 3)
 	for _, b in { recruit.single, recruit.multi, oddsButton } do
 		b.Size = UDim2.new(1, 0, 0, 50)
 	end
+	recruit.multi.Size = UDim2.new(1, 0, 0, UIKit.METRICS.primaryHeight)
 	recruit.single.Activated:Connect(function()
 		if recruit.single:GetAttribute("Style") ~= "disabled" then
 			callbacks.onRecruit(BANNER.id, 1)
@@ -153,8 +157,8 @@ local function buildOdds(root)
 	}, overlay)
 	padding(box, 16)
 	odds.box = box
-	label({
-		Size = UDim2.new(1, 0, 0, 34), Font = THEME.title, TextSize = 32, TextColor3 = THEME.gold,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, 0, 0, 34), TextSize = 32,
 		Text = "Wahrscheinlichkeiten", ZIndex = 22,
 	}, box)
 	local list = make("ScrollingFrame", {
@@ -211,8 +215,8 @@ local function buildResults(root)
 	}, overlay)
 	padding(box, 16)
 	results.box = box
-	label({
-		Size = UDim2.new(1, 0, 0, 40), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, 0, 0, 40), TextSize = 38,
 		Text = "Neue Verbündete", ZIndex = 32,
 	}, box)
 	results.grid = make("ScrollingFrame", {
@@ -402,7 +406,7 @@ function CollectionUI.update(newProfile)
 	end
 	recruit.gems.Text = ("<font color='#6ee8ff'>♦</font> %d Edelsteine"):format(profile.gems)
 	UIKit.setButtonStyle(recruit.single, profile.gems >= BANNER.costSingle and "default" or "disabled")
-	UIKit.setButtonStyle(recruit.multi, profile.gems >= BANNER.costMulti and "primary" or "disabled")
+	UIKit.setButtonStyle(recruit.multi, profile.gems >= BANNER.costMulti and "holo" or "disabled")
 	local to4, to5 = Recruit.pityRemaining(profile.pity or {})
 	recruit.pity.Text = ("★4 oder besser garantiert in <b>%d</b> Rufen\n★5 garantiert in <b>%d</b> Rufen"):format(to4, to5)
 	updateBarracks()
