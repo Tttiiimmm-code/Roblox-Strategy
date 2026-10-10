@@ -1,87 +1,97 @@
-# PLAN: Level-Optik Etappe C7 – helles Spielfeld, Terrain-Wasser, echte Berge/Klippen, sichtbare Wasserfälle (mit Studio-Prüfung)
+# PLAN: UI-Umstellung auf das Designsystem „Throne Tales“ (Y2K-Fantasy)
 
-Ziel: Die Befunde aus Claudes eigenem Studio-Test von C6 beheben. **Neu: Codex prüft jeden Optik-Schritt selbst in Roblox Studio** (Studio-MCP ist für Codex aktiv) mit Bildern statt nur mit Rechentests. Rechentests allein haben in C6 nicht erkannt, dass Terrain-Glättung Wasserfälle verdeckt.
-Branch: `feature/level-optik-c` (enthält Phase 3, C1–C6)
+Ziel: Die gesamte Oberfläche bekommt den Look des Designsystems – Glas-Indigo-Fenster mit Chromrand und Kronjuwel, Jelly-Knöpfe mit 3D-Kante, runde Konturschriften, Chrom-Titel, Heldenkarten mit Signaturfarbe und Holo-Rahmen für ★5. Das Spielverhalten ändert sich nicht.
+Branch: `feature/ui-designsystem` (abgezweigt von `feature/level-optik-c`, Stand `b44961a`)
+Designsystem (nur zur Info, für Codex nicht nötig): https://claude.ai/artifact/GsncXyUBtQh3UymyBhtbfD – alle benötigten Werte stehen unten.
 
-**Befunde aus Claudes Studio-Test (10.10.2026, Seed-Lauf + gezielt gebaute Wasserfallkarte):**
-1. **Spielfeld viel zu dunkel:** Bodenteile `Ground_*` sind `Material.Grass` mit Farbe ≈ (73,86,64) bzw. (65,77,57). Auf Parts wirkt das Grass-Material deutlich dunkler als dasselbe Material im Terrain (`SetMaterialColor` Grass = (88,115,72)). Das Spielfeld ist fast schwarzgrün und dunkler als die Umgebung; Felder und Raster sind kaum unterscheidbar. Die Client-Beleuchtung ist korrekt (battle-Preset: Brightness 2,2, Exposure 0,1, ColorCorrection Sat 0,18). Im Ort liegen zusätzlich `Lighting.ColorGrading` (ColorGradingEffect) und `Lighting.Bloom`, vom Nutzer in Studio angelegt; nicht anfassen.
-2. **Wasserfälle unsichtbar:** Seed 18 (`LevelGen.generate(18, "greenland", 1, "lance", 3, "battle")`, Wasserfall x=12, y=2, dy=1). Die Teile werden gebaut (`WaterfallSource` y≈8,1, `Waterfall` bei z=16), aber die Terrain-Klippe ist eine runde Felskuppe bis ≈11 Studs, die über die Feldkante hinausragt und die Fallfläche vollständig verdeckt. Von der Kamera sieht man nur einen dünnen hellblauen Strich. Smooth Terrain rundet zwischen 4-Stud-Voxeln und ragt über die rechnerische Belegung hinaus.
-3. **Bergfelder wirken wie Plattformen mit Trittplatten:** Die grauen Standkappen (4,4×4,4×0,4) sind als eckige Fliesen sichtbar, und der abgesenkte Hügel wirkt nicht mehr wie ein Berg.
-4. **Klippen (`C`) sind runde Felskuppen** statt steiler Felswände.
-5. **Wasser** ist ein flaches, hellblaues `SmoothPlastic`-Rechteck (Transparenz 0,18) mit harten Kanten, das nicht zum Terrain passt.
+**Warum zentral:** Fast alle Bildschirme (`UI`, `MenuUI`, `CollectionUI`, `RunUI`, `BattleScene`, `Hub`, `TutorialGuide`) bauen über `src/client/UIKit.luau` (`THEME`, `BUTTON_STYLES`, `panel`, `button`, `bar`, `heroCard`, `rarityStars`, `label`). Deshalb zuerst UIKit umbauen, dann nur gezielte Stellen in den Bildschirmen.
 
-**Nutzerentscheidungen:** C5: Bergfelder **Terrain + Felsmodelle**, Umgebung Tal. C6: Spielfeld **Roblox-Materialien passend zum Terrain**, Wasserfälle auf etwa jeder 4.–5. Karte. **Neu (10.10.2026): Wasser auf dem Spielfeld als Terrain-Wasser** (Wellen/Spiegelung; das Raster zeigt die Feldgrenzen; ein Fluss darf über den Spielfeldrand ins Gelände weiterfließen).
+**Werte (alle in `UIKit.THEME` als `Color3`, Namen frei wählbar, aber alte Schlüssel weiter gültig lassen):**
 
-**Bestehender Code:** `src/server/BoardBuilder.luau` (Bodenaufbau `Ground_*`, Wasserflächen, Standkappen, Felsmodelle, Ufer, `waterfall()`, Brücken mit Wasserboden unter `B`), `src/server/LandscapeBuilder.luau` (`surface()` für `M`/`C`, `rockFields`, `writeSurface`, Aufräumen, Landschaft), `src/shared/Grid.luau` (`setHeights`/`tileHeight`-Overrides, schon für Brücken genutzt, Server-Snapshot `tileHeights` an den Client), `src/shared/Config.luau` (`TERRAIN`, `LANDSCAPE`, `FEEL`), `src/shared/Stages.luau` (Regionspaletten), Client-Overlays/Auswahlring/`UnitShadow` nutzen `Grid.toWorld`.
+| Rolle | Wert | Verwendung |
+|---|---|---|
+| ink | #141a33 | einzige Konturfarbe: Textkontur, äußerer Fensterrand, Knopfrand, Kartenrand |
+| backdrop | #0b0a26 | Abdunklung hinter modalen Fenstern (Transparenz 0,35) |
+| panelTop / panelBottom | #3b3fd1 / #1a1660 | Fensterverlauf (ersetzt `top`/`bottom`) |
+| panelInset | #110e45 | vertiefte Flächen, Balkenspur (ersetzt `barBg`) |
+| panelLine | #7f86ff | 1-px-Lichtkante oben innen |
+| text / dim | #ffffff / #d2d9f5 | Haupttext / Nebentext |
+| chromeLight / chromeMid / chromeDark | #f4f7ff / #b9c2d6 / #5f6884 | Chromverlauf: hell → mittel → harter Knick dunkel (bei 0,50) → hell |
+| holoCyan / holoLilac / holoPink / holoLime | #3ef0ff / #b58cff / #ff5fd2 / #c6ff4a | Holo-Verlauf (nur Beschwörung und ★5), Kennzeilen in holoCyan |
+| holoShade | #7a4fd6 | 3D-Kante unter dem Holo-Knopf |
+| gold / goldShade | #ffc93c / #c98a12 | Hauptaktion, Gold-Chrom-Titel, Münzen |
+| gem | #6ee8ff | Edelstein-Symbol ♦ (wie bisher) |
+| starEmpty | #4a5068 | leere Sterne (wie bisher) |
+| good / bad / warn, player / enemy, HP-Farben, Seltenheitsfarben | **unverändert** | |
 
-**Studio-Prüfung (Pflicht für Schritte 1–5) – so hat Claude getestet:**
-- `list_roblox_studios` → Ort „Throne Tales“. Rojo muss verbunden sein (prüfen: `ReplicatedStorage.Shared.Config.Source` enthält den aktuellen Stand).
-- `start_stop_play(true)`. DataStore ist in Studio gesperrt, daher immer ein frisches Profil. Vom **Client** aus `ReplicatedStorage.Remotes.Command:FireServer`: `{type="TutorialChoice", play=false}`, dann `{type="StartRun", heroes={"leon","starter_mage","starter_knight"}}`, Optionen über `Remotes.GetProfile:InvokeServer().run.options`, dann `{type="ChooseLevel", index=<battle-Option>}`. „Missionsaufbau …“ steht in `get_console_output`.
-- Für bestimmte Karten im **Server**-Kontext: `LevelGen.generate(seed, …)`, `Grid.setMap(stage.map)`, `BoardBuilder.build(stage.region or "greenland", stage.features, stage)`. `execute_luau` lädt frische Modulinstanzen, das ist fürs Bauen in Ordnung.
-- Kamera: Im Play-Modus wirkt `screen_capture` mit Kameraposition nicht (die Spielkamera überschreibt sie). Stattdessen über `user_mouse_input` scrollen (Zoom) und über `user_keyboard_input` mit W/A/S/D verschieben, dann `screen_capture`.
-- **Nur im Play-Modus bauen**, nie im Edit-Modus: Die Landschaft räumt große Terrainbereiche, das würde den Ort verändern. Nach der Prüfung `start_stop_play(false)`.
-- In den Notizen pro Schritt beschreiben, was auf den Bildern zu sehen war (vorher/nachher). Wenn möglich die Bilder unter `docs/screenshots/c7/` ablegen.
+**Knopfstile (`BUTTON_STYLES`: Füllung, 3D-Kante):** default #4a8dff / #2a5fc4 · primary = gold #ffc93c / #c98a12 · danger #ff4d4d / #c22d36 · active #3fd15a / #23963a · muted #6a71c9 / #454b9a (WIP, noch nicht im Designsystem) · disabled #8a90a6 ohne Kante, Schrift 0,4 transparent · **neu `holo`**: Verlauf holoCyan → holoLilac → holoPink → gold, Kante holoShade.
 
-**Leitlinien:** Klickbarkeit (Client-Raycast Include auf Board/Units, ignoriert Terrain), Figurenmitte, Overlays, Brückenhöhen, Umrisse, Determinismus und Part-Fallback bleiben erhalten. Alle Werte WIP in `Config`. Teile/Dreiecke/Terrain vorher/nachher. Ein Commit pro Schritt, alle Prüfskripte grün. Geschmacksfragen: zurückhaltende Variante, über Config umstellbar, in den Notizen nennen.
+**Schriften:** Display `Enum.Font.LuckiestGuy` (große Titel, Schadenszahlen) · UI `Enum.Font.FredokaOne` (Knöpfe, Namen, Überschriften, Balkenzahlen – ersetzt `title` und `bold`) · Text `Enum.Font.GothamMedium` (bleibt) · Tech `Enum.Font.Michroma` (kurze Kennzeilen in Versalien). Falls ein Enum-Wert fehlt: `Font.fromName` bzw. `FontFace` verwenden und in den Notizen nennen.
+
+**Maße:** Ecken klein 6 / Knopf+Karte 12 / Fenster 16 / Banner 24 · Knopf mindestens 48 hoch (Designgröße 1280×720), Hauptaktion 64 · 3D-Kante 5 px, beim Drücken 1 px · Textkontur 1,5 px (≤ 16), 2 px (17–28), 3 px (≥ 32) · Fensterrand: 3 px Chrom innen + 3 px ink außen · Kartenrahmen 4 px + ink außen · harter Fallschatten 8 px nach unten, ink, Transparenz ≈ 0,55 (kein Weichzeichner).
+
+**Studio-Prüfung (Pflicht für Schritte 2–6), wie in C7:** `list_roblox_studios` → Ort „Throne Tales“, Rojo verbunden (`ReplicatedStorage.Shared.Config.Source` aktuell). `start_stop_play(true)`, frisches Profil; Bildschirme über `Remotes.Command` aufrufen (Hub/Menü, Sammlung/Rekrutierung, Kaserne, Laufwahl, Kampf mit Kampfvorschau und Level-Up). `screen_capture` je Bildschirm vorher (Schritt 1) und nachher; in den Notizen beschreiben, was zu sehen ist. Zusätzlich eine Aufnahme in Handygröße (Studio-Gerätesimulation, z. B. 844×390), wenn über MCP möglich – sonst in den Notizen sagen, dass es fehlt. Danach `start_stop_play(false)`. Nichts im Edit-Modus bauen.
+
+**Leitlinien:** Server bleibt unberührt. Alle Werte zentral in `UIKit` (THEME/BUTTON_STYLES/neue Konstanten), keine Farbwerte verstreut. Bestehende Aufrufer müssen ohne Änderung weiterlaufen: `UIKit.button` liefert weiter einen `TextButton`, dessen `.Text` man setzen kann; `setButtonStyle`, `GetAttribute("Style")`, `HoverScale`, Größen in Layouts bleiben. Klick-/Touchflächen dürfen nicht kleiner werden. Animationen aus `Config.FEEL` unverändert. Lesbarkeit vor Effekt: Weiße Schrift auf hellen Flächen (gold, grün, cyan) nur mit ink-Kontur. Ein Commit pro Schritt. Geschmacksfragen nicht selbst entscheiden → „Offene Fragen“.
 
 ## Schritte
 
-- [x] 1. **Helles, passendes Spielfeld** – `Config.TERRAIN`, `Stages`, `BoardBuilder`
-  - Die Bodenfarben der Felder so wählen, dass sie im Spiel **gleich hell oder etwas heller als das umgebende Terrain-Gras** wirken; das Material-Abdunkeln auf Parts ausgleichen. Wiese, Wald (etwas dunkler), Erde/Weg und Fels bleiben klar unterscheidbar; Rasterlinien gut sichtbar, aber nicht schwarz. Werte pro Region.
-  - Studio: Vergleichsbild Spielfeldrand ↔ Terrain bei Normalzoom; das Spielfeld darf nicht dunkler als die Umgebung wirken.
+- [ ] 1. **Vorher-Bilder** – nur Studio
+  - Vor jeder Codeänderung je ein Bild von: Hub-Menü, Rekrutierung (Banner + Ergebnis), Kaserne, Laufwahl/Levelwahl, Kampf (Einheiten-Info, Kampfvorschau, Schadenszahl), Level-Up-Fenster. Liste in den Notizen.
 
-- [x] 2. **Terrain-Wasser** – `BoardBuilder` (Wasserflächen `W`, Wasser unter `B`), `LandscapeBuilder`, `Config`
-  - `W`-Felder (und das Wasser unter Brücken) bestehen aus Roblox-**Terrain-Wasser** in passender Höhe (Wasseroberfläche ≈ bisherige Wasserhöhe). `Terrain.WaterColor`, `WaterTransparency`, `WaterWaveSize/Speed`, `WaterReflectance` pro Region (WIP, ruhig, nicht zu bunt). Ufer und Sandstreifen schließen sauber an.
-  - Klick-Kacheln über Wasser bleiben (unsichtbar/abfragbar), damit Felder anklickbar bleiben; das Raster bleibt über dem Wasser sichtbar.
-  - Fluss am Spielfeldrand: Das Terrain-Wasser läuft im Gelände ein Stück weiter, bis in den Dunst bzw. zu einer Senke (WIP-Schalter).
-  - `D` (Sumpfwasser): entweder ebenfalls Terrain-Wasser oder bisherige Darstellung, in den Notizen begründen (`WaterColor` gilt global).
-  - Aufräumen: Beim nächsten Brettaufbau verschwindet altes Wasser vollständig.
-  - Studio: Bild eines Flusses mit Brücke und Ufer; Brücken und Figuren darauf sehen weiter richtig aus.
+- [ ] 2. **Theme, Schriften, Konturschrift** – `UIKit.luau` (THEME, `label`, `fitText`), `Main.client.luau` (Schwebezahlen, ca. Zeile 878)
+  - THEME auf die Werte oben umstellen; alte Schlüssel (`top`, `bottom`, `barBg`, `goldDark`, `title`, `bold`, `body`) bleiben als Verweise auf die neuen Werte, damit alle Module laufen. `THEME.title` und `THEME.bold` → FredokaOne; neu `THEME.display` (LuckiestGuy) und `THEME.tech` (Michroma). `DIM_HEX`/`GOLD_HEX` anpassen.
+  - `UIKit.label`: Für UI-/Display-Schrift automatisch eine **Textkontur in ink** (UIStroke mit `ApplyStrokeMode.Contextual`, Dicke nach Textgröße wie oben). Fließtext (GothamMedium) ohne Kontur. Abschaltbar über ein Prop (z. B. `Outline = false`).
+  - Schwebende Schadens-/Heilzahlen: LuckiestGuy mit ink-Kontur statt GothamBlack/TextStroke.
+  - Akzeptanz: alle Bildschirme öffnen ohne Fehler im Output; Texte haben die neuen Schriften; Kontur sichtbar und nicht matschig bei 12–14 px.
 
-- [x] 3. **Echte Felshügel ohne Trittplatten** – `LandscapeBuilder.surface` (`M`), `BoardBuilder` (Standkappen, Felsmodelle), `Grid`, Server-Snapshot
-  - Standkappen entfernen. Der Felshügel darf wieder **sichtbar hoch und natürlich** sein, gerne höher als `TERRAIN.M.height`, mit Felsmodellen am Hang.
-  - **Standhöhe pro `M`-Feld = sichtbare Felsoberfläche an der Feldmitte**, beim Aufbau gemessen (Raycast nur gegen Terrain an der Feldmitte, bzw. über einen kleinen Bereich gemittelt) und über `Grid.setHeights` wie bei den Brücken an Server und Client übertragen. So stehen Figuren, Overlays, Auswahlring und `UnitShadow` auf dem Fels, ohne zu clippen und ohne zu schweben. Die Spielwerte von `M` (Kosten, Ausweichen, Verteidigung) bleiben unverändert.
-  - Zielfelder auf Nachbarfeldern dürfen nicht verdeckt werden: Der Hügel fällt zur Feldgrenze hin ab bzw. bleibt im Nachbarfeld unter dessen Overlay-Höhe.
-  - Studio: Nahaufnahme eines Berg-Clusters mit Figur darauf und markiertem Nachbarfeld. Keine Fliesen, kein Clipping, kein Schweben, Nachbarfeld frei.
+- [ ] 3. **Fenster mit Chromrand, Glas und Kronjuwel** – `UIKit.panel`
+  - Verlauf panelTop → panelBottom; innen 3-px-Chromrand (UIStroke mit UIGradient chromeLight → chromeMid → chromeDark bei 0,50 → chromeLight, senkrecht), außen 3 px ink (z. B. Chromrand am inneren `Background`, ink-Rand am äußeren Frame, sodass beide sichtbar sind); Ecken 16.
+  - Glas: 1-px-Lichtkante panelLine oben innen und eine weiche weiße Spiegelung im oberen Drittel (Transparenz ≈ 0,86 → 1).
+  - **Kronjuwel** (Erkennungszeichen): kleine Raute (um 45° gedrehtes Quadrat, ca. 16 px, Ecken 3) oben mittig auf der Fensterkante, Verlauf gem → holoLilac, ink-Rand, dünner Chromring, kleines weißes Glanzlicht. Prop zum Abschalten für kleine Info-Fenster (z. B. `Jewel = false`); Standard an.
+  - Harter Fallschatten 8 px unter dem Fenster; bei `Animated` (CanvasGroup, schneidet ab) darf er entfallen oder außerhalb liegen – Lösung in den Notizen.
+  - Modale Abdunklungen, die heute schwarz/dunkel sind, auf backdrop (0,35) umstellen, soweit sie über UIKit laufen.
+  - Akzeptanz: Studio-Bild Hub und Lager/Laufwahl: Chromrand mit hellem Knick erkennbar, ink-Außenrand, Juwel mittig oben, Inhalt nicht verdeckt.
 
-- [x] 4. **Steile Klippen** – `LandscapeBuilder.surface` (`C`), `BoardBuilder`, `Config`
-  - `C` wirkt wie eine **Felswand**: steile Seiten bis an die Feldkante, unregelmäßige Oberkante. Smooth Terrain rundet; deshalb an den Außenkanten große Felsmodelle aus dem Paket als Wandverkleidung (dicht genug, damit keine runde Kuppe sichtbar bleibt) oder eine andere robuste Lösung (in den Notizen begründen). Klippen bleiben unpassierbar und anklickbar.
-  - Studio: Bild einer Klippengruppe aus Normalansicht. Eine Wand ist erkennbar, keine Kuppe.
+- [ ] 4. **Jelly-Knöpfe mit 3D-Kante** – `UIKit.button`, `setButtonStyle`, `BUTTON_STYLES`
+  - Füllung aus Stil, Ecken 12, ink-Rand 3 px, **3D-Kante** 5 px in der Kantenfarbe unter dem Knopf, **Glanzkuppe** (weiße Ellipse/Verlauf in der oberen Hälfte, 0,35–0,5 deckend → 0), Schrift FredokaOne weiß mit ink-Kontur.
+  - Drücken: Knopf senkt sich auf 1 px Kante (zusätzlich zur bestehenden Skalierung 0,94). Hover wie bisher.
+  - Stile wie oben inkl. neuem `holo` (Verlauf), `disabled` ohne Kante. `setButtonStyle` setzt Füllung und Kante.
+  - Wichtig: `.Text`, Layout-Größe, Klickfläche und alle bestehenden Aufrufer bleiben gültig. Die Kante darf Layout-Abstände nicht zerstören (in den Notizen sagen, wie gelöst – z. B. Kante als Kind unterhalb der Knopfkante).
+  - Mindesthöhe 48 für normale Knöpfe dort sicherstellen, wo Knöpfe heute niedriger sind, ohne Layouts zu sprengen; Abweichungen auflisten.
+  - Akzeptanz: Studio-Bild mit default, primary, danger, active, muted, disabled; Text auf Gold/Grün gut lesbar.
 
-- [x] 5. **Wasserfälle sichtbar** – `BoardBuilder.waterfall`, `LandscapeBuilder` (Kanal), `Config.FEEL.waterfall*`
-  - Die Fallfläche liegt **vor** der sichtbaren Klippenoberfläche und wird von keinem Terrain verdeckt. Den Kanal in der Klippe so breit und tief räumen, dass auch nach der Terrain-Glättung nichts darüber ragt. Die Fallfläche reicht von der sichtbaren Oberkante bis in das Terrain-Wasser. Die Gischt sitzt auf der Wasseroberfläche. Gerne breiter und auffälliger (WIP), weiterhin ohne teure Partikel.
-  - Wenn nötig, die Generatorregel so anpassen, dass Wasserfälle an Klippenkanten entstehen, die zur Kamera (Grundausrichtung +Z) oder zur Seite zeigen und nicht nach hinten weg. Quote weiter 20–25 %.
-  - Studio: Seed 18 und mindestens eine weitere Wasserfallkarte aus Normalansicht. Der Fall ist klar sichtbar.
+- [ ] 5. **Balken, Sterne, Heldenkarten** – `UIKit.bar`, `rarityStars`, `heroCard`
+  - Balken: Pillenform (Ecken voll rund), Spur panelInset, Rand 2 px ink, Füllung mit Glanzkuppe; Zahl FredokaOne mit Kontur.
+  - Sterne: volle Sterne in Seltenheitsfarbe, leere starEmpty (wie bisher), wenn möglich mit ink-Kontur.
+  - Heldenkarte: Hintergrund-Verlauf aus der **Signaturfarbe des Helden** (`UnitData.Heroes[id].chibi.outfit.primary`, sonst Seltenheitsfarbe) oben nach panelBottom unten; Rahmen 4 px in Seltenheitsfarbe + ink außen; Ecken 12; Name FredokaOne in Seltenheitsfarbe mit dicker ink-Kontur, Klasse GothamMedium dim.
+  - **★5-Holo-Rahmen**: Rahmen als Verlauf rarity5 → #fff3b0 → holoPink → holoCyan (UIGradient am UIStroke), dazu ein schwacher Schein um die Karte; ★4 einfacher Rahmen (optional ein langsamer Glanzstreifen, nur wenn günstig – sonst weglassen und notieren). `Config.FEEL.rarityEffects` betrifft nur 3D-Effekte, nicht diesen Rahmen.
+  - Abzeichen „NEU“ o. ä. als Pille holoPink mit ink-Rand.
+  - Akzeptanz: Studio-Bild Kaserne mit ★1–★5 nebeneinander; jede Karte zeigt ihre Signaturfarbe, ★5 Holo-Rahmen.
 
-- [x] 6. **Abschluss:** Tests anpassen bzw. ergänzen (Rechentests bleiben). `scripts/check.ps1`, `scripts/test-levelgen.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-run-ui.ps1` alle OK, dazu Rojo-Build. Devlog **#39** „Level-Optik Etappe C7“ inklusive Studio-Prüfweg. Committen, pushen, Studio im Edit-Modus lassen, `.handoff/status` = `fertig`.
+- [ ] 6. **Titel, Kennzeilen, Beschwörung** – neue Helfer in `UIKit` + gezielte Stellen
+  - `UIKit.chromeTitle(props, parent)`: TextLabel in LuckiestGuy, Text mit Chromverlauf (UIGradient auf dem TextLabel, Hintergrund transparent), 3 px ink-Kontur; Variante `Gold = true` (Verlauf #fff6d0 → gold → goldShade bei 0,52 → gold → #fff6d0).
+  - `UIKit.tag(props, parent)`: Michroma, Versalien, holoCyan, klein (12–16).
+  - Große Titel umstellen (heute `THEME.title` mit TextSize ≥ 30): `MenuUI.luau` 72, 137, 240, 277 · `CollectionUI.luau` 69 (Bannertitel → Gold-Chrom), 157, 215 · `RunUI.luau` 36, 146 · `UI.luau` 382 („Level Up!“ → Gold-Chrom), 421, 448 · `BattleScene.luau` 39, 53. Zeilennummern Stand `b44961a`.
+  - Rekrutierung (`CollectionUI`): Zehnerruf-Knopf im Stil `holo` statt `primary`; Einzelruf `default`; Edelstein-Anzeige als Pille (panelInset, ink-Rand, Ecken voll rund). **Wahrscheinlichkeiten bleiben unverändert sichtbar** (Roblox-Regel).
+  - Akzeptanz: Studio-Bilder Hub-Titel, Rekrutierungsbanner, Ergebnis „Neue Verbündete“, Level-Up.
+
+- [ ] 7. **Abschluss** – Tests, Devlog
+  - `scripts/check.ps1`, `scripts/test-run-ui.ps1`, `scripts/test-run.ps1`, `scripts/test-tutorial.ps1`, `scripts/test-levelgen.ps1` alle OK; Rojo-Build. UI-Tests anpassen, falls sie Farben/Fonts prüfen (Regeln nicht abschwächen, nur neue Werte).
+  - Devlog **#40 „UI-Umstellung Designsystem“** (Ziel · Umsetzung · Entscheidungen · Probleme · Teststatus) und „Nächste Schritte“ aktualisieren (nächste Etappen: Schwebende Thronlande, Thronkristalle/Banner).
+  - Committen, pushen (erster Push des neuen Branches: `git push -u origin feature/ui-designsystem`), Studio im Edit-Modus lassen, `.handoff/status` = `fertig`.
 
 ## Manueller Test (Nutzer)
-- [ ] Spielfeld hell und passend zur Umgebung, Felder und Raster gut erkennbar
-- [ ] Flüsse/Seen aus Terrain-Wasser mit Wellen; Brücken, Ufer und Figuren sehen richtig aus; Fluss läuft am Rand ins Gelände weiter
-- [ ] Bergfelder sind echte Felshügel, Figuren stehen sauber darauf, keine Fliesen, Nachbarfelder frei
-- [ ] Klippen sind Felswände; Wasserfälle klar sichtbar (etwa jede 4.–5. Karte)
-- [ ] Aufbauzeit („Missionsaufbau …“) im Rahmen, Handy flüssig
+- [ ] Hub, Rekrutierung, Kaserne, Laufwahl, Kampf, Level-Up: neuer Look überall, nichts abgeschnitten oder überlappend
+- [ ] Fenster haben Chromrand und Kronjuwel; Knöpfe wirken „drückbar“ (Kante, Senken beim Tippen)
+- [ ] Texte gut lesbar, auch klein und auf goldenen/grünen Knöpfen
+- [ ] Heldenkarten zeigen ihre eigene Farbe; ★5-Karten haben den Holo-Rahmen
+- [ ] Handy: alle Knöpfe gut mit dem Daumen treffbar, Bildwiederholrate unverändert flüssig
 
 ## Nicht anfassen
-- Spielregeln, Generator (außer Wasserfall-Ausrichtung), Brückenlogik, Wiesen-Deko, Umrisse, UI, Lager-/Boss-Logik, Thronsaal, die vom Nutzer angelegten Lighting-Effekte (`ColorGrading`, `Bloom`), den Edit-Ort (nur im Play-Modus testen)
+- Server, Spielregeln, Generator, Brett/Welt-Optik (Terrain, Klippen, Wasser – kommt mit „Schwebende Thronlande“ in einem eigenen Plan), Kamera, Sounds, Profil-Schema, Wahrscheinlichkeitsanzeige, die vom Nutzer angelegten Lighting-Effekte, `docs/referenz/`
 
 ## Offene Fragen
-- Blocker vom 10.10.2026 durch Studio-Neustart und Fortsetzungsauftrag behoben.
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**, der Nutzer will gefragt werden.)
 
 ## Notizen (Codex)
-
-- Schritt 1: Regionale Part-Aufhellung (Gras 0,4; Sumpf/Vulkan 0,42; Eis 0,12; Erde 0,2), regionale Farb-Overrides vor Terrainpalette; Rasterabdunklung 0,22. Studio-Bilder C7_Schritt1_Ausgangsansicht/Nachher: gleiche Laufkarte und Kamera; vorher dunkelgr?nes, schwer lesbares Brett, nachher heller als das angrenzende Terrain mit sichtbarem Raster und dunklerem Wald. Lighting-Effekte unver?ndert. check.ps1 und test-run.ps1 OK. Bildtest durch Codex, Nutzer-/Handytest offen.
-
-- Schritt 2: W und Wasser unter B als Terrain-Voxel; regionale Wasserfarbe/Transparenz/Reflexion/Wellen in Config/Stages. Randfluss zentral abschaltbar, zehn Felder bis zur auslaufenden Senke. D bleibt bei der bisherigen Mud-/Pfuetzen-Darstellung, da WaterColor global gilt und D optisch schlammig bleiben soll. Studio C7_Schritt2_Terrainwasser/Bruecken_Ufer: statt blauem Rechteck bewegte Wasserstruktur/Spiegelung, beide Bruecken frei, Ufer anschliessend, Fluss laeuft beidseitig ins Tal. Figurenpositionen unveraendert; weitere gezielte Bruecken-Figurenprobe folgt im Abschluss. Kartenwechsel/Fortsetzungsschalter und Wasser unter Bruecken automatisch geprueft.
-
-- Schritt 3 (in Arbeit, **nicht abgehakt, nicht committet**): Standplatten entfernt; Terrain-Felshuegel mit Randabfall; gemessene M-Mittenhoehen werden unter Erhalt der Brueckenhoehen in Grid gespeichert. Server-Snapshot und Client nutzen bereits diese Hoehen, daher dort keine Codeaenderung erforderlich. Raycast startet oberhalb der moeglichen Felsoberkante. Erste Studio-Fixture: 16x12, M-Cluster bei (7-9,6-7)/(8,8), Leon-Modell auf (8,7), echter UnitShadow, Overlay auf Berg und Nachbarfeld (9,8). Bild C7_Schritt3_Bergfigur_Nachbar zeigte Huegel ohne Fliesen und Figur auf dem Fels; der Nachbaroverlay wurde am Rand noch verdeckt. Reale Terrain-Raycasts bestaetigten den Ueberhang. Reines starkes Absenken machte die Raender zwar frei, haette einzelne M-Felder zu tief gemacht; daher nicht uebernommen. Aktueller Ansatz: Bergkante -2, Gipfel 8 plus 1,5 Rauheit; begrenzte Randbelegung (0,5) auch in der Voxel-Schicht direkt unter Nullhoehe. **Dieser letzte Ansatz ist wegen Studio-Ausfall noch nicht bildgeprueft.** Keine Aussage, dass das Nachbarfeld bereits frei ist.
-- Pruefstand beim Stopp: `check.ps1` OK (38 Dateien, Exit 0), `test-run.ps1` OK (Exit 0) einschliesslich Terrain-Wasser/Berge/Wasserfaelle. Wasserfall-Regressionspruefung unterscheidet jetzt erlaubten Kontakt mit Terrain-Wasser von Festterrain; diese Korrektur liegt zusammen mit Schritt 3 noch uncommittet vor. Die Rechentests simulieren den Terrain-Mesher weiterhin nicht. Vollstaendige Abschlusspruefungen, Vergleichsmessung, Devlog #39, Push und finale Edit-Modus-Bestaetigung stehen aus.
-- Lokale Schritt-Commits: `357c02a` (Schritt 1), `f0b70f4` (Schritt 2). Unabhaengige unversionierte Dateien unter `docs/referenz/` waehrend der Arbeit erschienen; nicht angefasst oder gestaged. Screenshots wurden ueber Studio-MCP betrachtet; das Werkzeug lieferte keine lokalen Bildpfade, daher bisher keine Dateien unter docs/screenshots/c7/.
-
-- Schritt 3 abgeschlossen: Randabstand berücksichtigt diagonale Nachbarn; verringerte obere Randdichte plus freie Randbelegung direkt unter Null vermeiden den real gemessenen Mesher-Überhang. Studio-Probe nach Neustart: Clusterhöhen ca. 5,5–9 Studs, Figurenfeld 6,75 Studs, äußerer Ausläufer 2,9 Studs. Bilder C7_Schritt3_Nahaufnahme/Bergfigur_Freier_Nachbar: sichtbarer Fels ohne Standplatten, Leon auf der gemessenen Oberfläche, blauer Nachbaroverlay vollständig frei. Terrain-Raycasts in allen flachen Feldern um den Cluster: kein Treffer über Bodenhöhe (Maximum -3,05). Vorher am Nachbarfeld bis 3,53 Studs Überhang. Probe: 1643 Brettnachkommen ohne zwei Testoverlays, 129024 Voxel; Volumenmessung enthält die Umgebung. Nachbarschaft nicht allein über den Mesher-Stub beurteilt. Probe-Module nur im Play-Modus mit task.wait pro Terrainblock; nach der Probe Play beendet. check.ps1 und test-run.ps1 OK; Nutzer-/Handytest offen.
-- Schritt 4: Robuste Alternative zur dichten Paketverkleidung: abgesenkter Terrainkern plus senkrechter Slate-Kern und zwei günstige Wedge-Grate pro äußerer Feldseite, deterministische unregelmäßige Oberkante. Begründung: Paketfelsen sind rund und würden viele Meshes benötigen; die Wandlösung verdeckt den Mesher zuverlässig, bleibt innerhalb der C-Felder und funktioniert auch ohne Paket. Config.LANDSCAPE.cliffWalls schaltet sie zurück auf Terrain um. Quellkante des Wasserfalls bleibt frei. Studio C7_Schritt4_Vorher_Kuppen/Nachher_Waende bei gleicher Kamera: vorher runde Kuppe, nachher klar senkrechte Felswand und kantige Oberkante. Acht C-Felder: vorher 1664 Brettnachkommen / 125696 Voxel, nachher 1696 / 123648; +32 einfache Teile, +288 geschätzte Dreiecke, geringerer Terrainkern. Aufbau der Probe 0,55 s. check.ps1/test-run.ps1 OK. Studio nach Test im Edit-Modus; Nutzer-/Handytest offen.
-- Schritt 5: Fallbreite 0,76 Felder, 0,18 Studs dick, 0,35 Studs vor der sichtbaren Wand; Quelle bis zur äußeren Fallfläche verlängert. Terrainkanal um 4 Studs tiefer und mit einem Voxel Reserve in Längs-/Querrichtung; keine Grate auf dem Quellfeld. Fallende/Gischt verwenden den Terrain-Raycaster am Wasserempfänger (in Studio -1,203 Studs statt Soll -1,2). Bilder C7_Schritt5_Seed18_Normalzoom/Seed59_Normalzoom: beide Fälle vollständig von Quelle bis Wasser erkennbar, weiße Gischt am Fuß; gegenüber C6 kein dünner Strich hinter einer Felskuppe. Je 13 echte Terrain-Raycasts über die Fallbreite: kein Festterrain über dem Wasseranschluss. Seed 18: 2863 Brettnachkommen, 131072 Voxel, 0,70 s Probeaufbau; Seed 59: 2482 / 119552 / 0,72 s. Keine zusätzlichen Wasserfallteile und keine Partikel. Generator unverändert, Quote 21,6 % im bestehenden Seedtest; Ausrichtungseingriff nicht nötig für die geprüften +Z-Fälle. Alle vier Richtungen weiter im Rechentest. check.ps1/test-run.ps1 OK, Play danach beendet; Nutzer-/Handytest offen.
-- Abschluss-Studioprobe: waagerechter Randfluss mit senkrechter Einfeldbrücke (Paketmodell), Leon darauf. Bild C7_Abschluss_Brueckenfigur_Ufer: Wasser mit Wellen/Reflexion, Flussfortsetzung links/rechts, beide Ufer/Brückenenden frei, Figur auf der Brücke. Brückenhöhe 3,081, Fußhöhe 3,181 (bestehender Abstand 0,1), innerer Schatten 3,109 Studs. Aufbau 0,59 s mit Yield-Blöcken. Normaler Missionsstart im Output: Brett 220 ms, Figuren 16 ms. UI-Banner/Geländeinfo stammen bei gezielten Fixtures noch aus der vorherigen Mission; die Probe verändert nur die Play-Darstellung, keinen Spielstand. Nach Abschlussprobe start_stop_play(false), get_studio_state bestätigt Edit. Nutzer-/Handytest und Claude-Review offen. Keine Änderung an docs/referenz oder nutzereigenen Lighting-Effekten.
-
-- Schritt 6: Wandgrenzen über alle acht gedrehten Bounding-Box-Ecken, abschaltbare Klippen mit Terrain-Rückfall und Wasserfall/Gischt bei um 0,4 Studs abweichender gemessener Wasserhöhe ergänzt. Fehlenden Zeilenumbruch am Ende der verketteten Testdateien korrigiert. Alle Abschlussprüfungen Exit 0: check.ps1 (38), test-levelgen.ps1 (19000 Level/5000 Optionen/96 Kombinationen/2400 Bosskarten), test-run.ps1 (34458 Lauf-/338242 Brettprüfungen plus Regressionen), test-tutorial.ps1 (168), test-run-ui.ps1 (116), Rojo-Build. Devlog #39 und nächste Schritte aktualisiert. Aktuelle Paketmessung: Teile Mittel/Max 1365,1/1567, geschätzte Dreiecke 301885/460216. Nutzer-/Handytests bleiben bewusst offen, unabhängiges Review durch Claude folgt nach Handoff.
