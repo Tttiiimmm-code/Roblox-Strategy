@@ -25,7 +25,29 @@ do
 		expect(region.landscape.colors[region.landscape.grass] == originalGrass, "Insel veraendert Talpalette")
 		expect(Island.measure(board) <= s.partBudget, "Inselteilebudget ueberschritten")
 		maxParts = math.max(maxParts, board:GetAttribute("IslandParts"))
-		expect(board:GetAttribute("IslandSatellites") >= 2 and board:GetAttribute("IslandSatellites") <= 4, "Nebeninselzahl")
+		local satellites = board:GetAttribute("IslandSatellites")
+		expect(satellites >= s.satelliteCount.min and satellites <= s.satelliteCount.max, "Nebeninselzahl")
+		local satelliteFolders = 0
+		for _, folder in board:GetDescendants() do if folder:GetAttribute("Satellite") then
+			satelliteFolders += 1
+			expect(folder:GetAttribute("OutlinePoints") >= 6 and folder:GetAttribute("OutlinePoints") <= 8, "Nebeninsel nicht polygonal")
+			expect(folder:GetAttribute("SurfaceHeight") >= s.satelliteHeight.min and folder:GetAttribute("SurfaceHeight") <= s.satelliteHeight.max, "Nebeninsel nicht tiefer")
+			expect(math.abs(folder:GetAttribute("CenterX") - state.w / 2) >= state.w / 2 + s.satelliteDistanceTiles.min * T, "Nebeninsel vor Kamera")
+			local walls, stones, trunks, crowns, crystals = 0, 0, 0, 0, 0
+			for _, p in folder:GetChildren() do
+				if p.Name == "SatelliteEarth" then walls += 1
+				elseif p.Name == "SatelliteStone" then stones += 1
+				elseif p.Name == "SatelliteTrunk" then trunks += 1
+				elseif p.Name == "SatelliteCrown" then crowns += 1
+				elseif p.Name == "ThroneCrystal" then
+					crystals += 1
+					local accent = s.accents[region.id]
+					expect(p.Color.R == accent.R and p.Color.G == accent.G and p.Color.B == accent.B, "Nebeninsel ohne Gebietskristall")
+				end
+			end
+			expect(walls == s.satelliteOutlinePoints and stones >= walls and trunks == 1 and crowns == 1 and crystals > 0, "Nebeninsel unvollstaendig")
+		end end
+		expect(satelliteFolders == satellites, "Nebeninselzahl falsch gemeldet")
 		expect(board:GetAttribute("IslandCloudClusters") > 0, "Wolkenhaufen fehlen")
 		local clusters, near = 0, 0
 		for _, folder in board:GetDescendants() do if folder:GetAttribute("CloudCluster") then
@@ -41,7 +63,7 @@ do
 				expect((ball.Position - top.Position).Magnitude < (ball.Size.X + top.Size.X) / 2, "Wolkenkugeln getrennt")
 			end
 		end end
-		expect(clusters == board:GetAttribute("IslandCloudClusters") and near >= math.floor(clusters / #s.cloudRings), "Wolkenhaufen nur weit draussen")
+		expect(clusters == board:GetAttribute("IslandCloudClusters") and near >= math.floor((clusters - satellites) / #s.cloudRings), "Wolkenhaufen nur weit draussen")
 		for _, x in { 0, state.w } do for _, z in { 0, state.h } do
 			expect(Landscape.contains(state, x, z), "Insel umschliesst Brett nicht")
 		end end
@@ -79,6 +101,7 @@ do
 			elseif p.Name == "WaterfallFoam" then foam += 1; expect(p.Shape == Enum.PartType.Block, "Randgischt nicht kantig")
 			elseif p.Name == "SatelliteTop" then
 				tops += 1
+				expect(p:IsA("WedgePart"), "Nebeninsel bleibt quadratisches Brett")
 				local color = state.palette.colors[state.palette.grass]
 				expect(p.Color.R == color.R and p.Color.G == color.G and p.Color.B == color.B, "Nebeninsel ohne Gebietspalette")
 				expect(p.Position.X + p.Size.X / 2 < 0 or p.Position.X - p.Size.X / 2 > state.w
@@ -91,7 +114,7 @@ do
 		end
 			expect(tiles == Grid.width() * Grid.height(), "Spielbare Felder fehlen")
 		expect(earthWalls >= #state.outline and earthWalls == stoneWalls, "Senkrechte Inselwand fehlt")
-		expect(tops == board:GetAttribute("IslandSatellites") and cloudTiles > 0, "Nebeninseln/Wolken unvollstaendig")
+		expect(tops >= satellites * (s.satelliteOutlinePoints - 2) and cloudTiles > 0, "Nebeninseln/Wolken unvollstaendig")
 		local expected = Config.FEEL.waterfallsEnabled and #state.rivers or 0
 		expect(falls == expected and foam == expected * Config.FEEL.waterfallFoamCount, "Randfluss ohne Fall/Gischt")
 		rivers += falls

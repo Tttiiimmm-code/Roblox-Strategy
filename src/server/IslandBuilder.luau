@@ -98,23 +98,41 @@ local function shell(parent, points, center, depth, riverCuts)
 	end
 end
 
--- Kleine Inseln verwenden nur eine Steinstufe und eine einfache, rasterlose Kappe.
-local function satellite(parent, state, center, radius, index)
+-- Kleine Polygoninseln teilen Kappe, kurze Wand und Spitze; die Wolken verdecken den unteren Teil.
+local function satellite(parent, state, center, radius, index, random)
 	local s = Config.ISLAND
-	local earth = Config.TILE_SIZE * s.earthTiles * 0.5
+	local folder = Instance.new("Folder")
+	folder.Name, folder.Parent = "Satellite_" .. index, parent
+	folder:SetAttribute("Satellite", true)
+	folder:SetAttribute("OutlinePoints", s.satelliteOutlinePoints)
+	folder:SetAttribute("CenterX", center.X)
+	folder:SetAttribute("CenterZ", center.Z)
+	folder:SetAttribute("SurfaceHeight", center.Y)
+	parent = folder
+	local earth = Config.TILE_SIZE * s.satelliteEarthTiles
 	local points = {}
-	for _, offset in { Vector3.new(-radius, 0, -radius), Vector3.new(radius, 0, -radius),
-		Vector3.new(radius, 0, radius), Vector3.new(-radius, 0, radius) } do table.insert(points, center + offset) end
+	local phase = random:NextNumber(0, math.pi * 2)
+	for i = 1, s.satelliteOutlinePoints do
+		local angle = phase + (i - 1) * math.pi * 2 / s.satelliteOutlinePoints
+		local r = radius * random:NextNumber(s.satelliteOutlineRadius.min, s.satelliteOutlineRadius.max)
+		table.insert(points, center + Vector3.new(math.cos(angle) * r, 0, math.sin(angle) * r))
+	end
 	local grass = state.palette.colors[state.palette.grass]
-	part(parent, "SatelliteTop", Vector3.new(radius * 2, s.facetThickness, radius * 2), CFrame.new(center), grass)
-	part(parent, "SatelliteEarth", Vector3.new(radius * 2, earth, radius * 2), CFrame.new(center - Vector3.new(0, earth / 2, 0)), s.earthColor)
+	for i = 2, #points - 1 do triangle(parent, "SatelliteTop", points[1], points[i], points[i + 1], grass) end
 	local tip = center - Vector3.new(0, earth + radius * s.satelliteDepthScale, 0)
 	for i, a in points do
+		local b = points[i % #points + 1]
+		local delta = b - a
+		local inward = Vector3.new(-delta.Z, 0, delta.X).Unit
+		local midpoint = (a + b) / 2 + inward * s.satelliteWallThickness / 2
+		part(parent, "SatelliteEarth", Vector3.new(delta.Magnitude + s.edgeOverlap, earth, s.satelliteWallThickness),
+			CFrame.new(midpoint - Vector3.new(0, earth / 2, 0)) * CFrame.Angles(0, -math.atan2(delta.Z, delta.X), 0), s.earthColor)
 		triangle(parent, "SatelliteStone", a - Vector3.new(0, earth, 0),
-			points[i % #points + 1] - Vector3.new(0, earth, 0), tip, s.stoneColor)
+			b - Vector3.new(0, earth, 0), tip, s.stoneColor)
 	end
 	local accent = s.accents[state.region and state.region.id or "greenland"] or s.accents.greenland
-	crystal(parent, tip + Vector3.new(radius * 0.35, s.crystalHeight * 0.25, 0), s.crystalWidth * 0.5, s.crystalHeight * 0.7, accent)
+	local offset = s.satelliteCrystalOffset
+	crystal(parent, center + Vector3.new(radius * offset.X, s.crystalHeight * offset.Y, radius * offset.Z), s.crystalWidth * 0.5, s.crystalHeight * 0.7, accent)
 	local trunk = center + Vector3.new(-radius * 0.3, s.satelliteTreeHeight / 2, radius * 0.2)
 	local crown = EnvironmentAssets.crownColor(state.key .. ":satellite:" .. index, state.region and state.region.treePalette)
 	part(parent, "SatelliteTrunk", Vector3.new(1, s.satelliteTreeHeight, 1), CFrame.new(trunk), s.earthColor)
@@ -150,14 +168,18 @@ local function skyIslands(board, parent, state, random)
 	local riverParts = Config.FEEL.waterfallsEnabled and #state.rivers * (2 + Config.FEEL.waterfallFoamCount) or 0
 	local remaining = s.partBudget - IslandBuilder.measure(board) - riverParts - baseParts
 	local cloudReserve = s.cloudCount * s.cloudParts.min
-	local count = math.max(0, math.min(random:NextInteger(s.satelliteCount.min, s.satelliteCount.max), math.floor((remaining - cloudReserve) / s.satellitePartCost)))
+	-- Kappenfan 2*(n-2), Wand n, Spitze 2*n, Kristall 18 und Baum 2 Teile.
+	local satelliteCost = s.satelliteOutlinePoints * 5 + 16
+	local count = math.max(0, math.min(random:NextInteger(s.satelliteCount.min, s.satelliteCount.max), math.floor((remaining - cloudReserve) / satelliteCost)))
 	local phase = random:NextNumber(0, math.pi * 2)
+	local satelliteClouds = {}
 	for index = 1, count do
-		local angle = phase + (index - 1) * math.pi * 2 / count
-		local distance = math.max(state.w, state.h) / 2 + random:NextNumber(s.satelliteDistanceTiles.min, s.satelliteDistanceTiles.max) * T
-		local position = Vector3.new(center.X + math.cos(angle) * distance, random:NextNumber(s.satelliteHeight.min, s.satelliteHeight.max),
-			center.Z + math.sin(angle) * distance)
-		satellite(parent, state, position, random:NextNumber(s.satelliteRadiusTiles.min, s.satelliteRadiusTiles.max) * T, index)
+		local side = index % 2 == 1 and -1 or 1
+		local distance = state.w / 2 + random:NextNumber(s.satelliteDistanceTiles.min, s.satelliteDistanceTiles.max) * T
+		local z = center.Z + state.h * s.satelliteZSpread * (index <= 2 and -1 or 1)
+		local position = Vector3.new(center.X + side * distance, random:NextNumber(s.satelliteHeight.min, s.satelliteHeight.max), z)
+		satellite(parent, state, position, random:NextNumber(s.satelliteRadiusTiles.min, s.satelliteRadiusTiles.max) * T, index, random)
+		table.insert(satelliteClouds, Vector3.new(position.X, s.cloudHeight, position.Z))
 	end
 	board:SetAttribute("IslandSatellites", count)
 	for x = 1, cells do for z = 1, cells do
@@ -168,18 +190,22 @@ local function skyIslands(board, parent, state, random)
 	end end
 	local available = s.partBudget - IslandBuilder.measure(board) - riverParts
 	local clusterCount = math.max(0, math.min(s.cloudCount, math.floor(available / s.cloudParts.min)))
-	local perRing = math.ceil(clusterCount / #s.cloudRings)
+	local perRing = math.ceil(math.max(0, clusterCount - count) / #s.cloudRings)
 	for index = 1, clusterCount do
-		local ringIndex = math.ceil(index / perRing)
+		local ringIndex = math.max(1, math.ceil((index - count) / math.max(1, perRing)))
 		local ring = s.cloudRings[ringIndex]
-		local angle = phase + (index - 1) * math.pi * 2 / perRing
+		local angle = phase + (index - count - 1) * math.pi * 2 / math.max(1, perRing)
 		local gap = random:NextNumber(s.cloudGapTiles.min, s.cloudGapTiles.max) * T
 		local position = center + Vector3.new(math.cos(angle) * (state.w / 2 + s.rimTiles.max * T + gap) * ring, 0,
 			math.sin(angle) * (state.h / 2 + s.rimTiles.max * T + gap) * ring)
 		local width = random:NextNumber(s.cloudWidthTiles.min, s.cloudWidthTiles.max) * T
 		local height = random:NextNumber(s.cloudHeightTiles.min, s.cloudHeightTiles.max) * T
+		if satelliteClouds[index] then
+			position = satelliteClouds[index]
+			height = math.min(height, s.satelliteCloudRiseTiles * T)
+		end
 		local balls = math.min(random:NextInteger(s.cloudParts.min, s.cloudParts.max), available - (clusterCount - index) * s.cloudParts.min)
-		local tint = math.clamp((ring - 1) / (s.cloudRings[#s.cloudRings] - 1) + random:NextNumber(0, s.cloudPuff.edgeTint), 0, 1)
+		local tint = satelliteClouds[index] and 1 or math.clamp((ring - 1) / (s.cloudRings[#s.cloudRings] - 1) + random:NextNumber(0, s.cloudPuff.edgeTint), 0, 1)
 		cloudCluster(parent, position, width, height, balls, tint, index, random)
 		available -= balls
 	end

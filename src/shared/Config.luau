@@ -233,10 +233,13 @@ Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal
 	cloudCyanColor = Color3.fromRGB(186, 221, 232), horizonColor = Color3.fromRGB(201, 168, 255),
 	cloudLilacColor = Color3.fromRGB(222, 207, 239), -- WIP: sanfte Schatten trotz Nutzer-ColorGrading.
 	battleDensity = 0.08, battleHaze = 0.15, -- WIP: Wolkenfarben aus der steilen Spielkamera erhalten.
-	satelliteDepthScale = 1.4, satelliteTreeHeight = 7, satelliteTreeWidth = 5, satellitePartCost = 30,
+	satelliteDepthScale = 1.4, satelliteTreeHeight = 7, satelliteTreeWidth = 5,
+	satelliteOutlinePoints = 6, satelliteOutlineRadius = { min = 0.78, max = 1 }, satelliteEarthTiles = 0.35,
+	satelliteWallThickness = 1.2, satelliteZSpread = 0.22, satelliteCloudRiseTiles = 2.2,
+	satelliteCrystalOffset = Vector3.new(0.82, 0.15, -0.5), -- WIP: Kristall sichtbar an der Kappe.
 	skyColor = Color3.fromRGB(157, 221, 230), foamColor = Color3.fromRGB(242, 251, 255),
-	satelliteCount = { min = 2, max = 4 }, satelliteDistanceTiles = { min = 13, max = 18 },
-	satelliteRadiusTiles = { min = 1.8, max = 2.6 }, satelliteHeight = { min = -10, max = 8 },
+	satelliteCount = { min = 2, max = 3 }, satelliteDistanceTiles = { min = 29, max = 31 },
+	satelliteRadiusTiles = { min = 1.8, max = 2.6 }, satelliteHeight = { min = -23, max = -19 },
 	overviewPadding = 1.06, panInset = 0.3,
 }
 

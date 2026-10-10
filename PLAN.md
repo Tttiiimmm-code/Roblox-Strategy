@@ -34,7 +34,7 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
   - Budget: Wolken + Rest ≤ 450; Messung in Notizen.
   - Akzeptanz: Übersichtsbild zeigt erkennbare, weich schattierte Wolkenformen mit Lila/Cyan-Tönen, keine weiße Leere.
 
-- [ ] 5. **Nebeninseln** – `IslandBuilder.satellite`/`skyIslands`
+- [x] 5. **Nebeninseln** – `IslandBuilder.satellite`/`skyIslands`
   - Form: kein Quadrat mehr – kleiner unregelmäßiger Polygon-Umriss (wie Hauptinsel, 6–8 Punkte), kurze Wand + Spitze, Kristall im Gebietsakzent, 1 Baum in Gebietsfarbe.
   - Platzierung: tiefer, **teilweise in den Wolken** („lugen heraus“), nie direkt vor der Kamera oder hinter der oberen Rundenanzeige; in der Übersicht 2–3 sichtbar am Rand, bei Normalzoom höchstens angeschnitten am Bildrand.
   - Akzeptanz: Übersichtsbild mit mindestens zwei Nebeninseln, die wie kleine Inseln (nicht Bretter) wirken.
@@ -64,3 +64,5 @@ Branch: `feature/thronlande` (weiterarbeiten, schon gepusht).
 - Schritt 3: senkrechte Erdwand 0,6 Felder und Steinwand 1 Feld; Verjüngung erst darunter, Gesamttiefe/Flussöffnungen erhalten. Bilder D1b_03_wand_normal/uebersicht zeigen beide Bänder an der Vorderkante. check.ps1 OK (39), test-run.ps1 OK einschließlich 628.421 Inselprüfungen; Maximum weiterhin 450/450. Regression prüft bündigen Erd-/Steinanschluss und gleiche Segmentzahl.
 
 - Schritt 4: 16 Kugelhaufen auf zwei inselnahen Ringen, je 3–6 überlappende Kugeln mit weißen Kappen, Cyan innen/Lila außen; getönte Grundfläche, Kampf-Haze/Dichte reduziert. Teileersparnis: 1024 statt 512 Studs Grundkacheln (16 statt 64) und zwei statt drei Verjüngungsstufen; Spitze/Gesamttiefe erhalten. Erste flache Balls wirkten in Studio wie getrennte Perlen; auf gleichmäßige Kugelgrößen korrigiert, Schnitt-/Nähetests ergänzt. Bilder D1b_04_wolken_final_normal/uebersicht zeigen runde Haufen und sanfte Farben. Aktueller Lauf: 363 Teile, 16 Haufen; Tests: 709.658 Inselprüfungen, Max 450/450; check.ps1 OK. Kugeldreiecke jetzt grob mit 240 je Kugel geschätzt (LOD unbekannt), keine Bildratenmessung.
+
+- Schritt 5: unregelmäßige Sechseck-Kappen mit kurzer Erdwand und Spitze; Baum in Gebietspalette, Kristall sichtbar an Kappenkante im Gebietsakzent. Seitliche Platzierung bei -23 bis -19 Studs, eigener Wolkenhaufen je Nebeninsel mit niedrigerer Kappe; reserviertes Teilebudget aus Polygonzahl berechnet. Bilder D1b_05_nebeninseln_normal/uebersicht: im Normalzoom keine störende Nebeninsel, Übersicht zwei kleine Inseln seitlich aus den Wolken. Aktueller Lauf: 370 Teile, zwei Nebeninseln/16 Haufen; check.ps1 OK (39), test-run.ps1 OK (751.512 Inselprüfungen, Max 450/450). Studio-Output nur bekannte Lighting-/Chibi-Hinweise; aktueller Lauf Brett 162 ms/Figuren 21 ms.
