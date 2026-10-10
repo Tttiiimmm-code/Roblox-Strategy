@@ -317,79 +317,135 @@ end
 local function rimDetails(state, board)
 	local started, s, T = os.clock(), Config.ISLAND, Config.TILE_SIZE
 	local random = Random.new(hash(state.key .. ":rim"))
-	local occupied, placed, triangles = {}, 0, 0
-	for _, asset in board:GetChildren() do if asset:GetAttribute("LandscapeDetail") then
-		local lo, hi = bounds(asset)
-		table.insert(occupied, { lo = lo, hi = hi })
-	end end
-	local function put(category, x, z, key, scatter)
+	local occupied, centers, placed, triangles, trees = {}, {}, 0, 0, 0
+	local groups = { 0, 0, 0, 0 }
+	local function point(edge, along, distance)
+		if edge == 1 then return along, -distance end
+		if edge == 4 then return along, state.h + distance end
+		return edge == 2 and -distance or state.w + distance, along
+	end
+	local function put(category, x, z, key, group, edge)
+		if placed >= s.rimBudget.objects then return nil end
 		local height, material = LandscapeBuilder.surface(state, x, z)
-		if not height or material == Enum.Material.Water then return end
-		local opts = { parent = board, key = key }
-		if category == "rock" then opts.preferred = "rock_50" end
-		if s.rimScatter.sizes[category] then
-			opts.height = s.rimScatter.sizes[category].height
-			opts.width = s.rimScatter.sizes[category].width
-			opts.rimSize = true
-			opts.sizeVariation = s.rimScatter.sizeVariation
-		elseif scatter then
-			opts.height = category == "rock" and s.rimScatter.rockHeight or s.rimScatter.height
-			opts.width = category == "rock" and s.rimScatter.rockWidth or s.rimScatter.width
+		if not height or material == Enum.Material.Water then return nil end
+		local center = Vector3.new(x, height, z)
+		if not LandscapeBuilder.rimFits(state, center, center) then return nil end
+		for _, other in occupied do
+			local gap = s.rimPlacement.overlapClearance
+			if x + gap > other.lo.X and x - gap < other.hi.X and z + gap > other.lo.Z and z - gap < other.hi.Z then return nil end
+		end
+		local opts = { parent = board, key = key, sizeVariation = s.rimScatter.sizeVariation }
+		local dimensions = s.rimScatter.sizes[category]
+		if dimensions then
+			opts.height, opts.width, opts.rimSize = dimensions.height, dimensions.width, true
+		elseif category == "tree" then
+			opts.height, opts.crownWidth, opts.palette = s.tree.height, s.tree.crownWidth, state.region and state.region.treePalette
+		elseif category == "bush" then
+			opts.height, opts.width = s.bush.height, s.bush.width
+		elseif category == "rock" then
+			opts.height, opts.width, opts.preferred = s.rimScatter.rockHeight, s.rimScatter.rockWidth, "rock_50"
+		elseif category == "rim_barrels" and edge == 4 then
+			opts.height, opts.width = s.frontBarrels.height, s.frontBarrels.width
+		else
+			opts.rotationMode = "quarter"
 		end
 		local asset = EnvironmentAssets.place(category, CFrame.new(x, height, z), opts)
-		if not asset then return end
+		if not asset then return nil end
 		local lo, hi = bounds(asset)
-		local safe = LandscapeBuilder.rimFits(state, lo, hi)
+		local estimate = asset:GetAttribute("EstimatedTriangles") or 0
+		if estimate == 0 then estimate = s.rimBudget.estimates[category] or 0 end
+		local safe = triangles + estimate <= s.rimBudget.triangles and LandscapeBuilder.rimFits(state, lo, hi)
 		for _, other in occupied do
 			local gap = s.rimPlacement.overlapClearance
 			if hi.X + gap > other.lo.X and lo.X - gap < other.hi.X and hi.Z + gap > other.lo.Z and lo.Z - gap < other.hi.Z then safe = false; break end
 		end
-		if not safe then asset:Destroy(); return end
-		asset:SetAttribute("LandscapeDetail", "prop")
+		if not safe then asset:Destroy(); return nil end
+		asset:SetAttribute("LandscapeDetail", category == "tree" and "tree" or "prop")
 		asset:SetAttribute("RimCategory", category)
+		asset:SetAttribute("RimGroup", group)
+		asset:SetAttribute("RimEdge", edge)
+		asset:SetAttribute("EstimatedTriangles", estimate)
 		table.insert(occupied, { lo = lo, hi = hi })
-		placed += 1
-		triangles += asset:GetAttribute("EstimatedTriangles") or 0
+		placed += 1; triangles += estimate
+		if category == "tree" then trees += 1 end
+		return asset
 	end
-	for group, categories in s.rimGroups do
-		local edge = (group - 1) % 3 + 1
-		local distance = s.rimPlacement.distance * T
-		local x = edge == 1 and state.w * group / (#s.rimGroups + 1) or (edge == 2 and -distance or state.w + distance)
-		local z = edge == 1 and -distance or state.h * group / (#s.rimGroups + 1)
-		for index, category in categories do
-			local offset = (index - (#categories + 1) / 2) * s.rimPlacement.groupSpacing * T
+	local sequence = random:NextInteger(1, #s.rimGroups.categories)
+	for edge = 1, 4 do
+		local limits = edge == 4 and s.rimGroups.front or s.rimGroups.sides
+		local count = random:NextInteger(limits.min, limits.max)
+		local length = (edge == 1 or edge == 4) and state.w or state.h
+		for index = 1, count do
+			local categories = edge == 4 and s.rimGroups.frontCategories or s.rimGroups.categories
+			local category = edge == 4 and categories[(index - 1) % #categories + 1] or categories[(sequence - 1) % #categories + 1]
+			sequence += 1
+			local group = edge .. ":" .. index
+			local center
 			for attempt = 1, s.rimPlacement.attempts do
-				local before = placed
-				local jitter = attempt == 1 and 0 or random:NextNumber(-s.rimPlacement.jitter, s.rimPlacement.jitter) * T
-				local px, pz = x + (edge == 1 and offset + jitter or 0), z + (edge ~= 1 and offset + jitter or 0)
-				-- Bei blockiertem Gruppenplatz einen freien Abschnitt derselben Hinter-/Seitenkante suchen.
-				if attempt > s.rimPlacement.attempts / 2 then
-					if edge == 1 then px = random:NextNumber(0, state.w) else pz = random:NextNumber(0, state.h) end
+				local along = length * index / (count + 1) + random:NextNumber(-s.rimPlacement.jitter, s.rimPlacement.jitter) * T
+				local x, z = point(edge, along, s.rimPlacement.distance * T)
+				if put(category, x, z, state.key .. ":rim:main:" .. group, group, edge) then center = { x = x, z = z, edge = edge }; break end
+			end
+			if not center then continue end
+			table.insert(centers, center)
+			groups[edge] += 1
+			for companion = 1, random:NextInteger(s.rimGroups.companions.min, s.rimGroups.companions.max) do
+				local kind = s.rimScatter.categories[(companion - 1) % #s.rimScatter.categories + 1]
+				for attempt = 1, s.rimPlacement.attempts do
+					local along = random:NextNumber(-s.rimGroups.radius, s.rimGroups.radius) * T
+					local depth = random:NextNumber(-s.rimGroups.depthSpread, s.rimGroups.depthSpread) * T
+					local x = center.x + ((edge == 1 or edge == 4) and along or depth)
+					local z = center.z + ((edge == 1 or edge == 4) and depth or along)
+					if put(kind, x, z, state.key .. ":rim:companion:" .. group .. ":" .. companion, group, edge) then break end
 				end
-				put(category, px, pz,
-					state.key .. ":rim:group:" .. group .. ":" .. index, false)
-				if placed > before then break end
 			end
 		end
 	end
-	for index = 1, s.rimScatter.count do
-		local category = s.rimScatter.categories[(index - 1) % #s.rimScatter.categories + 1]
-		for attempt = 1, s.rimPlacement.attempts do
-			local before = placed
-			local edge = random:NextInteger(1, 4)
-			local distance = random:NextNumber(s.rimPlacement.scatterDistance.min, s.rimTiles.min - s.rimPlacement.scatterDistance.inset) * T
-			local x = edge <= 2 and random:NextNumber(0, state.w) or (edge == 3 and -distance or state.w + distance)
-			local z = edge <= 2 and (edge == 1 and -distance or state.h + distance) or random:NextNumber(0, state.h)
-			put(category, x, z, state.key .. ":rim:scatter:" .. index, true)
-			if placed > before then break end
+	-- Bäume nutzen verbleibende Hinter-/Seitenplätze, bevor die flache Streuung auffüllt.
+	for group = 1, s.clusterCount do
+		local edge = group % 3 + 1
+		local length = edge == 1 and state.w or state.h
+		for index = 1, s.clusterSize do
+			local category = index == s.clusterSize and "bush" or "tree"
+			if category == "tree" and trees >= s.maxTrees then continue end
+			for attempt = 1, s.rimPlacement.attempts do
+				local x, z = point(edge, random:NextNumber(0, length), random:NextNumber(s.clusterDistance.min, s.clusterDistance.max) * T)
+				if put(category, x, z, state.key .. ":rim:tree:" .. group .. ":" .. index, nil, edge) then break end
+			end
 		end
 	end
+	local rimArea = 2 * (state.w + state.h) / T * s.rimTiles.min + 4 * s.rimTiles.min ^ 2
+	local count = math.min(s.rimScatter.count, math.ceil(rimArea * s.rimScatter.objectsPerTile), s.rimBudget.objects - placed)
+	for index = 1, count do
+		local category = s.rimScatter.categories[(index - 1) % #s.rimScatter.categories + 1]
+		for attempt = 1, s.rimPlacement.attempts do
+			local edge = random:NextInteger(1, 4)
+			local length = (edge == 1 or edge == 4) and state.w or state.h
+			local along = random:NextNumber(0, length)
+			local outer = s.rimTiles.min - s.rimPlacement.scatterDistance.inset
+			local distance = random:NextNumber(s.rimPlacement.scatterDistance.min, outer)
+			if random:NextNumber(0, 1) < s.rimScatter.edgeChance then distance = outer end
+			local x, z = point(edge, along, distance * T)
+			if #centers > 0 and random:NextNumber(0, 1) < s.rimScatter.clusterChance then
+				local center = centers[random:NextInteger(1, #centers)]
+				edge = center.edge
+				local offset = random:NextNumber(-s.rimGroups.radius, s.rimGroups.radius) * T
+				local depth = random:NextNumber(-s.rimGroups.depthSpread, s.rimGroups.depthSpread) * T
+				x = center.x + ((edge == 1 or edge == 4) and offset or depth)
+				z = center.z + ((edge == 1 or edge == 4) and depth or offset)
+			end
+			if put(category, x, z, state.key .. ":rim:scatter:" .. index, nil, edge) then break end
+		end
+	end
+	for edge, countGroups in groups do board:SetAttribute("IslandGroups" .. edge, countGroups) end
+	board:SetAttribute("LandscapeTrees", trees)
 	board:SetAttribute("IslandProps", placed)
 	board:SetAttribute("IslandPropEstimatedTriangles", triangles)
 	board:SetAttribute("IslandPropBuildMs", (os.clock() - started) * 1000)
 end
 
 local function details(state, board)
+	if state.island then rimDetails(state, board); return end
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local random = Random.new(hash(state.key .. ":clusters"))
 	if state.island then s = setmetatable(table.clone(Config.ISLAND), { __index = s }) end
@@ -422,7 +478,6 @@ local function details(state, board)
 			if kind == "tree" then trees += 1 end
 		end
 	end
-	if state.island then rimDetails(state, board) end
 	board:SetAttribute("LandscapeTrees", trees)
 end
 
