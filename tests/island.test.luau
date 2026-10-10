@@ -7,7 +7,8 @@ do
 	local function signature(board)
 		local rows = {}
 		for _, p in board:GetDescendants() do if p:GetAttribute("IslandPart") then
-			table.insert(rows, p.Name .. ":" .. tostring(p.Position) .. ":" .. tostring(p.Size) .. ":" .. p.Color.R .. ":" .. p.Color.G .. ":" .. p.Color.B)
+			table.insert(rows, p.Name .. ":" .. tostring(p.Position) .. ":" .. tostring(p.Size) .. ":" .. p.Color.R .. ":" .. p.Color.G .. ":" .. p.Color.B
+				.. ":" .. tostring(p.Shape) .. ":" .. tostring(p.Material))
 		end end
 		for key, column in terrainColumns do if column.height then
 			table.insert(rows, key .. ":" .. column.height .. ":" .. tostring(column.material))
@@ -22,6 +23,7 @@ do
 		local grass = region.terrainColors and region.terrainColors["."] or Config.TERRAIN["."].color
 		local rim = state.palette.colors[state.palette.grass]
 		expect(rim.R >= grass.R and rim.G >= grass.G and rim.B >= grass.B, "Inselrand dunkler als Brettgras")
+		expect(rim.R >= originalGrass.R and rim.G >= originalGrass.G and rim.B >= originalGrass.B, "Helle Gebietspalette durch Gras ersetzt")
 		expect(region.landscape.colors[region.landscape.grass] == originalGrass, "Insel veraendert Talpalette")
 		expect(Island.measure(board) <= s.partBudget, "Inselteilebudget ueberschritten")
 		maxParts = math.max(maxParts, board:GetAttribute("IslandParts"))
@@ -50,11 +52,13 @@ do
 		expect(satelliteFolders == satellites, "Nebeninselzahl falsch gemeldet")
 		expect(board:GetAttribute("IslandCloudClusters") > 0, "Wolkenhaufen fehlen")
 		local clusters, near = 0, 0
+		local cloudTops = {}
 		for _, folder in board:GetDescendants() do if folder:GetAttribute("CloudCluster") then
 			clusters += 1
 			local balls = folder:GetChildren()
 			expect(#balls >= s.cloudParts.min and #balls <= s.cloudParts.max, "Wolkenhaufen ohne 3-6 Kugeln")
 			local top = folder:FindFirstChild("CloudTop")
+			table.insert(cloudTops, top.Position + Vector3.new(0, top.Size.Y / 2, 0))
 			local dx, dz = math.abs(top.Position.X - state.w / 2), math.abs(top.Position.Z - state.h / 2)
 			if dx <= state.w / 2 + (s.rimTiles.max + s.cloudGapTiles.max) * T
 				and dz <= state.h / 2 + (s.rimTiles.max + s.cloudGapTiles.max) * T then near += 1 end
@@ -64,6 +68,25 @@ do
 			end
 		end end
 		expect(clusters == board:GetAttribute("IslandCloudClusters") and near >= math.floor((clusters - satellites) / #s.cloudRings), "Wolkenhaufen nur weit draussen")
+		-- Tatsächliche Spielneigung: Wolkenkappen müssen in beiden Zoomstufen ins Bild fallen.
+		local c = Config.CAMERA
+		local up, back = 1 / math.sqrt(1 + c.tilt ^ 2), c.tilt / math.sqrt(1 + c.tilt ^ 2)
+		local tangent = math.tan(math.rad(70 / 2))
+		for _, aspect in { 4 / 3, 16 / 9, c.aspectMax } do
+			local overview = Config.overviewZoom(Vector3.new(state.w, 0, state.h), 70, aspect)
+			local normal = math.clamp(math.max(state.w, state.h) * c.zoomDefaultScale, c.zoomDefaultMin, math.min(c.zoomDefaultMax, overview))
+			for _, view in { { normal, state.h - T }, { overview, math.clamp(state.h - T, state.h * s.panInset, state.h * (1 - s.panInset)) } } do
+				local visible = 0
+				for _, point in cloudTops do
+					local x, z = point.X - state.w / 2, point.Z - view[2]
+					local depth = view[1] - point.Y * up - z * back
+					local vertical = point.Y * back - z * up
+					if depth > 0 and math.abs(x) < depth * tangent * aspect and math.abs(vertical) < depth * tangent
+						and not Landscape.contains(state, point.X, point.Z) then visible += 1 end
+				end
+				expect(visible > 0, "Wolkenhaufen ausserhalb Normal-/Uebersichtsbild")
+			end
+		end
 		for _, x in { 0, state.w } do for _, z in { 0, state.h } do
 			expect(Landscape.contains(state, x, z), "Insel umschliesst Brett nicht")
 		end end

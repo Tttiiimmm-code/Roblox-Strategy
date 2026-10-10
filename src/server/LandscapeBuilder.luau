@@ -98,7 +98,9 @@ function LandscapeBuilder.prepare(mapKey, region, features)
 		state.palette = table.clone(state.palette)
 		state.palette.colors = table.clone(state.palette.colors)
 		local grass = region and region.terrainColors and region.terrainColors["."] or Config.TERRAIN["."].color
-		state.palette.colors[state.palette.grass] = grass:Lerp(Color3.fromRGB(255, 255, 255), Config.ISLAND.rimBrighten)
+		local rim = state.palette.colors[state.palette.grass]
+		local bright = Color3.fromRGB(math.max(rim.R, grass.R) * 255, math.max(rim.G, grass.G) * 255, math.max(rim.B, grass.B) * 255)
+		state.palette.colors[state.palette.grass] = bright:Lerp(Color3.fromRGB(255, 255, 255), Config.ISLAND.rimBrighten)
 	end
 	state.rivers = {}
 	local water = region and region.water or Config.WATER
