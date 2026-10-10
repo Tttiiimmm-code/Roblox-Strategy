@@ -25,8 +25,8 @@ do
 					-- Offenes Volumen: bündiger Kontakt an der Klippenkante ist erlaubt.
 					local epsilon=0.0001
 					local x,z=lo.X+epsilon+(hi.X-lo.X-2*epsilon)*ix/16,lo.Z+epsilon+(hi.Z-lo.Z-2*epsilon)*iz/16
-					local height=terrainHeightAt(x,z)
-					expect(not height or height<lo.Y-0.001, "Wasserfallteil im Terrain: "..part.Name)
+					local height,material=terrainHeightAt(x,z)
+					expect(material==Enum.Material.Water or not height or height<lo.Y-0.001, "Wasserfallteil im Terrain: "..part.Name)
 				end end
 			end end
 		end

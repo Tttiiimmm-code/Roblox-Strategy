@@ -1,4 +1,4 @@
--- Berg- und Klippenterrain, Standkappen und unveränderte Klick-/Spielhöhen.
+-- Berge ohne Standplatten mit gemessener Figurenhoehe und freien Nachbarn.
 local function validateWalls(withPackage)
 	if withPackage then metricAssets() else freshAssets() end
 	Grid.setMap({ "MM.CC", "M.C.C", ".CW..", "..M.." })
@@ -35,13 +35,9 @@ local function validateWalls(withPackage)
 		local center = Grid.toWorld(x, y)
 		local height = terrainHeightAt(center.X, center.Z)
 		if ch == "M" then
-			local stand = stands[Grid.key(x, y)]
-			expect(stand and stand.Position.Y + stand.Size.Y / 2 == center.Y, "Ebene Standfläche fehlt")
-			expect(height and height + Config.LANDSCAPE.rockFields.smoothingReserve < center.Y, "Terrain-Bergmitte nicht in Feldhöhe")
-			for _, dx in { -2, 0, 2 } do for _, dz in { -2, 0, 2 } do
-				local top = terrainHeightAt(center.X + dx, center.Z + dz)
-				expect(top and top + Config.LANDSCAPE.rockFields.smoothingReserve < center.Y, "Terrain durchdringt Overlay auf M")
-			end end
+			expect(not stands[Grid.key(x, y)], "Berg hat Standplatte")
+			expect(height and math.abs(height - center.Y) < 0.001, "Figur schwebt oder clippt am Berg")
+			expect(Grid.getHeights()[Grid.key(x, y)] == height, "Berg ohne gemessene Snapshot-Hoehe")
 			for _, rock in rocks do
 				local p, size = rock[1], rock[2]
 				expect(math.abs(p.X - center.X) - size.X / 2 >= Config.ENVIRONMENT.rocks.centerClearance - 0.001
@@ -75,4 +71,4 @@ local function validateWalls(withPackage)
 end
 validateWalls(true)
 validateWalls(false)
-print("OK: Felshügel (Terrain, ebene Standflächen, Overlayfreiheit, höhere unpassierbare Klippen, freie Felsmitten, Klickfelder, Wasserfall, Aufräumen, Paket/Fallback).")
+print("OK: Felshügel (Terrain, gemessene Figurenhoehen, Overlayfreiheit, höhere unpassierbare Klippen, freie Felsmitten, Klickfelder, Wasserfall, Aufräumen, Paket/Fallback).")

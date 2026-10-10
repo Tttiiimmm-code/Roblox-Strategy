@@ -438,6 +438,13 @@ function BoardBuilder.build(regionId, features, stage)
 		return ch == "F" and color:Lerp(Color3.fromRGB(0, 0, 0), Config.ENVIRONMENT.forest.groundShade) or color
 	end
 	local landscape = LandscapeBuilder.build(board, mapKey, region, features)
+	local heights = Grid.getHeights()
+	for y, row in Grid.getMap() do for x = 1, #row do
+		if row:sub(x, x) ~= "M" then continue end
+		local height = LandscapeBuilder.groundHeight(landscape, (x - 0.5) * T, (y - 0.5) * T)
+		if height then heights[Grid.key(x, y)] = height end
+	end end
+	Grid.setHeights(heights)
 	-- Gleiche Zeichen bilden einfache Rechtecke statt eines sichtbaren Blocks pro Feld.
 	local used, groundCount = {}, 0
 	local shoreCount = 0
@@ -492,21 +499,7 @@ function BoardBuilder.build(regionId, features, stage)
 		for x = 1, Grid.width() do
 			local ch = string.sub(Grid.getMap()[y], x, x)
 			local terrain = Config.TERRAIN[ch]
-			if ch == "M" then
-				local width = T * Config.LANDSCAPE.rockFields.standWidth
-				local thickness = Config.LANDSCAPE.rockFields.standThickness
-				local cap = deco({ Name = "MountainStand", Size = Vector3.new(width, thickness, width),
-					Position = Grid.toWorld(x, y) - Vector3.new(0, thickness / 2, 0),
-					Color = (region and region.landscape or Config.LANDSCAPE.palette).colors[Enum.Material.Rock], Material = Enum.Material.Rock }, ground)
-				cap:SetAttribute("StandTile", Grid.key(x, y))
-				local textures = Config.GROUND_TEXTURES.M
-				if textures then
-					groundTexture(cap, Enum.NormalId.Top, textures.top, textures)
-					for _, face in { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right } do
-						groundTexture(cap, face, textures.side, textures)
-					end
-				end
-			end
+
 			shoreCount += shoreline(ch, x, y, ground, bridgeTiles)
 			local tile = Instance.new("Part")
 			tile.Name = ("Tile_%d_%d"):format(x, y)

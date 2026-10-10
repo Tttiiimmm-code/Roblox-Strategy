@@ -86,10 +86,20 @@ function LandscapeBuilder.surface(state, x, z)
 		if ch ~= "M" and ch ~= "C" then return nil end
 		local settings = s.rockFields
 		if ch == "M" then
-			-- Gemeinsame Voxeloberfläche verschmilzt auch über M-Feldgrenzen.
+			-- Nur Aussenraender fallen ab; benachbarte M-Felder bilden einen Huegel.
+			local edge = T
+			for oy = -1, 1 do for ox = -1, 1 do
+				local nx, ny = tx + ox, ty + oy
+				if Grid.inBounds(nx, ny) and Grid.getMap()[ny]:sub(nx, nx) == "M" then continue end
+				local dx = math.max((nx - 1) * T - x, x - nx * T, 0)
+				local dz = math.max((ny - 1) * T - z, z - ny * T, 0)
+				edge = math.min(edge, math.max(dx, dz))
+			end end
 			local wave = (math.sin(x / settings.roughnessScale + state.phase) * math.cos(z / settings.roughnessScale - state.phase) + 1) / 2
-			return Config.TERRAIN.M.height - settings.smoothingReserve - settings.surfaceInset - wave * settings.mountainRoughness,
-				wave < settings.grassChance and state.palette.grass or state.palette.rock
+			local peak = settings.mountainHeight + wave * settings.mountainRoughness
+			return settings.mountainEdgeHeight + (peak - settings.mountainEdgeHeight) * smooth(edge / settings.edgeFalloff),
+				wave < settings.grassChance and state.palette.grass or state.palette.rock,
+				settings.edgeDensity + (1 - settings.edgeDensity) * smooth((edge - T / 4) / settings.edgeFalloff)
 		end
 		local wave = (math.sin(x / settings.cliffScale + state.phase) * math.sin(z / settings.cliffScale - state.phase) + 1) / 2
 		local height = Config.TERRAIN.C.height + wave * settings.cliffRoughness
@@ -141,7 +151,8 @@ function LandscapeBuilder.groundHeight(state, x, z)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { workspace.Terrain }
-	local top = height + reserve
+	local rocks = Config.LANDSCAPE.rockFields
+	local top = math.max(height, rocks.mountainHeight + rocks.mountainRoughness, Config.TERRAIN.C.height + rocks.cliffRoughness) + reserve
 	local hit = workspace:Raycast(Vector3.new(x, top, z), Vector3.new(0, -Config.FEEL.terrainDepth - top - reserve, 0), params)
 	return hit and hit.Position.Y
 end
@@ -152,13 +163,13 @@ local function writeSurface(state, rect, stats)
 	for x0 = rect.x0, rect.x1 - R, chunk do for z0 = rect.z0, rect.z1 - R, chunk do
 		local x1, z1 = math.min(x0 + chunk, rect.x1), math.min(z0 + chunk, rect.z1)
 		local nx, nz = (x1 - x0) / R, (z1 - z0) / R
-		local heights, kinds, top = {}, {}, s.foundationTop
+		local heights, kinds, densities, top = {}, {}, {}, s.foundationTop
 		for ix = 1, nx do
-			heights[ix], kinds[ix] = {}, {}
+			heights[ix], kinds[ix], densities[ix] = {}, {}, {}
 			for iz = 1, nz do
 				local x, z = x0 + (ix - 0.5) * R, z0 + (iz - 0.5) * R
-				local height, kind = LandscapeBuilder.surface(state, x, z)
-				heights[ix][iz], kinds[ix][iz] = height, kind
+				local height, kind, density = LandscapeBuilder.surface(state, x, z)
+				heights[ix][iz], kinds[ix][iz], densities[ix][iz] = height, kind, density
 				top = math.max(top, height or s.foundationTop)
 				if x < 0 or x >= state.w or z < 0 or z >= state.h then
 					-- Der Nahblock ersetzt diesen Teil des bereits gezählten Fernbodens.
@@ -178,6 +189,13 @@ local function writeSurface(state, rect, stats)
 				for iz = 1, nz do
 					local height = heights[ix][iz]
 					local occupancy = height and math.clamp((height - y) / R, 0, 1) or 0
+					-- Geringere Randdichte zieht den Mesher innerhalb des M-Felds zurueck.
+					if y >= -R and densities[ix][iz] then
+						local density = densities[ix][iz]
+						-- Unter Null bleibt der Rand frei, damit die Glättung kein Nachbarfeld anhebt.
+						if y < 0 then density = math.max(0, (density - s.rockFields.edgeDensity) / (1 - s.rockFields.edgeDensity)) end
+						occupancy = math.min(occupancy, density)
+					end
 					materials[ix][iy][iz] = occupancy > 0 and kinds[ix][iz] or Enum.Material.Air
 					occupancies[ix][iy][iz] = occupancy
 					stats.volume += occupancy * R ^ 3

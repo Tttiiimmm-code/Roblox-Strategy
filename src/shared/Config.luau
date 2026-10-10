@@ -208,8 +208,8 @@ Config.WATER = { -- WIP: ruhiges Terrain-Wasser, Fortsetzung bis zur Senke.
 
 Config.LANDSCAPE = {
 	resolution = 4, chunkCells = 32, viewSafetyTiles = 2, sculptDistance = 18,
-	rockFields = { standWidth = 0.55, standThickness = 4, surfaceInset = 0.15, smoothingReserve = 2, mountainRoughness = 0.12, roughnessScale = 7,
-		cliffRoughness = 3, cliffScale = 5, grassChance = 0.16 }, -- Standkappen glätten die grobe Voxelauflösung.
+	rockFields = { mountainHeight = 8, mountainEdgeHeight = -2, edgeFalloff = 4, edgeDensity = 0.35, mountainRoughness = 1.5, roughnessScale = 7,
+		cliffRoughness = 3, cliffScale = 5, grassChance = 0.16 }, -- WIP: natuerliche Felshoehen werden am Terrain gemessen.
 	hubHalfWidth = 80, hubHalfDepth = 100, foundationTop = -4,
 	rimWidth = 1.5, hillRise = 7, hillHeight = 28, valleyFloor = 0.2,
 	mountainStart = 7, mountainRise = 10, mountainHeight = 76,
