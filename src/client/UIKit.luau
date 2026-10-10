@@ -26,6 +26,7 @@ UIKit.THEME = {
 	holoPink = Color3.fromRGB(255, 95, 210),
 	holoLime = Color3.fromRGB(198, 255, 74),
 	holoShade = Color3.fromRGB(122, 79, 214),
+	holoGold = Color3.fromRGB(255, 243, 176),
 	gold = Color3.fromRGB(255, 201, 60),
 	goldShade = Color3.fromRGB(201, 138, 18),
 	gem = Color3.fromRGB(110, 232, 255),
@@ -156,13 +157,15 @@ function UIKit.label(props, parent)
 	props.wrap = nil
 	local outline = props.Outline
 	props.Outline = nil
+	local outlineThickness = props.OutlineThickness
+	props.OutlineThickness = nil
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or THEME.text
 	props.Font = props.Font or THEME.body
 	props.TextSize = props.TextSize or 16
 	props.RichText = true
 	local text = make("TextLabel", props, parent)
-	UIKit.outline(text, outline)
+	UIKit.outline(text, outline, outlineThickness)
 	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text, nil, wrap) end
 	return text
 end
@@ -394,17 +397,15 @@ function UIKit.bar(parent, position, size, color)
 	local bg = make("Frame", {
 		Position = position, Size = size, BackgroundColor3 = THEME.barBg, BorderSizePixel = 0,
 	}, parent)
-	UIKit.corner(bg, 4)
-	UIKit.stroke(bg, THEME.goldDark, 1)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, bg)
+	UIKit.stroke(bg, THEME.ink, 2)
 	local loss = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = THEME.bad, BorderSizePixel = 0 }, bg)
-	UIKit.corner(loss, 4)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, loss)
 	local fill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = color, BorderSizePixel = 0 }, bg)
-	UIKit.corner(fill, 4)
-	make("UIGradient", {
-		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)), Rotation = 90,
-	}, fill)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+	gloss(fill, fill.ZIndex)
 	local text = UIKit.label({
-		Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 13, ZIndex = 3, TextStrokeTransparency = 0.4,
+		Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 13, ZIndex = 3,
 	}, bg)
 	return { bg = bg, fill = fill, loss = loss, text = text }
 end
@@ -537,8 +538,8 @@ end
 -- "★★★☆☆" in Seltenheitsfarbe
 function UIKit.rarityStars(rarity)
 	local r = UnitData.Rarities[rarity or 1]
-	return ("<font color='%s'>%s</font><font color='#4a5068'>%s</font>"):format(
-		r.hex, string.rep("★", rarity), string.rep("★", 5 - rarity))
+	return ("<font color='%s'>%s</font><font color='#%s'>%s</font>"):format(
+		r.hex, string.rep("★", rarity), THEME.starEmpty:ToHex(), string.rep("★", 5 - rarity))
 end
 
 -- 3D-Kopie einer Figur in einem ViewportFrame (Porträt)
@@ -623,31 +624,58 @@ function UIKit.heroCard(parent, heroId, props)
 		LayoutOrder = props.LayoutOrder or 0, BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
 		ZIndex = props.ZIndex or 1,
 	}, parent)
-	UIKit.corner(card, 8)
-	local stroke = UIKit.stroke(card, rarity.color, 3)
-	make("UIGradient", {
-		Color = ColorSequence.new(rarity.color:Lerp(Color3.new(0, 0, 0), 0.35), Color3.fromRGB(14, 18, 40)), Rotation = 90,
-	}, card)
+	UIKit.corner(card, METRICS.buttonRadius)
 	local z = (props.ZIndex or 1) + 1
+	local outer = make("Frame", {
+		Name = "CardBorder", Position = UDim2.fromOffset(-4, -4), Size = UDim2.new(1, 8, 1, 8),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = card.ZIndex,
+	}, card)
+	UIKit.corner(outer, METRICS.buttonRadius + METRICS.cardBorder)
+	UIKit.stroke(outer, THEME.ink, 3)
+	local stroke = UIKit.stroke(card, rarity.color, METRICS.cardBorder)
+	if def.rarity == 5 then
+		stroke.Color = THEME.text
+		local holo = make("UIGradient", { Rotation = 35, Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, rarity.color), ColorSequenceKeypoint.new(0.33, THEME.holoGold),
+			ColorSequenceKeypoint.new(0.67, THEME.holoPink), ColorSequenceKeypoint.new(1, THEME.holoCyan),
+		}) }, stroke)
+		-- Direkte Rahmenfarben der Aufstellungswahl bleiben kompatibel.
+		stroke:GetPropertyChangedSignal("Color"):Connect(function()
+			if stroke.Color == rarity.color then stroke.Color = THEME.text end
+			holo.Enabled = stroke.Color == THEME.text
+		end)
+		local halo = make("Frame", {
+			Name = "HoloGlow", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+			BorderSizePixel = 0, ZIndex = card.ZIndex,
+		}, outer)
+		UIKit.corner(halo, METRICS.buttonRadius + METRICS.cardBorder)
+		local glow = UIKit.stroke(halo, THEME.holoCyan, 8)
+		glow.Transparency = 0.88
+	end
+	local signature = def.chibi and def.chibi.outfit and def.chibi.outfit.primary or rarity.color
+	make("UIGradient", {
+		Color = ColorSequence.new(signature, THEME.panelBottom), Rotation = 90,
+	}, card)
 	local vp, cam = UIKit.viewport(card, { Size = UDim2.new(1, 0, 1, -58), ZIndex = z })
 	UIKit.heroPortrait(vp, cam, heroId, true)
 	local name = UIKit.label({
 		Position = UDim2.new(0, 0, 1, -58), Size = UDim2.new(1, 0, 0, 22), Font = THEME.title, TextSize = 20,
-		TextColor3 = rarity.color, Text = def.name, ZIndex = z,
+		TextColor3 = rarity.color, Text = def.name, ZIndex = z, OutlineThickness = 3,
 	}, card)
 	local sub = UIKit.label({
 		Position = UDim2.new(0, 0, 1, -36), Size = UDim2.new(1, 0, 0, 16), TextSize = 12, TextColor3 = THEME.dim,
 		Text = UnitData.Classes[def.class].name, ZIndex = z,
 	}, card)
 	local stars = UIKit.label({
-		Position = UDim2.new(0, 0, 1, -20), Size = UDim2.new(1, 0, 0, 16), TextSize = 14,
+		Position = UDim2.new(0, 0, 1, -20), Size = UDim2.new(1, 0, 0, 16), TextSize = 14, Font = THEME.bold,
 		Text = UIKit.rarityStars(def.rarity), ZIndex = z,
 	}, card)
 	local badge = UIKit.label({
 		Position = UDim2.fromOffset(6, 6), Size = UDim2.fromOffset(84, 20), Font = THEME.bold, TextSize = 12,
-		BackgroundTransparency = 0.15, BackgroundColor3 = Color3.fromRGB(30, 34, 54), Visible = false, ZIndex = z + 1,
+		BackgroundTransparency = 0, BackgroundColor3 = THEME.holoPink, Visible = false, ZIndex = z + 1,
 	}, card)
-	UIKit.corner(badge, 4)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, badge)
+	UIKit.stroke(badge, THEME.ink, 2)
 	return { card = card, stroke = stroke, badge = badge, name = name, sub = sub, stars = stars, rarity = rarity }
 end
 

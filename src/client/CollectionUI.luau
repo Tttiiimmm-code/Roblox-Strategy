@@ -250,7 +250,7 @@ function CollectionUI.showResults(list)
 		local c = UIKit.heroCard(results.grid, r.heroId, { LayoutOrder = i, ZIndex = 33 })
 		c.badge.Visible = true
 		c.badge.Text = r.isNew and "NEU!" or "+1 Verschm."
-		c.badge.BackgroundColor3 = r.isNew and Color3.fromRGB(190, 60, 60) or Color3.fromRGB(60, 70, 110)
+		c.badge.BackgroundColor3 = r.isNew and THEME.holoPink or THEME.panelInset
 		local scale = make("UIScale", { Scale = 0 }, c.card)
 		task.delay(0.15 + i * 0.22, function()
 			TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
