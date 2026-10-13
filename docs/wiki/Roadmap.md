@@ -10,6 +10,7 @@ Maßgeblich ist der Abschnitt „Nächste Schritte“ am Ende von [[DEVLOG]]. Ku
 - [x] Rekrutierung, Kaserne, Thronsaal-Hub (#6–#8)
 - [x] Roguelike Phase 1, Levelgenerator, Level-Optik (#23–#29)
 - [x] Tutorial und Feinschliff (#30–#31), vom Nutzer bestätigt
+- [x] Obsidian-Vault (#32)
 
 ## Als Nächstes
 - [ ] Textur-Malen ausprobieren → [[textur-malen]]
