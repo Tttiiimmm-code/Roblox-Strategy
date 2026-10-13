@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "type": "file", "ctime": 0, "path": "docs/Start.md", "title": "Start" },
+    { "type": "file", "ctime": 0, "path": "PLAN.md", "title": "Aktueller Plan" },
+    { "type": "file", "ctime": 0, "path": "docs/DEVLOG.md", "title": "Devlog" }
+  ]
+}

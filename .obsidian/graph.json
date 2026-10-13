@@ -1,0 +1,8 @@
+{
+  "colorGroups": [
+    { "query": "path:docs/wiki", "color": { "a": 1, "rgb": 3900150 } },
+    { "query": "tag:#system", "color": { "a": 1, "rgb": 14725458 } },
+    { "query": "path:docs/vorlagen", "color": { "a": 1, "rgb": 8421504 } }
+  ],
+  "showOrphans": true
+}
