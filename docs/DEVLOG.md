@@ -1020,6 +1020,8 @@ Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bos
 
 **Teststatus:** check.ps1 OK (39 Dateien), test-run.ps1 OK (34.458 Lauf-/Boss-/Lager-Stubs, 677.787 Inselprüfungen, D2b-/Brücken-/Talregressionen), test-levelgen.ps1 OK (19.000 Level-, 5.000 Options-, 96 Landschafts-, 2.400 Boss-/Minibossprüfungen), test-tutorial.ps1 OK (168), test-run-ui.ps1 OK (280); alle Exit 0. Rojo-Build erfolgreich. Finale Randzeiten 107,51 / 85,59 / 68,07 ms (Mittel 87,06 ms, 72,98 % schneller als Baseline), unverändert 91 / 107 / 114 Randobjekte. Studio und Handy in diesem Durchgang ungetestet; Nutzer-/Handytest, dann Merge nach main offen.
 
+**Studio-Prüfung (Claude, 17.10.2026):** Echter Ort, Play. Reguläres ResumeLevel Seed 1867460066: Randaufbau 118 ms (D2b: 272 ms), aber 109 statt 126 Randobjekte (−13 %). Grasland-Seed 1 als Server-Vorschau: 3 eigene Brücken ohne Rückfall, Brett 306 ms (D2b: 592 ms), Rand 108 ms, aber 92 statt 118 Objekte (−22 %, knapp über Mindestwert 90). Klickstrahlen: alle Felder treffbar, Brückenfelder exakt; Fehltreffer nur hinter Bergfeldern (Relief, nicht Rand). Ursache des Dichteverlusts: Vorprüfung nimmt ein volles Quadrat aus Zielbreite an, schmale Modelle (Banner, Gras) belegen real weniger. Handy ungetestet.
+
 ---
 ## Nächste Schritte (Plan)
 
