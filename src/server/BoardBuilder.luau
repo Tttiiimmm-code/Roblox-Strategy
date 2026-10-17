@@ -131,7 +131,7 @@ local function buildBridges(parent, mapKey)
 		if base == math.huge then continue end
 		local length = crossing.length + 2 * settings.bankOverlap
 		local model = place("archbridge", Vector3.new((crossing.x - 0.5) * T, base, (crossing.y - 0.5) * T), parent,
-			mapKey .. ":crossing:" .. i, { length = length, rotation = crossing.angle, variant = "archbridge_1" })
+			mapKey .. ":crossing:" .. i, { length = length, rotation = crossing.angle, variant = settings.referenceModel })
 		if not model then continue end
 		model:SetAttribute("BridgeLength", length * T)
 		model:SetAttribute("BridgeAlongX", crossing.alongX)

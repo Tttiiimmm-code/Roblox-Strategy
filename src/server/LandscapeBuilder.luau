@@ -338,7 +338,7 @@ local function rimDetails(state, board)
 		elseif category == "bush" then
 			opts.height, opts.width = s.bush.height, s.bush.width
 		elseif category == "rock" then
-			opts.height, opts.width, opts.preferred = s.rimScatter.rockHeight, s.rimScatter.rockWidth, "rock_50"
+			opts.height, opts.width, opts.preferred = s.rimScatter.rockHeight, s.rimScatter.rockWidth, Config.ENVIRONMENT.rimRock
 		elseif category == "rim_barrels" and edge == 4 then
 			opts.height, opts.width = s.frontBarrels.height, s.frontBarrels.width
 		else

@@ -183,9 +183,10 @@ Config.ENVIRONMENT = {
 
 	},
 	estimatedTriangleBudget = 350000, -- WIP: C3 inklusive dichtem Rand; Ferne aus günstigen Parts
-	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3,
+	rimRock = "rock_50",
+	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3, referenceModel = "archbridge_1",
 		ownModel = "archbridge_2", ownWidth = 5.2, ownHeight = 4.8 }, -- WIP: nur Optik/Brückenprofil, Ufer bleiben erhalten.
-	preferred = { deco_grass = "deco_grass_2", deco_flower = "deco_flower_4", deco_stone = "deco_stone_1", archbridge = "archbridge_1" },
+	preferred = { deco_grass = "deco_grass_2", deco_flower = "deco_flower_4", deco_stone = "deco_stone_1" },
 	triangles = { rim_ruin_column_1 = 1500, rim_banner_1 = 998, rim_crystal_shrine_1 = 1500,
 		rim_ruin_arch_1 = 2999, rim_lantern_1 = 998, rim_crystal_pedestal_1 = 999, archbridge_2 = 3000,
 		deco_grass_2 = 299, deco_flower_4 = 798, rim_barrels_1 = 1000, deco_stone_1 = 300, rock_50 = 1499 },

@@ -178,9 +178,9 @@ function EnvironmentAssets.place(category, cframe, opts)
 	local random = randomFor(tostring(opts.key or cframe.Position) .. ":" .. category)
 	local preferred = opts.variant or opts.preferred or Config.ENVIRONMENT.preferred[category]
 	-- Der große eigene Felsen gehört ausschließlich an den Rand, nicht in die Brett-Felsmischung.
-	if category == "rock" and preferred ~= "rock_50" then
+	if category == "rock" and preferred ~= Config.ENVIRONMENT.rimRock then
 		local boardVariants = {}
-		for _, variant in variants do if variant.Name ~= "rock_50" then table.insert(boardVariants, variant) end end
+		for _, variant in variants do if variant.Name ~= Config.ENVIRONMENT.rimRock then table.insert(boardVariants, variant) end end
 		variants = boardVariants
 		if #variants == 0 then return nil end
 	end

@@ -20,7 +20,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
   - Nach `if state.island then rimDetails(state, board); return end` sind alle weiteren `state.island`-Zweige unerreichbar: `setmetatable(table.clone(Config.ISLAND) …)`, `(state.island and 0 or s.frontTransition)` → `s.frontTransition`, Zeile `if state.island and not LandscapeBuilder.rimFits(...)`. Entfernen.
   - Akzeptanz: Verhalten bei `Config.ISLAND.enabled = false` (Tal) unverändert; bestehende Tal-/Landschaftstests in `test-run.ps1` und `test-levelgen.ps1` grün.
 
-- [ ] 3. **Modellnamen zentral in Config** – `Config.ENVIRONMENT`, `EnvironmentAssets.place`, `LandscapeBuilder.put`, `BoardBuilder.buildBridges`
+- [x] 3. **Modellnamen zentral in Config** – `Config.ENVIRONMENT`, `EnvironmentAssets.place`, `LandscapeBuilder.put`, `BoardBuilder.buildBridges`
   - Neu `Config.ENVIRONMENT.rimRock = "rock_50"`; die drei Literale `"rock_50"` in `EnvironmentAssets.luau` (2×) und `LandscapeBuilder.luau` (1×) darauf umstellen.
   - Neu `Config.ENVIRONMENT.bridge.referenceModel = "archbridge_1"`; `BoardBuilder` übergibt `variant = settings.referenceModel` statt des Literals. Den nun doppelten Eintrag `archbridge = "archbridge_1"` aus `Config.ENVIRONMENT.preferred` entfernen (einziger `archbridge`-Platzierer ist `buildBridges`, der immer `variant` setzt).
   - Akzeptanz: `rg '"rock_50"|"archbridge_1"' src` findet nur noch `Config.luau`. `bridges.test.luau` und D2-Regressionen grün.
@@ -54,3 +54,4 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
 - Sandbox-Setupfehler: nicht-destruktive Projektbefehle gemäß Dauerregel außerhalb der Sandbox ausgeführt.
 - Schritt 1 nachher (test-run.ps1 Exit 0, alle D2b-Regressionen grün): Seeds 1/2/3 = 109,97 / 80,25 / 68,20 ms (Mittel 86,14 ms, 73,27 % schneller). Randobjekte 91 / 107 / 114 (-9,00 / -7,76 / -6,56 %), Dreiecke 53.521 / 61.002 / 68.489. Mindestdichte/Budgets/Determinismus erfüllt; check.ps1 OK (39 Dateien).
 - Schritt 2: ausschließlich nach der Insel-Frührückkehr unerreichbare Zweige entfernt; Tal-Ausdruck auf s.frontTransition vereinfacht. Tal-/Generatorregressionen werden im Abschluss erneut ausgeführt.
+- Schritt 3: Randfels und Referenzbrücke zentral in Config.ENVIRONMENT; doppeltes preferred.archbridge entfernt. Literalsuche in src trifft nur Config.luau.
