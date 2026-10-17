@@ -25,7 +25,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
   - Neu `Config.ENVIRONMENT.bridge.referenceModel = "archbridge_1"`; `BoardBuilder` übergibt `variant = settings.referenceModel` statt des Literals. Den nun doppelten Eintrag `archbridge = "archbridge_1"` aus `Config.ENVIRONMENT.preferred` entfernen (einziger `archbridge`-Platzierer ist `buildBridges`, der immer `variant` setzt).
   - Akzeptanz: `rg '"rock_50"|"archbridge_1"' src` findet nur noch `Config.luau`. `bridges.test.luau` und D2-Regressionen grün.
 
-- [ ] 4. **Doppelten Namen `frontCategories` auflösen** – `Config.ISLAND`, `LandscapeBuilder.put`
+- [x] 4. **Doppelten Namen `frontCategories` auflösen** – `Config.ISLAND`, `LandscapeBuilder.put`
   - `Config.ISLAND.frontCategories` (Menge erlaubter flacher Kategorien vorne) in `frontAllowed` umbenennen; `rimGroups.frontCategories` (Liste der vorderen Hauptobjekte) bleibt.
   - `rimGroups`-Block so einrücken/umbrechen, dass sichtbar ist, wo er endet und dass `frontAllowed` direkt in `Config.ISLAND` steht.
   - Akzeptanz: `rg frontCategories src` trifft nur `rimGroups.frontCategories`; Vorderzonen-Regression grün.
@@ -55,3 +55,4 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
 - Schritt 1 nachher (test-run.ps1 Exit 0, alle D2b-Regressionen grün): Seeds 1/2/3 = 109,97 / 80,25 / 68,20 ms (Mittel 86,14 ms, 73,27 % schneller). Randobjekte 91 / 107 / 114 (-9,00 / -7,76 / -6,56 %), Dreiecke 53.521 / 61.002 / 68.489. Mindestdichte/Budgets/Determinismus erfüllt; check.ps1 OK (39 Dateien).
 - Schritt 2: ausschließlich nach der Insel-Frührückkehr unerreichbare Zweige entfernt; Tal-Ausdruck auf s.frontTransition vereinfacht. Tal-/Generatorregressionen werden im Abschluss erneut ausgeführt.
 - Schritt 3: Randfels und Referenzbrücke zentral in Config.ENVIRONMENT; doppeltes preferred.archbridge entfernt. Literalsuche in src trifft nur Config.luau.
+- Schritt 4: Config.ISLAND.frontAllowed benennt die erlaubten flachen Kategorien; rimGroups.frontCategories bleibt unverändert. Literalsuche frontCategories trifft nur die Gruppenliste und deren Zugriff.

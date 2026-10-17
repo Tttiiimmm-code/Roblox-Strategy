@@ -362,7 +362,7 @@ local function rimDetails(state, board)
 		local estimate = asset:GetAttribute("EstimatedTriangles") or 0
 		if estimate == 0 then estimate = s.rimBudget.estimates[category] or 0 end
 		local safe = triangles + estimate <= s.rimBudget.triangles and LandscapeBuilder.rimFits(state, lo, hi)
-		if hi.Z > state.h and not s.frontCategories[category] then safe = false end
+		if hi.Z > state.h and not s.frontAllowed[category] then safe = false end
 		for _, other in occupied do
 			local gap = s.rimPlacement.overlapClearance
 			if hi.X + gap > other.lo.X and lo.X - gap < other.hi.X and hi.Z + gap > other.lo.Z and lo.Z - gap < other.hi.Z then safe = false; break end
