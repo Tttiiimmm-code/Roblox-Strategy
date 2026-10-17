@@ -28,6 +28,7 @@ function RunService.start(profile, heroes, seed)
 	end
 	local region = RunConfig.regionAt(1)
 	profile.run = {
+		version = RunConfig.VERSION, phase = "choice", campExtra = false, maxTeam = RunConfig.START_TEAM,
 		seed = seed, region = region, depth = 1, team = team, order = order,
 		options = LevelGen.makeOptions(seed, 1, region), current = nil,
 		earned = { gold = 0, gems = 0 }, cleared = 0,
@@ -36,9 +37,10 @@ function RunService.start(profile, heroes, seed)
 end
 
 function RunService.choose(run, index)
-	if not run or run.current ~= nil or type(index) ~= "number" or index % 1 ~= 0
+	if not run or run.phase ~= "choice" or run.current ~= nil or type(index) ~= "number" or index % 1 ~= 0
 		or index < 1 or index > #run.options then return false end
 	run.current = index
+	if run.options[index].kind == "camp" then run.phase = "camp" end
 	return true
 end
 
@@ -47,7 +49,70 @@ function RunService.stage(run)
 	local living = {}
 	for _, id in ipairs(run.order) do if run.team[id].alive then table.insert(living, id) end end
 	-- Immer mit voller Startfeldzahl erzeugen, damit ein Neustart nach Todesfällen dasselbe Level ergibt.
-	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, RunConfig.MAX_TEAM), living
+	return LevelGen.generate(option.seed, run.region, run.depth, option.themeId, RunConfig.MAX_TEAM, option.kind), living
+end
+
+function RunService.advance(run)
+	run.depth += 1
+	run.current = nil
+	run.region = RunConfig.regionAt(run.depth)
+	run.options = LevelGen.makeOptions(run.seed, run.depth, run.region)
+	run.campExtra = RunConfig.levelKind(run.depth) == "boss"
+	run.phase = run.campExtra and "camp" or "choice"
+end
+
+function RunService.enterCamp(profile)
+	local run = profile and profile.run
+	if not run or run.phase ~= "camp" then return false end
+	for _, id in ipairs(run.order) do
+		local member = run.team[id]
+		if member.alive then member.hp = RunService.maxHp(id, profile.heroes[id]) end
+	end
+	return true
+end
+
+function RunService.swap(profile, slot, id, outgoing)
+	local run = profile and profile.run
+	if not run or run.phase ~= "camp" or type(slot) ~= "number" or slot % 1 ~= 0
+		or slot < 1 or slot > run.maxTeam or slot > #run.order + 1
+		or type(id) ~= "string" or not UnitData.Heroes[id] or type(profile.heroes[id]) ~= "table"
+		or table.find(run.order, id) or outgoing ~= run.order[slot] then return false end
+	local member = run.team[id]
+	if not member then
+		member = { alive = true, hp = RunService.maxHp(id, profile.heroes[id]) }
+		run.team[id] = member
+	elseif member.alive then
+		member.hp = RunService.maxHp(id, profile.heroes[id])
+	end
+	run.order[slot] = id
+	return true
+end
+
+function RunService.revive(profile, id, currency)
+	local run = profile and profile.run
+	if not run or run.phase ~= "camp" or type(id) ~= "string" or not run.team[id]
+		or run.team[id].alive or type(profile.heroes[id]) ~= "table" then return false end
+	local price = RunConfig.revivePrice(profile.heroes[id].level or 1, currency)
+	if not price or type(profile[currency]) ~= "number" or profile[currency] < price then return false end
+	profile[currency] -= price
+	run.team[id].alive = true
+	run.team[id].hp = RunService.maxHp(id, profile.heroes[id])
+	return true
+end
+
+function RunService.leaveCamp(run)
+	if not run or run.phase ~= "camp" then return false end
+	local alive = false
+	for _, id in ipairs(run.order) do if run.team[id].alive then alive = true end end
+	if not alive then return false end
+	if run.campExtra then
+		run.campExtra = false
+		run.phase = "choice"
+	else
+		run.cleared += 1
+		RunService.advance(run)
+	end
+	return true
 end
 
 local function summary(run, outcome)
@@ -55,7 +120,7 @@ local function summary(run, outcome)
 		run = true, ended = true, outcome = outcome, victory = outcome == "Completed",
 		cleared = run.cleared, totalLevels = RunConfig.totalLevels(),
 		earned = table.clone(run.earned), depth = run.depth, region = run.region,
-		reward = { gold = 0, gems = 0 }, healed = {},
+		reward = { gold = 0, gems = 0 }, healed = {}, maxTeam = run.maxTeam, teamPlaceGained = 0,
 	}
 end
 
@@ -80,22 +145,32 @@ function RunService.finish(profile, heroUnits, victory)
 				info.healed[id] = { before = before, after = member.hp, amount = member.hp - before, alive = member.alive, maxHp = unit and unit.maxHp or RunService.maxHp(id, profile.heroes[id]) }
 			end
 		end
-		local reward = run.options[run.current].reward
+		local option = run.options[run.current]
+		if option.kind == "boss" then
+			local before = run.maxTeam
+			run.maxTeam = math.min(RunConfig.MAX_TEAM, run.maxTeam + 1)
+			info.maxTeam, info.teamPlaceGained = run.maxTeam, run.maxTeam - before
+		end
+		local reward = option.reward
 		profile[reward.kind] += reward.amount
 		run.earned[reward.kind] += reward.amount
 		info.reward[reward.kind] = reward.amount
 		run.cleared += 1
 		info.cleared = run.cleared
 		info.earned = table.clone(run.earned)
-		run.depth += 1
-		run.current = nil
 		info.ended = run.cleared >= RunConfig.totalLevels()
 		if info.ended then
 			info.outcome = "Completed"
 			profile.run = nil
 		else
-			run.region = RunConfig.regionAt(run.depth)
-			run.options = LevelGen.makeOptions(run.seed, run.depth, run.region)
+			RunService.advance(run)
+			if RunService.enterCamp(profile) then
+				info.campNext = true
+				for id, healed in pairs(info.healed) do
+					healed.after = run.team[id].hp
+					healed.amount = healed.after - healed.before
+				end
+			end
 		end
 	else
 		profile.run = nil

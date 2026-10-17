@@ -60,7 +60,7 @@ local function updateCurrency(textLabel, profile)
 end
 
 local function buildLobby(root)
-	local f = panel({
+	local f = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(1000, 640),
 		Visible = false,
@@ -68,7 +68,7 @@ local function buildLobby(root)
 	padding(f, 18)
 	lobby.frame = f
 
-	lobby.title = label({
+	lobby.title = UIKit.chromeTitle({
 		Size = UDim2.new(0.5, 0, 0, 40), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold,
 		Text = "Kaserne", TextXAlignment = Enum.TextXAlignment.Left,
 	}, f)
@@ -79,7 +79,7 @@ local function buildLobby(root)
 	local close = button("X", f, "muted")
 	close.AnchorPoint = Vector2.new(1, 0)
 	close.Position = UDim2.fromScale(1, 0)
-	close.Size = UDim2.fromOffset(44, 40)
+	close.Size = UDim2.fromOffset(48, 48)
 	close.TextSize = 22
 	close.Activated:Connect(function()
 		MenuUI.closeLobby()
@@ -92,7 +92,7 @@ local function buildLobby(root)
 
 	-- Reiter: Rekrutieren · Kaserne
 	local tabBar = make("Frame", {
-		Position = UDim2.fromOffset(0, 80), Size = UDim2.new(1, 0, 0, 42), BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 80), Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1,
 	}, f)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -101,7 +101,7 @@ local function buildLobby(root)
 	lobby.pages = {}
 	for i, tab in { { "recruit", "Rekrutieren" }, { "barracks", "Kaserne" } } do
 		local b = button(tab[2], tabBar, "default", i)
-		b.Size = UDim2.fromOffset(200, 42)
+		b.Size = UDim2.fromOffset(200, 48)
 		b.Activated:Connect(function()
 			lobbyTab = tab[1]
 			MenuUI.update(lastState, lastProfile)
@@ -122,18 +122,18 @@ end
 -- Ergebnis ---------------------------------------------------------------------------
 local function buildResult(root)
 	local overlay = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45,
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop, BackgroundTransparency = 0.35,
 		Visible = false, ZIndex = 10,
 	}, root)
 	result.frame = overlay
-	local box = panel({
+	local box = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(480, 540),
 		ZIndex = 11,
 	}, overlay)
 	padding(box, 18)
 	result.box = box
-	result.title = label({
+	result.title = UIKit.chromeTitle({
 		Size = UDim2.new(1, 0, 0, 64), Font = THEME.title, TextSize = 64, ZIndex = 12,
 	}, box)
 	result.sub = label({
@@ -152,7 +152,7 @@ local function buildResult(root)
 	}, resultDetails)
 
 	local buttons = make("Frame", {
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 148),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 165),
 		BackgroundTransparency = 1, ZIndex = 12,
 	}, box)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, buttons)
@@ -160,7 +160,7 @@ local function buildResult(root)
 	result.retry = button("Nochmal", buttons, "default", 2)
 	result.lobby = button("Zum Thronsaal", buttons, "muted", 3)
 	for _, b in { result.next, result.retry, result.lobby } do
-		b.Size = UDim2.new(1, 0, 0, 44)
+		b.Size = UDim2.new(1, 0, 0, 48)
 		b.ZIndex = 12
 	end
 	result.retry.Activated:Connect(function()
@@ -183,7 +183,7 @@ local function updateResult(state, _profile)
 	local key = state.stageId .. tostring(info.victory) .. state.turn
 	if key ~= resultKey then resultKey = key; UIKit.popIn(result.box) end
 	result.title.Text = info.victory and "Sieg!" or "Niederlage"
-	result.title.TextColor3 = info.victory and THEME.gold or THEME.enemy
+	UIKit.setChromeTitleGold(result.title, info.victory)
 	result.sub.Text = Stages.get(state.stageId).name
 	result.goals.Text = not info.victory and "Leon ist gefallen. Versuche die Mission erneut."
 		or state.tutorial.mission == 1 and "Gut gemacht! In Mission 2 lernst du Magierin und Ritter kennen."
@@ -236,8 +236,8 @@ local function buildThroneMenu(root)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, f)
 	padding(content, 14)
 	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, content)
-	label({
-		Size = UDim2.new(1, 0, 0, 36), Font = THEME.title, TextSize = 32, TextColor3 = THEME.gold,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, 0, 0, 36), TextSize = 32,
 		Text = "★  Thron", LayoutOrder = 0,
 	}, content)
 	local entries = {
@@ -248,7 +248,7 @@ local function buildThroneMenu(root)
 	}
 	for i, e in entries do
 		local b = button(e[2], content, e[3], i)
-		b.Size = UDim2.new(1, 0, 0, 52)
+		b.Size = UDim2.new(1, 0, 0, e[1] == "run" and UIKit.METRICS.primaryHeight or 52)
 		b.TextSize = 20
 		throne[e[1]] = b
 		b.Activated:Connect(function()
@@ -259,7 +259,7 @@ local function buildThroneMenu(root)
 		end)
 	end
 	local stand = button("Aufstehen", content, "muted", 10)
-	stand.Size = UDim2.new(1, 0, 0, 44)
+	stand.Size = UDim2.new(1, 0, 0, 48)
 	stand.Activated:Connect(function()
 		callbacks.onStandUp()
 	end)
@@ -268,12 +268,12 @@ end
 -- Erste Wahl mit ausdrücklicher Bestätigung beim Überspringen.
 local function buildWelcome(root)
 	welcome.frame = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0),
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop,
 		BackgroundTransparency = 0.35, Active = true, Visible = false, ZIndex = 60,
 	}, root)
-	local box = panel({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+	local box = panel({ Jewel = true, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(760, 400), ZIndex = 61 }, welcome.frame)
-	welcome.title = label({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 60),
+	welcome.title = UIKit.chromeTitle({ Position = UDim2.fromOffset(24, 24), Size = UDim2.new(1, -48, 0, 60),
 		Text = "Willkommen im Thronsaal!", Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold, ZIndex = 62 }, box)
 	welcome.text = label({ Position = UDim2.fromOffset(24, 100), Size = UDim2.new(1, -48, 0, 164),
 		Text = "Lerne in zwei kurzen Missionen, wie du dein Team bewegst und angreifst. Danach kannst du deinen ersten Lauf starten.",
@@ -320,6 +320,7 @@ function MenuUI.openLobby(tab)
 end
 
 function MenuUI.closeLobby()
+	CollectionUI.closeOverlays()
 	if lobbyOpen then SoundPlayer.play("close") end
 	lobbyOpen = false
 	MenuUI.update(lastState, lastProfile)
@@ -383,6 +384,7 @@ function MenuUI.update(state, profile)
 	end
 	UIKit.setVisible(throne.frame, inHall and throneSeated and not lobbyOpen)
 
+	if not (inHall and lobbyOpen and lobbyTab == "recruit") then CollectionUI.closeOverlays() end
 	UIKit.setVisible(lobby.frame, inHall and lobbyOpen)
 	if inHall and lobbyOpen then
 		lobby.title.Text = TAB_TITLES[lobbyTab]

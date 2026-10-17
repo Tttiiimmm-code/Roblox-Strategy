@@ -20,6 +20,8 @@ local callbacks
 local profile = nil
 local recruit, barracks, odds, results = {}, {}, {}, {}
 local selectedHero = nil
+local barracksFrame, barracksHome, barracksPosition, barracksSize
+local campRun, campSelect
 
 local function pct(value)
 	local text = (value >= 1 and "%.1f" or "%.3f"):format(value)
@@ -57,14 +59,14 @@ local function buildRecruit(frame)
 		Size = UDim2.new(1, -320, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
 	}, frame)
 	art.BackgroundTransparency = 0
-	corner(art, 8)
-	UIKit.stroke(art, THEME.gold, 2)
+	corner(art, UIKit.METRICS.bannerRadius)
+	UIKit.bannerBorder(art)
 	make("UIGradient", {
-		Color = ColorSequence.new(Color3.fromRGB(120, 86, 30), Color3.fromRGB(30, 20, 50)), Rotation = 120,
+		Color = ColorSequence.new(THEME.bannerTop, THEME.bannerBottom), Rotation = 90,
 	}, art)
 	padding(art, 16)
-	label({
-		Size = UDim2.new(1, -12, 0, 44), Font = THEME.title, TextSize = 44, TextColor3 = THEME.gold, LayoutOrder = 1,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, -12, 0, 44), TextSize = 44, Gold = true, LayoutOrder = 1,
 		Text = BANNER.name, TextXAlignment = Enum.TextXAlignment.Left,
 	}, art)
 	UIKit.flowLabel({
@@ -92,8 +94,11 @@ local function buildRecruit(frame)
 		BackgroundTransparency = 1,
 	}, frame)
 	recruit.gems = label({
-		Size = UDim2.new(1, 0, 0, 30), Font = THEME.bold, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, 0, 0, 30), Font = THEME.bold, TextSize = 22,
+		BackgroundTransparency = 0, BackgroundColor3 = THEME.panelInset,
 	}, side)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, recruit.gems)
+	UIKit.stroke(recruit.gems, THEME.ink, 2)
 	local rateLines = { ("<font color='%s'><b>Chancen pro Ruf</b></font>"):format(UIKit.GOLD_HEX) }
 	for rarity = 5, 1, -1 do
 		table.insert(rateLines, ("%s  %s  <b>%s</b>"):format(UIKit.rarityStars(rarity), UnitData.Rarities[rarity].name,
@@ -111,16 +116,17 @@ local function buildRecruit(frame)
 	}, rateDetails)
 
 	local buttons = make("Frame", {
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 170),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 190),
 		BackgroundTransparency = 1,
 	}, side)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, buttons)
 	recruit.single = button(("1× rufen   <font color='#6ee8ff'>♦</font> %d"):format(BANNER.costSingle), buttons, "default", 1)
-	recruit.multi = button(("10× rufen   <font color='#6ee8ff'>♦</font> %d"):format(BANNER.costMulti), buttons, "primary", 2)
+	recruit.multi = button(("10× rufen   <font color='#6ee8ff'>♦</font> %d"):format(BANNER.costMulti), buttons, "holo", 2)
 	local oddsButton = button("ⓘ  Alle Wahrscheinlichkeiten", buttons, "muted", 3)
 	for _, b in { recruit.single, recruit.multi, oddsButton } do
 		b.Size = UDim2.new(1, 0, 0, 50)
 	end
+	recruit.multi.Size = UDim2.new(1, 0, 0, UIKit.METRICS.primaryHeight)
 	recruit.single.Activated:Connect(function()
 		if recruit.single:GetAttribute("Style") ~= "disabled" then
 			callbacks.onRecruit(BANNER.id, 1)
@@ -140,19 +146,19 @@ end
 -- Vollständige Liste aller Ergebnisse mit Prozentwerten (Pflicht bei Zufallsitems gegen Robux)
 local function buildOdds(root)
 	local overlay = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45,
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop, BackgroundTransparency = 0.35,
 		Visible = false, ZIndex = 20,
 	}, root)
 	odds.frame = overlay
-	local box = panel({
+	local box = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(520, 560),
 		ZIndex = 21,
 	}, overlay)
 	padding(box, 16)
 	odds.box = box
-	label({
-		Size = UDim2.new(1, 0, 0, 34), Font = THEME.title, TextSize = 32, TextColor3 = THEME.gold,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, 0, 0, 34), TextSize = 32,
 		Text = "Wahrscheinlichkeiten", ZIndex = 22,
 	}, box)
 	local list = make("ScrollingFrame", {
@@ -188,7 +194,7 @@ local function buildOdds(root)
 	local close = button("Schließen", box, "muted")
 	close.AnchorPoint = Vector2.new(0, 1)
 	close.Position = UDim2.fromScale(0, 1)
-	close.Size = UDim2.new(1, 0, 0, 44)
+	close.Size = UDim2.new(1, 0, 0, 48)
 	close.ZIndex = 22
 	close.Activated:Connect(function()
 		UIKit.setVisible(overlay, false)
@@ -198,19 +204,19 @@ end
 -- Enthüllung nach dem Ruf
 local function buildResults(root)
 	local overlay = make("Frame", {
-		Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35,
+		Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.backdrop, BackgroundTransparency = 0.35,
 		Visible = false, ZIndex = 30,
 	}, root)
 	results.frame = overlay
-	local box = panel({
+	local box = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(940, 560),
 		ZIndex = 31,
 	}, overlay)
 	padding(box, 16)
 	results.box = box
-	label({
-		Size = UDim2.new(1, 0, 0, 40), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold,
+	UIKit.chromeTitle({
+		Size = UDim2.new(1, 0, 0, 40), TextSize = 38,
 		Text = "Neue Verbündete", ZIndex = 32,
 	}, box)
 	results.grid = make("ScrollingFrame", {
@@ -229,11 +235,16 @@ local function buildResults(root)
 	local done = button("Weiter", box, "primary")
 	done.AnchorPoint = Vector2.new(0.5, 1)
 	done.Position = UDim2.fromScale(0.5, 1)
-	done.Size = UDim2.fromOffset(260, 46)
+	done.Size = UDim2.fromOffset(260, 48)
 	done.ZIndex = 32
 	done.Activated:Connect(function()
 		UIKit.setVisible(overlay, false)
 	end)
+end
+
+function CollectionUI.closeOverlays()
+	if odds.frame then UIKit.setVisible(odds.frame, false) end
+	-- Rufergebnisse bleiben bis „Weiter“ sichtbar, damit die Enthüllung nicht verloren geht.
 end
 
 function CollectionUI.showResults(list)
@@ -248,7 +259,7 @@ function CollectionUI.showResults(list)
 		local c = UIKit.heroCard(results.grid, r.heroId, { LayoutOrder = i, ZIndex = 33 })
 		c.badge.Visible = true
 		c.badge.Text = r.isNew and "NEU!" or "+1 Verschm."
-		c.badge.BackgroundColor3 = r.isNew and Color3.fromRGB(190, 60, 60) or Color3.fromRGB(60, 70, 110)
+		c.badge.BackgroundColor3 = r.isNew and THEME.holoPink or THEME.panelInset
 		local scale = make("UIScale", { Scale = 0 }, c.card)
 		task.delay(0.15 + i * 0.22, function()
 			TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
@@ -324,7 +335,7 @@ local function showHeroDetail(heroId)
 	barracks.extra.Text = ("Verschmelzungen: <b>%d / %d</b>  (+%d KP)\nDoppelte Rekrutierungen verschmelzen automatisch."):format(
 		merges, Recruit.MAX_MERGES, merges * Recruit.MERGE_HP)
 	for id, c in barracks.cards do
-		c.stroke.Thickness = id == heroId and 5 or 3
+		c.stroke.Thickness = id == heroId and UIKit.METRICS.selectedCardBorder or UIKit.METRICS.cardBorder
 	end
 end
 
@@ -342,6 +353,7 @@ local function updateBarracks()
 			local c = UIKit.heroCard(barracks.list, heroId, { LayoutOrder = i })
 			c.card.Activated:Connect(function()
 				showHeroDetail(heroId)
+				if campSelect then campSelect(heroId) end
 			end)
 			barracks.cards[heroId] = c
 		end
@@ -349,6 +361,12 @@ local function updateBarracks()
 	for heroId, c in barracks.cards do
 		local entry = profile.heroes[heroId]
 		c.badge.Visible = true
+		c.badge.BackgroundColor3 = THEME.panelInset
+		c.badge.TextColor3 = THEME.text
+		local member = campRun and campRun.team[heroId]
+		c.sub.Text = campRun and (member and not member.alive and "Gefallen in diesem Lauf"
+			or table.find(campRun.order, heroId) and "Im Laufteam" or "Für Tausch verfügbar")
+			or UnitData.Classes[UnitData.Heroes[heroId].class].name
 		c.badge.Text = ("Lv %d%s"):format(entry.level or 1, (entry.merges or 0) > 0 and ("+" .. entry.merges) or "")
 	end
 	if not selectedHero or not profile.heroes[selectedHero] then
@@ -360,12 +378,32 @@ local function updateBarracks()
 end
 
 -- Öffentliche API ----------------------------------------------------------------------
-function CollectionUI.build(recruitFrame, barracksFrame, overlayRoot, cbs)
+function CollectionUI.build(recruitFrame, collectionFrame, overlayRoot, cbs)
 	callbacks = cbs
+	barracksFrame, barracksHome = collectionFrame, collectionFrame.Parent
+	barracksPosition, barracksSize = collectionFrame.Position, collectionFrame.Size
 	buildRecruit(recruitFrame)
-	buildBarracks(barracksFrame)
+	buildBarracks(collectionFrame)
 	buildOdds(overlayRoot)
 	buildResults(overlayRoot)
+end
+
+function CollectionUI.restoreBarracks()
+	if not campRun then return end
+	campRun, campSelect = nil, nil
+	barracksFrame.Parent = barracksHome
+	barracksFrame.Position, barracksFrame.Size = barracksPosition, barracksSize
+	barracksFrame.Visible = false
+	updateBarracks()
+end
+
+function CollectionUI.mountCamp(parent, newProfile, onSelect)
+	profile, campRun, campSelect = newProfile, newProfile.run, onSelect
+	barracksFrame.Parent = parent
+	barracksFrame.Position, barracksFrame.Size = UDim2.new(), UDim2.fromScale(1, 1)
+	barracksFrame.Visible = true
+	updateBarracks()
+	if selectedHero then onSelect(selectedHero) end
 end
 
 function CollectionUI.update(newProfile)
@@ -375,7 +413,7 @@ function CollectionUI.update(newProfile)
 	end
 	recruit.gems.Text = ("<font color='#6ee8ff'>♦</font> %d Edelsteine"):format(profile.gems)
 	UIKit.setButtonStyle(recruit.single, profile.gems >= BANNER.costSingle and "default" or "disabled")
-	UIKit.setButtonStyle(recruit.multi, profile.gems >= BANNER.costMulti and "primary" or "disabled")
+	UIKit.setButtonStyle(recruit.multi, profile.gems >= BANNER.costMulti and "holo" or "disabled")
 	local to4, to5 = Recruit.pityRemaining(profile.pity or {})
 	recruit.pity.Text = ("★4 oder besser garantiert in <b>%d</b> Rufen\n★5 garantiert in <b>%d</b> Rufen"):format(to4, to5)
 	updateBarracks()

@@ -13,6 +13,7 @@ local Tutorial = require(Shared.Tutorial)
 local Recruit = require(Shared.Recruit)
 local RunConfig = require(Shared.RunConfig)
 local RunService = require(script.Parent.RunService)
+local BossAbilities = require(script.Parent.BossAbilities)
 
 local BoardBuilder = require(script.Parent.BoardBuilder)
 local UnitVisuals = require(script.Parent.UnitVisuals)
@@ -43,7 +44,7 @@ local GetProfile = remote("RemoteFunction", "GetProfile")
 local unitsFolder = BoardBuilder.ensureUnitsFolder()
 UnitVisuals.init(unitsFolder)
 Grid.setMap(Stages.List[1].map) -- Kulisse vor dem ersten Kampf
-BoardBuilder.build()
+BoardBuilder.build(Stages.List[1].region, nil, Stages.List[1])
 HubBuilder.build()
 task.spawn(UnitVisuals.buildHeroTemplates)
 
@@ -81,6 +82,8 @@ local function snapshot()
 		ownerName = state.ownerName,
 		run = state.run,
 		map = state.map,
+		tileHeights = state.mode == "Battle" and Grid.getHeights() or {},
+		reinforcementMarks = state.reinforcementMarks,
 	}
 end
 
@@ -148,6 +151,8 @@ local function makeUnit(def, x, y, team, level, bonus)
 		rarity = def.rarity or 1,
 		isLord = def.isLord or false,
 		ai = def.ai or "aggressive",
+		mov = def.mov, family = def.family,
+		abilities = def.abilities,
 		done = false,
 		deployed = true,
 		maxHp = def.stats.hp,
@@ -174,7 +179,7 @@ local function setupBattle(stage, opts)
 	clearUnits()
 	Grid.setMap(stage.map)
 	local boardStart = os.clock()
-	BoardBuilder.build(stage.region)
+	BoardBuilder.build(stage.region, stage.features, stage)
 	local board = workspace:FindFirstChild("Board")
 	if board then board:SetAttribute("RunSeed", opts.run and opts.run.seed) end
 	local boardDuration = os.clock() - boardStart
@@ -189,6 +194,7 @@ local function setupBattle(stage, opts)
 		run = opts.run,
 		tutorial = opts.tutorial,
 		map = stage.map,
+		reinforcementFields = stage.reinforcementFields, reinforcementMarks = {},
 		units = {},
 		heroUnits = {}, -- heroId -> Einheit (auch gefallene), für das Zurückschreiben des Fortschritts
 		phase = "Prep",
@@ -204,7 +210,7 @@ local function setupBattle(stage, opts)
 	local unitsStart = os.clock()
 	local enemies = table.clone(stage.enemies)
 	for _, e in enemies do
-		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level)
+		local unit = makeUnit(UnitData.Enemies[e.kind], e.x, e.y, "Enemy", e.level, opts.run and RunConfig.enemyBonus(opts.run.depth))
 		if opts.tutorial then
 			unit.tutorial = true
 			unit.tutorialTarget = e.tutorialTarget
@@ -213,6 +219,7 @@ local function setupBattle(stage, opts)
 				if stat == "hp" then unit.hp, unit.maxHp = value, value else unit[stat] = value end
 			end
 		end
+		unit.enemyKind = e.kind
 		state.units[unit.id] = unit
 		UnitVisuals.create(unit)
 	end
@@ -286,6 +293,7 @@ local function beginRunLevel(player, profile)
 	state.battleScenes = profile.settings.battleScenes
 	setupBattle(stage, { run = {
 		depth = run.depth, region = run.region, themeId = option.themeId,
+		kind = option.kind, bossId = stage.bossId,
 		totalLevels = RunConfig.totalLevels(), seed = option.seed,
 	} })
 	for i, id in ipairs(living) do
@@ -333,10 +341,11 @@ local function checkResult()
 	if state.result then
 		return true
 	end
-	local enemies, players, lordAlive = 0, 0, false
+	local enemies, players, lordAlive, bossAlive = 0, 0, false, false
 	for _, u in state.units do
 		if u.team == "Enemy" then
 			enemies += 1
+			if state.run and u.enemyKind == state.run.bossId and u.hp > 0 then bossAlive = true end
 		end
 		if u.team == "Player" then players += 1 end
 		if u.team == "Player" and u.isLord then
@@ -345,6 +354,13 @@ local function checkResult()
 	end
 	if (state.run and players == 0) or (not state.run and not lordAlive) then
 		state.result = "Defeat"
+	elseif state.run and state.run.bossId and not bossAlive then
+		state.result = "Victory"
+		local fleeing = {}
+		for id, unit in pairs(state.units) do if unit.team == "Enemy" then table.insert(fleeing, id) end end
+		for _, id in ipairs(fleeing) do state.units[id] = nil; UnitVisuals.remove(id, true) end
+		state.reinforcementMarks = {}
+		BattleEvent:FireAllClients({ ability = { type = "flee", text = "Der Anführer ist gefallen – die übrigen Gegner fliehen!" } })
 	elseif enemies == 0 then
 		state.result = "Victory"
 	end
@@ -403,6 +419,7 @@ local function battle(attacker, defender)
 	end
 
 	for _, u in { attacker, defender } do
+		if u.ai == "hold_until_hurt" and u.hp < u.maxHp then u.awakened = true end
 		if u.hp <= 0 then
 			if u.team == "Player" then
 				state.lost += 1
@@ -431,6 +448,18 @@ local function runEnemyPhase()
 	for _, u in state.units do
 		u.done = false
 		UnitVisuals.update(u)
+	end
+	if state.run then
+		BossAbilities.process(state, function(kind, cell)
+			local unit = makeUnit(UnitData.Enemies[kind], cell.x, cell.y, "Enemy",
+				RunConfig.enemyLevel(state.run.depth), RunConfig.enemyBonus(state.run.depth))
+			unit.enemyKind = kind
+			state.units[unit.id] = unit
+			UnitVisuals.create(unit)
+		end, function(event)
+			BattleEvent:FireAllClients({ ability = event })
+		end, rng)
+		for _, unit in pairs(state.units) do UnitVisuals.update(unit) end
 	end
 	healOnForts("Enemy")
 	broadcast()
@@ -712,13 +741,36 @@ local function handleCommand(player, cmd)
 		if not free or not Tutorial.unlocked(profile) or not RunService.choose(profile.run, cmd.index) then return false end
 		state.ownerUserId = player.UserId
 		state.ownerPlayer = player
+		if profile.run.phase == "camp" then
+			RunService.enterCamp(profile)
+			clearUnits()
+			state = lobbyState(state.speed)
+			state.ownerUserId, state.ownerPlayer = player.UserId, player
+		end
 		state.busy = true
 		ProfileStore.save(player, true) -- Wahl festhalten, bevor das Brett entsteht
 		sendProfile(player)
-		beginRunLevel(player, profile)
+		if profile.run.phase == "camp" then state.busy = false; broadcast()
+		else beginRunLevel(player, profile) end
+		return true
+	elseif t == "CampSwap" or t == "CampRevive" or t == "LeaveCamp" then
+		if not free or not Tutorial.unlocked(profile) or not profile.run or profile.run.phase ~= "camp" then return false end
+		local accepted
+		if t == "CampSwap" then accepted = RunService.swap(profile, cmd.slot, cmd.heroId, cmd.outgoing)
+		elseif t == "CampRevive" then accepted = RunService.revive(profile, cmd.heroId, cmd.currency)
+		else
+			accepted = RunService.leaveCamp(profile.run)
+			if accepted then RunService.enterCamp(profile) end
+		end
+		if not accepted then return false end
+		state.busy = true
+		ProfileStore.save(player, true)
+		state.busy = false
+		sendProfile(player)
+		broadcast()
 		return true
 	elseif t == "ResumeLevel" then
-		if not free or not Tutorial.unlocked(profile) or not profile.run or not profile.run.current then return false end
+		if not free or not Tutorial.unlocked(profile) or not profile.run or profile.run.phase ~= "choice" or not profile.run.current then return false end
 		state.busy = true
 		beginRunLevel(player, profile)
 		return true

@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local GuiService = game:GetService("GuiService")
 
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local CameraController = {}
 
 local active = false -- true = Taktik-Kamera (eigener Kampf), false = normale Avatar-Kamera im Thronsaal
@@ -55,16 +56,36 @@ function CameraController.shake(strength, duration)
 	shakeStrength, shakeDuration, shakeTime = strength, math.max(duration, 0.001), 0
 end
 
-local function clampFocus()
-	focus = Vector3.new(math.clamp(focus.X, 0, bounds.X), focus.Y, math.clamp(focus.Z, 0, bounds.Z))
+local function maximumZoom()
+	local camera, c = workspace.CurrentCamera, Config.CAMERA
+	local viewport = camera.ViewportSize
+	local aspect = viewport.Y > 0 and viewport.X / viewport.Y or c.aspectMin
+	return Config.overviewZoom(bounds, camera.FieldOfView, aspect)
 end
 
-function CameraController.setBounds(center, size)
+local function defaultZoom()
+	return math.clamp(math.max(bounds.X, bounds.Z) * Config.CAMERA.zoomDefaultScale, Config.CAMERA.zoomDefaultMin,
+		math.min(Config.CAMERA.zoomDefaultMax, maximumZoom()))
+end
+
+local function clampFocus()
+	local inset = 0
+	if Config.ISLAND.enabled then
+		-- Erst beim Herauszoomen wird der Fokus Richtung Brettmitte begrenzt.
+		local normal = defaultZoom()
+		inset = Config.ISLAND.panInset * math.clamp((zoom - normal) / math.max(0.001, maximumZoom() - normal), 0, 1)
+	end
+	focus = Vector3.new(math.clamp(focus.X, bounds.X * inset, bounds.X * (1 - inset)), focus.Y,
+		math.clamp(focus.Z, bounds.Z * inset, bounds.Z * (1 - inset)))
+end
+
+function CameraController.setBounds(center, size, startFocus)
 	saved, transition = nil, nil
 	shakeStrength = 0
-	focus = center
+	focus = startFocus or center
 	bounds = size
-	zoom = math.clamp(math.max(size.X, size.Z) * 0.85, 45, 120)
+	zoom = defaultZoom()
+	clampFocus()
 end
 
 -- Bildschirm-Verschiebung in Pixeln ("Karte greifen")
@@ -77,7 +98,7 @@ end
 
 function CameraController.zoomBy(factor)
 	if factor > 0 then
-		zoom = math.clamp(zoom / factor, 30, 140)
+		zoom = math.clamp(zoom / factor, Config.CAMERA.zoomMin, maximumZoom())
 	end
 end
 
@@ -115,7 +136,7 @@ function CameraController.start()
 
 	UserInputService.InputChanged:Connect(function(input, processed)
 		if active and not processed and input.UserInputType == Enum.UserInputType.MouseWheel then
-			zoom = math.clamp(zoom - input.Position.Z * 6, 30, 140)
+			zoom = math.clamp(zoom - input.Position.Z * 6, Config.CAMERA.zoomMin, maximumZoom())
 		end
 	end)
 
@@ -149,7 +170,10 @@ function CameraController.start()
 		focus += rotation:VectorToWorldSpace(move) * dt * 45
 		clampFocus()
 
-		local offset = rotation:VectorToWorldSpace(Vector3.new(0, 1, 0.75).Unit * zoom)
+		-- Auch nach Fensterwechseln und Kamerafahrten gilt derselbe sichtbare Ausschnitt.
+		camera.FieldOfView = math.clamp(camera.FieldOfView, Config.CAMERA.fovMin, Config.CAMERA.fovMax)
+		zoom = math.clamp(zoom, Config.CAMERA.zoomMin, maximumZoom())
+		local offset = rotation:VectorToWorldSpace(Vector3.new(0, 1, Config.CAMERA.tilt).Unit * zoom)
 		local shakeOffset = Vector3.zero
 		if shakeStrength > 0 then
 			shakeTime += dt

@@ -44,7 +44,7 @@ function EnemyAI.plan(enemy, units)
 		return best
 	end
 
-	if enemy.ai == "stationary" then
+	if enemy.ai == "stationary" or (enemy.ai == "hold_until_hurt" and not enemy.awakened and enemy.hp == enemy.maxHp) then
 		return nil
 	end
 
@@ -66,7 +66,7 @@ function EnemyAI.plan(enemy, units)
 	end
 
 	-- Dem Weg so weit folgen, wie die Bewegung reicht, und auf einem freien Feld anhalten
-	local mov = UnitData.Classes[enemy.class].mov
+	local mov = enemy.mov or UnitData.Classes[enemy.class].mov
 	local path = Grid.pathTo(far, goal.x, goal.y)
 	local stopIndex = 1
 	for i, step in path do

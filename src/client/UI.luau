@@ -178,7 +178,7 @@ end
 local function buildMenu()
 	menuFrame = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.42, 0), Size = UDim2.fromOffset(200, 212),
+		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.42, 0), Size = UDim2.fromOffset(200, 220),
 		Visible = false,
 	}, hud)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, menuFrame)
@@ -192,7 +192,7 @@ local function buildMenu()
 	waitButton = button("Warten", content, "default", 2)
 	cancelButton = button("Abbrechen", content, "muted", 3)
 	for _, b in { attackButton, waitButton, cancelButton } do
-		b.Size = UDim2.new(1, 0, 0, 46)
+		b.Size = UDim2.new(1, 0, 0, 48)
 	end
 	attackButton.Activated:Connect(function()
 		if attackButton:GetAttribute("Style") ~= "disabled" and menuCallbacks.onAttack then
@@ -214,7 +214,7 @@ end
 local function buildForecast()
 	local f = panel({
 		Animated = true,
-		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 92), Size = UDim2.fromOffset(470, 256),
+		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, UIKit.METRICS.forecastTop), Size = UDim2.fromOffset(470, 256),
 		Visible = false,
 	}, hud)
 	padding(f, 12)
@@ -248,7 +248,7 @@ local function buildForecast()
 			Position = UDim2.fromOffset(12, 0), Size = UDim2.new(0.35, -12, 1, 0), Font = THEME.bold, TextSize = 20,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}, row)
-		label({
+		UIKit.tag({
 			AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0), Size = UDim2.new(0.3, 0, 1, 0),
 			TextSize = 14, TextColor3 = THEME.gold, Font = THEME.bold,
 			Text = ({ dmg = "SCHADEN", hit = "TREFFER", crit = "KRIT" })[key],
@@ -262,12 +262,12 @@ local function buildForecast()
 
 	local confirm = button("⚔  Angreifen!", f, "danger")
 	forecast.confirm = confirm
-	confirm.Position = UDim2.new(0, 0, 1, -44)
-	confirm.Size = UDim2.new(0.5, -5, 0, 44)
+	confirm.Position = UDim2.new(0, 0, 1, -48)
+	confirm.Size = UDim2.new(0.5, -5, 0, 48)
 	local back = button("Zurück", f, "muted")
 	forecast.back = back
-	back.Position = UDim2.new(0.5, 5, 1, -44)
-	back.Size = UDim2.new(0.5, -5, 0, 44)
+	back.Position = UDim2.new(0.5, 5, 1, -48)
+	back.Size = UDim2.new(0.5, -5, 0, 48)
 	confirm.Activated:Connect(function()
 		if forecastCallbacks.onConfirm then
 			forecastCallbacks.onConfirm()
@@ -283,19 +283,19 @@ end
 -- Unten rechts: Zurück · [Rückblende][Gefahr][Tempo] · Zug beenden
 local function buildTools(callbacks)
 	local col = make("Frame", {
-		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(300, 212),
+		AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.fromOffset(300, 240),
 		BackgroundTransparency = 1,
 	}, hud)
 
 	tools.endTurn = button("Zug beenden", col, "primary")
 	tools.endTurn.AnchorPoint = Vector2.new(0, 1)
 	tools.endTurn.Position = UDim2.fromScale(0, 1)
-	tools.endTurn.Size = UDim2.new(1, 0, 0, 50)
+	tools.endTurn.Size = UDim2.new(1, 0, 0, UIKit.METRICS.primaryHeight)
 	tools.endTurn.TextSize = 20
 	tools.endTurn.Activated:Connect(callbacks.onEndTurn)
 
 	local row = make("Frame", {
-		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -58), Size = UDim2.new(1, 0, 0, 44),
+		AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -72), Size = UDim2.new(1, 0, 0, 48),
 		BackgroundTransparency = 1,
 	}, col)
 	make("UIListLayout", {
@@ -318,8 +318,8 @@ local function buildTools(callbacks)
 	tools.speed = toolButton("1×", 3, callbacks.onSpeed)
 	tools.scenes = button("Szenen an", col, "active")
 	tools.scenes.AnchorPoint = Vector2.new(0, 1)
-	tools.scenes.Position = UDim2.new(0, 0, 1, -110)
-	tools.scenes.Size = UDim2.new(1, 0, 0, 44)
+	tools.scenes.Position = UDim2.new(0, 0, 1, -128)
+	tools.scenes.Size = UDim2.new(1, 0, 0, 48)
 	tools.scenes.TextSize = 18
 	tools.scenes.Activated:Connect(callbacks.onBattleScenes)
 
@@ -333,8 +333,8 @@ local function buildTools(callbacks)
 
 	tools.back = button("Zurück", col, "muted")
 	tools.back.AnchorPoint = Vector2.new(0, 1)
-	tools.back.Position = UDim2.new(0, 0, 1, -162)
-	tools.back.Size = UDim2.new(1, 0, 0, 44)
+	tools.back.Position = UDim2.new(0, 0, 1, -184)
+	tools.back.Size = UDim2.new(1, 0, 0, 48)
 	tools.back.Visible = false
 	tools.back.Activated:Connect(callbacks.onBack)
 end
@@ -371,15 +371,16 @@ local function buildPopups()
 	}, level.gui)
 	dismiss.Activated:Connect(UI.dismissLevelUp)
 
-	local lf = panel({
+	local lf = panel({ Jewel = true,
 		Animated = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.fromOffset(320, 250),
 		Visible = false, ZIndex = 6,
 	}, levelRoot)
 	padding(lf, 14)
 	level.frame = lf
-	label({
-		Size = UDim2.new(1, 0, 0, 38), Font = THEME.title, TextSize = 38, TextColor3 = THEME.gold, Text = "Level Up!",
+	UIKit.chromeTitle({
+		Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 32),
+		TextSize = 38, Gold = true, Text = "Level Up!",
 	}, lf)
 	level.sub = label({ Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 20), TextColor3 = THEME.dim }, lf)
 	local grid = make("Frame", {
@@ -417,8 +418,8 @@ local function buildPopups()
 		}, bf)
 		make("UIGradient", { Transparency = fade }, line)
 	end
-	banner.label = label({
-		Size = UDim2.fromScale(1, 1), Font = THEME.title, TextSize = 64, ZIndex = 9, TextStrokeTransparency = 0.5,
+	banner.label = UIKit.chromeTitle({
+		Size = UDim2.fromScale(1, 1), TextSize = 64, ZIndex = 9,
 	}, bf)
 	banner.frame = bf
 end
@@ -439,11 +440,11 @@ local function buildLoading(playerGui)
 	loading.content = make("CanvasGroup", {
 		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Active = false,
 	}, contentRoot)
-	local card = panel({
+	local card = panel({ Jewel = true,
 		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(780, 250),
 	}, loading.content)
-	loading.title = label({
+	loading.title = UIKit.chromeTitle({
 		Position = UDim2.fromOffset(24, 32), Size = UDim2.new(1, -48, 0, 76),
 		Font = THEME.title, TextSize = 42, TextWrapped = true, TextScaled = false,
 	}, card)
@@ -640,7 +641,7 @@ function UI.showInfo(unit, terrain)
 	info.hp.fill.BackgroundColor3 = UIKit.hpColor(unit.hp / unit.maxHp)
 	UIKit.setBar(info.exp, unit.xp, 100)
 	for stat, lbl in info.stats do
-		local value = stat == "mov" and cls.mov or unit[stat]
+		local value = stat == "mov" and (unit.mov or cls.mov) or unit[stat]
 		local name = stat == "mov" and "Bew" or UnitData.STAT_NAMES[stat]
 		lbl.Text = ("<font color='%s'>%s</font> <b>%d</b>"):format(UIKit.DIM_HEX, name, value)
 	end

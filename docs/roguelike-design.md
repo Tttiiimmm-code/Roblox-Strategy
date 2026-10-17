@@ -1,9 +1,9 @@
 # Design: Roguelike-Läufe
 
-Stand: 08.10.2026 – Entscheidungen des Nutzers. **Phase 1 umgesetzt**, Studio-/Handy-Test und Claude-Review noch offen; Phasen 2–7 folgen. Grundlage für spätere Pläne in Etappen. Offene Punkte stehen am Ende und werden vor der jeweiligen Etappe mit dem Nutzer geklärt.
+Stand: 09.10.2026 – Entscheidungen des Nutzers. **Phasen 1–3 umgesetzt** (Grasland); Phase 3 in Studio/auf Handy ungetestet, Claude-Review ausstehend; Phasen 4–7 folgen. Grundlage für spätere Pläne in Etappen. Offene Punkte stehen am Ende und werden vor der jeweiligen Etappe mit dem Nutzer geklärt.
 
 ## Kernidee
-Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vor jedem Level wählt man aus 2–3 zufällig erzeugten Optionen. Die **Helden- und Waffensammlung wächst dauerhaft** (Metaprogression): Jeder Lauf macht stärker, auch ein gescheiterter.
+Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vor normalen Leveln wählt man aus 2–3 zufällig erzeugten Optionen; Level 3 und 5 sind feste Bosskämpfe. Die **Helden- und Waffensammlung wächst dauerhaft** (Metaprogression): Jeder Lauf macht stärker, auch ein gescheiterter.
 
 ## Ablauf eines Laufs
 | Gebiet | Level 1–2 | Level 3 | Level 4 | Level 5 | Besonderheit |
@@ -23,7 +23,7 @@ Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vo
 - Vor jedem normalen Level **zufällig 2 oder 3 Optionen**.
 - Jede Option zeigt Symbole für **Gegnerschwerpunkt** (z. B. Bogen = viele Bogenschützen, Pferd = viele Ritter), **Gelände-Gefahren**, **Belohnung** (Gold, Edelsteine, Waffe) und **Leveltyp**.
 - **Leveltypen:** Standard *Alle Gegner besiegen*; seltener *Boss besiegen*, *X Runden überleben*, *Ziel erreichen/verteidigen*. Boss-Level: Boss besiegen.
-- **Lager** ist selbst eine mögliche Option statt eines Kampfes. **Vor jedem Boss (Level 3 und 5) ist garantiert ein Lager unter den Optionen.**
+- **Lager** ist selbst eine mögliche Option statt eines Kampfes. **Vor Level 5 gibt es einen garantierten Extra-Lagerhalt ohne Levelverbrauch.** In Level 1/2/4 ist höchstens eine Lageroption zufällig möglich (aktuelle Entscheidung Phase 3).
 - **Kein Rundenlimit**; schnelle Siege geben Bonus-Punkte.
 
 ## Team
@@ -81,7 +81,7 @@ Statt fester Missionen spielt man **Läufe** durch 4 Gebiete mit je 5 Leveln. Vo
 Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein zentrales Konfigurationsmodul.
 1. **Lauf-Grundgerüst (Grasland) – umgesetzt:** Lauf starten/aufgeben/fortsetzen, Lauf-Speicherstand im Profil, Team aus 3 Helden, Seed-Generator mit Bausteinen und Lösbarkeitsprüfung, Levelwahl mit 2–3 Optionen (Gegnerschwerpunkt + Belohnung), Teilheilung, Tote bleiben tot, Niederlage wenn alle tot, Belohnung pro Level.
 2. **Tutorial-Umbau:** Mission 1 + 2 als Pflicht-Tutorial mit Überspringen-Abfrage, übrige Missionen, Sterne und Schwierigkeitsstufen entfernen, Lauf-Knopf im Hub.
-3. **Bosse + Lager:** Miniboss (Level 3) und Gebietsboss (Level 5), Lager als Option (garantiert vor Bossen), volle Heilung, Teamwechsel über Kaserne, Wiederbeleben, Teamplatz +1 nach Boss.
+3. **Bosse + Lager (umgesetzt, Studio-Test/Review offen):** Miniboss (Level 3) und Gebietsboss (Level 5), Lager als Option und Extra-Halt vor Level 5, volle Heilung, Teamwechsel über Kaserne, Wiederbeleben, Teamplatz +1 nach Boss.
 4. **Beute + Händler:** Waffensammlung, Waffen als Level-/Boss-Belohnung, Händler, Rückblende als Item, Notfall-Beschwörung (Wahrscheinlichkeiten sichtbar).
 5. **Sumpf + Gefahren-System:** Matsch/Gift, KI meidet Gefahren, weitere Leveltypen (Überleben, Ziel erreichen/verteidigen, Boss besiegen), Gefahren-Symbole in der Wahl.
 6. **Eis + Vulkan:** Schneesturm-Nebel (serverseitig verdeckt), Lava, angekündigter Steinschlag, wachsende Bretter.
@@ -112,7 +112,54 @@ Genaue Werte sind Work in Progress: Alle Zahlen kommen als Platzhalter in ein ze
 - Missionen 3–5, Sterneziele und Schwierigkeitspfade entfernt. Weltkarten-Reiter verborgen/entfernt; Kriegstisch öffnet die Lauf-Teamwahl. Die spätere Lauf-Karte bleibt offen.
 - Prüfungen: `scripts/check.ps1`, `scripts/test-tutorial.ps1` (168 Stub-Prüfungen), `scripts/test-levelgen.ps1` und Rojo-Build. Zusätzlich 179 lokale UI-Anschlussprüfungen mit den vorhandenen Stubs. Darstellung, Replikation und Bedienung in Studio/auf dem Handy noch ungetestet; unabhängiger Review durch Claude ausstehend.
 
+## Entscheidungen Phase 3 – Bosse + Lager (09.10.2026)
+- **Grasland-Boss = Garrick** (Bandenführer, vorhandene Figur). **Miniboss = neuer Bandit** (z. B. sein Hauptmann; Name/Design Platzhalter, Nutzer entwirft).
+- **Garrick (Level 5):** deutlich stärkere Werte; steht in einer **Festung** auf einer **handgemachten Boss-Karte** und bleibt dort, **bis er verletzt wird**, danach bewegt er sich. Fähigkeit **„Kriegsschrei“**: alle Banditen in der Nähe +Stärke für 1 Runde (alle paar Runden). **Phase 2 bei halben KP:** 2–3 Banditen stürmen vom Kartenrand herein, **eine Runde vorher angekündigt**.
+- **Miniboss (Level 3):** höhere Werte, **bewegt sich aktiv**, aber mit geringerer Bewegungsweite als normale Gegner; **beschwört bei niedrigen KP 1–2 Gegner**. Keine weitere Phase.
+- **Boss-Level gewonnen, sobald der Boss fällt** (restliche Gegner fliehen).
+- **Lager:** volle Heilung, Teamwechsel über die Kaserne, Wiederbeleben. **Wiederbeleben kostet Gold (Grundpreis + Aufschlag pro Heldenlevel) oder einen festen Edelsteinpreis** (Werte WIP). Gefallene dürfen gegen Sammlungs-Helden **ausgewechselt** werden, bleiben aber tot, bis sie wiederbelebt werden.
+- **Lager-Rhythmus je Gebiet:** L1 Wahl · L2 Wahl · **L3 Miniboss** (fest) · L4 Wahl · **Extra-Lager (garantiert, zählt nicht als Level)** · **L5 Boss** (fest). In den Wahlen L1/L2/L4 kann zufällig ein Lager unter den Optionen sein – gewählt **ersetzt es den Kampf dieses Levels** (kein Kampf, keine Kampfbelohnung, man rückt ein Level vor).
+- **+1 Teamplatz nach jedem Gebietsboss** (wirksam beim nächsten Lager bzw. nächsten Gebiet).
+- Händler, Waffenbeute, Rückblende-Item und Notfall-Beschwörung folgen in Phase 4.
+
+## Umsetzung Phase 3 – Bosse und Lager (09.10.2026)
+- Ablauf: L1/L2 Wahl, L3 Banditenhauptmann, L4 Wahl, Extra-Lager, L5 Garrick. Lager als Wahl ersetzt den Kampf ohne Belohnung. Nach Garrick endet der aktuelle Grasland-Lauf; der neue Teamplatz wird zuvor im Lauf und im Ergebnis vermerkt (spätere Gebiete noch offen).
+- Bosskarte in `MapChunks.bossMaps.greenland`: Festung oben, drei Leibwachen, sechs Starts unten, vier freie Randfelder; horizontale Spiegelung nach Seed. Miniboss auf normal erzeugter Karte mit zwei Leibwachen.
+- Fähigkeiten sind Gegnerdaten und werden durch `BossAbilities` serverseitig ausgeführt. Beschworene Banditen skalieren wie die ursprünglichen Laufgegner. Markierte Ankunftsfelder bleiben bei Belegung bis zur nächsten freien Gegnerphase offen. Ein Bossfall entfernt auch wartende Markierungen. Kriegsschrei ist als Ansage und goldenes Stärke-Symbol an betroffenen Einheiten sichtbar; endet vor der nächsten Gegnerphase.
+- Lager: volle Heilung lebender aktiver Helden; vorhandene Kaserne für Ansicht und ausdrücklich bestätigte Platzwechsel. Todesstatus aller jemals eingesetzten Helden bleibt erhalten; lebende neu eingesetzte Helden starten mit vollen KP. Wiederbelebung per Gold oder Edelsteinen, Preise vor Kauf sichtbar. Ohne lebenden aktiven Helden bleibt „Weiter“ gesperrt, Tauschen/Wiederbeleben weiter möglich.
+- Profil-Laufversion 2: `phase`, `campExtra`, `maxTeam` und Todeshistorie auch inaktiver Helden werden geprüft und gespeichert. Alte Phase-1-Läufe werden verworfen, Sammlung/Währungen/Erfahrung bleiben erhalten. Wahl- und Extra-Lager werden bei Wiederkommen fortgesetzt.
+
+**WIP-Werte (noch kein finales Balancing):**
+
+| Wert | Aktueller Platzhalter | Quelle |
+|---|---|---|
+| Lagerchance pro Wahl | 30 %, höchstens eine Option | `RunConfig.CAMP_CHANCE` |
+| Wiederbeleben | 100 + 25 × Heldenlevel Gold oder 15 Edelsteine | `RunConfig.REVIVE_*` |
+| Boss-/Miniboss-Belohnung | 3× / 2× normale Tiefenbelohnung, Gold | `RunConfig.*REWARD_MULTIPLIER` |
+| Gegner je zusätzlichem Level | +2 KP, +1 Stärke, +1 Verteidigung | `RunConfig.ENEMY_STAT_PER_LEVEL` |
+| Hauptmann | Basis 30 KP, Bewegung 3; bei ≤40 % KP einmal 1–2 Banditen, Radius 2 | `UnitData.Enemies.brigand_captain` |
+| Garrick | Basis 40 KP; Kriegsschrei alle 3 Runden ab Runde 1, Radius 3, +3 Stärke für 1 Runde | `UnitData.Enemies.chieftain` |
+| Garrick Phase 2 | bei ≤50 % KP Ankündigung, 2–3 Banditen in nächster Gegnerphase | `UnitData.Enemies.chieftain.abilities` |
+
+`brigand_captain` / „Banditenhauptmann“ bleibt Platzhalter: Name und eigener Entwurf kommen vom Nutzer; Darstellung derzeit über die vorhandene Klasse Brigand. Händler, Waffenbeute, Rückblenden und Notfall-Beschwörung bleiben Phase 4.
+
+Prüfungen: `scripts/check.ps1`, `scripts/test-levelgen.ps1` (90.000 normale Level, 5.000 Wahlabfolgen, 12.000 Bosskarten), `scripts/test-tutorial.ps1`, `scripts/test-run.ps1` (34.006 Stub-Prüfungen), `scripts/test-run-ui.ps1` (109 UI-Anschlussprüfungen) und Rojo-Build. Automatische Prüfungen simulieren kein echtes Rendering, Roblox-Replikation oder Handybedienung; manuelle Phase-3-Checkboxen in PLAN.md bleiben offen, Claude-Review ausstehend.
+
+## Entscheidungen 10.10.2026 – Designsystem, Endlosmodus, Klassen
+- **Designsystem „Throne Tales“** (Artifact: https://claude.ai/artifact/GsncXyUBtQh3UymyBhtbfD) ist Richtschnur für UI und Optik: Y2K-Fantasy, hoher Coolnessfaktor, einheitlicher Stil für UI und Welt. Leitziele: unendlich spielbar, jeder Lauf macht sichtbar stärker, Persönlichkeit jedes Helden am Design erkennbar, viele Klassen und Gegnertypen wie in Fire Emblem.
+- **Aufstiegsklassen sind gewünscht** (Grundklasse → Aufstiegsklasse wie in Fire Emblem). Klassenliste nach Bewegungsart (Fuß, Pferd, Flug, Rüstung) laut Designsystem `ClassRoster` gilt als Zielbild.
+- **Gegnertypen** entstehen als Klasse × Gebietsfraktion × Rang (Gegner, Elite, Miniboss, Boss).
+- **Gebiete frei erweiterbar:** Neue Gebiete müssen sich ohne Umbau ergänzen lassen (eigene Palette, Fraktion, Gefahr, Kartenstücke). Jetzt zuerst die **ersten 4 Gebiete fertigstellen**.
+- **Endlosmodus:** Nach dem Vulkan geht es mit dem gesammelten Fortschritt wieder im Grasland weiter (**Zyklus 2, 3, …**), Gegner werden mit jedem Zyklus stärker.
+- **Relikte und Segen** sind als zusätzliche Lauf-Variation interessant (Regeln offen, siehe unten).
+- **Gesichter:** Die Stil-Guide-Regel „entschlossen bis neutral“ ist gelockert; jeder Held darf eine Grundstimmung tragen (siehe `docs/stil-guide.md`).
+- **Zielgruppe:** modern und intuitiv für jede Altersklasse; an Roblox-Hits orientiert, aber mit eigenem Wiedererkennungswert in UI **und** Welt (Raute/Kronjuwel, Thronkristalle, Königreichs-Banner, Rauten-Brosche an Helden, Holo-Saum für ★5).
+- **Kartendarstellung: Schwebende Thronlande.** Jedes Level ist eine Insel über einem Wolkenmeer, Unterseite mit Erd- und Steinschicht und Thronkristallen, Wasserfälle stürzen über die Kante. Der Canyon-Rahmen aus dem Referenzvideo ist verworfen; das Video gibt nur noch Helligkeit, Sättigung und Requisitendichte vor. Die bisherigen Klippen/Wasserfälle aus C7 müssen dafür umgebaut werden (eigener Plan).
+
 ## Offene Punkte (vor der jeweiligen Etappe klären)
+- Endlosmodus: Wie stark wird jeder Zyklus (Gegnerlevel, Elite-Anteil, Aufstiegsklassen bei Gegnern)? Teamgröße über 6? Endet der Lauf nur durch Niederlage/Aufgeben? Punktzahl und Bestenliste je Zyklus?
+- Relikte und Segen: Was genau ist ein Relikt (passiv für den ganzen Lauf?) und was ein Segen (Wahl 1 aus 3, z. B. nach Bossen?), wie viele, Quelle, Seltenheiten.
+- Aufstieg: Wann und wie (Level, Item, Lager)? Wechselt die Waffe/das Modell?
 - Regeln für Matsch und Gift (Bewegungskosten? Schaden pro Runde? Dauer?), für Lava (unpassierbar? Schaden daneben?) und Hindernisse im Grasland.
 - Konkrete Bosse und Minibosse je Gebiet (Namen, Fähigkeiten).
 - Zahlen: Teilheilung in %, Preise (Wiederbeleben, Händler, Notfall-Beschwörung, Rückblende), Belohnungskurve, Punktzahl-Formel, Weiterspielen nach Level 20.

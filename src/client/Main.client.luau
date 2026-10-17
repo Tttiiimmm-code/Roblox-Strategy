@@ -18,6 +18,7 @@ local RunConfig = require(Shared:WaitForChild("RunConfig"))
 local Atmosphere = require(script.Parent:WaitForChild("Atmosphere"))
 Atmosphere.set("hall") -- sofort, nicht erst wenn der erste Spielstand vom Server kommt
 local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
+local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local UI = require(script.Parent:WaitForChild("UI"))
 local MenuUI = require(script.Parent:WaitForChild("MenuUI"))
 local CameraController = require(script.Parent:WaitForChild("CameraController"))
@@ -160,7 +161,8 @@ end
 local function requestRunLevel(index, resume)
 	local run = profile and profile.run
 	local option = run and run.options[index]
-	if not option then return end
+	if not option or run.phase ~= "choice" then return end
+	if option.kind == "camp" then send({ type = "ChooseLevel", index = index }); return end
 	local level = { seed = option.seed, depth = run.depth, region = run.region, themeId = option.themeId }
 	if startLoading(nil, level) then
 		send(resume and { type = "ResumeLevel" } or { type = "ChooseLevel", index = index })
@@ -874,12 +876,13 @@ local function floatText(unitId, text, color, size)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBlack
+	label.Font = UIKit.THEME.display
+	label.TextSize = 44
 	label.TextScaled = true
 	label.TextColor3 = color
-	label.TextStrokeTransparency = 0
 	label.Text = text
 	label.Parent = bb
+	UIKit.outline(label)
 	local scale = Instance.new("UIScale")
 	scale.Scale = 1.6
 	scale.Parent = label
@@ -889,7 +892,7 @@ local function floatText(unitId, text, color, size)
 	local info = TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	TweenService:Create(bb, info, { StudsOffsetWorldSpace = Vector3.new(0, top + 5, 0) }):Play()
 	TweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.6), {
-		TextTransparency = 1, TextStrokeTransparency = 1,
+		TextTransparency = 1,
 	}):Play()
 	Debris:AddItem(bb, 1.2)
 end
@@ -911,10 +914,43 @@ local function impactHaptic(critical, speed)
 	end)
 end
 
+local reinforcementFx = Instance.new("Folder")
+reinforcementFx.Name = "Verstärkung"
+reinforcementFx.Parent = fxFolder
+local reinforcementKey
+local function showReinforcementMarks()
+	local cells = isMine() and not state.result and (state.reinforcementMarks or {}) or {}
+	local keys = {}
+	for _, cell in ipairs(cells) do table.insert(keys, Grid.key(cell.x, cell.y)) end
+	local key = table.concat(keys, ";")
+	if key == reinforcementKey then return end
+	reinforcementKey = key
+	reinforcementFx:ClearAllChildren()
+	for _, cell in ipairs(cells) do
+		local marker = Instance.new("Part")
+		marker.Name = "Ankunft"
+		marker.Anchored, marker.CanCollide, marker.CanTouch, marker.CanQuery = true, false, false, false
+		marker.Material = Enum.Material.Neon
+		marker.Color, marker.Transparency = Color3.fromRGB(255, 180, 40), 0.3
+		marker.Size = Vector3.new(Config.TILE_SIZE * 0.8, 0.12, Config.TILE_SIZE * 0.8)
+		marker.Position = Grid.toWorld(cell.x, cell.y) + Vector3.new(0, 0.2, 0)
+		marker.Parent = reinforcementFx
+		local billboard = Instance.new("BillboardGui")
+		billboard.Size, billboard.StudsOffset, billboard.AlwaysOnTop = UDim2.fromOffset(100, 48), Vector3.new(0, 2, 0), true
+		billboard.Parent = marker
+		local text = Instance.new("TextLabel")
+		text.Size, text.BackgroundTransparency = UDim2.fromScale(1, 1), 1
+		text.Text, text.TextSize, text.TextColor3, text.TextStrokeTransparency = "⚠", 32, marker.Color, 0.2
+		text.Parent = billboard
+	end
+end
+
 local cameraEvent = 0
 BattleEvent.OnClientEvent:Connect(function(payload)
 	if not isMine() then return end
-	if payload.enemyMove then
+	if payload.ability then
+		UI.toast(payload.ability.text, 4)
+	elseif payload.enemyMove then
 		cameraEvent += 1
 		local move = payload.enemyMove
 		CameraController.focusOn(Grid.toWorld(move.x, move.y), Config.FEEL.battleZoom, Config.FEEL.cameraFocusTime / (state.speed or 1))
@@ -1019,7 +1055,6 @@ local function applyState(newState)
 	end
 	local previous = state
 	state = newState
-	TutorialGuide.update(isMine() and state or nil)
 	local changedBattle = state.mode == "Battle" and (not previous or previous.mode ~= "Battle"
 		or previous.stageId ~= state.stageId
 		or (state.tutorial and (not previous.tutorial or previous.tutorial.id ~= state.tutorial.id))
@@ -1041,7 +1076,8 @@ local function applyState(newState)
 		if state.tutorial then dangerOn = false end
 		local T = Config.TILE_SIZE
 		local size = Vector3.new(Grid.width() * T, 0, Grid.height() * T)
-		CameraController.setBounds(size / 2, size)
+		local startFocus = state.run and Vector3.new(size.X / 2, 0, (Grid.height() - 1) * T)
+		CameraController.setBounds(size / 2, size, startFocus)
 	end
 	if state.phase == "Prep" then
 		UI.resetPhaseBanner()
@@ -1050,6 +1086,9 @@ local function applyState(newState)
 		end
 	end
 
+	Grid.setHeights(state.tileHeights)
+	showReinforcementMarks()
+	TutorialGuide.update(isMine() and state or nil)
 	UnitAnimator.setSpeed(state.speed or 1)
 	if previous and previous.phase == "Enemy" and state.phase ~= "Enemy" then
 		cameraEvent += 1
@@ -1146,6 +1185,9 @@ MenuUI.init(root, {
 	onResumeLevel = function()
 		if profile and profile.run then requestRunLevel(profile.run.current, true) end
 	end,
+	onCampSwap = function(slot, heroId, outgoing) send({ type = "CampSwap", slot = slot, heroId = heroId, outgoing = outgoing }) end,
+	onCampRevive = function(heroId, currency) send({ type = "CampRevive", heroId = heroId, currency = currency }) end,
+	onLeaveCamp = function() send({ type = "LeaveCamp" }) end,
 	onAbandonRun = function() send({ type = "AbandonRun" }) end,
 	onRecruit = function(bannerId, count)
 		send({ type = "Recruit", bannerId = bannerId, count = count })

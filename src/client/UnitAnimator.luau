@@ -8,6 +8,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local UnitData = require(Shared:WaitForChild("UnitData"))
 local UnitShadow = require(Shared:WaitForChild("UnitShadow"))
+local ForestOutlines = require(script.Parent.ForestOutlines)
 
 local Animator = {}
 
@@ -19,6 +20,7 @@ local busy = setmetatable({}, { __mode = "k" }) -- Modelle in einer Kampfanimati
 local life = setmetatable({}, { __mode = "k" })
 local random = Random.new()
 local selected, selectedAt, selectionRing
+local outlineAt = 0
 
 -- Alle Zeiten laufen über diese Helfer, damit das Tempo (1×/2×) überall wirkt
 local speed = 1
@@ -401,6 +403,7 @@ end
 function Animator.playDeath(model, options)
 	if not model or not model.PrimaryPart or dying[model] then return end
 	dying[model] = true
+	ForestOutlines.remove(model)
 	local previous = context()
 	local ctx, cancel = newContext(options or {})
 	contexts[coroutine.running()] = ctx
@@ -549,6 +552,10 @@ local function idle(dt)
 		Animator.select(nil)
 	end
 	local models = unitsFolder:GetChildren()
+	if t >= outlineAt then
+		outlineAt = t + Config.FOREST_OUTLINES.updateInterval
+		ForestOutlines.update(models, workspace.CurrentCamera.CFrame.LookVector, dying, workspace.CurrentCamera.CameraType == Enum.CameraType.Scriptable)
+	end
 	local hall = workspace:FindFirstChild("Hub")
 	if hall then
 		for _, model in hall:GetChildren() do

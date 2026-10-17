@@ -75,6 +75,26 @@ Negativ: *realistic, photo, noisy texture, soft gradient shading, outline, text,
 
 Die Auswahl hängt deterministisch von Karteninhalt, Gebiet und Feldposition ab. Ein unverändertes Brett mit denselben Vorlagen erhält dieselben Varianten, Drehungen und Größen. Anordnung größerer Gebäude und Bausteine ist **Etappe B**.
 
+## Thronlande D2: zwölf eigene Requisiten in einem Import
+
+Das aufbereitete Paket liegt lokal unter `assets/raw/d2/thronlande_pack.fbx`. Es enthält zwölf getrennte Objekte mit eingebetteten 512×512-Texturen; die Rohdateien sind nicht im Git. Ein weiterer Download oder eine KI-Generierung ist nicht nötig.
+
+1. Das Spiel in **Roblox Studio** öffnen und Play/Run stoppen (Edit-Modus).
+2. Über **3D importieren** die Datei `assets/raw/d2/thronlande_pack.fbx` auswählen. Im Importdialog alle zwölf Objekte und ihre Texturen übernehmen. Objektnamen beibehalten und die Meshes nicht zu einem einzigen Mesh zusammenführen. Importieren.
+3. Im **Explorer** das gemeinsame importierte **Model im Workspace** auswählen. Darin müssen zwölf MeshParts liegen; etwa `rim_banner_1`, `deco_grass_2`, `deco_flower_4`, `archbridge_2` und `rock_50`. Farben und aufrechte Haltung ansehen.
+4. **Befehlsleiste** öffnen. Die Datei `scripts/studio/thronlande-import.luau` in einem Texteditor öffnen, ihren **gesamten Inhalt** kopieren, in die Befehlsleiste einfügen und Enter drücken. Das Skript arbeitet mit dem ausgewählten Import-Model; es lädt keine Store-Assets.
+5. Im Output muss **„[D2-Import] Zwölf Vorlagen fertig“** erscheinen. Der neu ausgewählte **Ordner `Workspace.thronlande_pack`** enthält zwölf Models, jeweils mit Pivot unten Mitte und verankert, ohne Kollision/Query/Touch. Bei einer Fehlermeldung nicht speichern; das ursprüngliche Import-Model bleibt unverändert erhalten.
+6. Genau diesen **Ordner** im Explorer rechtsklicken → **Save to File…** → im Projekt als **`assets/environment/thronlande_pack.rbxm`** speichern. Nicht das ursprüngliche Import-Model und nicht die einzelnen MeshParts speichern.
+7. Erst nach erfolgreichem Speichern das ursprüngliche Import-Model und den Vorschauordner aus dem Workspace entfernen; Studio im Edit-Modus lassen. Den abgeschlossenen Import an Claude melden. Kategorien, bevorzugte Varianten und Inselrand-Platzierung werden erst im anschließenden Planschritt eingebunden.
+
+Zum erneuten Erzeugen des lokalen FBX-Pakets nach der Einzelaufbereitung (Blender, nacheinander ausführen):
+
+```powershell
+& 'C:/Program Files/Blender Foundation/Blender 5.2/blender.exe' -t 1 -b --factory-startup --python-exit-code 1 --python scripts/cleanup/thronlande_pack.py -- --root assets/raw/d2
+```
+
+Den Blender-Pfad an die installierte Version anpassen. Blender-Läufe einzeln ausführen; bei knappen Speicherressourcen lässt sich die Einzelaufbereitung mit `scripts/cleanup.ps1 -Threads 1` begrenzen (ohne diese Option bleibt die automatische Threadwahl erhalten). Das Skript prüft beim Paket-Re-Import alle zwölf Namen, Dreieckslimits (Blumen: 800), Größen, eingebettete Texturen, matte Materialien und Pivots. Bericht: `assets/raw/d2/thronlande_pack_bericht.json`. Der Studio-Import und die spätere Darstellung müssen noch vom Nutzer geprüft werden.
+
 ## Eigene Boden-Texturen einbinden
 
 Der Boden ist zunächst mit gedämpften Farben und kleinen prozeduralen Flecken versehen. Du kannst die Oberseite jeder Geländeart durch ein eigenes Bild ersetzen und unabhängig davon ein Bild für die Seiten eintragen. Dafür brauchst du kein 3D-Modell und kein Blender.

@@ -96,6 +96,7 @@ Verbindliche Regeln (Proportionen 1 : 7, Cel-Shading 2-Ton, Gesicht wie Leon, 1 
 | kai | Kavalier ★2 | Stahlgrau / Hellblau | Knappe (einfache Leute), dunkelbraunes Haar, schlichter stahlgrauer Waffenrock, einfache Kettenhaube, wenig Metall |
 | finn | Kämpfer ★1 | Sandbeige / Hellgrün | Bauernjunge, orange Stachelhaare, hellgrünes Bandana, beiges Hemd, geflickte Hose, schlicht |
 | ida | Bogenschützin ★1 | Altrosa / Braun | Dorf-Jägerin, blonder Pferdeschwanz, altrosa Tunika, braunes Stirnband, Lederkleidung, kleiner Köcher |
+| brigand_captain | Banditenhauptmann ★3 (Miniboss, Brigand) | vom Nutzer festzulegen | **Neue Figur, Platzhalter** – Grasland-Level 3; Name/Design vom Nutzer, derzeit Darstellung über vorhandenes Brigand-Modell bzw. Klassen-Chibi; eigener Figurenimport folgt mit dem Entwurf |
 | Brigand | Bandit | Dunkelrot / Braun | gezackt, geflickt, Fell-Kragen, dunkelrotes Bandana, Narben |
 | Soldier | Soldat (Graf) | Stahlgrau / Rot | Eisenhut, graue Rüstung mit rotem Waffenrock, ordentlicher als Banditen |
 | EnemyArcher | Bandit | Dunkelrot / Ocker | rote Kapuze, Lederkleidung, ausgefranste Säume |

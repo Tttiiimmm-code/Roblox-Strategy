@@ -36,21 +36,23 @@ end
 local function buildSide(parent, side, x, color)
 	local unit, forecast = side.unit, side.forecast
 	local panel = coloredPanel(parent, UDim2.new(x, 4, 1, -174), UDim2.new(0.5, -8, 0, 166), color)
-	label({ Text = unit.name, Font = THEME.title, TextSize = 32, Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -36, 0, 36), TextXAlignment = Enum.TextXAlignment.Left }, panel)
+	UIKit.chromeTitle({ Text = unit.name, TextSize = 32, Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -36, 0, 36), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local weapon = UnitData.Weapons[unit.weapon]
 	label({ Text = weapon and weapon.name or unit.weapon, TextSize = 20, TextColor3 = THEME.dim, Position = UDim2.fromOffset(18, 45), Size = UDim2.new(1, -36, 0, 26), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local stats = forecast and forecast.count ~= 0 and ("HIT %d    DMG %d    CRT %d"):format(forecast.hit, forecast.dmg, forecast.crit) or "HIT --    DMG --    CRT --"
 	label({ Text = stats, Font = THEME.bold, TextSize = 23, Position = UDim2.fromOffset(18, 76), Size = UDim2.new(1, -36, 0, 30), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local hp = label({ Text = ("KP %d / %d"):format(unit.hp, unit.maxHp), Font = THEME.bold, TextSize = 22, Position = UDim2.fromOffset(18, 115), Size = UDim2.fromOffset(170, 30), TextXAlignment = Enum.TextXAlignment.Left }, panel)
 	local bar = make("Frame", { Position = UDim2.fromOffset(194, 118), Size = UDim2.new(1, -212, 0, 25), BackgroundColor3 = THEME.barBg, BorderSizePixel = 0, ClipsDescendants = true }, panel)
-	UIKit.stroke(bar, THEME.goldDark, 1)
+	UIKit.stroke(bar, THEME.ink, UIKit.METRICS.barBorder)
+	UIKit.corner(bar, UIKit.METRICS.smallRadius)
 	local fill = make("Frame", { Size = UDim2.fromScale(unit.hp / unit.maxHp, 1), BackgroundColor3 = UIKit.hpColor(unit.hp / unit.maxHp), BorderSizePixel = 0 }, bar)
+	UIKit.corner(fill, UIKit.METRICS.smallRadius)
 	-- Eine Trennlinie je KP; die Füllung läuft kontinuierlich darunter zurück.
 	for i = 1, unit.maxHp - 1 do
 		make("Frame", { Position = UDim2.fromScale(i / unit.maxHp, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = THEME.barBg, BackgroundTransparency = 0.3, BorderSizePixel = 0 }, bar)
 	end
 	local shield = coloredPanel(parent, UDim2.new(x, 18, 0, 18), UDim2.new(0.5, -36, 0, 54), color)
-	label({ Text = unit.name, Font = THEME.title, TextSize = 30, Size = UDim2.fromScale(1, 1) }, shield)
+	UIKit.chromeTitle({ Text = unit.name, TextSize = 30, Size = UDim2.fromScale(1, 1) }, shield)
 	return { unit = unit, model = side.model, hp = hp, fill = fill, x = x == 0 and 0.28 or 0.72 }
 end
 
@@ -165,8 +167,8 @@ function BattleScene.play(info)
 				SoundPlayer.play(not strike.hit and "miss" or strike.crit and "crit" or "hit", { varyPitch = true })
 				if info.onImpact then info.onImpact(strike) end
 				local text = not strike.hit and "Verfehlt" or strike.crit and ("KRITISCH! " .. strike.damage) or strike.damage == 0 and "Kein Schaden" or tostring(strike.damage)
-				local number = label({ Text = text, Font = THEME.bold, TextSize = strike.crit and 36 or 30, TextColor3 = strike.crit and THEME.warn or THEME.text, TextStrokeTransparency = 0.2, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(target.x, 0.3), Size = UDim2.fromOffset(360, 58), ZIndex = 4 }, root)
-				tween(number, Config.FEEL.battleSceneTextTime, { Position = UDim2.fromScale(target.x, 0.23), TextTransparency = 1, TextStrokeTransparency = 1 })
+				local number = label({ Text = text, Font = THEME.display, TextSize = strike.crit and 36 or 30, TextColor3 = strike.crit and THEME.warn or THEME.text, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(target.x, 0.3), Size = UDim2.fromOffset(360, 58), ZIndex = 4 }, root)
+				tween(number, Config.FEEL.battleSceneTextTime, { Position = UDim2.fromScale(target.x, 0.23), TextTransparency = 1 })
 				later(Config.FEEL.battleSceneTextTime, function() number:Destroy() end)
 				target.hp.Text = ("KP %d / %d"):format(strike.hpAfter, target.unit.maxHp)
 				tween(target.fill, Config.FEEL.battleSceneHpTime, { Size = UDim2.fromScale(strike.hpAfter / target.unit.maxHp, 1), BackgroundColor3 = UIKit.hpColor(strike.hpAfter / target.unit.maxHp) })

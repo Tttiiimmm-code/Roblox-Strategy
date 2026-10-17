@@ -1,5 +1,6 @@
 -- Gemeinsame UI-Bausteine im Fire-Emblem-Stil: Farben, Fenster, Buttons, Balken, Skalierung
 local TweenService = game:GetService("TweenService")
+local TextService = game:GetService("TextService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
@@ -12,37 +13,75 @@ local SoundPlayer = require(script.Parent:WaitForChild("SoundPlayer"))
 local UIKit = {}
 
 UIKit.THEME = {
-	top = Color3.fromRGB(42, 60, 118),
-	bottom = Color3.fromRGB(14, 20, 48),
-	gold = Color3.fromRGB(228, 192, 108),
-	goldDark = Color3.fromRGB(130, 102, 54),
-	text = Color3.fromRGB(246, 242, 230),
-	dim = Color3.fromRGB(170, 178, 204),
+	ink = Color3.fromRGB(20, 26, 51),
+	backdrop = Color3.fromRGB(11, 10, 38),
+	panelTop = Color3.fromRGB(59, 63, 209),
+	panelBottom = Color3.fromRGB(26, 22, 96),
+	panelInset = Color3.fromRGB(17, 14, 69),
+	panelLine = Color3.fromRGB(127, 134, 255),
+	chromeLight = Color3.fromRGB(244, 247, 255),
+	chromeMid = Color3.fromRGB(185, 194, 214),
+	chromeDark = Color3.fromRGB(95, 104, 132),
+	holoCyan = Color3.fromRGB(62, 240, 255),
+	holoLilac = Color3.fromRGB(181, 140, 255),
+	holoPink = Color3.fromRGB(255, 95, 210),
+	holoLime = Color3.fromRGB(198, 255, 74),
+	holoShade = Color3.fromRGB(122, 79, 214),
+	holoGold = Color3.fromRGB(255, 243, 176),
+	gold = Color3.fromRGB(255, 201, 60),
+	goldShade = Color3.fromRGB(201, 138, 18),
+	goldLight = Color3.fromRGB(255, 246, 208),
+	gem = Color3.fromRGB(110, 232, 255),
+	starEmpty = Color3.fromRGB(74, 80, 104),
+	text = Color3.new(1, 1, 1),
+	dim = Color3.fromRGB(210, 217, 245),
 	player = Color3.fromRGB(120, 176, 255),
 	enemy = Color3.fromRGB(255, 112, 112),
 	good = Color3.fromRGB(120, 232, 140),
 	bad = Color3.fromRGB(255, 120, 100),
 	warn = Color3.fromRGB(255, 180, 80),
-	barBg = Color3.fromRGB(8, 10, 24),
-	title = Enum.Font.Fondamento,
+	title = Enum.Font.FredokaOne,
 	body = Enum.Font.GothamMedium,
-	bold = Enum.Font.GothamBold,
+	bold = Enum.Font.FredokaOne,
+	display = Enum.Font.LuckiestGuy,
+	tech = Enum.Font.Michroma,
 }
-UIKit.DIM_HEX = "#aab2cc"
+UIKit.THEME.bannerTop = UIKit.THEME.holoShade
+UIKit.THEME.bannerBottom = UIKit.THEME.panelBottom
+UIKit.THEME.top = UIKit.THEME.panelTop
+UIKit.THEME.bottom = UIKit.THEME.panelBottom
+UIKit.THEME.barBg = UIKit.THEME.panelInset
+UIKit.THEME.goldDark = UIKit.THEME.goldShade
+UIKit.DIM_HEX = "#d2d9f5"
 UIKit.GOOD_HEX = "#78e88c"
 UIKit.BAD_HEX = "#ff7864"
-UIKit.GOLD_HEX = "#e4c06c"
+UIKit.GOLD_HEX = "#ffc93c"
 
 local THEME = UIKit.THEME
 local lastHoverSound = -math.huge
 
+UIKit.METRICS = {
+	smallRadius = 6, buttonRadius = 12, panelRadius = 16, bannerRadius = 24,
+	buttonHeight = 48, primaryHeight = 64, buttonEdge = 5, pressedEdge = 1,
+	panelBorder = 3, barBorder = 2, cardBorder = 4, selectedCardBorder = 6, shadowOffset = 8, forecastTop = 120,
+}
+local METRICS = UIKit.METRICS
+
+local function chromeSequence()
+	return ColorSequence.new({
+		ColorSequenceKeypoint.new(0, THEME.chromeLight), ColorSequenceKeypoint.new(0.49, THEME.chromeMid),
+		ColorSequenceKeypoint.new(0.5, THEME.chromeDark), ColorSequenceKeypoint.new(1, THEME.chromeLight),
+	})
+end
+
 UIKit.BUTTON_STYLES = {
-	default = { Color3.fromRGB(50, 68, 128), Color3.fromRGB(76, 100, 172) },
-	primary = { Color3.fromRGB(176, 132, 40), Color3.fromRGB(214, 166, 60) },
-	danger = { Color3.fromRGB(150, 48, 48), Color3.fromRGB(198, 70, 62) },
-	muted = { Color3.fromRGB(56, 58, 76), Color3.fromRGB(82, 86, 108) },
-	active = { Color3.fromRGB(60, 130, 90), Color3.fromRGB(80, 166, 116) },
-	disabled = { Color3.fromRGB(38, 40, 52), Color3.fromRGB(38, 40, 52) },
+	default = { Color3.fromRGB(74, 141, 255), Color3.fromRGB(42, 95, 196) },
+	primary = { THEME.gold, THEME.goldShade },
+	danger = { Color3.fromRGB(255, 77, 77), Color3.fromRGB(194, 45, 54) },
+	muted = { Color3.fromRGB(106, 113, 201), Color3.fromRGB(69, 75, 154) },
+	active = { Color3.fromRGB(63, 209, 90), Color3.fromRGB(35, 150, 58) },
+	disabled = { Color3.fromRGB(138, 144, 166), Color3.fromRGB(138, 144, 166) },
+	holo = { THEME.holoCyan, THEME.holoShade },
 }
 
 function UIKit.make(className, props, parent)
@@ -65,6 +104,31 @@ function UIKit.stroke(parent, color, thickness)
 	}, parent)
 end
 
+
+-- Der äußere Rand einer Scrollfläche liegt außerhalb ihrer abgeschnittenen Kinder.
+function UIKit.bannerBorder(surface)
+	local chrome = UIKit.stroke(surface, THEME.text, METRICS.panelBorder)
+	make("UIGradient", { Color = chromeSequence(), Rotation = 90 }, chrome)
+	local outer = make("Frame", {
+		Name = "BannerOuterBorder", BackgroundTransparency = 1, BorderSizePixel = 0,
+	}, surface.Parent)
+	UIKit.corner(outer, METRICS.bannerRadius + METRICS.panelBorder)
+	UIKit.stroke(outer, THEME.ink, METRICS.panelBorder)
+	local function update()
+		outer.AnchorPoint = surface.AnchorPoint
+		outer.Position = surface.Position + UDim2.fromOffset(
+			METRICS.panelBorder * (2 * surface.AnchorPoint.X - 1), METRICS.panelBorder * (2 * surface.AnchorPoint.Y - 1))
+		outer.Size = surface.Size + UDim2.fromOffset(METRICS.panelBorder * 2, METRICS.panelBorder * 2)
+		outer.ZIndex, outer.Visible = surface.ZIndex, surface.Visible
+	end
+	for _, property in { "Position", "Size", "AnchorPoint", "ZIndex", "Visible" } do
+		surface:GetPropertyChangedSignal(property):Connect(update)
+	end
+	surface.Destroying:Connect(function() outer:Destroy() end)
+	update()
+	return chrome
+end
+
 function UIKit.padding(parent, px)
 	local background = parent:FindFirstChild("Background")
 	if background then
@@ -76,6 +140,59 @@ function UIKit.padding(parent, px)
 		PaddingTop = UDim.new(0, px), PaddingBottom = UDim.new(0, px),
 		PaddingLeft = UDim.new(0, px), PaddingRight = UDim.new(0, px),
 	}, parent)
+end
+
+-- TextBounds enthält die gerenderte Größe einschließlich TextScaled/UIScale.
+local function displayedTextSize(text)
+	local bounds = text.TextBounds
+	if bounds.Y <= 0 then return text.TextSize end
+	local content = text.ContentText
+	local _, breaks = content:gsub("\n", "")
+	if not text.TextWrapped then return bounds.Y / (breaks + 1) / text.LineHeight end
+	-- Umgebrochene Konturtexte sind selten; logarithmisch statt pro Frame messen.
+	local low, high = 1, math.ceil(bounds.Y)
+	while low < high do
+		local candidate = math.ceil((low + high) / 2)
+		local measured = TextService:GetTextSize(content, candidate, text.Font, Vector2.new(bounds.X + 1, 100000))
+		if measured.Y * text.LineHeight <= bounds.Y + 1 then low = candidate else high = candidate - 1 end
+	end
+	return low
+end
+
+-- Konturen folgen Layoutänderungen; Transparenzänderungen benötigen keine Schriftmessung.
+function UIKit.outline(text, enabled, thickness)
+	local outline = make("UIStroke", {
+		Name = "TextOutline", Color = THEME.ink, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+	}, text)
+	local function updateAppearance()
+		outline.Enabled = enabled ~= false and (text.Font == THEME.bold or text.Font == THEME.display)
+		outline.Transparency = text.TextTransparency
+	end
+	local function updateSize()
+		updateAppearance()
+		if not outline.Enabled then return end
+		local size = displayedTextSize(text)
+		local limit = size < 12 and 1 or size <= 16 and 1.5 or size < 32 and 2 or 3
+		outline.Thickness = math.min(thickness or limit, limit)
+		updateAppearance()
+	end
+	local pending = false
+	local function scheduleSize()
+		if pending then return end
+		pending = true
+		task.defer(function()
+			pending = false
+			if text.Parent then updateSize() end
+		end)
+	end
+	text:GetPropertyChangedSignal("Font"):Connect(updateSize)
+	text:GetPropertyChangedSignal("TextSize"):Connect(updateSize)
+	text:GetPropertyChangedSignal("TextTransparency"):Connect(updateAppearance)
+	for _, property in { "TextBounds", "AbsoluteSize", "TextScaled", "TextWrapped", "ContentText", "LineHeight" } do
+		text:GetPropertyChangedSignal(property):Connect(scheduleSize)
+	end
+	updateSize()
+	return outline
 end
 
 -- Feste Textfelder passen sich an; nachträgliche TextSize-Werte bleiben die Obergrenze.
@@ -103,14 +220,50 @@ end
 function UIKit.label(props, parent)
 	local wrap = props.wrap == true
 	props.wrap = nil
+	local outline = props.Outline
+	props.Outline = nil
+	local outlineThickness = props.OutlineThickness
+	props.OutlineThickness = nil
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or THEME.text
 	props.Font = props.Font or THEME.body
 	props.TextSize = props.TextSize or 16
 	props.RichText = true
 	local text = make("TextLabel", props, parent)
+	UIKit.outline(text, outline, outlineThickness)
 	if props.AutomaticSize == nil and props.TextScaled ~= false then UIKit.fitText(text, nil, wrap) end
 	return text
+end
+
+function UIKit.setChromeTitleGold(text, gold)
+	text:SetAttribute("Gold", gold == true)
+	text.TextColor3 = THEME.text
+	text.ChromeGradient.Color = gold and ColorSequence.new({
+		ColorSequenceKeypoint.new(0, THEME.goldLight), ColorSequenceKeypoint.new(0.51, THEME.gold),
+		ColorSequenceKeypoint.new(0.52, THEME.goldShade), ColorSequenceKeypoint.new(0.75, THEME.gold),
+		ColorSequenceKeypoint.new(1, THEME.goldLight),
+	}) or chromeSequence()
+end
+
+function UIKit.chromeTitle(props, parent)
+	local gold = props.Gold
+	props.Gold = nil
+	props.Font = THEME.display
+	props.TextColor3 = THEME.text
+	props.OutlineThickness = 3
+	props.TextStrokeTransparency = 1
+	local text = UIKit.label(props, parent)
+	make("UIGradient", { Name = "ChromeGradient", Rotation = 90 }, text)
+	UIKit.setChromeTitleGold(text, gold)
+	return text
+end
+
+function UIKit.tag(props, parent)
+	props.Font = THEME.tech
+	props.TextColor3 = THEME.holoCyan
+	props.TextSize = props.TextSize or 14
+	props.Text = string.upper(props.Text or "")
+	return UIKit.label(props, parent)
 end
 
 -- Fließtext behält seine Schriftgröße und erweitert den Kasten nach unten.
@@ -134,45 +287,215 @@ function UIKit.textList(props, parent, gap)
 	return list
 end
 
--- Blaues Fenster mit Verlauf und Goldrand
+-- Dekoration bleibt am Hintergrund, damit padding nur den Inhalt verschiebt.
 function UIKit.panel(props, parent)
 	local animated = props.Animated
 	props.Animated = nil
-	local transparency = props.BackgroundTransparency or 0.04
+	local jewel = props.Jewel == true
+	props.Jewel = nil
+	local transparency = props.BackgroundTransparency or 0
 	props.BackgroundTransparency = 1
 	props.BorderSizePixel = 0
 	local f = make(animated and "CanvasGroup" or "Frame", props, parent)
+	UIKit.corner(f, METRICS.panelRadius)
+	local chrome = UIKit.stroke(f, THEME.text, METRICS.panelBorder)
+	make("UIGradient", { Color = chromeSequence(), Rotation = 90 }, chrome)
 	local background = make("Frame", {
 		Name = "Background", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = transparency, BorderSizePixel = 0, ZIndex = 0,
+		BackgroundTransparency = transparency, BorderSizePixel = 0, ZIndex = f.ZIndex,
 	}, f)
-	UIKit.corner(background, 8)
+	UIKit.corner(background, METRICS.panelRadius)
 	make("UIGradient", { Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90 }, background)
-	UIKit.corner(f, 8)
-	UIKit.stroke(f, THEME.gold, 2)
+	local outer = make("Frame", {
+		Name = "OuterBorder", Position = UDim2.fromOffset(-3, -3), Size = UDim2.new(1, 6, 1, 6),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = f.ZIndex,
+	}, background)
+	UIKit.corner(outer, METRICS.panelRadius + METRICS.panelBorder)
+	UIKit.stroke(outer, THEME.ink, METRICS.panelBorder)
+	if not animated and (props.AutomaticSize == nil or props.AutomaticSize == Enum.AutomaticSize.None) then
+		local shadow = make("Frame", {
+			Name = "Shadow", Position = UDim2.fromOffset(0, METRICS.shadowOffset),
+			Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.ink,
+			BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = f.ZIndex,
+		}, background)
+		UIKit.corner(shadow, METRICS.panelRadius)
+		-- Gleicher ZIndex: zuerst zeichnen, dann Glas und Inhalt.
+		shadow.Parent = nil
+		background.Parent = nil
+		shadow.Parent = f
+		background.Parent = f
+		local function alignShadow()
+			local fixed = f.AutomaticSize == Enum.AutomaticSize.None
+			shadow.Visible = fixed
+			shadow.Position = fixed and background.Position + UDim2.fromOffset(0, METRICS.shadowOffset) or UDim2.new()
+			shadow.Size = fixed and background.Size or UDim2.new()
+		end
+		background:GetPropertyChangedSignal("Position"):Connect(alignShadow)
+		background:GetPropertyChangedSignal("Size"):Connect(alignShadow)
+		f:GetPropertyChangedSignal("AutomaticSize"):Connect(alignShadow)
+	end
+	local reflection = make("Frame", {
+		Name = "Glass", Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.text,
+		BorderSizePixel = 0, ZIndex = f.ZIndex,
+	}, background)
+	UIKit.corner(reflection, METRICS.panelRadius)
+	make("UIGradient", {
+		Rotation = 90, Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.86), NumberSequenceKeypoint.new(0.33, 1), NumberSequenceKeypoint.new(1, 1),
+		}),
+	}, reflection)
+	make("Frame", {
+		Name = "InnerLight", Position = UDim2.fromOffset(16, 3), Size = UDim2.new(1, -32, 0, 1),
+		BackgroundColor3 = THEME.panelLine, BorderSizePixel = 0, ZIndex = f.ZIndex,
+	}, background)
+	if jewel then
+		local gem = make("Frame", {
+			Name = "CrownJewel", AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0, animated and 10 or 0),
+			Size = UDim2.fromOffset(animated and 14 or 16, animated and 14 or 16),
+			Rotation = 45, BackgroundColor3 = THEME.text, BorderSizePixel = 0,
+			ZIndex = f.ZIndex,
+		}, background)
+		UIKit.corner(gem, 3)
+		UIKit.stroke(gem, THEME.ink, 3)
+		local face = make("Frame", {
+			Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.text, BorderSizePixel = 0, ZIndex = gem.ZIndex,
+		}, gem)
+		UIKit.corner(face, 3)
+		UIKit.stroke(face, THEME.chromeLight, 1)
+		make("UIGradient", { Color = ColorSequence.new(THEME.gem, THEME.holoLilac), Rotation = 90 }, face)
+		local gleam = make("Frame", {
+			Position = UDim2.fromOffset(3, 3), Size = UDim2.fromOffset(5, 3),
+			BackgroundColor3 = THEME.text, BorderSizePixel = 0, ZIndex = gem.ZIndex,
+		}, face)
+		UIKit.corner(gleam, 2)
+	end
+	-- AutomaticSize darf keine Rückkopplung mit gepolsterter, überstehender Deko bilden.
+	local automaticGradient = make("UIGradient", {
+		Name = "AutomaticGradient", Color = ColorSequence.new(THEME.top, THEME.bottom), Rotation = 90,
+	}, f)
+	local function updateAutomaticSurface()
+		local automatic = f.AutomaticSize ~= Enum.AutomaticSize.None
+		background.Visible = not automatic
+		f.BackgroundColor3 = THEME.text
+		f.BackgroundTransparency = automatic and transparency or 1
+		automaticGradient.Enabled = automatic
+	end
+	f:GetPropertyChangedSignal("AutomaticSize"):Connect(updateAutomaticSurface)
+	updateAutomaticSurface()
+	-- Eigene Deko teilt die Fensterebene; Inhalt bekommt stets eine Ebene darüber.
+	local decorations = { [background] = true }
+	for _, object in background:GetDescendants() do
+		if object:IsA("GuiObject") then decorations[object] = true end
+	end
+	local shadow = f:FindFirstChild("Shadow")
+	if shadow then decorations[shadow] = true end
+	local contentConnections = {}
+	local function raiseContent(object)
+		local minimum = f.ZIndex + (object:IsA("TextButton") and object.Text ~= "" and 2 or 1)
+		if object.ZIndex < minimum then object.ZIndex = minimum end
+	end
+	local function watchContent(object)
+		if not object:IsA("GuiObject") or decorations[object] or contentConnections[object] then return end
+		raiseContent(object)
+		contentConnections[object] = object:GetPropertyChangedSignal("ZIndex"):Connect(function()
+			raiseContent(object)
+		end)
+	end
+	local function updateLayers()
+		for object in decorations do object.ZIndex = f.ZIndex end
+		for object in contentConnections do raiseContent(object) end
+	end
+	f.DescendantAdded:Connect(function(object)
+		watchContent(object)
+		for _, child in object:GetDescendants() do watchContent(child) end
+	end)
+	f.DescendantRemoving:Connect(function(object)
+		local connection = contentConnections[object]
+		if connection then connection:Disconnect(); contentConnections[object] = nil end
+	end)
+	f:GetPropertyChangedSignal("ZIndex"):Connect(updateLayers)
+	f.Destroying:Connect(function()
+		for _, connection in contentConnections do connection:Disconnect() end
+	end)
+	updateLayers()
 	return f
+end
+
+local function gloss(parent, z)
+	local cap = make("Frame", {
+		Name = "Gloss", Position = UDim2.fromScale(0.05, 0.02), Size = UDim2.fromScale(0.9, 0.48),
+		BackgroundColor3 = THEME.text, BorderSizePixel = 0, ZIndex = z or 0,
+	}, parent)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, cap)
+	make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1),
+	}) }, cap)
+	return cap
+end
+
+local buttonStates = setmetatable({}, { __mode = "k" })
+
+local function updateButton(b)
+	local state = buttonStates[b]
+	if not state then return end
+	local style = b:GetAttribute("Style")
+	local colors = UIKit.BUTTON_STYLES[style]
+	local disabled = style == "disabled"
+	if disabled then state.pressed = false end
+	local drop = state.pressed and METRICS.buttonEdge - METRICS.pressedEdge or 0
+	-- padding verschiebt nur den Text; die Flächen kompensieren dieselben Abstände.
+	state.padding.PaddingTop = UDim.new(0, drop * 2)
+	state.face.Position = UDim2.fromOffset(-6, -drop)
+	state.face.Size = UDim2.new(1, 12, 1, drop * 2)
+	state.edge.Position = UDim2.fromOffset(-6, METRICS.buttonEdge - drop * 2)
+	state.edge.Size = UDim2.new(1, 12, 1, drop * 2)
+	state.edge.Visible = not disabled
+	state.edge.BackgroundColor3 = colors[2]
+	state.face.BackgroundColor3 = style == "holo" and THEME.text or colors[1]
+	if state.hovered and not disabled and style ~= "holo" then
+		state.face.BackgroundColor3 = colors[1]:Lerp(THEME.text, 0.08)
+	end
+	state.gradient.Enabled = style == "holo"
+	state.gloss.Visible = not disabled
+	for _, decoration in { state.edge, state.face, state.gloss } do decoration.ZIndex = math.max(0, b.ZIndex - 1) end
 end
 
 function UIKit.setButtonStyle(b, style)
 	b:SetAttribute("Style", style)
 	b.BackgroundColor3 = UIKit.BUTTON_STYLES[style][1]
-	b.TextTransparency = style == "disabled" and 0.55 or 0
+	b.TextTransparency = style == "disabled" and 0.4 or 0
+	updateButton(b)
 end
 
 function UIKit.button(text, parent, style, order, wrap)
 	local b = make("TextButton", {
-		Text = text, Size = UDim2.new(1, 0, 0, 40), AutoButtonColor = false,
+		Text = text, Size = UDim2.new(1, 0, 0, METRICS.buttonHeight), AutoButtonColor = false,
 		TextColor3 = THEME.text, Font = THEME.bold, TextSize = 18,
-		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true,
+		BorderSizePixel = 0, LayoutOrder = order or 0, RichText = true, BackgroundTransparency = 1,
 	}, parent)
 	UIKit.fitText(b, nil, wrap)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
-	UIKit.corner(b, 6)
-	local s = UIKit.stroke(b, THEME.goldDark, 1.5)
+	local textPadding = make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, b)
+	UIKit.corner(b, METRICS.buttonRadius)
+	UIKit.outline(b)
+	local edge = make("Frame", { Name = "ButtonEdge", BorderSizePixel = 0, ZIndex = 0 }, b)
+	UIKit.corner(edge, METRICS.buttonRadius)
+	UIKit.stroke(edge, THEME.ink, 3)
+	local face = make("Frame", { Name = "ButtonFace", BorderSizePixel = 0, ZIndex = 0 }, b)
+	UIKit.corner(face, METRICS.buttonRadius)
+	UIKit.stroke(face, THEME.ink, 3)
+	local gradient = make("UIGradient", { Rotation = 15, Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, THEME.holoCyan), ColorSequenceKeypoint.new(0.33, THEME.holoLilac),
+		ColorSequenceKeypoint.new(0.67, THEME.holoPink), ColorSequenceKeypoint.new(1, THEME.gold),
+	}) }, face)
+	local state = { edge = edge, face = face, gradient = gradient, gloss = gloss(face), padding = textPadding, pressed = false, hovered = false }
+	buttonStates[b] = state
+	b:GetPropertyChangedSignal("ZIndex"):Connect(function() updateButton(b) end)
 	UIKit.setButtonStyle(b, style or "default")
 	local scale = make("UIScale", { Name = "ButtonScale" }, b)
 	local scaleTween
 	local hovered = false
+	local function hoverScale() return b:GetAttribute("HoverScale") or Config.FEEL.buttonHoverScale end
 	local function animateScale(value, duration, easing)
 		if scaleTween then scaleTween:Cancel() end
 		scaleTween = TweenService:Create(scale, TweenInfo.new(duration, easing or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = value })
@@ -180,12 +503,17 @@ function UIKit.button(text, parent, style, order, wrap)
 	end
 	b.InputBegan:Connect(function(input)
 		if b:GetAttribute("Style") ~= "disabled" and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+			state.pressed = true
+			updateButton(b)
 			animateScale(Config.FEEL.buttonPressScale, Config.FEEL.buttonPressTime)
 		end
 	end)
 	b.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			animateScale(hovered and Config.FEEL.buttonHoverScale or 1, Config.FEEL.buttonReleaseTime, Enum.EasingStyle.Back)
+			state.pressed = false
+			updateButton(b)
+			animateScale(hovered and hoverScale() or 1, Config.FEEL.buttonReleaseTime,
+				hoverScale() <= 1 and Enum.EasingStyle.Quad or Enum.EasingStyle.Back)
 		end
 	end)
 	b.Activated:Connect(function()
@@ -194,23 +522,21 @@ function UIKit.button(text, parent, style, order, wrap)
 	b.MouseEnter:Connect(function()
 		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" then
 			hovered = true
-			animateScale(Config.FEEL.buttonHoverScale, Config.FEEL.buttonReleaseTime)
+			state.hovered = true
+			updateButton(b)
+			animateScale(hoverScale(), Config.FEEL.buttonReleaseTime)
 		end
 		local now = os.clock()
 		if UserInputService.MouseEnabled and b:GetAttribute("Style") ~= "disabled" and now - lastHoverSound >= Config.FEEL.hoverSoundCooldown then
 			lastHoverSound = now
 			SoundPlayer.play("hover")
 		end
-		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
-		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[2] }):Play()
-		s.Color = THEME.gold
 	end)
 	b.MouseLeave:Connect(function()
 		hovered = false
+		state.hovered = false
+		updateButton(b)
 		animateScale(1, Config.FEEL.buttonReleaseTime)
-		local colors = UIKit.BUTTON_STYLES[b:GetAttribute("Style")]
-		TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = colors[1] }):Play()
-		s.Color = THEME.goldDark
 	end)
 	return b
 end
@@ -220,17 +546,15 @@ function UIKit.bar(parent, position, size, color)
 	local bg = make("Frame", {
 		Position = position, Size = size, BackgroundColor3 = THEME.barBg, BorderSizePixel = 0,
 	}, parent)
-	UIKit.corner(bg, 4)
-	UIKit.stroke(bg, THEME.goldDark, 1)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, bg)
+	UIKit.stroke(bg, THEME.ink, METRICS.barBorder)
 	local loss = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = THEME.bad, BorderSizePixel = 0 }, bg)
-	UIKit.corner(loss, 4)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, loss)
 	local fill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = color, BorderSizePixel = 0 }, bg)
-	UIKit.corner(fill, 4)
-	make("UIGradient", {
-		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)), Rotation = 90,
-	}, fill)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+	gloss(fill, fill.ZIndex)
 	local text = UIKit.label({
-		Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 13, ZIndex = 3, TextStrokeTransparency = 0.4,
+		Size = UDim2.fromScale(1, 1), Font = THEME.bold, TextSize = 13, ZIndex = 3,
 	}, bg)
 	return { bg = bg, fill = fill, loss = loss, text = text }
 end
@@ -363,8 +687,8 @@ end
 -- "★★★☆☆" in Seltenheitsfarbe
 function UIKit.rarityStars(rarity)
 	local r = UnitData.Rarities[rarity or 1]
-	return ("<font color='%s'>%s</font><font color='#4a5068'>%s</font>"):format(
-		r.hex, string.rep("★", rarity), string.rep("★", 5 - rarity))
+	return ("<font color='%s'>%s</font><font color='#%s'>%s</font>"):format(
+		r.hex, string.rep("★", rarity), THEME.starEmpty:ToHex(), string.rep("★", 5 - rarity))
 end
 
 -- 3D-Kopie einer Figur in einem ViewportFrame (Porträt)
@@ -449,31 +773,58 @@ function UIKit.heroCard(parent, heroId, props)
 		LayoutOrder = props.LayoutOrder or 0, BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
 		ZIndex = props.ZIndex or 1,
 	}, parent)
-	UIKit.corner(card, 8)
-	local stroke = UIKit.stroke(card, rarity.color, 3)
-	make("UIGradient", {
-		Color = ColorSequence.new(rarity.color:Lerp(Color3.new(0, 0, 0), 0.35), Color3.fromRGB(14, 18, 40)), Rotation = 90,
-	}, card)
+	UIKit.corner(card, METRICS.buttonRadius)
 	local z = (props.ZIndex or 1) + 1
+	local outer = make("Frame", {
+		Name = "CardBorder", Position = UDim2.fromOffset(-4, -4), Size = UDim2.new(1, 8, 1, 8),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = card.ZIndex,
+	}, card)
+	UIKit.corner(outer, METRICS.buttonRadius + METRICS.cardBorder)
+	UIKit.stroke(outer, THEME.ink, 3)
+	local stroke = UIKit.stroke(card, rarity.color, METRICS.cardBorder)
+	if def.rarity == 5 then
+		stroke.Color = THEME.text
+		local holo = make("UIGradient", { Rotation = 35, Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, rarity.color), ColorSequenceKeypoint.new(0.33, THEME.holoGold),
+			ColorSequenceKeypoint.new(0.67, THEME.holoPink), ColorSequenceKeypoint.new(1, THEME.holoCyan),
+		}) }, stroke)
+		-- Direkte Rahmenfarben der Aufstellungswahl bleiben kompatibel.
+		stroke:GetPropertyChangedSignal("Color"):Connect(function()
+			if stroke.Color == rarity.color then stroke.Color = THEME.text end
+			holo.Enabled = stroke.Color == THEME.text
+		end)
+		local halo = make("Frame", {
+			Name = "HoloGlow", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+			BorderSizePixel = 0, ZIndex = card.ZIndex,
+		}, outer)
+		UIKit.corner(halo, METRICS.buttonRadius + METRICS.cardBorder)
+		local glow = UIKit.stroke(halo, THEME.holoCyan, 8)
+		glow.Transparency = 0.88
+	end
+	local signature = def.chibi and def.chibi.outfit and def.chibi.outfit.primary or rarity.color
+	make("UIGradient", {
+		Color = ColorSequence.new(signature, THEME.panelBottom), Rotation = 90,
+	}, card)
 	local vp, cam = UIKit.viewport(card, { Size = UDim2.new(1, 0, 1, -58), ZIndex = z })
 	UIKit.heroPortrait(vp, cam, heroId, true)
 	local name = UIKit.label({
 		Position = UDim2.new(0, 0, 1, -58), Size = UDim2.new(1, 0, 0, 22), Font = THEME.title, TextSize = 20,
-		TextColor3 = rarity.color, Text = def.name, ZIndex = z,
+		TextColor3 = rarity.color, Text = def.name, ZIndex = z, OutlineThickness = 3,
 	}, card)
 	local sub = UIKit.label({
 		Position = UDim2.new(0, 0, 1, -36), Size = UDim2.new(1, 0, 0, 16), TextSize = 12, TextColor3 = THEME.dim,
 		Text = UnitData.Classes[def.class].name, ZIndex = z,
 	}, card)
 	local stars = UIKit.label({
-		Position = UDim2.new(0, 0, 1, -20), Size = UDim2.new(1, 0, 0, 16), TextSize = 14,
+		Position = UDim2.new(0, 0, 1, -20), Size = UDim2.new(1, 0, 0, 16), TextSize = 14, Font = THEME.bold,
 		Text = UIKit.rarityStars(def.rarity), ZIndex = z,
 	}, card)
 	local badge = UIKit.label({
 		Position = UDim2.fromOffset(6, 6), Size = UDim2.fromOffset(84, 20), Font = THEME.bold, TextSize = 12,
-		BackgroundTransparency = 0.15, BackgroundColor3 = Color3.fromRGB(30, 34, 54), Visible = false, ZIndex = z + 1,
+		BackgroundTransparency = 0, BackgroundColor3 = THEME.holoPink, Visible = false, ZIndex = z + 1,
 	}, card)
-	UIKit.corner(badge, 4)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, badge)
+	UIKit.stroke(badge, THEME.ink, 2)
 	return { card = card, stroke = stroke, badge = badge, name = name, sub = sub, stars = stars, rarity = rarity }
 end
 

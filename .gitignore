@@ -20,3 +20,9 @@ desktop.ini
 
 # Rohdaten der 3D-Pipeline (groß, nicht ins Repo)
 assets/raw/
+
+# Obsidian: persönliche Fensterzustände nicht committen
+.obsidian/workspace*.json
+.obsidian/cache
+.obsidian/plugins/
+.trash/

@@ -1,6 +1,8 @@
 -- Globale Einstellungen: Karte, Gelände, Farben, Timings
 local Config = {}
 
+Config.ICONS = { gold = "💰", gems = "💎" }
+
 Config.INPUT_DIAGNOSTICS = false -- Vorübergehend für Handy-/Mausfehler einschalten; Ausgabe im Client-Output.
 
 Config.CHARACTER_STYLE = "mesh" -- "chibi", "avatar" oder "mesh"; auf "mesh" umstellen, sobald R15-Modelle vorliegen.
@@ -13,6 +15,37 @@ Config.CHIBI = {
 	eyeSize = Vector3.new(0.38, 0.6, 0.1), eyeX = 0.48, eyeY = 3.6,
 	riderLift = 2.6, riderHipAngle = -35,
 }
+
+Config.CAMERA = { zoomMin = 30, zoomDefaultMin = 45, zoomDefaultMax = 120,
+	zoomDefaultScale = 0.85, overviewPadding = 1.08, tilt = 0.75,
+	fovMin = 60, fovMax = 75, aspectMin = 4 / 3, aspectMax = 21 / 9, focusHeightReserve = 12 }
+
+-- Die Brettdiagonale als Umkreis passt bei jeder Drehung in beide Bildachsen.
+function Config.overviewZoom(size, fov, aspect, includeIsland)
+	local c = Config.CAMERA
+	local vertical = math.rad(math.clamp(fov, c.fovMin, c.fovMax)) / 2
+	local horizontal = math.atan(math.tan(vertical) * aspect)
+	local rim = Config.ISLAND and Config.ISLAND.enabled and includeIsland ~= false and Config.ISLAND.rimTiles.max * Config.TILE_SIZE or 0
+	local padding = rim > 0 and Config.ISLAND.overviewPadding or 1
+	return math.max(c.zoomMin, math.sqrt((size.X + rim * 2) ^ 2 + (size.Z + rim * 2) ^ 2) / 2
+		/ math.sin(math.min(vertical, horizontal)) * c.overviewPadding * padding)
+end
+
+-- Reichweite des fernsten unteren Sichtstrahls auf dem flachen Fernboden.
+function Config.viewReach(distance, fov, aspect)
+	local c = Config.CAMERA
+	local up = 1 / math.sqrt(1 + c.tilt ^ 2)
+	local back = c.tilt * up
+	local tangent = math.tan(math.rad(fov) / 2)
+	local time = (distance * up + c.focusHeightReserve - Config.LANDSCAPE.foundationTop) / (up - back * tangent)
+	return math.sqrt((aspect * tangent * time) ^ 2 + (distance * back - (back + up * tangent) * time) ^ 2)
+end
+
+function Config.landscapeMargin(size)
+	local c = Config.CAMERA
+	local distance = Config.overviewZoom(size, c.fovMin, c.aspectMin, false)
+	return Config.viewReach(distance, c.fovMax, c.aspectMax) + Config.LANDSCAPE.viewSafetyTiles * Config.TILE_SIZE
+end
 
 Config.FEEL = {
 	battleSceneIntro = 0.45, battleSceneOutro = 0.5,
@@ -28,8 +61,15 @@ Config.FEEL = {
 	unitShadowSurfaceOffset = 0.022, unitShadowThickness = 0.003, -- über den Bodenflecken (bis 0,015), Schichten mit Abstand gegen Flackern
 	unitShadowLayers = { { size = 0.65, transparency = 0.70 }, { size = 0.82, transparency = 0.84 }, { size = 1, transparency = 0.93 } },
 	terrainDepth = 12, terrainClearTop = 20, terrainSurfaceMargin = 0.15, gridLineWidth = 0.045, gridTransparency = 0.5,
-	gridSurfaceOffset = 0.005, gridShade = 0.3, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
+	gridSurfaceOffset = 0.005, gridShade = 0.22, groundCapHeight = 0.12, groundDepth = 4, groundSideShade = 0.22,
 	surroundHeight = -0.4, waterTransparency = 0.18,
+	cliffSideShade = 0.42,
+	shore = { enabled = true, width = 0.1, maxPartsPerTile = 4,
+		thickness = 0.01, surfaceOffset = 0.018, color = Color3.fromRGB(104, 95, 75) }, -- WIP: gedämpfter Erdton
+	waterfallsEnabled = true, waterfallWidth = 0.76, waterfallThickness = 0.18, waterfallSurfaceClearance = 0.05,
+	waterfallFaceOffset = 0.35, waterfallChannelDepth = 4,
+	waterfallColor = Color3.fromRGB(161, 207, 235), waterfallFoamColor = Color3.fromRGB(230, 242, 250),
+	waterfallTransparency = 0.12, waterfallFoamCount = 3, waterfallFoamSize = 0.65,
 	hallBrightness = 1.2, hallExposure = -0.35, candleBrightness = 1.2,
 	hallWhite = Color3.fromRGB(225, 218, 205), hallMarble = Color3.fromRGB(205, 198, 186),
 	hoverSoundCooldown = 0.08,
@@ -56,8 +96,7 @@ Config.FEEL = {
 	rarityEffects = false, -- Nutzer 08.10.2026: Seltenheits-Leuchten/-Partikel (Waffe ★4, Bodenaura ★5) vorerst aus
 	flickerStrength = 0.12, flickerRate = 7,
 	hallDustRate = 12, hallDustLifetime = 14, hallDustSpeed = 0.3,
-	-- Zoom 140, Blickwinkel 70°, bis 21:9 und Boden bis -terrainDepth: 609,32 Studs, auf Voxelbreite gerundet.
-	environmentMargin = 72, environmentCount = 16, -- klein halten: Rand besteht aus vier Parts; Ferne verdeckt der Dunst
+	environmentMargin = 72, -- Terrain-Freiraum; sichtbarer Boden separat bis zum Übersichtszoom.
 	atmosphere = {
 		hall = {
 			bloom = { Intensity = 0.18, Size = 28, Threshold = 1.4 },
@@ -88,6 +127,23 @@ Config.FEEL = {
 
 Config.TILE_SIZE = 8
 
+Config.FOREST_OUTLINES = { -- WIP: Reserven für Tutorial/Auswahl/Kampfeffekte
+	maxCount = 20, totalBudget = 31, reserved = 8, updateInterval = 0.1,
+	fillTransparency = 0.8, outlineTransparency = 0,
+	canopyNeighborRadius = 1, sightDistance = 2, -- WIP: Kronenüberhang und perspektivische Verdeckung
+	colors = { Player = Color3.fromRGB(70, 155, 255), Enemy = Color3.fromRGB(255, 80, 70) },
+}
+
+Config.TREE_PALETTES = { -- WIP: Gewichte pro Region
+	greenland = {
+		{ weight = 65, color = Color3.fromRGB(74, 128, 64) }, { weight = 25, color = Color3.fromRGB(112, 157, 74) },
+		{ weight = 7, color = Color3.fromRGB(192, 115, 49) }, { weight = 3, color = Color3.fromRGB(158, 70, 46) },
+	},
+	swamp = { { weight = 80, color = Color3.fromRGB(44, 78, 48) }, { weight = 20, color = Color3.fromRGB(69, 94, 50) } },
+	ice = { { weight = 85, color = Color3.fromRGB(226, 235, 239) }, { weight = 15, color = Color3.fromRGB(169, 200, 208) } },
+	volcano = { { weight = 85, color = Color3.fromRGB(54, 49, 43) }, { weight = 15, color = Color3.fromRGB(91, 61, 44) } },
+}
+
 -- Werte WIP: Bild-ID leer/nil = prozedurale Flecken; Seitenbilder sind unabhängig.
 Config.GROUND_TEXTURES = {
 	["."] = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
@@ -100,6 +156,7 @@ Config.GROUND_TEXTURES = {
 	B = { top = nil, side = nil, studsPerTile = 8, transparency = 0.65 },
 }
 Config.GROUND_FLECKS = {
+	enabled = false, -- WIP: Roblox-Materialien liefern bereits Bodendetail.
 	maxPartsPerTile = 3, patchCount = 2, detailChance = 0.35,
 	thickness = 0.003, surfaceOffset = 0.012, transparency = 0, -- deckend und mit Abstand: kein Flackern, keine Transparenz-Kosten am Handy
 	shade = 0.12, light = 0.06, centerClearance = 2.3, edgeInset = 0.25,
@@ -108,26 +165,133 @@ Config.GROUND_FLECKS = {
 
 -- Maximalmaße in Feldern; auf dem Brett bleibt die Figurenmitte frei.
 Config.ENVIRONMENT = {
-	sizeVariation = 0.1, shadowHeight = 0.6,
+	rootFoot = { widthScale = 1.1, sink = 0.12, centerTolerance = 0.05 }, -- WIP: relativ zur Wood-Stammbreite.
+	sizeVariation = 0.1, castShadows = false, shadowHeight = 0.6, -- WIP: alte Höhenschwelle nur bei aktivierten Schatten
 	decoChance = 0.08, bushChance = 0.25, edgeInset = 1.3,
+	treesPerForestTile = { min = 1, max = 2 }, -- WIP: lichter Wald
+	forest = {
+		groundShade = 0.1, groundFleckContrast = 0.5, -- WIP: ruhige Tiefe ohne Baumschatten
+		treeHeight = { min = 1.2, max = 1.5 }, treeWidth = { min = 1.1, max = 1.2 },
+		bush = { height = 0.3, width = 0.45 }, deco_root = { height = 0.2, width = 0.5 },
+		secondTreeChance = 0.35, singleTreeOffset = 0.22, understoryChance = 0.2, positionJitter = 0.1, -- WIP: Mengen für Handy-Budget
+	},
+	rocks = { -- WIP: große Felsen und kleine Begleiter
+		centerClearance = 2.3, centerEdgeInset = 0.8, surfaceSink = 0.2,
+		mountain = { height = 0.2, width = 0.175 }, largeScale = { min = 0.8, max = 1 },
+		smallScale = { min = 0.5, max = 0.85 }, smallCount = { min = 0, max = 0 }, secondSmallChance = 0,
+		cliff = { height = 0.2, width = 0.175 }, cliffCount = { min = 0, max = 1 },
+
+	},
+	estimatedTriangleBudget = 350000, -- WIP: C3 inklusive dichtem Rand; Ferne aus günstigen Parts
+	rimRock = "rock_50",
+	bridge = { bankOverlap = 0.65, rayMargin = 2, footTolerance = 0.3, referenceModel = "archbridge_1",
+		ownModel = "archbridge_2", ownWidth = 5.2, ownHeight = 4.8 }, -- WIP: nur Optik/Brückenprofil, Ufer bleiben erhalten.
+	preferred = { deco_grass = "deco_grass_2", deco_flower = "deco_flower_4", deco_stone = "deco_stone_1" },
+	triangles = { rim_ruin_column_1 = 1500, rim_banner_1 = 998, rim_crystal_shrine_1 = 1500,
+		rim_ruin_arch_1 = 2999, rim_lantern_1 = 998, rim_crystal_pedestal_1 = 999, archbridge_2 = 3000,
+		deco_grass_2 = 299, deco_flower_4 = 798, rim_barrels_1 = 1000, deco_stone_1 = 300, rock_50 = 1499 },
+	meadow = { chance = 0.5, grassCount = { min = 1, max = 2 }, flowerChance = 0.18, stoneChance = 0.16,
+		fenceChance = 0.025, centerClearance = 2.3 }, -- WIP: mittlere Dichte, freie Figurenmitte
 	terrainCategories = { F = "tree", M = "rock", H = "fortress", B = "bridge" },
 	decoCategories = { "deco_flower", "deco_stone", "deco_grass", "deco_fence" },
 	categories = {
 		tree = { height = 0.55, width = 0.22, rotation = "free" },
 		bush = { height = 0.16, width = 0.2, rotation = "free" },
+		deco_root = { height = 0.2, width = 0.4, rotation = "free" },
 		rock = { height = 0.28, width = 0.22, rotation = "quarter" },
 		fortress = { height = 0.38, width = 0.2, rotation = "quarter" },
 		bridge = { height = 0.16, width = 1, rotation = "none" },
+		archbridge = { height = 1, width = 1, rotation = "none" },
+		rim_ruin_column = { height = 1, width = 0.85, rotation = "quarter" },
+		rim_banner = { height = 1.1, width = 0.7, rotation = "none" },
+		rim_crystal_shrine = { height = 0.85, width = 0.8, rotation = "quarter" },
+		rim_ruin_arch = { height = 1, width = 1.5, rotation = "none" },
+		rim_lantern = { height = 0.8, width = 0.65, rotation = "quarter" },
+		rim_crystal_pedestal = { height = 0.8, width = 0.8, rotation = "quarter" },
+		rim_barrels = { height = 0.6, width = 0.7, rotation = "quarter" },
 		ruins = { height = 0.38, width = 0.2, rotation = "quarter" },
 		deco_flower = { height = 0.08, width = 0.14, rotation = "free" },
 		deco_stone = { height = 0.08, width = 0.14, rotation = "free" },
 		deco_grass = { height = 0.12, width = 0.14, rotation = "free" },
 		deco_fence = { height = 0.12, width = 0.24, rotation = "quarter" },
 	},
-	outer = {
-		tree = { height = 2.25, width = 1.4 },
-		rock = { height = 0.75, width = 0.9 },
-		bush = { height = 0.45, width = 0.7 },
+}
+-- WIP: Distanzen in Feldern, Höhen/Skalen in Studs; Terrainauflösung von Roblox fest vorgegeben.
+Config.WATER = { -- WIP: ruhiges Terrain-Wasser, Fortsetzung bis zur Senke.
+	color = Color3.fromRGB(64, 105, 113), transparency = 0.35, reflectance = 0.12, waveSize = 0.08, waveSpeed = 3,
+	extendRivers = true, extensionTiles = 10, extensionWidth = 0.65,
+}
+
+Config.ISLAND = { -- WIP: schwebende Thronlande, false erhält das bisherige Tal.
+	enabled = true, rimTiles = { min = 2, max = 3 }, outlineSteps = 4,
+	surfaceHeight = -1, edgeReserve = 4, earthTiles = 1, depthTiles = 4.5,
+	rimBrighten = 0.3, -- WIP: Brett-Gras als Mindesthelligkeit, frischer heller Inselrand.
+	cliffEarthTiles = 0.6, cliffStoneTiles = 1, -- WIP: senkrechtes Band vor der Verjüngung.
+	layerScales = { 1, 0.46, 0 }, partBudget = 450, -- WIP: zwei Steinstufen sparen Teile für runde Wolken.
+	facetThickness = 0.16, edgeLip = 0.2, edgeOverlap = 1,
+	clusterCount = 3, clusterSize = 3, clusterSpread = 0.45, maxTrees = 6,
+	clusterDistance = { min = 1.15, max = 1.4 },
+	tree = { height = 1.15, crownWidth = 1.35 }, rock = { height = 0.45, width = 0.65 }, bush = { height = 0.3, width = 0.5 },
+	rimGroups = { sides = { min = 2, max = 3 }, front = { min = 1, max = 2 },
+		categories = { "rim_ruin_column", "rim_ruin_arch", "rim_lantern", "rim_crystal_shrine",
+			"rim_crystal_pedestal", "rim_banner" }, frontCategories = { "rim_barrels", "rock" },
+		companions = { min = 3, max = 6 }, companionCategories = { "deco_grass", "deco_flower", "deco_stone", "deco_grass" },
+		radius = 1.8, depthSpread = 0.45, mainDistance = { min = 1.15, max = 1.65 },
+	},
+	frontAllowed = { deco_grass = true, deco_flower = true, deco_stone = true, rim_barrels = true, rock = true },
+	frontBarrels = { height = 0.45, width = 0.65 },
+	rimBudget = { objects = 140, minimumObjects = 90, triangles = 90000,
+			estimates = { tree = 2000, bush = 1500, rock = 1000, deco_grass = 300, deco_flower = 800, deco_stone = 300 } },
+	rimScatter = { count = 110, objectsPerTile = 1 / 0.75, clusterChance = 0.35, edgeChance = 0.3,
+		categories = { "deco_grass", "deco_grass", "deco_grass", "deco_flower", "deco_stone" },
+		height = 0.28, width = 0.45, rockHeight = 0.45, rockWidth = 0.65, sizeVariation = 0.15,
+		sizes = { deco_grass = { height = 0.35, width = 0.55 },
+			deco_flower = { height = 0.3, width = 0.55 }, deco_stone = { height = 0.25, width = 0.5 } } },
+	rimPlacement = { attempts = 48, distance = 1.25, groupSpacing = 0.65, jitter = 0.65,
+		scatterDistance = { min = 0.75, inset = 0.5 }, edgeClearance = 2,
+		waterClearance = 3, overlapClearance = 0.4, frontHeight = 0.5 * Config.TILE_SIZE },
+	earthColor = Color3.fromRGB(154, 106, 72), stoneColor = Color3.fromRGB(109, 100, 128),
+	crystalCount = { min = 2, max = 4 }, crystalWidth = 3, crystalHeight = 9, crystalDepth = 0.75,
+	accents = { greenland = Color3.fromRGB(124, 194, 66), swamp = Color3.fromRGB(180, 107, 224),
+		ice = Color3.fromRGB(111, 211, 255), volcano = Color3.fromRGB(255, 122, 26) },
+	cloudHeight = -48, cloudThickness = 8, cloudReachTiles = 224, cloudTileSize = 1024, cloudCount = 16,
+	cloudWidthTiles = { min = 8, max = 14 }, cloudHeightTiles = { min = 2, max = 3.2 },
+	cloudRings = { 1, 1.8 }, cloudGapTiles = { min = 2, max = 4 }, cloudParts = { min = 3, max = 6 },
+	cloudPuff = { spread = 0.25, topLift = 1, shadeLift = 0.72, topWidth = 0.9,
+		shadeWidth = { min = 0.55, max = 0.85 }, edgeTint = 0.2 },
+	cloudBallEstimatedTriangles = 240, -- WIP: grobe Kugelschätzung, tatsächliches LOD ist geräteabhängig.
+	cloudColor = Color3.fromRGB(249, 248, 255), cloudBaseColor = Color3.fromRGB(194, 183, 224),
+	cloudCyanColor = Color3.fromRGB(186, 221, 232), horizonColor = Color3.fromRGB(201, 168, 255),
+	cloudLilacColor = Color3.fromRGB(222, 207, 239), -- WIP: sanfte Schatten trotz Nutzer-ColorGrading.
+	battleDensity = 0.08, battleHaze = 0.15, -- WIP: Wolkenfarben aus der steilen Spielkamera erhalten.
+	satelliteDepthScale = 1.4, satelliteTreeHeight = 7, satelliteTreeWidth = 5,
+	satelliteOutlinePoints = 6, satelliteOutlineRadius = { min = 0.78, max = 1 }, satelliteEarthTiles = 0.35,
+	satelliteWallThickness = 1.2, satelliteZSpread = 0.22, satelliteCloudRiseTiles = 2.2,
+	satelliteCrystalOffset = Vector3.new(0.82, 0.15, -0.5), -- WIP: Kristall sichtbar an der Kappe.
+	skyColor = Color3.fromRGB(157, 221, 230), foamColor = Color3.fromRGB(242, 251, 255),
+	satelliteCount = { min = 2, max = 3 }, satelliteDistanceTiles = { min = 29, max = 31 },
+	satelliteRadiusTiles = { min = 1.8, max = 2.6 }, satelliteHeight = { min = -23, max = -19 },
+	overviewPadding = 1.06, panInset = 0.3,
+}
+
+Config.LANDSCAPE = {
+	resolution = 4, chunkCells = 32, viewSafetyTiles = 2, sculptDistance = 18,
+	rockFields = { mountainHeight = 8, mountainEdgeHeight = -2, edgeFalloff = 4, edgeDensity = 0.35, mountainRoughness = 1.5, roughnessScale = 7,
+		cliffRoughness = 3, cliffScale = 5, grassChance = 0.16 }, -- WIP: natuerliche Felshoehen werden am Terrain gemessen.
+	cliffWalls = { enabled = true, terrainInset = 8, ridgeDepth = 0.22, segments = 2 }, -- WIP: kantige Wände begrenzen den geglätteten Terrainkern.
+	hubHalfWidth = 80, hubHalfDepth = 100, foundationTop = -4,
+	rimWidth = 1.5, hillRise = 7, hillHeight = 28, valleyFloor = 0.2,
+	mountainStart = 7, mountainRise = 10, mountainHeight = 76,
+	broadScale = 47, detailScale = 29, edgeFade = 5,
+	frontTransition = 4, frontMaxHeight = 4, rockHeight = 27, slateThreshold = 0.55, groundThreshold = 0.18,
+	maxTrees = 32, clusterCount = 12, clusterSize = 4, clusterSpread = 2,
+	clusterDistance = { min = 4, max = 15 }, objectClearance = 4, rootSink = 0.8,
+	tree = { height = 1.8, crownWidth = 2 }, rock = { height = 0.8, width = 1.3, rotationMode = "free" },
+	bush = { height = 0.4, width = 0.8 },
+	palette = {
+		grass = Enum.Material.Grass, ground = Enum.Material.Ground, rock = Enum.Material.Rock, slate = Enum.Material.Slate,
+		colors = { [Enum.Material.Grass] = Color3.fromRGB(88, 115, 72), [Enum.Material.Ground] = Color3.fromRGB(96, 85, 64),
+			[Enum.Material.Rock] = Color3.fromRGB(91, 96, 94), [Enum.Material.Slate] = Color3.fromRGB(71, 80, 85) },
 	},
 }
 Config.TILE_THICKNESS = 1
@@ -140,24 +304,33 @@ Config.MAX_LEVEL = 20
 -- cost: Bewegungskosten je Bewegungstyp (fehlt = unpassierbar)
 -- avoid: Ausweich-Bonus, def: Verteidigungs-Bonus, heal: Heilung pro Runde (Anteil der Max-KP)
 -- Werte WIP: Bodenfarben in HSV um etwa 30 % entsättigt und 25 % abgedunkelt.
+-- Parts ben?tigen hellere Farben als Terrain mit demselben Material.
+Config.GROUND_COLORS = { grassLighten = 0.4, groundLighten = 0.2 }
+
 Config.TERRAIN = {
 	["."] = {
 		height = 0, terrainMaterial = Enum.Material.Grass,
 		name = "Ebene", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(108, 138, 90), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(108, 138, 90), material = Enum.Material.Grass, paletteKey = "grass",
 	},
 	F = {
 		height = 0.4, terrainMaterial = Enum.Material.LeafyGrass,
 		name = "Wald", avoid = 20, def = 1,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(68, 99, 62), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(68, 99, 62), material = Enum.Material.Grass, paletteKey = "grass",
 	},
 	M = {
 		height = 4, terrainMaterial = Enum.Material.Rock,
 		name = "Berg", avoid = 30, def = 2,
 		cost = { foot = 4 },
-		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(105, 96, 83), material = Enum.Material.Rock, paletteKey = "rock",
+	},
+	C = {
+		height = 8, terrainMaterial = Enum.Material.Rock,
+		name = "Klippe", avoid = 0, def = 0,
+		cost = {},
+		color = Color3.fromRGB(99, 96, 91), material = Enum.Material.Slate, paletteKey = "slate",
 	},
 	W = {
 		height = -1.2, terrainMaterial = Enum.Material.Water,
@@ -169,25 +342,25 @@ Config.TERRAIN = {
 		height = -0.2, terrainMaterial = Enum.Material.Mud,
 		name = "Morast", avoid = -15, def = 0,
 		cost = { foot = 2, horse = 3 },
-		color = Color3.fromRGB(71, 66, 53), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(71, 66, 53), material = Enum.Material.Mud, paletteKey = "ground",
 	},
 	D = {
 		height = -0.8, terrainMaterial = Enum.Material.Mud,
 		name = "Tiefer Morast", avoid = 0, def = 0,
 		cost = {}, -- Später fly = 1 für Flieger.
-		color = Color3.fromRGB(54, 75, 83), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(54, 75, 83), material = Enum.Material.Mud, paletteKey = "ground",
 	},
 	H = {
 		height = 1, terrainMaterial = Enum.Material.Cobblestone,
 		name = "Festung", avoid = 20, def = 3, heal = 0.2,
 		cost = { foot = 2, horse = 2 },
-		color = Color3.fromRGB(128, 122, 117), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(128, 122, 117), material = Enum.Material.Cobblestone, paletteKey = "slate",
 	},
 	B = {
 		height = 0.2, terrainMaterial = Enum.Material.WoodPlanks,
 		name = "Brücke", avoid = 0, def = 0,
 		cost = { foot = 1, horse = 1 },
-		color = Color3.fromRGB(113, 92, 71), material = Enum.Material.SmoothPlastic,
+		color = Color3.fromRGB(113, 92, 71), material = Enum.Material.WoodPlanks,
 	},
 }
 
@@ -198,7 +371,12 @@ Config.TEAM_COLORS = {
 }
 
 -- Thronsaal: liegt weit hinter dem Schlachtfeld, damit die Taktik-Kamera ihn nicht sieht
-Config.HUB_ORIGIN = Vector3.new(0, 0, 420)
+-- Größtes aktuelles Brett (Lauf: 16×12); Sichtreichweite plus Hub-Halbtiefe und Sicherheitsrand.
+Config.HUB_BOARD_TILES = Vector3.new(16, 0, 12)
+local hubBoardSize = Vector3.new(Config.HUB_BOARD_TILES.X * Config.TILE_SIZE, 0, Config.HUB_BOARD_TILES.Z * Config.TILE_SIZE)
+Config.HUB_ORIGIN = Vector3.new(0, 0, math.ceil((hubBoardSize.Z + Config.landscapeMargin(hubBoardSize)
+	+ Config.LANDSCAPE.hubHalfDepth + Config.LANDSCAPE.viewSafetyTiles * Config.TILE_SIZE) / Config.LANDSCAPE.resolution)
+	* Config.LANDSCAPE.resolution)
 
 Config.OVERLAY = {
 	Move = Color3.fromRGB(60, 140, 255),

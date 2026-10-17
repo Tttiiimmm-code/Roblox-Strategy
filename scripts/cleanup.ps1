@@ -12,6 +12,7 @@ param(
 	[switch]$Prop,
 	[switch]$Cel,
 	[ValidateRange(2, 256)][int]$CelColors = 16,
+	[ValidateRange(0, 64)][int]$Threads = 0,
 	[string]$Blender
 )
 
@@ -55,6 +56,7 @@ try {
 		'--', '--input', $inputPath, '--output', $outputPath, '--name', $Name,
 		"--front=$Front", '--size', "$Size", '--head-share', $HeadShare.ToString([Globalization.CultureInfo]::InvariantCulture),
 		'--max-tris', "$MaxTris", '--cel-colors', "$CelColors")
+	if ($Threads -gt 0) { $blenderArgs = @('-t', "$Threads") + $blenderArgs }
 	if ($Prop) { $blenderArgs += '--prop' }
 	if ($Cel) { $blenderArgs += '--cel' }
 	& $Blender @blenderArgs

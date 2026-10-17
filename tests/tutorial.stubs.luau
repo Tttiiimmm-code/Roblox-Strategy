@@ -6,7 +6,7 @@ local function copy(value)
 	return result
 end
 local Color3 = { fromRGB = function(...) return { ... } end }
-local Vector3 = { new = function(...) return { ... } end }
+local Vector3 = { new = function(x, y, z) return { x, y, z, X = x, Y = y, Z = z } end }
 local Vector2 = { new = function(...) return { ... } end }
 local Enum = { Material = setmetatable({}, { __index = function(_, key) return key end }) }
 local task = { wait = function() end, spawn = function(fn, ...) fn(...) end }

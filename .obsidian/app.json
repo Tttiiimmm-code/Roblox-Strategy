@@ -1,0 +1,14 @@
+{
+  "userIgnoreFilters": [
+    "tools/",
+    "assets/raw/",
+    "src/",
+    "tests/",
+    "scripts/"
+  ],
+  "newFileLocation": "folder",
+  "newFileFolderPath": "docs/wiki",
+  "attachmentFolderPath": "docs/bilder",
+  "alwaysUpdateLinks": true,
+  "showLineNumber": true
+}

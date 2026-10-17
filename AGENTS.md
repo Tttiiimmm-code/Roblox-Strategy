@@ -49,6 +49,7 @@ Regel: Wer den Code geschrieben hat, reviewt ihn nicht selbst.
 - Kleine, fokussierte Änderungen; keine Refactorings nebenbei.
 - Vor dem Abschluss: `scripts/check.ps1` laufen lassen, Ergebnis kurz melden. Ein grüner Check ersetzt **nicht** den Test in Studio – Teststatus ehrlich angeben („ungetestet" vs. „vom Nutzer bestätigt").
 - **Devlog-Pflicht:** Nach jedem abgeschlossenen Plan einen nummerierten Eintrag in `docs/DEVLOG.md` anhängen (Ziel · Umsetzung · Entscheidungen · Probleme · Teststatus) und „Nächste Schritte" aktualisieren.
+- **Wiki-Pflicht (Obsidian-Vault):** Ändert ein Plan ein System, einen Befehl, ein Modul oder Werte, die in `docs/wiki/` beschrieben sind (Startseite `docs/Start.md`), die betroffenen Notizen im selben Durchgang anpassen; neue Systeme/Module als Notiz anlegen und von `docs/Start.md` bzw. der passenden Modul-Notiz verlinken. Links als `[[Notizname]]`, Notizen kurz halten, Details stehen im Code.
 - Nur gezielt lesen: erst `rg`/`grep`, dann die konkreten Dateien – nicht das ganze Repo einlesen.
 - Logs/Ausgaben kürzen (`| Select-Object -Last 50`, `rg`), nie komplett ausgeben.
 - Keine Secrets (Passwörter, API-Keys, Cookies, Roblox-Zugangsdaten) in Code oder Commits.
