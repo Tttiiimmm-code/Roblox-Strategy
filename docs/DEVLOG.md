@@ -1032,9 +1032,7 @@ Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bos
 
 **Projektdoku #47:** Obsidian-Vault – Projektordner in Obsidian öffnen, Startseite `docs/Start.md`; Wiki-Notizen bei Systemänderungen mitpflegen (Wiki-Pflicht in AGENTS.md).
 
-**Thronlande-Stand #45:** D2 mit zwölf eigenen Requisiten umgesetzt, automatische Prüfungen und Studio-Bilder grün. Claude-Review D2/D2b erledigt; Nutzer-/Handytests von Rand, neuer Brücke, Feldklicks und Leistung offen, danach Merge nach main.
-
-**Thronlande-Stand #46:** D2b umgesetzt: schmaler Rand, sichtbare Streumaße, vollständige Gruppen und flache Vorderzone; automatische Regressionen und Studio-Geometrieprüfungen grün. Claude-Review D2/D2b erledigt; D2c-Aufräumpunkte unter #48 umgesetzt. Nutzer-/Handytests von Lesbarkeit, Feldklicks, Bewegung und Leistung offen, danach Merge nach main.
+**Thronlande-Stand #45–#48 (17.10.2026):** D2 (eigene Requisiten/Brücke), D2b (schmaler, belebter Rand) und D2c (Aufräumen, Randaufbau ~60–70 % schneller) umgesetzt; Claude-Review ohne offene Befunde, Studio-Prüfung durch Claude (Brücken, Klickstrahlen, Aufbauzeit) grün. Geringere Randdichte nach D2c (−13 bis −22 %) vom Nutzer akzeptiert. Branch `feature/thronlande-d2` nach `main` zusammengeführt. Handytest (Bildrate, Touch) weiterhin offen. Danach D3: gemalter Himmel je Gebiet × Tageszeit.
 
 **Nächste Entwicklungspläne:** D3: gemalter Himmel je Gebiet × Tageszeit, zufällig pro Level; anschließend Gebietsvarianten der Requisiten. Vor Umsetzung neuen PLAN.md von Claude abwarten. Eigener 3D-Lagerplatz als Lichtung mit Lagerfeuer/Zelten und Helden ums Feuer bleibt vorgemerkt; Notfall-Beschwörung bei Roguelike Phase 4.
 
