@@ -990,12 +990,30 @@ Klippen erhalten einen abgesenkten Terrainkern, senkrechte Slate-Wände bis zur 
 **Teststatus:** check.ps1 **OK (39 Dateien)**; test-run.ps1 **OK (34.458 Lauf-/Boss-/Lagerprüfungen, 677.787 Inselprüfungen, Maximum 450/450)** mit neuen Randmaß-/Vorderzonen-/Gruppen-/Mindestdichte-/Gesamtbudgetregressionen und vier Paletten × drei Seeds, Determinismus und bestehenden Brückenregressionen. Andere Gebietspaletten auf Graslandgeometrie, da RunConfig.REGIONS aktuell nur Grasland enthält. test-levelgen.ps1 **OK (19.000 Level-, 5.000 Options-, 96 Landschafts-, 2.400 Boss-/Minibossprüfungen)**; test-tutorial.ps1 **OK (168)**; test-run-ui.ps1 **OK (280)**. Alle Exit 0, Rojo-Build TacticsGame.rbxlx und git diff --check erfolgreich. Keine Bestätigung manueller Nutzer-/Handytests.
 
 ---
+## #47 – Obsidian-Vault für die Projektdoku
+**Datum:** 17.10.2026
+
+**Ziel:** Projektwissen in Obsidian durchsuchbar und verlinkt machen.
+
+**Umsetzung:** Vault aus dem Branch `ccr-7ef5a318-mlmfw4` (dort ursprünglich als #32 vom 13.10.2026) übernommen. Projektordner ist der Vault (`.obsidian/`): `src/`, `tools/`, `tests/`, `scripts/`, `assets/raw/` ausgeblendet; neue Notizen nach `docs/wiki/`, Bilder nach `docs/bilder/`; Lesezeichen für Start, PLAN und DEVLOG. Startseite `docs/Start.md` verlinkt alle vorhandenen Dokumente. 19 Wiki-Notizen in `docs/wiki/` zu Architektur, Remotes/Befehlen, Modulen, Spielsystemen (Kampf, Helden, Rekrutierung, Läufe, Bosse und Lager, Levelgenerator, Thronlande, Tutorial, Hub, Profil, Oberfläche), Arbeitsablauf, Studio-Test, Roadmap und Glossar. Vorlagen (Devlog-Eintrag, Plan, Idee, Bug) in `docs/vorlagen/`. AGENTS.md um eine Wiki-Pflicht ergänzt.
+
+Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bosse und Lager“ (#32) und „Thronlande“ (#43–#46); Lagerbefehle `CampSwap`/`CampRevive`/`LeaveCamp`, Laufprofil Version 2, Gegner/Bosse, 16 × 12-Brett mit 8 × 4-Kartenstücken und Landschaftsmerkmalen (#33–#39), Designsystem in „Oberfläche und Handy“ (#40–#42), neue Module (`BossAbilities`, `LandscapeBuilder`, `IslandBuilder`, `ForestOutlines`), Prüfskripte `test-run.ps1`/`test-run-ui.ps1`, Umsetzer-Regel im Arbeitsablauf und Roadmap-Stand 17.10.2026.
+
+**Entscheidungen:** Vorhandene Dokumente bleiben an ihrem Ort, damit Skripte und Agenten-Regeln weiter stimmen. Persönliche Obsidian-Zustände (`workspace*.json`, Plugins, `.trash/`) sind in `.gitignore`. Reine Doku, deshalb von Claude selbst umgesetzt statt über Codex.
+
+**Probleme:** Nummer #32 war auf diesem Stand schon durch Phase 3 belegt, Eintrag deshalb als #47.
+
+**Teststatus:** Alle 132 Wikilinks lösen auf vorhandene Notizen auf, jede Wiki-Notiz hat mindestens einen eingehenden Link (geprüft per Skript). In Obsidian selbst ungetestet. Kein Code geändert.
+
+---
 ## Nächste Schritte (Plan)
 
 **UI-Stand #42:** Levelwahl-Karten und Schließen der Wahrscheinlichkeiten automatisch sowie von Codex im echten Ort bild-/klickgeprüft. Claude-Review und Nutzer-/Handytests offen: zwei/drei getrennte Karten, lesbare Belohnungen, erkennbares Lager, genau eine Wahl pro Karten-/Knopftipp sowie Wahrscheinlichkeiten beim Kriegstisch-Wechsel geschlossen. Nutzer-/Handytests der UI-Korrekturen #41 bleiben ebenfalls offen (Rufdialoge, Geländekasten, Juwelen/Vorschauabstand, Banner, Kasernenrahmen, kleine Konturtexte). Danach durch den Nutzer veröffentlichen.
 **Stand 10.10.2026:** C7 automatisch und von Codex in Studio bildgeprüft; Nutzer-/Handytests und unabhängiges Claude-Review offen. C5 vom Nutzer getestet: Brett 263 ms/Figuren 16 ms, PC und Handy flüssig, Wald gut, Thronsaal unverändert. C4 vom Nutzer bestätigt: Thronsaal, Warnungen, Schatten, Brückenfüße und Samsung-S25+-Leistung ok. Grundtutorial (#30) vom Nutzer bestätigt (Willkommensfenster, beide Missionen, 150 Gold). Feinschliff (#31) vom Nutzer bestätigt (größere Tutorial-Hinweise, gelbe Zielfelder, PC-Skalierung, Level-Up wegtippen). Branch `feature/lauf-phase2` nach `main` zusammengeführt. Level-Optik (#24–#29) vom Nutzer auf dem Handy bestätigt („geht jetzt“): Banner/Hinweis/Gelände vollständig, Antippen funktioniert, Karten und Rundschatten ok, Seltenheits-Effekte aus. Branch `feature/level-optik` nach `main` zusammengeführt. Bei künftigen Darstellungsfehlern `Config.INPUT_DIAGNOSTICS` einschalten und `[Eingabe]`/`[UI-Diagnose]`-Zeilen liefern.
 
 **Thronlande-Stand #44:** D1b umgesetzt und mit regulärer Kamera in Studio bildgeprüft: heller Rand, Erd-/Steinwand, runde Lila-/Cyanwolken und seitliche Polygoninseln. Automatische Regressionen grün; unabhängiges Claude-Review sowie Nutzer-/Handytests für Klicks, Bewegung, Randfälle und reale Bildrate offen.
+
+**Projektdoku #47:** Obsidian-Vault – Projektordner in Obsidian öffnen, Startseite `docs/Start.md`; Wiki-Notizen bei Systemänderungen mitpflegen (Wiki-Pflicht in AGENTS.md).
 
 **Thronlande-Stand #45:** D2 mit zwölf eigenen Requisiten umgesetzt, automatische Prüfungen und Studio-Bilder grün. Claude-Review sowie Nutzer-/Handytests von Rand, neuer Brücke, Feldklicks und Leistung offen.
 
