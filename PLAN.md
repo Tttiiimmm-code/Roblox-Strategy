@@ -30,7 +30,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
   - `rimGroups`-Block so einrücken/umbrechen, dass sichtbar ist, wo er endet und dass `frontAllowed` direkt in `Config.ISLAND` steht.
   - Akzeptanz: `rg frontCategories src` trifft nur `rimGroups.frontCategories`; Vorderzonen-Regression grün.
 
-- [ ] 5. **Abschluss** – Tests, Doku
+- [x] 5. **Abschluss** – Tests, Doku
   - `scripts/check.ps1`, `test-run.ps1`, `test-levelgen.ps1`, `test-tutorial.ps1`, `test-run-ui.ps1` OK; Rojo-Build.
   - Devlog **#48 „Thronlande D2c – Aufräumen nach Review“** (Ziel · Umsetzung · Entscheidungen · Probleme · Messung vorher/nachher · Teststatus); „Nächste Schritte“: Claude-Review D2/D2b erledigt, Nutzer-/Handytest offen, danach Merge nach `main`.
   - Wiki: `docs/wiki/Thronlande.md` nur anpassen, falls dort Geändertes beschrieben ist.
@@ -53,6 +53,8 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
 - Studio-Messung übersprungen: MCP meldet keine verbundene Studio-Instanz. Keine Kamera-/Studio-Eingriffe.
 - Sandbox-Setupfehler: nicht-destruktive Projektbefehle gemäß Dauerregel außerhalb der Sandbox ausgeführt.
 - Schritt 1 nachher (test-run.ps1 Exit 0, alle D2b-Regressionen grün): Seeds 1/2/3 = 109,97 / 80,25 / 68,20 ms (Mittel 86,14 ms, 73,27 % schneller). Randobjekte 91 / 107 / 114 (-9,00 / -7,76 / -6,56 %), Dreiecke 53.521 / 61.002 / 68.489. Mindestdichte/Budgets/Determinismus erfüllt; check.ps1 OK (39 Dateien).
-- Schritt 2: ausschließlich nach der Insel-Frührückkehr unerreichbare Zweige entfernt; Tal-Ausdruck auf s.frontTransition vereinfacht. Tal-/Generatorregressionen werden im Abschluss erneut ausgeführt.
+- Schritt 2: ausschließlich nach der Insel-Frührückkehr unerreichbare Zweige entfernt; Tal-Ausdruck auf s.frontTransition vereinfacht. Tal-/Generatorregressionen im Abschluss erneut grün.
 - Schritt 3: Randfels und Referenzbrücke zentral in Config.ENVIRONMENT; doppeltes preferred.archbridge entfernt. Literalsuche in src trifft nur Config.luau.
 - Schritt 4: Config.ISLAND.frontAllowed benennt die erlaubten flachen Kategorien; rimGroups.frontCategories bleibt unverändert. Literalsuche frontCategories trifft nur die Gruppenliste und deren Zugriff.
+- Abschluss: check.ps1 OK (39 Dateien), test-run.ps1 OK (34.458 Lauf-/Boss-/Lager-Stubs, 677.787 Inselprüfungen, D2b inklusive Vorderzone/Gruppen/Budgets/Determinismus und Brücken), test-levelgen.ps1 OK (19.000 Level-, 5.000 Options-, 96 Landschafts-, 2.400 Boss-/Minibossprüfungen), test-tutorial.ps1 OK (168), test-run-ui.ps1 OK (280), Rojo-Build erfolgreich. Alle Skripte Exit 0.
+- Finale Seeds 1/2/3: 107,51 / 85,59 / 68,07 ms (Mittel 87,06 ms, 72,98 % schneller als Baseline); weiterhin 91 / 107 / 114 Randobjekte. Devlog #48 und Wiki aktualisiert. Studio nicht verbunden, Edit-Modus nicht prüfbar; Nutzer-/Handytests offen.

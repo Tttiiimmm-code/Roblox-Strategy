@@ -1006,6 +1006,21 @@ Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bos
 **Teststatus:** Alle 132 Wikilinks lösen auf vorhandene Notizen auf, jede Wiki-Notiz hat mindestens einen eingehenden Link (geprüft per Skript). In Obsidian selbst ungetestet. Kein Code geändert.
 
 ---
+## #48 – Thronlande D2c – Aufräumen nach Review
+
+**Ziel:** Die vier Aufräumpunkte aus Claudes D2-/D2b-Review umsetzen; Größen, Kategorien und Budgets unverändert lassen.
+
+**Umsetzung:** LandscapeBuilder prüft vor dem Klonen den geschätzten Mindestfußabdruck gegen Randfreiheit und belegte Flächen sowie das Dreiecksbudget. Die Nachprüfung mit der echten Bounding-Box bleibt bestehen. Unvollständige Gruppen sammeln ihre Modelle lokal und zerstören nur diese. Nach der Insel-Frührückkehr unerreichbare Inselzweige aus dem Talpfad entfernt. Randfels und Referenzbrücke stehen zentral unter Config.ENVIRONMENT.rimRock bzw. bridge.referenceModel; die doppelte Brückenpräferenz entfällt. Config.ISLAND.frontAllowed unterscheidet die erlaubten Vorderkategorien von rimGroups.frontCategories. Wiki-Notiz Thronlande aktualisiert.
+
+**Entscheidungen:** Ein Commit je Schritt, bestehender Branch feature/thronlande-d2. Keine Änderungen an Größen, Budgets, Brettinhalt, Spielregeln, Nutzer-Lighting oder Referenzdateien. Bestehende D2b-Regressionen dienen als Abnahme; unabhängiges Review bleibt bei Claude.
+
+**Probleme:** Sandbox-Setupfehler; nicht-destruktive Projektbefehle gemäß AGENTS.md-Dauerregel außerhalb der Sandbox ausgeführt. Keine Studio-Instanz am MCP verbunden, deshalb reguläres ResumeLevel/IslandPropBuildMs und Edit-Modus nicht prüfbar; keine Studio-/Kamera-Eingriffe.
+
+**Messung vorher/nachher:** test-run.ps1, Grasland-Seeds 1/2/3: vorher 361,96 / 368,91 / 235,86 ms, nach Schritt 1 109,97 / 80,25 / 68,20 ms Stub-Randaufbau. Mittel 322,24 → 86,14 ms, 73,27 % schneller (Ziel mindestens 30 %). Randobjekte 100 / 116 / 122 → 91 / 107 / 114 (-9,00 / -7,76 / -6,56 %, jeweils innerhalb ±10 %); geschätzte Dreiecke 57.409 / 63.690 / 72.582 → 53.521 / 61.002 / 68.489. D2b-Regressionen inklusive Mindestdichte, Vorderzone, vollständiger Gruppen, Budgets und Determinismus grün. Stub-Zeiten sind keine Messung der Studio-/Handyleistung.
+
+**Teststatus:** check.ps1 OK (39 Dateien), test-run.ps1 OK (34.458 Lauf-/Boss-/Lager-Stubs, 677.787 Inselprüfungen, D2b-/Brücken-/Talregressionen), test-levelgen.ps1 OK (19.000 Level-, 5.000 Options-, 96 Landschafts-, 2.400 Boss-/Minibossprüfungen), test-tutorial.ps1 OK (168), test-run-ui.ps1 OK (280); alle Exit 0. Rojo-Build erfolgreich. Finale Randzeiten 107,51 / 85,59 / 68,07 ms (Mittel 87,06 ms, 72,98 % schneller als Baseline), unverändert 91 / 107 / 114 Randobjekte. Studio und Handy in diesem Durchgang ungetestet; Nutzer-/Handytest, dann Merge nach main offen.
+
+---
 ## Nächste Schritte (Plan)
 
 **UI-Stand #42:** Levelwahl-Karten und Schließen der Wahrscheinlichkeiten automatisch sowie von Codex im echten Ort bild-/klickgeprüft. Claude-Review und Nutzer-/Handytests offen: zwei/drei getrennte Karten, lesbare Belohnungen, erkennbares Lager, genau eine Wahl pro Karten-/Knopftipp sowie Wahrscheinlichkeiten beim Kriegstisch-Wechsel geschlossen. Nutzer-/Handytests der UI-Korrekturen #41 bleiben ebenfalls offen (Rufdialoge, Geländekasten, Juwelen/Vorschauabstand, Banner, Kasernenrahmen, kleine Konturtexte). Danach durch den Nutzer veröffentlichen.
@@ -1015,9 +1030,9 @@ Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bos
 
 **Projektdoku #47:** Obsidian-Vault – Projektordner in Obsidian öffnen, Startseite `docs/Start.md`; Wiki-Notizen bei Systemänderungen mitpflegen (Wiki-Pflicht in AGENTS.md).
 
-**Thronlande-Stand #45:** D2 mit zwölf eigenen Requisiten umgesetzt, automatische Prüfungen und Studio-Bilder grün. Claude-Review sowie Nutzer-/Handytests von Rand, neuer Brücke, Feldklicks und Leistung offen.
+**Thronlande-Stand #45:** D2 mit zwölf eigenen Requisiten umgesetzt, automatische Prüfungen und Studio-Bilder grün. Claude-Review D2/D2b erledigt; Nutzer-/Handytests von Rand, neuer Brücke, Feldklicks und Leistung offen, danach Merge nach main.
 
-**Thronlande-Stand #46:** D2b umgesetzt: schmaler Rand, sichtbare Streumaße, vollständige Gruppen und flache Vorderzone; automatische Regressionen und Studio-Geometrieprüfungen grün. Claude-Review sowie Nutzer-/Handytests von Lesbarkeit, Feldklicks, Bewegung und Leistung offen.
+**Thronlande-Stand #46:** D2b umgesetzt: schmaler Rand, sichtbare Streumaße, vollständige Gruppen und flache Vorderzone; automatische Regressionen und Studio-Geometrieprüfungen grün. Claude-Review D2/D2b erledigt; D2c-Aufräumpunkte unter #48 umgesetzt. Nutzer-/Handytests von Lesbarkeit, Feldklicks, Bewegung und Leistung offen, danach Merge nach main.
 
 **Nächste Entwicklungspläne:** D3: gemalter Himmel je Gebiet × Tageszeit, zufällig pro Level; anschließend Gebietsvarianten der Requisiten. Vor Umsetzung neuen PLAN.md von Claude abwarten. Eigener 3D-Lagerplatz als Lichtung mit Lagerfeuer/Zelten und Helden ums Feuer bleibt vorgemerkt; Notfall-Beschwörung bei Roguelike Phase 4.
 
