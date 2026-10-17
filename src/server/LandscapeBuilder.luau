@@ -319,6 +319,7 @@ local function rimDetails(state, board)
 	local random = Random.new(hash(state.key .. ":rim"))
 	local occupied, centers, placed, triangles, trees = {}, {}, 0, 0, 0
 	local groups = { 0, 0, 0, 0 }
+	local groupAssets = nil
 	local function point(edge, along, distance)
 		if edge == 1 then return along, -distance end
 		if edge == 4 then return along, state.h + distance end
@@ -328,12 +329,6 @@ local function rimDetails(state, board)
 		if placed >= s.rimBudget.objects then return nil end
 		local height, material = LandscapeBuilder.surface(state, x, z)
 		if not height or material == Enum.Material.Water then return nil end
-		local center = Vector3.new(x, height, z)
-		if not LandscapeBuilder.rimFits(state, center, center) then return nil end
-		for _, other in occupied do
-			local gap = s.rimPlacement.overlapClearance
-			if x + gap > other.lo.X and x - gap < other.hi.X and z + gap > other.lo.Z and z - gap < other.hi.Z then return nil end
-		end
 		local opts = { parent = board, key = key, sizeVariation = s.rimScatter.sizeVariation }
 		local dimensions = s.rimScatter.sizes[category]
 		if dimensions then
@@ -349,6 +344,18 @@ local function rimDetails(state, board)
 		else
 			opts.rotationMode = "quarter"
 		end
+		local width = category == "tree" and s.tree.crownWidth or opts.width or Config.ENVIRONMENT.categories[category].width
+		local half = 0.5 * width * (1 - opts.sizeVariation) * T
+		local probeLo, probeHi = Vector3.new(x - half, height, z - half), Vector3.new(x + half, height, z + half)
+		if not LandscapeBuilder.rimFits(state, probeLo, probeHi) then return nil end
+		for _, other in occupied do
+			local gap = s.rimPlacement.overlapClearance
+			if probeHi.X + gap > other.lo.X and probeLo.X - gap < other.hi.X
+				and probeHi.Z + gap > other.lo.Z and probeLo.Z - gap < other.hi.Z then return nil end
+		end
+		local preferred = opts.preferred or Config.ENVIRONMENT.preferred[category]
+		local estimated = (preferred and Config.ENVIRONMENT.triangles[preferred]) or s.rimBudget.estimates[category] or 0
+		if triangles + estimated > s.rimBudget.triangles then return nil end
 		local asset = EnvironmentAssets.place(category, CFrame.new(x, height, z), opts)
 		if not asset then return nil end
 		local lo, hi = bounds(asset)
@@ -367,6 +374,7 @@ local function rimDetails(state, board)
 		asset:SetAttribute("RimEdge", edge)
 		asset:SetAttribute("EstimatedTriangles", estimate)
 		table.insert(occupied, { lo = lo, hi = hi })
+		if groupAssets then table.insert(groupAssets, asset) end
 		placed += 1; triangles += estimate
 		if category == "tree" then trees += 1 end
 		return asset
@@ -388,6 +396,7 @@ local function rimDetails(state, board)
 				local distance = random:NextNumber(s.rimGroups.mainDistance.min, s.rimGroups.mainDistance.max)
 				local x, z = point(edge, along, distance * T)
 				local before, beforeTriangles = placed, triangles
+				groupAssets = {}
 				if not put(category, x, z, state.key .. ":rim:main:" .. group, group, edge) then continue end
 				for companion = 1, companions do
 					local kind = s.rimGroups.companionCategories[(companion - 1) % #s.rimGroups.companionCategories + 1]
@@ -405,12 +414,13 @@ local function rimDetails(state, board)
 					break
 				end
 				-- Unvollständige Szenen verlegen, statt einzelne Hauptobjekte zurückzulassen.
-				for _, asset in board:GetChildren() do if asset:GetAttribute("RimGroup") == group then asset:Destroy() end end
+				for _, asset in groupAssets do asset:Destroy() end
 				while #occupied > before do table.remove(occupied) end
 				placed, triangles = before, beforeTriangles
 			end
 		end
 	end
+	groupAssets = nil
 	-- Bäume nutzen verbleibende Hinter-/Seitenplätze, bevor die flache Streuung auffüllt.
 	for group = 1, s.clusterCount do
 		local edge = group % 3 + 1

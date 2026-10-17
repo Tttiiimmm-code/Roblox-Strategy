@@ -9,7 +9,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
 
 ## Schritte
 
-- [ ] 1. **Randaufbau beschleunigen** – `LandscapeBuilder.rimDetails` / `put`
+- [x] 1. **Randaufbau beschleunigen** – `LandscapeBuilder.rimDetails` / `put`
   - Vorher messen: `scripts/test-run.ps1` gibt „D2b Seed 1/2/3 … ms Stub-Randaufbau“ aus; Werte in Notizen.
   - **Rückbau unvollständiger Gruppen:** Statt `board:GetChildren()` nach `RimGroup` zu durchsuchen, die Assets der aktuellen Gruppe in einer lokalen Liste sammeln und nur diese zerstören.
   - **Vorprüfung vor dem Klonen:** In `put` vor `EnvironmentAssets.place` einen geschätzten Fußabdruck prüfen – Quadrat um (x, z) mit halber Kantenlänge `0.5 * Zielbreite * (1 - sizeVariation) * TILE_SIZE`; Zielbreite = `opts.width` bzw. `Config.ENVIRONMENT.categories[category].width` (Bäume: `ISLAND.tree.crownWidth`). Fußabdruck gegen `occupied` (mit `overlapClearance`) und `LandscapeBuilder.rimFits` prüfen; außerdem Dreiecksbudget mit `rimBudget.estimates[category]` bzw. `Config.ENVIRONMENT.triangles` der bevorzugten Variante, falls bekannt. Nur offensichtlich scheiternde Proben verwerfen; die bestehende Nachprüfung mit echter Bounding-Box bleibt unverändert.
@@ -48,3 +48,8 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
 - (Codex: hier eintragen, `.handoff/status` = `frage` schreiben und stoppen. **Design- und Geschmacksfragen nicht selbst entscheiden**.)
 
 ## Notizen (Codex)
+
+- Baseline Schritt 1 (test-run.ps1, Exit 0): Seeds 1/2/3 = 361,96 / 368,91 / 235,86 ms Stub-Randaufbau (Mittel 322,24 ms), 100 / 116 / 122 Randobjekte, 57.409 / 63.690 / 72.582 geschätzte Dreiecke.
+- Studio-Messung übersprungen: MCP meldet keine verbundene Studio-Instanz. Keine Kamera-/Studio-Eingriffe.
+- Sandbox-Setupfehler: nicht-destruktive Projektbefehle gemäß Dauerregel außerhalb der Sandbox ausgeführt.
+- Schritt 1 nachher (test-run.ps1 Exit 0, alle D2b-Regressionen grün): Seeds 1/2/3 = 109,97 / 80,25 / 68,20 ms (Mittel 86,14 ms, 73,27 % schneller). Randobjekte 91 / 107 / 114 (-9,00 / -7,76 / -6,56 %), Dreiecke 53.521 / 61.002 / 68.489. Mindestdichte/Budgets/Determinismus erfüllt; check.ps1 OK (39 Dateien).
