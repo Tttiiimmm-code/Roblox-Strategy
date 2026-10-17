@@ -1020,7 +1020,7 @@ Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bos
 
 **Teststatus:** check.ps1 OK (39 Dateien), test-run.ps1 OK (34.458 Lauf-/Boss-/Lager-Stubs, 677.787 Inselprüfungen, D2b-/Brücken-/Talregressionen), test-levelgen.ps1 OK (19.000 Level-, 5.000 Options-, 96 Landschafts-, 2.400 Boss-/Minibossprüfungen), test-tutorial.ps1 OK (168), test-run-ui.ps1 OK (280); alle Exit 0. Rojo-Build erfolgreich. Finale Randzeiten 107,51 / 85,59 / 68,07 ms (Mittel 87,06 ms, 72,98 % schneller als Baseline), unverändert 91 / 107 / 114 Randobjekte. Studio und Handy in diesem Durchgang ungetestet; Nutzer-/Handytest, dann Merge nach main offen.
 
-**Studio-Prüfung (Claude, 17.10.2026):** Echter Ort, Play. Reguläres ResumeLevel Seed 1867460066: Randaufbau 118 ms (D2b: 272 ms), aber 109 statt 126 Randobjekte (−13 %). Grasland-Seed 1 als Server-Vorschau: 3 eigene Brücken ohne Rückfall, Brett 306 ms (D2b: 592 ms), Rand 108 ms, aber 92 statt 118 Objekte (−22 %, knapp über Mindestwert 90). Klickstrahlen: alle Felder treffbar, Brückenfelder exakt; Fehltreffer nur hinter Bergfeldern (Relief, nicht Rand). Ursache des Dichteverlusts: Vorprüfung nimmt ein volles Quadrat aus Zielbreite an, schmale Modelle (Banner, Gras) belegen real weniger. Handy ungetestet.
+**Studio-Prüfung (Claude, 17.10.2026):** Echter Ort, Play. Reguläres ResumeLevel Seed 1867460066: Randaufbau 118 ms (D2b: 272 ms), aber 109 statt 126 Randobjekte (−13 %). Grasland-Seed 1 als Server-Vorschau: 3 eigene Brücken ohne Rückfall, Brett 306 ms (D2b: 592 ms), Rand 108 ms, aber 92 statt 118 Objekte (−22 %, knapp über Mindestwert 90). Klickstrahlen: alle Felder treffbar, Brückenfelder exakt; Fehltreffer nur hinter Bergfeldern (Relief, nicht Rand). Ursache des Dichteverlusts: Vorprüfung nimmt ein volles Quadrat aus Zielbreite an, schmale Modelle (Banner, Gras) belegen real weniger. **Handy vom Nutzer am 17.10.2026 bestätigt: läuft gut.**
 
 ---
 ## Nächste Schritte (Plan)
@@ -1032,7 +1032,7 @@ Gegenüber dem Vault-Branch an den aktuellen Code angepasst: neue Notizen „Bos
 
 **Projektdoku #47:** Obsidian-Vault – Projektordner in Obsidian öffnen, Startseite `docs/Start.md`; Wiki-Notizen bei Systemänderungen mitpflegen (Wiki-Pflicht in AGENTS.md).
 
-**Thronlande-Stand #45–#48 (17.10.2026):** D2 (eigene Requisiten/Brücke), D2b (schmaler, belebter Rand) und D2c (Aufräumen, Randaufbau ~60–70 % schneller) umgesetzt; Claude-Review ohne offene Befunde, Studio-Prüfung durch Claude (Brücken, Klickstrahlen, Aufbauzeit) grün. Geringere Randdichte nach D2c (−13 bis −22 %) vom Nutzer akzeptiert. Branch `feature/thronlande-d2` nach `main` zusammengeführt. Handytest (Bildrate, Touch) weiterhin offen. Danach D3: gemalter Himmel je Gebiet × Tageszeit.
+**Thronlande-Stand #45–#48 (17.10.2026):** D2 (eigene Requisiten/Brücke), D2b (schmaler, belebter Rand) und D2c (Aufräumen, Randaufbau ~60–70 % schneller) umgesetzt; Claude-Review ohne offene Befunde, Studio-Prüfung durch Claude (Brücken, Klickstrahlen, Aufbauzeit) grün. Geringere Randdichte nach D2c (−13 bis −22 %) vom Nutzer akzeptiert. Branch `feature/thronlande-d2` nach `main` zusammengeführt (5e66ccd). Handytest vom Nutzer bestätigt („läuft gut“). Danach D3: gemalter Himmel je Gebiet × Tageszeit.
 
 **Nächste Entwicklungspläne:** D3: gemalter Himmel je Gebiet × Tageszeit, zufällig pro Level; anschließend Gebietsvarianten der Requisiten. Vor Umsetzung neuen PLAN.md von Claude abwarten. Eigener 3D-Lagerplatz als Lichtung mit Lagerfeuer/Zelten und Helden ums Feuer bleibt vorgemerkt; Notfall-Beschwörung bei Roguelike Phase 4.
 
