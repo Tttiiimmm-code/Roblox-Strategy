@@ -16,7 +16,7 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
   - Akzeptanz: Alle D2b-Regressionen in `test-run.ps1` grün (Randmaße, Vorderzone, vollständige Gruppen, Mindestdichte ≥ `rimBudget.minimumObjects`, Budgets, Determinismus). Stub-Randaufbau im Mittel der Seeds 1–3 **mindestens 30 % schneller** (vorher/nachher in Notizen). Randobjekte je Seed höchstens ±10 % gegenüber vorher.
   - Wenn Studio erreichbar: ein reguläres `ResumeLevel` und `IslandPropBuildMs` vorher/nachher notieren (nur Play, keine Kamera-Eingriffe, Studio nicht minimieren). Sonst überspringen und in Notizen vermerken.
 
-- [ ] 2. **Toten Insel-Code entfernen** – `LandscapeBuilder.details`
+- [x] 2. **Toten Insel-Code entfernen** – `LandscapeBuilder.details`
   - Nach `if state.island then rimDetails(state, board); return end` sind alle weiteren `state.island`-Zweige unerreichbar: `setmetatable(table.clone(Config.ISLAND) …)`, `(state.island and 0 or s.frontTransition)` → `s.frontTransition`, Zeile `if state.island and not LandscapeBuilder.rimFits(...)`. Entfernen.
   - Akzeptanz: Verhalten bei `Config.ISLAND.enabled = false` (Tal) unverändert; bestehende Tal-/Landschaftstests in `test-run.ps1` und `test-levelgen.ps1` grün.
 
@@ -53,3 +53,4 @@ Branch: `feature/thronlande-d2` (weiterarbeiten, ist gepusht).
 - Studio-Messung übersprungen: MCP meldet keine verbundene Studio-Instanz. Keine Kamera-/Studio-Eingriffe.
 - Sandbox-Setupfehler: nicht-destruktive Projektbefehle gemäß Dauerregel außerhalb der Sandbox ausgeführt.
 - Schritt 1 nachher (test-run.ps1 Exit 0, alle D2b-Regressionen grün): Seeds 1/2/3 = 109,97 / 80,25 / 68,20 ms (Mittel 86,14 ms, 73,27 % schneller). Randobjekte 91 / 107 / 114 (-9,00 / -7,76 / -6,56 %), Dreiecke 53.521 / 61.002 / 68.489. Mindestdichte/Budgets/Determinismus erfüllt; check.ps1 OK (39 Dateien).
+- Schritt 2: ausschließlich nach der Insel-Frührückkehr unerreichbare Zweige entfernt; Tal-Ausdruck auf s.frontTransition vereinfacht. Tal-/Generatorregressionen werden im Abschluss erneut ausgeführt.

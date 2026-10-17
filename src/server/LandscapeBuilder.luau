@@ -468,13 +468,12 @@ local function details(state, board)
 	if state.island then rimDetails(state, board); return end
 	local s, T = Config.LANDSCAPE, Config.TILE_SIZE
 	local random = Random.new(hash(state.key .. ":clusters"))
-	if state.island then s = setmetatable(table.clone(Config.ISLAND), { __index = s }) end
 	local trees = 0
 	for group = 1, s.clusterCount do
 		local edge = random:NextInteger(1, 3)
 		local distance = random:NextNumber(s.clusterDistance.min, s.clusterDistance.max) * T
 		local x = edge == 1 and random:NextNumber(-distance, state.w + distance) or (edge == 2 and -distance or state.w + distance)
-		local z = edge == 1 and -distance or random:NextNumber(0, math.max(0, state.h - (state.island and 0 or s.frontTransition) * T))
+		local z = edge == 1 and -distance or random:NextNumber(0, math.max(0, state.h - s.frontTransition * T))
 		for index = 1, s.clusterSize do
 			local px, pz = x + random:NextNumber(-s.clusterSpread, s.clusterSpread) * T, z + random:NextNumber(-s.clusterSpread, s.clusterSpread) * T
 			local height, material = LandscapeBuilder.surface(state, px, pz)
@@ -492,7 +491,6 @@ local function details(state, board)
 				and hi.Z > -s.objectClearance and lo.Z < state.h + s.objectClearance
 			local hubOverlap = hi.X > hub.X - s.hubHalfWidth and lo.X < hub.X + s.hubHalfWidth
 				and hi.Z > hub.Z - s.hubHalfDepth and lo.Z < hub.Z + s.hubHalfDepth
-			if state.island and not LandscapeBuilder.rimFits(state, lo, hi) then asset:Destroy(); continue end
 			if boardOverlap or hubOverlap or (hi.Z >= state.h and hi.Y > Config.FEEL.surroundHeight + s.frontMaxHeight) then asset:Destroy(); continue end
 			asset:SetAttribute("LandscapeDetail", kind)
 			if kind == "tree" then trees += 1 end
